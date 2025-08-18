@@ -1,8 +1,6 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+// ===========================================================
+// Prisma Schema (Optimized for Production - PostgreSQL)
+// ===========================================================
 
 generator client {
   provider = "prisma-client-js"
@@ -11,4 +9,342 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+// ===========================================================
+// ENUMS
+// ===========================================================
+
+enum UserRole {
+  STAFF
+  CLIENT
+  VENDOR
+  ADMIN
+  SALES_MANAGER
+  SALES_PERSON
+  DEPT_MANAGER
+  ESTIMATION_HEAD
+  ESTIMATOR
+  PROJECT_MANAGER
+  TEAM_LEAD
+  PROJECT_MANAGER_OFFICER
+  DEPUTY_MANAGER
+  OPERATION_EXECUTIVE
+  HUMAN_RESOURCE
+}
+
+enum TeamMemberRole{
+  CHECKER
+  DETAILER
+  ERECTER
+  MODELER
+  DESIGNER
+  ESTIMATOR
+  GUEST
+}
+enum Status {
+  ACTIVE
+  ONHOLD
+  INACTIVE
+  DELAY
+  COMPLETE
+  ASSIGNED
+}
+enum Stage {
+  RFI
+  IFA
+  BFA
+  BFAM
+  RIFA
+  RBFA
+  IFC
+  BFC
+  RIFC
+  REV
+  CO
+  COMPLETED
+}
+enum Tools {
+  TEKLA
+  SDS2
+  PEMB
+}
+// ===========================================================
+// MODELS
+// ===========================================================
+
+model User {
+  id              String      @id @default(uuid()) @db.Uuid
+  username        String      @unique
+  password        String
+  email           String?     @db.VarChar(150)
+  firstName       String      @db.VarChar(50) @map("f_name")
+  middleName      String?     @db.VarChar(50) @map("m_name")
+  lastName        String?     @db.VarChar(50) @map("l_name")
+  phone           String      @db.VarChar(20)
+  landline        String?     @default("") @db.VarChar(20)
+  altLandline     String?     @default("") @db.VarChar(20)
+  altPhone        String?     @default("") @db.VarChar(20)
+  designation     String?     @default("") @db.VarChar(50)
+  city            String?     @default("")
+  zipCode         String?     @default("") @map("zip_code")
+  state           String?     @default("")
+  country         String?     @default("")
+  address         String?     @default("")
+  role            UserRole
+  isActive        Boolean     @default(true) @map("is_active")
+  isFirstLogin    Boolean     @default(true) @map("is_firstLogin")
+  updatedAt       DateTime    @updatedAt
+  createdAt       DateTime    @default(now())
+
+  // Relations
+  departmentId      String?
+  department        Department?         @relation(fields: [departmentId], references: [id])
+  managedDepartment Department[]        @relation("ManagerOfDepartment")
+  managedFabricator Fabricator[]        @relation("FabricatorCreatedBy")
+  branchesPOC       Branch[]            @relation("BranchPointOfContacts")
+  managedTeam       Team[]              @relation("TeamManager")
+  teamMember        TeamMember[]        @relation("TeamMember")
+  managedProject    Project[]           @relation("projectManager")
+  assignedTask      Task                @relation("userTask")
+  comments          Comment[]           @relation("taskcommentuser")
+  notifications     Notification[]      @relation("Notification")  
+
+  @@map("user")
+  @@index([email])
+  @@index([phone])
+  @@index([role])
+  @@index([departmentId])
+}
+
+model Department {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String   @unique   
+  createdById String?  @db.Uuid
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  isDeleted   Boolean  @default(false) @map("is_bin")
+
+  // Relations
+  manager     User[]    @relation("ManagerOfDepartment")
+  users       User[]
+  Teams       Team[]   @relation("DepartmentOfTeam")
+
+  @@map("department")
+  @@index([createdById])
+}
+
+model Fabricator {
+  id           String      @id @default(uuid()) @db.Uuid
+  createdById  String      @db.Uuid
+  fabName      String      @default("")
+  website      String?     @default("")
+  drive        String?     @default("")
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  files        Json        @default("[]")
+  isDeleted    Boolean     @default(false) @map("is_bin")
+
+  // Relations      
+  branches     Branch[]    @relation("FabricatorBranches")
+  createdBy    User        @relation("FabricatorCreatedBy", fields: [createdById], references: [id])
+  project     Project[]    @relation("projectFabricator")
+
+  @@map("fabricators")
+  @@index([createdById])
+  @@index([fabName])
+}
+
+model Branch {
+  id             String      @id @default(uuid()) @db.Uuid
+  fabricatorId   String      @db.Uuid
+  name           String      @default("")
+  address        String      @default("")
+  city           String      @default("")
+  state          String      @default("")
+  country        String      @default("")
+  zipCode        String      @default("")
+  phone          String?     @db.VarChar(20)
+  email          String?     @db.VarChar(150)
+  isHeadquarters Boolean     @default(false)
+
+  // Relations
+  fabricator     Fabricator  @relation("FabricatorBranches", fields: [fabricatorId], references: [id])
+  pointOfContact User[]      @relation("BranchPointOfContacts")
+
+  @@map("branches")
+  @@index([fabricatorId])
+  @@index([city])
+  @@index([state])
+  @@index([zipCode])
+  @@unique([fabricatorId, isHeadquarters], map: "one_hq_per_fabricator")
+}
+
+
+model Team {
+  id           String         @id @default(uuid()) @db.Uuid
+  name         String         @unique
+  managerID    String         @db.Uuid
+  departmentID String?
+  //Relations
+  manager      User          @relation("TeamManager", fields: [managerID], references: [id])
+  members      TeamMember[]  @relation("MemberBelongsToTeam") // relation to members
+  department   Department?    @relation("DepartmentOfTeam",fields: [departmentID],references: [id])
+  project      Project[] @relation("projectTeam")
+
+
+  @@index([name])
+  @@index([departmentID])
+  @@index([managerID])
+  @@map("team")
+}
+
+
+
+model TeamMember {
+  id        String   @id @default(uuid()) @db.Uuid
+  teamId    String   @db.Uuid
+  userId    String   @db.Uuid
+  role      TeamMemberRole   
+  //Relations
+  team      Team     @relation("MemberBelongsToTeam",fields: [teamId], references: [id])
+  member    User    @relation("TeamMember",fields: [userId], references: [id])
+
+  @@index([teamId])
+  @@unique([teamId, userId]) // prevents duplicate members in same team
+  @@map("team_members")
+}
+model Project{
+  id                     String        @id @default(uuid()) @db.Uuid
+  name                   String        @unique
+  description            String
+  fabricatorID           String        @db.Uuid
+  departmentID           String        @db.Uuid
+  teamID                 String?       @db.Uuid
+  managerID              String        @db.Uuid
+  status                 Status        @default(ACTIVE)
+  stage                  Stage         @default(RFI)
+  tools                  Tools         @default(TEKLA)
+  files                  Json          @default("[]")
+  connectionDesign       Boolean       @default(false)
+  miscDesign             Boolean       @default(false)
+  customerDesign         Boolean       @default(false)
+  startDate              String
+  endDate                String?
+  endDateChangeLog       Json          @default("[]")
+  approvalDate           String
+  estimatedHours         Float         @default(0)
+  detailCheckingHours    Float         @default(0)
+  detailingHours         Float         @default(0)
+  executionCheckingHours Float         @default(0)
+  executionHours         Float         @default(0)
+  modelCheckingHours     Float         @default(0)
+  modelingHours          Float         @default(0)
+  mailReminder           Boolean       @default(false)
+  submissionMailReminder Boolean       @default(false)
+  
+  //Relations
+  stageHistory           ProjectStageHistory[]
+  fabricator             Fabricator    @relation("projectFabricator", fields: [fabricatorID], references: [id], onDelete: Cascade)
+  manager                User         @relation("projectManager", fields: [managerID], references: [id], onDelete: Cascade)
+  team                   Team?         @relation("projectTeam", fields: [teamID], references: [id], onDelete: Cascade)
+
+  @@map("project")
+}
+
+model ProjectStageHistory {
+  id         String   @id @default(uuid()) @db.Uuid
+  projectID  String   @db.Uuid
+  stage      Stage
+  startDate  DateTime @default(now())
+  endDate    DateTime?
+
+  project    Project  @relation(fields: [projectID], references: [id], onDelete: Cascade)
+
+  @@index([stage])
+  @@index([projectID])
+  @@map("project_stage_history")
+}
+
+model Task {
+  id                 String          @id @default(uuid()) @db.Uuid
+  name               String
+  description        String
+  status             String
+  priority           Int
+  created_on         DateTime        @default(now())
+  reworkStartTime    DateTime?
+  due_date           String
+  duration           String
+  project_id         String          @db.Uuid
+  user_id            String          @db.Uuid
+  start_date         String
+  Stage              Stage           @default(IFA)
+  departmentId       String          @db.Uuid
+  updatedAt          DateTime        @updatedAt
+
+  //Relations
+  taskcomment        Comment[]       @relation("taskcomment")
+  project            Project         @relation("projectTask", fields: [project_id], references: [id])
+  user               User           @relation("userTask", fields: [user_id], references: [id])
+  workingHourTask    WorkingHours[]  @relation("workingHourTask")
+  department         Department      @relation("TaskBelongsToDepartment",fields: [departmentId],references: [id])
+
+  @@index([name])
+  @@index([status])
+  @@index([priority])
+  @@index([project_id])
+  @@index([Stage])
+
+  @@map("task")
+}
+
+model WorkingHours {
+  id                String          @id @default(uuid()) @db.Uuid
+  user_id           String          @db.Uuid
+  task_id           String?         @db.Uuid
+  status            WorkHourStatus
+  start             DateTime?
+  duration          Int             @default(0)
+  end               DateTime?
+  estimationTask_id String?         @db.Uuid
+  estimationTask    EstimationTask? @relation("workingHourEstimationTask", fields: [estimationTask_id], references: [id], onDelete: Cascade)
+  task              Task?           @relation("workingHourTask", fields: [task_id], references: [id], onDelete: Cascade)
+  user              Users           @relation("workingHourUser", fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("workinghour")
+}
+
+model Comment {
+  id                    String    @id @default(uuid()) @db.Uuid
+  created_on            DateTime  @default(now())
+  data                  String
+  task_id               String?    @db.Uuid
+  user_id               String    @db.Uuid
+  file                  Json      @default("[]")
+  acknowledged          Boolean   @default(false)
+  acknowledgedTime      DateTime?
+
+  //Relations   
+
+  // estimationTaskId   String?    @db.Uuid
+  // estimationTask     EstimationTask?   @relation("estComment",fields:[estimationTaskId],references:[id],onDelete:Cascade)
+  task                  Task?      @relation("taskcomment", fields: [task_id], references: [id], onDelete: Cascade)
+  user                  User     @relation("taskcommentuser", fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([task_id])
+  @@index([user_id])
+
+  @@map("comment")
+}
+
+model Notification {
+  id        String   @id @default(uuid()) @db.Uuid
+  createdAt DateTime @default(now())
+  userID    String   @db.Uuid
+  payload   Json
+  delivered Boolean  @default(false)
+  user      User    @relation("Notification", fields: [userID], references: [id], onDelete: Cascade)
+
+  @@map("notification")
 }
