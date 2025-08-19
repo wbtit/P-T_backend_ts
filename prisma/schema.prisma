@@ -4,6 +4,8 @@
 
 generator client {
   provider = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+    extensions = [uuid_ossp(map: "uuid-ossp")]
 }
 
 datasource db {
@@ -69,6 +71,36 @@ enum Tools {
   SDS2
   PEMB
 }
+
+enum WorkSessionStatus {
+  ACTIVE
+  PAUSED
+  ENDED
+}
+
+
+enum WorkEventType {
+  START
+  PAUSE
+  RESUME
+  END
+}
+
+enum Activity {
+  MODELING
+  DETAILING
+  ERECTION
+  MC
+  DC
+  EC
+  DESIGNER
+  DWG_CHECKING
+  MODEL_CHECKING
+  DETAIL_CHECKING
+  ERECTION_CHECKING
+  DESIGN_CHECKING
+  OTHERS
+}
 // ===========================================================
 // MODELS
 // ===========================================================
@@ -92,23 +124,25 @@ model User {
   country         String?     @default("")
   address         String?     @default("")
   role            UserRole
+  departmentId    String?     @db.Uuid
   isActive        Boolean     @default(true) @map("is_active")
   isFirstLogin    Boolean     @default(true) @map("is_firstLogin")
   updatedAt       DateTime    @updatedAt
   createdAt       DateTime    @default(now())
 
   // Relations
-  departmentId      String?
-  department        Department?         @relation(fields: [departmentId], references: [id])
+  
+  department        Department?         @relation("UserOfTheDepartment",fields: [departmentId], references: [id])
   managedDepartment Department[]        @relation("ManagerOfDepartment")
   managedFabricator Fabricator[]        @relation("FabricatorCreatedBy")
   branchesPOC       Branch[]            @relation("BranchPointOfContacts")
   managedTeam       Team[]              @relation("TeamManager")
   teamMember        TeamMember[]        @relation("TeamMember")
   managedProject    Project[]           @relation("projectManager")
-  assignedTask      Task                @relation("userTask")
+  assignedTask      Task[]              @relation("usersTask")
   comments          Comment[]           @relation("taskcommentuser")
-  notifications     Notification[]      @relation("Notification")  
+  notifications     Notification[]      @relation("Notification")
+  WorkSession       WorkSession[]       @relation("WorkSessionOfuser")  
 
   @@map("user")
   @@index([email])
@@ -127,8 +161,9 @@ model Department {
 
   // Relations
   manager     User[]    @relation("ManagerOfDepartment")
-  users       User[]
-  Teams       Team[]   @relation("DepartmentOfTeam")
+  users       User[]    @relation("UserOfTheDepartment")
+  teams       Team[]    @relation("DepartmentOfTeam")
+  tasks       Task[]    @relation("TaskBelongsToDepartment")
 
   @@map("department")
   @@index([createdById])
@@ -185,7 +220,7 @@ model Team {
   id           String         @id @default(uuid()) @db.Uuid
   name         String         @unique
   managerID    String         @db.Uuid
-  departmentID String?
+  departmentID String?        @db.Uuid
   //Relations
   manager      User          @relation("TeamManager", fields: [managerID], references: [id])
   members      TeamMember[]  @relation("MemberBelongsToTeam") // relation to members
@@ -214,42 +249,132 @@ model TeamMember {
   @@unique([teamId, userId]) // prevents duplicate members in same team
   @@map("team_members")
 }
-model Project{
-  id                     String        @id @default(uuid()) @db.Uuid
-  name                   String        @unique
-  description            String
-  fabricatorID           String        @db.Uuid
-  departmentID           String        @db.Uuid
-  teamID                 String?       @db.Uuid
-  managerID              String        @db.Uuid
-  status                 Status        @default(ACTIVE)
-  stage                  Stage         @default(RFI)
-  tools                  Tools         @default(TEKLA)
-  files                  Json          @default("[]")
-  connectionDesign       Boolean       @default(false)
-  miscDesign             Boolean       @default(false)
-  customerDesign         Boolean       @default(false)
-  startDate              String
-  endDate                String?
-  endDateChangeLog       Json          @default("[]")
-  approvalDate           String
-  estimatedHours         Float         @default(0)
-  detailCheckingHours    Float         @default(0)
-  detailingHours         Float         @default(0)
-  executionCheckingHours Float         @default(0)
-  executionHours         Float         @default(0)
-  modelCheckingHours     Float         @default(0)
-  modelingHours          Float         @default(0)
-  mailReminder           Boolean       @default(false)
-  submissionMailReminder Boolean       @default(false)
+model Project{          
+  id                     String                 @id @default(uuid()) @db.Uuid
+  name                   String                 @unique
+  description            String         
+  fabricatorID           String                 @db.Uuid
+  departmentID           String                 @db.Uuid
+  teamID                 String?                @db.Uuid
+  managerID              String                 @db.Uuid
+  status                 Status                 @default(ACTIVE)
+  stage                  Stage                  @default(RFI)
+  tools                  Tools                  @default(TEKLA)
+  files                  Json                   @default("[]")
+  connectionDesign       Boolean                @default(false)
+  miscDesign             Boolean                @default(false)
+  customerDesign         Boolean                @default(false)
+  startDate              DateTime               @default(now())
+  endDate                DateTime               @default(now())
+  endDateChangeLog       Json                   @default("[]")
+  approvalDate           DateTime               @default(now())         
+  fabricationDate        DateTime               @default(now())
+  estimatedHours         Float                  @default(0)
+  detailCheckingHours    Float                  @default(0)
+  detailingHours         Float                  @default(0)
+  executionCheckingHours Float                  @default(0)
+  executionHours         Float                  @default(0)
+  modelCheckingHours     Float                  @default(0)
+  modelingHours          Float                  @default(0)
+  mailReminder           Boolean                @default(false)
+  submissionMailReminder Boolean                @default(false)
   
   //Relations
   stageHistory           ProjectStageHistory[]
-  fabricator             Fabricator    @relation("projectFabricator", fields: [fabricatorID], references: [id], onDelete: Cascade)
-  manager                User         @relation("projectManager", fields: [managerID], references: [id], onDelete: Cascade)
-  team                   Team?         @relation("projectTeam", fields: [teamID], references: [id], onDelete: Cascade)
+  fabricator             Fabricator            @relation("projectFabricator", fields: [fabricatorID], references: [id])
+  manager                User                  @relation("projectManager", fields: [managerID], references: [id])
+  team                   Team?                 @relation("projectTeam", fields: [teamID], references: [id])
+  tasks                  Task[]                @relation("TaskBelongsToProject")
+  projectJobStudy        JobStudy?             @relation("projectJobStudy") 
+  projectWorkBreakdown   WorkBreakdown?        @relation("ProjectWorkBreakdown")
+  lineItems              ProjectLineItems[]    @relation("LineItems")
+  notes                  Notes[]               @relation("projectNotes")
 
+  @@index([name])
+  @@index([fabricatorID])
+  @@index([departmentID])
+  @@index([managerID])
+  @@index([stage])
+  @@index([status])
   @@map("project")
+}
+
+model Notes{
+  id                     String         @id @default(uuid()) @db.Uuid
+  content                String   
+  stage                  Stage         @default(RFI)            
+  files                  Json           @default("[]")
+  createdAt              DateTime       @default(now())
+  updatedAt              DateTime       @updatedAt
+  projectId              String         @unique @db.Uuid
+
+  // Relations
+  project                Project        @relation("projectNotes",fields:[projectId],references:[id])
+
+  @@index([projectId])
+  @@map("notes")
+}
+
+model JobStudy {
+  id          String      @id @default(uuid()) @db.Uuid
+  QtyNo       Int   
+  unitTime    Float       @default(0.0)
+  execTime    Float       @default(0.0)
+  projectId   String      @unique @db.Uuid
+  description String    
+  project    Project     @relation("projectJobStudy", fields: [projectId], references: [id], onDelete: Cascade)
+
+
+  @@index([projectId])
+  @@map("jobStudy")
+}
+
+model WorkBreakdown {
+  id                     String             @id @default(uuid()) @db.Uuid
+  type                   Activity       
+  name                   String       
+  createdAt              DateTime           @default(now())
+  projectId              String             @unique @db.Uuid
+  templateKey            String             @default("")
+  updatedAt              DateTime           @updatedAt
+  stage                  Stage              @default(IFA)
+  totalCheckHr           Int                @default(0)
+  totalExecHr            Int                @default(0)
+  totalQtyNo             Int                @default(0)
+  totalCheckHrWithRework Float              @default(0.0)
+  totalExecHrWithRework  Float              @default(0.0)
+
+  // Relations
+  subTasks               ProjectLineItems[] @relation("subTasks")
+  project                Project            @relation("ProjectWorkBreakdown",fields: [projectId], references: [id])
+  @@index([projectId])
+  @@index([stage])
+  @@index([type])
+  @@map("wbsactivity")
+}
+
+model ProjectLineItems {
+  id                String        @id @default(uuid()) @db.Uuid
+  description       String  
+  unitTime          Float         @default(0.0)
+  CheckUnitTime     Float         @default(0.0)
+  QtyNo             Int           @default(0)
+  checkHr           Float         @default(0.0)
+  execHr            Float         @default(0.0)
+  projectID         String        @unique @db.Uuid
+  workBreakDownID   String        @unique @db.Uuid
+  createdAt         DateTime      @default(now())
+  parentTemplateKey String        @default("")
+  stage             Stage         @default(IFA)
+  updatedAt         DateTime      @updatedAt
+
+  // Relations
+  project           Project       @relation("LineItems", fields: [projectID], references: [id], onDelete: Cascade)
+  WBSACTIVITY       WorkBreakdown @relation("subTasks", fields: [workBreakDownID], references: [id], onDelete: Cascade)
+
+  @@unique([workBreakDownID, parentTemplateKey, stage])
+  @@index([projectID])
+  @@map("subTasks")
 }
 
 model ProjectStageHistory {
@@ -285,9 +410,9 @@ model Task {
 
   //Relations
   taskcomment        Comment[]       @relation("taskcomment")
-  project            Project         @relation("projectTask", fields: [project_id], references: [id])
-  user               User           @relation("userTask", fields: [user_id], references: [id])
-  workingHourTask    WorkingHours[]  @relation("workingHourTask")
+  project            Project         @relation("TaskBelongsToProject", fields: [project_id], references: [id])
+  user               User           @relation("usersTask", fields: [user_id], references: [id])
+  workingHourTask    WorkSession[]  @relation("WorkSession")
   department         Department      @relation("TaskBelongsToDepartment",fields: [departmentId],references: [id])
 
   @@index([name])
@@ -299,21 +424,41 @@ model Task {
   @@map("task")
 }
 
-model WorkingHours {
-  id                String          @id @default(uuid()) @db.Uuid
-  user_id           String          @db.Uuid
-  task_id           String?         @db.Uuid
-  status            WorkHourStatus
-  start             DateTime?
-  duration          Int             @default(0)
-  end               DateTime?
-  estimationTask_id String?         @db.Uuid
-  estimationTask    EstimationTask? @relation("workingHourEstimationTask", fields: [estimationTask_id], references: [id], onDelete: Cascade)
-  task              Task?           @relation("workingHourTask", fields: [task_id], references: [id], onDelete: Cascade)
-  user              Users           @relation("workingHourUser", fields: [user_id], references: [id], onDelete: Cascade)
 
-  @@map("workinghour")
+model WorkSession {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  taskId    String   @db.Uuid
+  start     DateTime @default(now())
+  end       DateTime?
+  status    WorkSessionStatus @default(ACTIVE)
+  events    WorkEvent[]
+
+//Relations
+task              Task?           @relation("WorkSession", fields: [taskId], references: [id], onDelete: Cascade)
+user              User           @relation("WorkSessionOfuser", fields: [userId], references: [id], onDelete: Cascade)
+  
+
+  @@index([userId])
+  @@index([status])
+  @@index([taskId])
+
+  @@map("work_sessions")
 }
+
+model WorkEvent {
+  id          String        @id @default(uuid()) @db.Uuid
+  sessionId   String        @db.Uuid
+  eventType   WorkEventType
+  timestamp   DateTime      @default(now())
+  session     WorkSession   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+  @@index([eventType])
+
+  @@map("work_events")
+}
+
 
 model Comment {
   id                    String    @id @default(uuid()) @db.Uuid
@@ -346,5 +491,6 @@ model Notification {
   delivered Boolean  @default(false)
   user      User    @relation("Notification", fields: [userID], references: [id], onDelete: Cascade)
 
+  @@index([userID])
   @@map("notification")
 }
