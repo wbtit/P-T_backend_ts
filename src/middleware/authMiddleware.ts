@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { AppError } from '../utils/AppError';
+import { AppError } from '../config/utils/AppError';
 import { UserJwt } from '../shared/types';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'youDefaultSecret';
