@@ -7,7 +7,7 @@ import {
     NextFunction
 } from 'express'
 import routes from "./app"
-import healthRouter from './config/health'
+import healthRouter from './system/health'
  export const app =express();
  app.use(cors())
  app.use(express.json())
