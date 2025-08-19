@@ -1,21 +1,32 @@
 // auth/repository.ts
 import prisma from "../../../config/database/client";
-import { SignupInput } from "../dtos/auth.dto";
+import { SignupInput,userRole } from "../dtos";
 
-export const findUserByEmail = async (email: string) => {
-  return prisma.user.findUnique({ where: { email } });
+export const findUserByEmail = async (username: string) => {
+  return prisma.user.findUnique({ where: { username } });
 };
-
+  
 export const createUser = async (user: SignupInput) => {
   return prisma.user.create({
     data: {
-      name: user.name,
+      username: user.username,
+      password: user.password,
       email: user.email,
-      password: user.password, // hash this in service layer, not here
-      profileImage: user.profileImage,
-      bio: user.bio,
-      website: user.website,
-      location: user.location,
+      firstName: user.firstName,
+      middleName: user.middleName,
+      lastName: user.lastName,
+      phone: user.phone,
+      landline: user.landline,
+      altLandline: user.altLandline,
+      altPhone: user.altPhone,
+      designation: user.designation,
+      city: user.city,
+      zipCode: user.zipCode,
+      state: user.state,
+      country: user.country,
+      address: user.address,
+      role: user.role as userRole,
+      departmentId: user.departmentId
     },
   });
 };

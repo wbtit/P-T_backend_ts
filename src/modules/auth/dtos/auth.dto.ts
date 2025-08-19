@@ -1,18 +1,44 @@
 // auth/dto.ts
 import { z } from "zod";
+export type userRole='STAFF'|
+          'CLIENT'|
+          'VENDOR'|
+          'ADMIN'|
+          'SALES_MANAGER'|
+          'SALES_PERSON'|
+          'DEPT_MANAGER'|
+          'ESTIMATION_HEAD'|
+          'ESTIMATOR'|
+          'PROJECT_MANAGER'|
+          'TEAM_LEAD'|
+          'PROJECT_MANAGER_OFFICER'|
+          'DEPUTY_MANAGER'|
+          'OPERATION_EXECUTIVE'|
+          'HUMAN_RESOURCE'
 
 export const signupSchema = z.object({
-  name: z.string(),
-  email: z.string().email(),
+  username: z.string(),
   password: z.string().min(6),
-  profileImage: z.string().nullable().optional(),
-  bio: z.string().nullable().optional(),
-  website: z.string().nullable().optional(),
-  location: z.string().nullable().optional(),
+  email: z.string().nullable().optional(),
+  firstName:z.string(),
+  middleName:z.string().nullable().optional(),
+  lastName:z.string().nullable().optional(),
+  phone:z.string(),
+  landline:z.string().nullable().optional(),
+  altLandline:z.string().nullable().optional(),
+  altPhone:z.string().nullable().optional(),
+  designation:z.string().nullable().optional(),
+  city: z.string().nullable().optional(),
+  zipCode: z.string().nullable().optional(),
+  state: z.string().nullable().optional(),
+  country: z.string().nullable().optional(),
+  address: z.string().nullable().optional(),
+  role: z.string(),
+  departmentId: z.string().nullable().optional()
 });
 
 export const signinSchema = z.object({
-  email: z.string().email(),
+  username: z.string().email(),
   password: z.string(),
 });
 
