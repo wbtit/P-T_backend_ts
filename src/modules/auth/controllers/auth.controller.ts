@@ -1,10 +1,7 @@
 import { Request,Response } from "express";
-import * as AuthService from './auth.services';
-import {
-    signupSchema,
-    signinSchema,
-    resetPasswordSchema
-} from './auth.model'
+import * as AuthService from "../services"
+
+
 
 export const handleSignup = async(req:Request,res:Response)=>{
     const result = await AuthService.signup(req.body);

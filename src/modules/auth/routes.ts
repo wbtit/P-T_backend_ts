@@ -3,15 +3,16 @@ import {
     handleResetPassword,
     handleSignin,
     handleSignup
-} from './auth.controller'
+} from './controllers'
 import { asyncHandler } from "../../config/utils/asyncHandler";
-import { validate } from "../../middlewares/validate";
+import validate from "../../middleware/validate";
+import authMiddleware from "../../middleware/authMiddleware";
 import { 
     signupSchema,
     signinSchema,
     resetPasswordSchema
- } from "./auth.model";
-import authMiddleware from "../../middlewares/authMiddleware";
+ } from "./dtos";
+
 const router =Router();
 
 router.post("/signup",validate(signupSchema),asyncHandler(handleSignup));
