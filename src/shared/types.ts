@@ -1,7 +1,7 @@
 import { JwtPayload } from "jsonwebtoken";
 interface UserJwt extends JwtPayload{
     id:string;
-    email:string;
+    email:string|null;
     username:string;
     role: 'STAFF'|
           'CLIENT'|

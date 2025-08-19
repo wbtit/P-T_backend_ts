@@ -2,7 +2,7 @@
 import prisma from "../../../config/database/client";
 import { SignupInput,userRole } from "../dtos";
 
-export const findUserByEmail = async (username: string) => {
+export const findUserByUsername = async (username: string) => {
   return prisma.user.findUnique({ where: { username } });
 };
   
