@@ -1,11 +1,16 @@
 import prisma from "../../config/database/client"; 
 import { userRole } from "./dtos";
-import { createUserInput } from "./dtos";
+import { createUserInput,updateUserInput } from "./dtos";
+import { cleandata } from "../../config/utils/cleanDataObject";
 
 
 export const findUserByUsername = async (username: string) => {
   return prisma.user.findUnique({ where: { username } });
 };
+
+export const findUserById=async(id:string)=>{
+    return prisma.user.findUnique({where:{id}});
+}
   
 export const createUser = async (user: createUserInput) => {
   return prisma.user.create({
@@ -31,3 +36,22 @@ export const createUser = async (user: createUserInput) => {
     },
   });
 };
+
+export const updateUser=async(id:string,user:updateUserInput)=>{
+    const safeData =cleandata(user);
+
+    return prisma.user.update({
+        where:{id},
+        data:{
+            ...safeData,
+            role: user.role as userRole,
+        }
+    });
+  };
+
+
+  export const deleteUser=async(id:string)=>{
+    return await prisma.user.delete({
+        where:{id}
+    })
+  }
