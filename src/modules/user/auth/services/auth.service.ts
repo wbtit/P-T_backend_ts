@@ -8,8 +8,8 @@ import {
 import { generateToken } from '../../../../config/utils/jwtutils' 
 import { AppError } from '../../../../config/utils/AppError' 
 import { UserJwt } from '../../../../shared/types' 
-import {createUser,findUserByUsername,updatePassword}  from "../repositories"
-
+import {updatePassword}  from "../repositories"
+import { createUser,findUserByUsername } from '../../repository'
 const JWT_SECRET = process.env.JWT_SECRET || 'your_dev_secret';
 
 
