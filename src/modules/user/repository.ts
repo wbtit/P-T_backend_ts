@@ -12,6 +12,10 @@ export const findUserById=async(id:string)=>{
     return prisma.user.findUnique({where:{id}});
 }
   
+export const  findAllUsers=async()=>{
+  return await prisma.user.findMany();
+}
+
 export const createUser = async (user: createUserInput) => {
   return prisma.user.create({
     data: {
@@ -51,7 +55,10 @@ export const updateUser=async(id:string,user:updateUserInput)=>{
 
 
   export const deleteUser=async(id:string)=>{
-    return await prisma.user.delete({
-        where:{id}
+    return await prisma.user.update({
+        where:{id},
+        data:{
+          isActive:false
+        }
     })
   }

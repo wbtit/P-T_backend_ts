@@ -3,12 +3,19 @@ import bcrypt from 'bcrypt-ts'
 import { 
     createUserInput,
     updateUserInput,
-    getUserInput,
-    deleteUserInput, 
+    getUserInput, 
 } from "./dtos";
-import { findUserByUsername,findUserById,createUser,updateUser,deleteUser} from "./repository";
+import { 
+    findUserByUsername,
+    findUserById,
+    createUser,
+    updateUser,
+    deleteUser,
+    findAllUsers
+} from "./repository";
+import { cleandata } from "../../config/utils/cleanDataObject";
 
-export class userService{
+export class UserService{
     
     async create(data:createUserInput){
         const password=process.env.DEFAULT_PASSWORD|| "your_default_password";
@@ -26,14 +33,24 @@ export class userService{
     }
 
     async update(id:string,data:updateUserInput){
-        const user = await updateUser(id,data);
-        if(!user) throw new AppError("Failed to update User",202);
+        const cleanData= cleandata(data)
+        const user = await updateUser(id,cleanData);
+        if(!user) throw new AppError("Failed to update User",404);
         return{user}
     }
-    async delete(data:deleteUserInput){
-        const user = await deleteUser(data.id);
-         if(!user) throw new AppError("Failed to delete User",202);
+    async delete(id:string){
+        const user = await deleteUser(id);
+         if(!user) throw new AppError("Failed to delete User",404);
         return{user}
 
+    }
+
+    async readAll(){
+        const users = await findAllUsers();
+        if (!users || users.length === 0) {
+        return { users: [] };
+    }
+        if(!users) throw new AppError("Failed to fetch users",500);
+        return {users};
     }
 }

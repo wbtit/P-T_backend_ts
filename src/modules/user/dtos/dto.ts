@@ -49,4 +49,3 @@ export const FetchUserSchema=z.object({
 export type createUserInput = z.infer<typeof createUserSchema>;
 export type updateUserInput=z.infer<typeof UpdateUserSchema>;
 export type getUserInput=z.infer<typeof FetchUserSchema>
-export type deleteUserInput=z.infer<typeof FetchUserSchema>
