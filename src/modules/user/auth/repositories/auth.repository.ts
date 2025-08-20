@@ -1,5 +1,5 @@
 // auth/repository.ts
-import prisma from "../../../config/database/client";
+import prisma from "../../../../config/database/client"; 
 import { SignupInput,userRole } from "../dtos";
 
 export const findUserByUsername = async (username: string) => {
