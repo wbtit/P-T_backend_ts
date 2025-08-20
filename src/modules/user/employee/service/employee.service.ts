@@ -1,7 +1,7 @@
 import { AppError } from "../../../../config/utils/AppError";
 import { userRole } from "../../dtos";
 import { UserService } from "../../services";
-import { EmployeRepository } from "../repositories/repository";
+import { EmployeRepository } from "../repositories/employee.repository";
 
 export class EmployeeServices extends UserService{
     emprepo= new EmployeRepository()
