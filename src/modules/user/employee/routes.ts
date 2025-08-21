@@ -13,15 +13,15 @@ const router = Router();
 router.post(
   "/",
   authMiddleware,
-  validate(createUserSchema),
+  validate({body:createUserSchema}),
   asyncHandler(empCtrl.handleCreateEmp)
 );
 
 // Update employee profile
 router.put(
-  "/update",
+  "/update/:id",
   authMiddleware,
-  validate(UpdateUserSchema),
+  validate({body:UpdateUserSchema}),
   asyncHandler(empCtrl.handleUpdateProfile)
 );
 
@@ -29,7 +29,7 @@ router.put(
 router.get(
   "/",
   authMiddleware,
-  validate(FetchUserSchema),
+  validate({body:FetchUserSchema}),
   asyncHandler(empCtrl.handleGetAllEmployees)
 );
 
@@ -37,15 +37,15 @@ router.get(
 router.get(
   "/role/:role",
   authMiddleware,
-  validate(z.object({ params: z.object({ role: z.string()}) })),
+  validate({params: z.object({ role: z.string() })}),
   asyncHandler(empCtrl.handleGetEmployeesByRole)
 );
 
 // Fetch employee by ID
 router.get(
-  "/id/:id",
+  "/:id",
   authMiddleware,
-  validate(z.object({ params: z.object({ id: z.string()}) })),
+  validate({params:z.object({id:z.string()})}),
   asyncHandler(empCtrl.handleGetEmployeeById)
 );
 
@@ -53,7 +53,7 @@ router.get(
 router.delete(
   "/id/:id",
   authMiddleware,
-  validate(z.object({ params: z.object({ id: z.string()}) })),
+  validate({params:z.object({id:z.string()})}),
   asyncHandler(empCtrl.handleDeletEmployee)
 );
 
