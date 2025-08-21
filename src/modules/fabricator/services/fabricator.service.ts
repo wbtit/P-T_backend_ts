@@ -2,6 +2,7 @@ import { AppError } from "../../../config/utils/AppError";
 import { CreateFabricatorInput } from "../dtos";
 import { FabricatorRepository } from "../repositories";
 
+
 const fabRepo = new FabricatorRepository();
 
 
@@ -10,7 +11,10 @@ export class FabricatorService {
         const exsiting = await fabRepo.findByName(data.fabName);
         if(exsiting) throw new AppError('Fabricator already exists', 409);
        
-        const fabricator= await fabRepo.create(data,userId);
+        const fabricator= await fabRepo.create(
+            {...data,files:data.files??[]},
+            userId
+        );
         return fabricator;
     }
     async getAllFabricators() {
@@ -23,7 +27,7 @@ export class FabricatorService {
         const existing = await fabRepo.findById({id});
         if(!existing) throw new AppError('Fabricator not found', 404);
 
-        const fabricator = await fabRepo.update({id}, data);
+        const fabricator = await fabRepo.update({id}, {...data,files:data.files??[]});
         return fabricator;
     }
     async deleteFabricator(id: string) {

@@ -8,7 +8,7 @@ import {
  import prisma from "../../../config/database/client";
 
  export class FabricatorRepository {
-      async create(data: CreateFabricatorInput, userId: string) {
+      async create(data: CreateFabricatorInput & {files:any[]}, userId: string) {
     return prisma.fabricator.create({
       data: {
         ...data,

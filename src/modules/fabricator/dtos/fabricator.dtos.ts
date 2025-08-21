@@ -6,7 +6,6 @@ export const CreateFabricatorSchema=z.object({
     drive:z.url({message:"Invalid drive link"}).nullable().optional(),
     files:z.union([
         z.array(z.any()),//array of JSON
-        z.record(z.string(),z.any())
     ]).optional().default([]),
 });
 

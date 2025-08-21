@@ -5,7 +5,7 @@ import { UserJwt } from '../shared/types';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'youDefaultSecret';
 
-interface AuthenticateRequest extends Request {
+export interface AuthenticateRequest extends Request {
   user?: UserJwt;
 }
 
