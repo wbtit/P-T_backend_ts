@@ -37,6 +37,12 @@ import {
       where: { fabName },
     });
   }
+  //Get by createdById
+  async findByCreatedById(createdById: GetFabricatorInput) {
+    return prisma.fabricator.findMany({
+      where: { createdById: createdById.id },
+    });
+  }
 
   // Update fabricator
   async update(input: GetFabricatorInput, data: UpdateFabricatorInput){
@@ -53,8 +59,11 @@ import {
 
   // Delete fabricator
   async delete(input: DeleteFabricatorInput){
-    return prisma.fabricator.delete({
+    return prisma.fabricator.update({
       where: { id: input.id },
+      data:{
+        isDeleted: true
+      }
     });
   }
  }

@@ -23,6 +23,9 @@ export class FabricatorService {
     async getFabricatorById(id: string) {
         return fabRepo.findById({id});
     }
+    async getFabricatorByCreatedById(createdById: string) {
+        return fabRepo.findByCreatedById({id: createdById});
+    }
     async updateFabricator(id: string, data: CreateFabricatorInput) {
         const existing = await fabRepo.findById({id});
         if(!existing) throw new AppError('Fabricator not found', 404);
