@@ -31,6 +31,13 @@ import {
     });
   }
 
+  //Get by fabName
+  async findByName(fabName: string) {
+    return prisma.fabricator.findUnique({
+      where: { fabName },
+    });
+  }
+
   // Update fabricator
   async update(input: GetFabricatorInput, data: UpdateFabricatorInput){
     return prisma.fabricator.update({

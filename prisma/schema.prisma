@@ -177,7 +177,7 @@ model Department {
 model Fabricator {
   id           String      @id @default(uuid()) @db.Uuid
   createdById  String      @db.Uuid
-  fabName      String      @default("")
+  fabName      String      @unique @default("")
   website      String?     @default("")
   drive        String?     @default("")
   createdAt    DateTime    @default(now())
