@@ -1,7 +1,6 @@
 import z from "zod";
 
 export const CreateFabricatorSchema=z.object({
-    createdById:z.string(),
     fabName:z.string().min(1,{message:"Fabricator name is required"}),
     website:z.url({message:"Invalid website URL"}).nullable().optional(),
     drive:z.url({message:"Invalid drive link"}).nullable().optional(),
