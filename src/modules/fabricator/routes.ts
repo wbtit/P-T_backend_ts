@@ -7,14 +7,16 @@ import {CreateFabricatorSchema,
     UpdateFabricatorSchema,
 } from "./dtos"
 import z from 'zod'
+import { fabricatorsUploads } from "../../utils/multerUploader.util";
 
  const fabCtrl=new FabricatorController();
  const router = Router();
 
 router.post(
-    "/",
+    "/:",
     authMiddleware,
-    validate({params:z.object({id:z.string()}),body:CreateFabricatorSchema}),
+    validate({body:CreateFabricatorSchema}),
+    fabricatorsUploads.array("files"),
     asyncHandler(fabCtrl.handleCreateFabricator)
 );
 
@@ -22,32 +24,33 @@ router.put(
     "/update/:id",
     authMiddleware,
     validate({params:z.object({id:z.string()}),body:UpdateFabricatorSchema}),
-    asyncHandler(fabCtrl.handleUpdateFabricator)
+     fabricatorsUploads.array("files"),
+    asyncHandler(fabCtrl.handleUpdateFabricator.bind(fabCtrl))
 )
 
 router.get(
     "/:id",
     authMiddleware,
     validate({params:z.object({id:z.string()})}),
-    asyncHandler(fabCtrl.handleGetFabricatorById)
+    asyncHandler(fabCtrl.handleGetFabricatorById.bind(fabCtrl))
 )
 
 router.get(
     "/all",
     authMiddleware,
-    asyncHandler(fabCtrl.handleGetAllFabricators)
+    asyncHandler(fabCtrl.handleGetAllFabricators.bind(fabCtrl))
 )
 router.get(
     "/createdBy/:id",
     authMiddleware,
     validate({params:z.object({id:z.string()})}),
-    asyncHandler(fabCtrl.handleGetFabricatorByCreatedById)
+    asyncHandler(fabCtrl.handleGetFabricatorByCreatedById.bind(fabCtrl))
 )
 router.delete(
     "/id/:id",
     authMiddleware,
     validate({params:z.object({id:z.string()})}),
-    asyncHandler(fabCtrl.handleDeleteFabricator)
+    asyncHandler(fabCtrl.handleDeleteFabricator.bind(fabCtrl))
 )
 
 export default router;

@@ -43,3 +43,5 @@ export function createMulterUploader(
     fileFilter: (_req, _file, cb) => cb(null, true),
   });
 }
+export const fabricatorDataMap = {};
+export const fabricatorsUploads=createMulterUploader("public/fabricators",fabricatorDataMap)
