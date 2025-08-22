@@ -29,7 +29,6 @@ router.put(
 router.get(
   "/",
   authMiddleware,
-  validate({body:FetchUserSchema}),
   asyncHandler(empCtrl.handleGetAllEmployees)
 );
 
