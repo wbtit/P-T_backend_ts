@@ -19,7 +19,8 @@ export const signup=async(data:SignupInput)=>{
 
     const hashedPassword = await bcrypt.hash(data.password,10);
     const user = await createUser({...data,password:hashedPassword})
-    const token=generateToken(user)
+   
+    const token=generateToken(user as UserJwt);
     return {token,user};
 }
 
@@ -31,7 +32,7 @@ export const signin=async(data:SigninInput)=>{
     const isMatch = await bcrypt.compare(data.password,user.password)
     if(!isMatch) throw new AppError('Invalid Password',401)
        
-    const token = generateToken(user);
+    const token = generateToken(user as UserJwt);
     return { token,user};
 }
 

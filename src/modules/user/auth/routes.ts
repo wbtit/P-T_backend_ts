@@ -17,14 +17,14 @@ const router =Router();
 // Register
 router.post(
   "/register",
-  validate(createUserSchema), // instead of createUserSchema if different
+  validate({ body: createUserSchema }),
   asyncHandler(handleSignup)
 );
 
 // Login
 router.post(
   "/login",
-  validate(signinSchema),
+  validate({ body: signinSchema }),
   asyncHandler(handleSignin)
 );
 
@@ -32,7 +32,7 @@ router.post(
 router.patch(
   "/reset-password",
   authMiddleware,
-  validate(resetPasswordSchema),
+  validate({ body: resetPasswordSchema }),
   asyncHandler(handleResetPassword)
 );
 
