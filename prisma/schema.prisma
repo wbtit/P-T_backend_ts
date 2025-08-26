@@ -207,6 +207,7 @@ model Branch {
   phone          String?     @db.VarChar(20)
   email          String?     @db.VarChar(150)
   isHeadquarters Boolean     @default(false)
+  isDeleted      Boolean     @default(false)
 
   // Relations
   fabricator     Fabricator  @relation("FabricatorBranches", fields: [fabricatorId], references: [id])

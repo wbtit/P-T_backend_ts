@@ -8,12 +8,15 @@ import {CreateFabricatorSchema,
 } from "./dtos"
 import z from 'zod'
 import { fabricatorsUploads } from "../../utils/multerUploader.util";
+import { BranchController } from "./branches";
+import { branchSchema } from "./branches";
 
  const fabCtrl=new FabricatorController();
+ const branchCtrl = new BranchController();
  const router = Router();
 
 router.post(
-    "/:",
+    "/",
     authMiddleware,
     validate({body:CreateFabricatorSchema}),
     fabricatorsUploads.array("files"),
@@ -51,6 +54,19 @@ router.delete(
     authMiddleware,
     validate({params:z.object({id:z.string()})}),
     asyncHandler(fabCtrl.handleDeleteFabricator.bind(fabCtrl))
+)
+router.post(
+    "/branch",
+    authMiddleware,
+    validate({body:branchSchema}),
+    asyncHandler(branchCtrl.createBranch.bind(branchCtrl))
+)
+
+router.delete(
+    "/branch/:id",
+    authMiddleware,
+    validate({params:z.object({id:z.string()})}),
+    asyncHandler(branchCtrl.deleteBranch.bind(branchCtrl))
 )
 
 export default router;
