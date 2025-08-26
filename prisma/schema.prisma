@@ -106,6 +106,22 @@ enum Activity {
   DESIGN_CHECKING
   OTHERS
 }
+enum RFQStatus {
+  OPEN
+  IN_REVIEW
+  CLOSED
+  APPROVED
+  RE_APPROVAL
+  RECEIVED
+  ASSIGNED_FOR_ESTIMATION
+  ESTIMATION_IN_PROGRESS
+  ESTIMATION_COMPLETED
+  QUOTED
+  AWARDED
+  REJECTED
+  RE_ESTIMATION_REQUESTED
+  SENT
+}
 // ===========================================================
 // MODELS
 // ===========================================================
@@ -147,7 +163,11 @@ model User {
   assignedTask      Task[]              @relation("usersTask")
   comments          Comment[]           @relation("taskcommentuser")
   notifications     Notification[]      @relation("Notification")
-  WorkSession       WorkSession[]       @relation("WorkSessionOfuser")  
+  WorkSession       WorkSession[]       @relation("WorkSessionOfuser")
+  createdRFQ        RFQ[]               @relation("SenderRFQ")
+  salesRFQ         RFQ[]               @relation("SalesPersonRFQ")
+  receivedRFQ      RFQ[]               @relation("ReceiverRFQ")
+  rfqResponseBy     RFQResponse[]       @relation("rfqResponseBy")
 
   @@map("user")
   @@index([email])
@@ -256,6 +276,71 @@ model TeamMember {
   @@unique([teamId, userId]) // prevents duplicate members in same team
   @@map("team_members")
 }
+
+model RFQ {
+  id               String        @id @default(uuid()) @db.Uuid
+  projectName      String
+  senderId         String        @db.Uuid
+  recipientId      String        @db.Uuid
+  salesPersonId    String?       @db.Uuid
+  subject          String
+  description      String
+  status           RFQStatus     @default(RECEIVED)
+  wbtStatus        RFQStatus     @default(SENT)
+  
+  connectionDesign Boolean       @default(false)
+  customerDesign   Boolean       @default(false)
+  miscDesign       Boolean       @default(false)
+  files            Json?          @default("[]")
+  link             String?       @default("")
+
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @default(now()) @updatedAt
+  createdById      String?
+  isDeleted        Boolean       @default(false)
+  deletedAt        DateTime?
+
+  //Relations
+  recipient        User         @relation("ReceiverRFQ", fields: [recipientId], references: [id])
+  salesPerson      User?        @relation("SalesPersonRFQ", fields: [salesPersonId], references: [id])
+  sender           User         @relation("SenderRFQ", fields: [senderId], references: [id])
+  responses        RFQResponse[]
+  project          Project?     @relation("ProjectRFQ")
+
+  @@map("rfq")
+  @@index([projectName])
+  @@index([senderId])
+  @@index([recipientId])
+  @@index([status])
+}
+
+model RFQResponse {
+  id               String        @id @default(uuid()) @db.Uuid
+  rfqId            String        @db.Uuid
+  userId           String        @db.Uuid
+  parentResponseId String?       @db.Uuid
+  description      String        @default("")
+  status           RFQStatus     @default(RECEIVED)
+  wbtStatus        RFQStatus     @default(SENT)
+  files            Json?         @default("[]")
+  link             String?       @default("")
+
+  createdAt        DateTime      @default(now())
+  isDeleted        Boolean       @default(false)
+  deletedAt        DateTime?
+
+  
+  parentResponse   RFQResponse?  @relation("ParentChildResponse", fields: [parentResponseId], references: [id])
+  childResponses   RFQResponse[] @relation("ParentChildResponse")
+  rfq              RFQ           @relation(fields: [rfqId], references: [id])
+  user             User         @relation("rfqResponseBy", fields: [userId], references: [id])
+
+  @@map("rfqResponse")
+  @@index([rfqId])
+  @@index([userId])
+  @@index([parentResponseId])
+}
+
 model Project{          
   id                     String                 @id @default(uuid()) @db.Uuid
   name                   String                 @unique
@@ -264,6 +349,7 @@ model Project{
   departmentID           String                 @db.Uuid
   teamID                 String?                @db.Uuid
   managerID              String                 @db.Uuid
+  rfqId                  String?                @unique @db.Uuid
   status                 Status                 @default(ACTIVE)
   stage                  Stage                  @default(RFI)
   tools                  Tools                  @default(TEKLA)
@@ -296,6 +382,7 @@ model Project{
   projectWorkBreakdown   WorkBreakdown?        @relation("ProjectWorkBreakdown")
   lineItems              ProjectLineItems[]    @relation("LineItems")
   notes                  Notes[]               @relation("projectNotes")
+  rfq                     RFQ?                  @relation("ProjectRFQ", fields: [rfqId], references: [id])
 
   @@index([name])
   @@index([fabricatorID])
