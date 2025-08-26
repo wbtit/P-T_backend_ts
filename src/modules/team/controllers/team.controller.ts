@@ -1,6 +1,7 @@
 import { Request,Response } from "express";
 import { TeamService } from "../services";
 import { AppError } from "../../../config/utils/AppError";
+import { TeamMemberRole } from "../dtos";
 
 const teamService = new TeamService();
 
@@ -17,6 +18,17 @@ export class TeamController {
             data: result
         });
     }
+
+    async addTeamMembers(req: Request, res: Response) {
+    const role = req.params.role as TeamMemberRole; // cast
+    // better: validate with Zod if needed
+
+    const result = await teamService.addTeamMembers(req.body, role);
+    return res.status(200).json({
+        message: "Team members added successfully",
+        data: result
+    });
+}
 
     async getById(req: Request, res: Response) {
         const result = await teamService.getById({ id: req.params.id });
@@ -41,6 +53,18 @@ export class TeamController {
             data: result
         });
     }
+    async updateTeamRole(req: Request, res: Response) {
+    const result = await teamService.updateTeamRole({
+        teamId: req.params.id,
+        userId: req.body.userId,
+        newRole: req.body.newRole as TeamMemberRole
+    });
+    return res.status(200).json({
+        message: "Team role updated successfully",
+        data: result
+    });
+}
+
 
     async delete(req: Request, res: Response) {
         const result = await teamService.delete({ id: req.params.id });
@@ -49,4 +73,12 @@ export class TeamController {
             data: result
         });
     }
-}
+
+    async removeTeamMembers(req: Request, res: Response) {
+        const result = await teamService.removeTeamMembers(req.body);
+        return res.status(200).json({
+            message: "Team members removed successfully",
+            data: result
+        });
+    }
+}    

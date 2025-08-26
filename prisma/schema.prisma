@@ -226,6 +226,7 @@ model Team {
   name         String         @unique
   managerID    String         @db.Uuid
   departmentID String        @db.Uuid
+  isDeleted    Boolean      @default(false) @map("is_bin")
   //Relations
   manager      User          @relation("TeamManager", fields: [managerID], references: [id])
   members      TeamMember[]  @relation("MemberBelongsToTeam") // relation to members

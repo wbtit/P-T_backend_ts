@@ -3,7 +3,11 @@ import {
     CreateTeamInput,
     GetTeamInput,
     UpdateTeamInput,
-    DeleteTeamInput 
+    DeleteTeamInput,
+    AddTeamMembersInput,
+    UpdateRoleInput,
+    TeamMemberRole,
+    RemoveTeamMembersInput
     } from "../dtos";
 
 const teamRepository = new TeamRepository();
@@ -12,7 +16,9 @@ export class TeamService {
     async create(data: CreateTeamInput) {
         return teamRepository.create(data);
     }
-
+    async addTeamMembers(data: AddTeamMembersInput,role:TeamMemberRole) {
+        return teamRepository.addTeamMembers(data,role);
+    }
     async getById(data: GetTeamInput) {
         return teamRepository.getById(data);
     }
@@ -25,11 +31,20 @@ export class TeamService {
         return teamRepository.getByName(name);
     }
 
-  async update(data: UpdateTeamInput) {
-  return teamRepository.update(data);
+    async update(data: UpdateTeamInput) {
+        return teamRepository.update(data);
     }
+
+    async updateTeamRole(data: UpdateRoleInput) {
+    return teamRepository.updateTeamRole(data);
+}
+
 
     async delete(data: DeleteTeamInput) {
         return teamRepository.delete(data);
+    }
+
+    async removeTeamMembers(data: RemoveTeamMembersInput) {
+        return teamRepository.removeTeamMembers(data);
     }
 }
