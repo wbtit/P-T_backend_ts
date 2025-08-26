@@ -14,6 +14,10 @@ import {
         ...data,
         createdById: userId,
       },
+    include:{
+      branches:true,
+      project:true
+    }
     });
   }
 
@@ -28,6 +32,10 @@ import {
   async findById(input: GetFabricatorInput){
     return prisma.fabricator.findUnique({
       where: { id: input.id },
+      include:{
+        branches:true,
+        project:true
+      }
     });
   }
 
@@ -35,12 +43,20 @@ import {
   async findByName(fabName: string) {
     return prisma.fabricator.findUnique({
       where: { fabName },
+      include:{
+        branches:true,
+        project:true
+      }
     });
   }
   //Get by createdById
   async findByCreatedById(createdById: GetFabricatorInput) {
     return prisma.fabricator.findMany({
       where: { createdById: createdById.id },
+      include:{
+        branches:true,
+        project:true
+      }
     });
   }
 
@@ -54,6 +70,10 @@ import {
         drive: data.drive ?? null,
         files: data.files ?? [],
       },
+      include:{
+        branches:true,
+        project:true
+      }
     });
   }
 
