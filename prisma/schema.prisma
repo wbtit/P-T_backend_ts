@@ -225,7 +225,7 @@ model Team {
   id           String         @id @default(uuid()) @db.Uuid
   name         String         @unique
   managerID    String         @db.Uuid
-  departmentID String?        @db.Uuid
+  departmentID String        @db.Uuid
   //Relations
   manager      User          @relation("TeamManager", fields: [managerID], references: [id])
   members      TeamMember[]  @relation("MemberBelongsToTeam") // relation to members
