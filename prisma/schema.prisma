@@ -279,6 +279,7 @@ model TeamMember {
 
 model RFQ {
   id               String        @id @default(uuid()) @db.Uuid
+  projectNumber    String        @unique
   projectName      String
   senderId         String        @db.Uuid
   recipientId      String        @db.Uuid
@@ -309,9 +310,14 @@ model RFQ {
 
   @@map("rfq")
   @@index([projectName])
+  @@index([projectNumber])
   @@index([senderId])
+  @@index([salesPersonId])
   @@index([recipientId])
   @@index([status])
+  @@index([wbtStatus])
+  @@index([createdById])
+  
 }
 
 model RFQResponse {
@@ -343,6 +349,7 @@ model RFQResponse {
 
 model Project{          
   id                     String                 @id @default(uuid()) @db.Uuid
+  projectNumber          String                 @unique
   name                   String                 @unique
   description            String         
   fabricatorID           String                 @db.Uuid

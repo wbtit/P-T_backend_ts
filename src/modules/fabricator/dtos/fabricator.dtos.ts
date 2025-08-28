@@ -4,9 +4,7 @@ export const CreateFabricatorSchema=z.object({
     fabName:z.string().min(1,{message:"Fabricator name is required"}),
     website:z.url({message:"Invalid website URL"}).nullable().optional(),
     drive:z.url({message:"Invalid drive link"}).nullable().optional(),
-    files:z.union([
-        z.array(z.any()),//array of JSON
-    ]).optional().default([]),
+    files: z.union([z.array(z.any()), z.null()]).optional(),
 });
 
 export const UpdateFabricatorSchema=CreateFabricatorSchema.partial();
