@@ -324,7 +324,7 @@ model RFQResponse {
   id               String        @id @default(uuid()) @db.Uuid
   rfqId            String        @db.Uuid
   userId           String        @db.Uuid
-  parentResponseId String?       @db.Uuid
+  parentResponseId String?       @unique @db.Uuid
   description      String        @default("")
   status           RFQStatus     @default(RECEIVED)
   wbtStatus        RFQStatus     @default(SENT)

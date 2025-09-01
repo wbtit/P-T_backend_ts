@@ -1,5 +1,6 @@
 import z from "zod";
 import { RFQStatus } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 
 export const CreateRfqSchema = z.object({
   projectNumber: z.string().min(2).max(100),
@@ -14,8 +15,14 @@ export const CreateRfqSchema = z.object({
   connectionDesign: z.boolean(),
   customerDesign: z.boolean(),
   miscDesign: z.boolean(),
-  files: z.union([z.array(z.any()), z.null()]).optional(),
-  link: z.string().nullable().optional(),
+  files: z
+      .union([
+        z.array(z.any()),
+        z.literal(null),
+      ])
+      .transform((val) => (val === null ? Prisma.JsonNull : val))
+      .optional(),
+      link: z.string().nullable().optional(),
 });
 
 export const UpdateRfqSchema = CreateRfqSchema.partial();

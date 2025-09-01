@@ -19,7 +19,7 @@ export class RFQController {
             data: rfq,
         });
     }
-    async updateRfq(req:AuthenticateRequest,res:Response){
+    async hanleUpdateRfq(req:AuthenticateRequest,res:Response){
         if (!req.user) {
             throw new AppError('User not found', 404);
         }
@@ -32,7 +32,7 @@ export class RFQController {
             data: rfq,
         });
     }
-    async getRfqById(req:Request,res:Response){
+    async handleGetRfqById(req:Request,res:Response){
         const {id}=req.params
         const rfq = await rfqService.getRfqById({id});
         res.status(200).json({
@@ -40,7 +40,7 @@ export class RFQController {
             data: rfq,
         });
     }
-    async sents(req:AuthenticateRequest,res:Response){
+    async handleSents(req:AuthenticateRequest,res:Response){
         if (!req.user) {
             throw new AppError('User not found', 404);
         }
@@ -51,7 +51,7 @@ export class RFQController {
             data: rfq,
         });
     }
-    async received(req:AuthenticateRequest,res:Response){
+    async handleReceived(req:AuthenticateRequest,res:Response){
         if (!req.user) {
             throw new AppError('User not found', 404);
         }
@@ -62,7 +62,7 @@ export class RFQController {
             data: rfq,
         });
     }
-    async closeRfq(req:AuthenticateRequest,res:Response){
+    async handleCloseRfq(req:AuthenticateRequest,res:Response){
         const {id}=req.params
         const rfq = await rfqService.closeRfq(id);
         res.status(200).json({

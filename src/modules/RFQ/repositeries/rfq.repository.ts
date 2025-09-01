@@ -4,15 +4,13 @@ import { CreateRfqInput,
     GetRfqInput,
     UpdateRfqInput
  } from "../dtos";
+import { cleandata } from "../../../config/utils/cleanDataObject";
 
 export class RFQRepository {
     async create(data: CreateRfqInput,createdById:string) {
+        const cleanedData = cleandata(data);
             return await prisma.rFQ.create({
-                data: {
-          ...data,
-          files: data.files === null ? Prisma.JsonNull : data.files, // 👈 convert null
-          createdById
-        },
+            data:cleanedData,
         include: {
           sender: true,
           recipient: true,

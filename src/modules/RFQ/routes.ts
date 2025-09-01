@@ -3,49 +3,68 @@ import { RFQController } from "./controllers";
 import validate from "../../middleware/validate";
 import authMiddleware from "../../middleware/authMiddleware";
 import { CreateRfqSchema } from "./dtos";
+
+import { RfqResponseSchema} from "./RFQresponse";
+import { RfqResponseController } from "./RFQresponse";
+
 import z from "zod";
 
 const router = Router();
 const rfqController = new RFQController();
+const rfqResponseController = new RfqResponseController();
 
 router.post(
     "/",
     authMiddleware,
     validate({body: CreateRfqSchema}),
-    rfqController.createRfq.bind(rfqController)
+    rfqController.handleCreateRfq.bind(rfqController)
 );
 
 router.put(
     "/:id",
     authMiddleware,
     validate({params:z.object({id:z.string()}),body:CreateRfqSchema}),
-    rfqController.updateRfq.bind(rfqController)
+    rfqController.hanleUpdateRfq.bind(rfqController)
 );
 
 router.get(
     "/:id",
     authMiddleware,
     validate({params:z.object({id:z.string()})}),
-    rfqController.getRfqById.bind(rfqController)
+    rfqController.handleGetRfqById.bind(rfqController)
 );
 
 router.get(
     "/sents",
     authMiddleware,
-    rfqController.sents.bind(rfqController)
+    rfqController.handleSents.bind(rfqController)
 );
 
 router.get(
     "/received",
     authMiddleware,
-    rfqController.received.bind(rfqController)
+    rfqController.handleReceived.bind(rfqController)
 );
 
 router.delete(
     "/:id",
     authMiddleware,
     validate({params:z.object({id:z.string()})}),
-    rfqController.closeRfq.bind(rfqController)
+    rfqController.handleCloseRfq.bind(rfqController)
+);
+
+router.post(
+    "/:rfqId/responses",
+    authMiddleware,
+    validate({params:z.object({rfqId:z.string()}),body:RfqResponseSchema}),
+    rfqResponseController.handleCreate.bind(rfqResponseController)
+);
+
+router.get(
+    "/responses/:id",
+    authMiddleware,
+    validate({params:z.object({id:z.string()})}),
+    rfqResponseController.handleGetById.bind(rfqResponseController)
 );
 
 export default router;
