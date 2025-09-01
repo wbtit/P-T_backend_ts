@@ -15,6 +15,7 @@ export const CreateRfqSchema = z.object({
   connectionDesign: z.boolean(),
   customerDesign: z.boolean(),
   miscDesign: z.boolean(),
+  createdById: z.string(),
   files: z
       .union([
         z.array(z.any()),

@@ -7,7 +7,7 @@ import { CreateRfqInput,
 import { cleandata } from "../../../config/utils/cleanDataObject";
 
 export class RFQRepository {
-    async create(data: CreateRfqInput,createdById:string) {
+    async create(data: CreateRfqInput) {
         const cleanedData = cleandata(data);
             return await prisma.rFQ.create({
             data:cleanedData,

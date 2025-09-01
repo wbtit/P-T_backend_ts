@@ -2,6 +2,8 @@ import { RfqResponseRepository } from "../repositories";
 import { CreateRFQResponseInput,GetRFQResponseInput } from "../dtos";
 import { RFQRepository } from "../../repositeries";
 import { AppError } from "../../../../config/utils/AppError";
+import { Request } from "express";
+import { FileObject } from "../../../../shared/fileType";
 
 export class RfqResponseService {
     private repository = new RfqResponseRepository();
@@ -25,5 +27,15 @@ export class RfqResponseService {
 
     async getById(params: GetRFQResponseInput) {
         return await this.repository.getById(params);
+    }
+
+    async getFile(rfqResId:string,fileId:string,req:Request){
+        const rfqRes= await this.repository.getById({id:rfqResId});
+        if(!rfqRes) throw new AppError("RFQ Response not found",404);
+        const files= req?.files as unknown as FileObject[];
+        const fileObject = files.find((file: FileObject) => file.id === fileId);
+        if (!fileObject) throw new AppError("File not found", 404);
+
+        return fileObject;
     }
 }

@@ -6,6 +6,7 @@ import { CreateRfqSchema } from "./dtos";
 
 import { RfqResponseSchema} from "./RFQresponse";
 import { RfqResponseController } from "./RFQresponse";
+import { rfqUploads,rfqResponseUploads } from "../../utils/multerUploader.util";
 
 import z from "zod";
 
@@ -17,6 +18,7 @@ router.post(
     "/",
     authMiddleware,
     validate({body: CreateRfqSchema}),
+    rfqUploads.array("files"),
     rfqController.handleCreateRfq.bind(rfqController)
 );
 
@@ -24,6 +26,7 @@ router.put(
     "/:id",
     authMiddleware,
     validate({params:z.object({id:z.string()}),body:CreateRfqSchema}),
+    rfqUploads.array("files"),
     rfqController.hanleUpdateRfq.bind(rfqController)
 );
 
@@ -45,7 +48,12 @@ router.get(
     authMiddleware,
     rfqController.handleReceived.bind(rfqController)
 );
-
+router.get(
+    "/:rfqId/files/:fileId",
+    authMiddleware,
+    validate({params:z.object({rfqId:z.string(),fileId:z.string()})}),
+    rfqController.handleGetFile.bind(rfqController)
+);
 router.delete(
     "/:id",
     authMiddleware,
@@ -57,6 +65,7 @@ router.post(
     "/:rfqId/responses",
     authMiddleware,
     validate({params:z.object({rfqId:z.string()}),body:RfqResponseSchema}),
+    rfqResponseUploads.array("files"),
     rfqResponseController.handleCreate.bind(rfqResponseController)
 );
 
@@ -65,6 +74,13 @@ router.get(
     authMiddleware,
     validate({params:z.object({id:z.string()})}),
     rfqResponseController.handleGetById.bind(rfqResponseController)
+);
+
+router.get(
+    "/:rfqId/responses/:responseId/files/:fileId",
+    authMiddleware,
+    validate({params:z.object({rfqId:z.string(),responseId:z.string(),fileId:z.string()})}),
+    rfqResponseController.handleGetFile.bind(rfqResponseController)
 );
 
 export default router;

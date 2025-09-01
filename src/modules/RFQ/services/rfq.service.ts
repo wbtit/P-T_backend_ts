@@ -4,6 +4,8 @@ import { CreateRfqInput,
     UpdateRfqInput
  } from "../dtos";
 import { AppError } from "../../../config/utils/AppError";
+import { Request } from "express";
+import { FileObject } from "../../../shared/fileType";
 
 const rfqrepo= new RFQRepository();
 
@@ -12,7 +14,7 @@ export class RFQService {
         const existing = await rfqrepo.getByName(data.projectNumber);
         if(existing) throw new AppError('RFQ with this project number already exists', 409);
 
-        const rfq = await rfqrepo.create(data,createdById);
+        const rfq = await rfqrepo.create(data);
         return rfq;
     }
     async updateRfq(id:string,data:UpdateRfqInput){
@@ -36,5 +38,14 @@ export class RFQService {
     }
     async closeRfq(id:string){
         return await rfqrepo.closeRfq(id);
+    }
+   async getFile(rfqId: string, fileId: string,req:Request) {
+        const rfq = await rfqrepo.getById({ id: rfqId });
+        if (!rfq) throw new AppError("RFQ not found", 404);
+        const files = req.files as unknown as FileObject[];
+        const fileObject = files.find((file: FileObject) => file.id === fileId);
+        if (!fileObject) throw new AppError("File not found", 404);
+
+        return fileObject;
     }
 }

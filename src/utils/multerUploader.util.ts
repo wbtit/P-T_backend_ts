@@ -45,3 +45,9 @@ export function createMulterUploader(
 }
 export const fabricatorDataMap = {};
 export const fabricatorsUploads=createMulterUploader("public/fabricators",fabricatorDataMap)
+
+export const rfqDataMap = {};
+export const rfqUploads=createMulterUploader("public/rfq",rfqDataMap)
+
+export const rfqResponseMap={}
+export const rfqResponseUploads=createMulterUploader("public/rfqResponses",rfqResponseMap)

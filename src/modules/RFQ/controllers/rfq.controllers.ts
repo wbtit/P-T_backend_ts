@@ -2,6 +2,7 @@ import { Request,Response } from "express";
 import { AuthenticateRequest } from "../../../middleware/authMiddleware";
 import { AppError } from "../../../config/utils/AppError";
 import { RFQService } from "../services/rfq.service";
+import { mapUploadedFiles } from "../../uploads/fileUtil";
 
 const rfqService = new RFQService();
 
@@ -13,7 +14,14 @@ export class RFQController {
     const { id } = req.user;
 
     if(!id) throw new AppError('User not found', 404);
-        const rfq = await rfqService.createRfq(req.body,id);
+    const uploadedFiles = mapUploadedFiles(
+      (req.files as Express.Multer.File[]) || [],
+      "rfq"
+    );
+        const rfq = await rfqService.createRfq({
+          ...req.body,
+          files: uploadedFiles
+        }, id);
         res.status(201).json({
             status: 'success',
             data: rfq,
@@ -24,9 +32,15 @@ export class RFQController {
             throw new AppError('User not found', 404);
         }
         const { id } = req.user;
-
         if(!id) throw new AppError('User not found', 404);
-        const rfq = await rfqService.updateRfq(id, req.body);
+        const uploadedFiles = mapUploadedFiles(
+      (req.files as Express.Multer.File[]) || [],
+      "rfq"
+    );
+        const rfq = await rfqService.updateRfq(id, {
+          ...req.body,
+          files: uploadedFiles
+        });
         res.status(200).json({
             status: 'success',
             data: rfq,
@@ -68,6 +82,14 @@ export class RFQController {
         res.status(200).json({
             status: 'success',
             data: rfq,
+        });
+    }
+    async handleGetFile(req:Request,res:Response){
+        const { rfqId, fileId } = req.params;
+        const file = await rfqService.getFile(rfqId, fileId, req);
+        res.status(200).json({
+            status: 'success',
+            data: file,
         });
     }
 }
