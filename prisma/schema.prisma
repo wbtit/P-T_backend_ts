@@ -378,6 +378,7 @@ model Project{
   modelingHours          Float                  @default(0)
   mailReminder           Boolean                @default(false)
   submissionMailReminder Boolean                @default(false)
+  isDeleted              Boolean                @default(false)
   
   //Relations
   stageHistory           ProjectStageHistory[]
