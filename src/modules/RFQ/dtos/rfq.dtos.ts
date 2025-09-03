@@ -11,7 +11,9 @@ export const CreateRfqSchema = z.object({
   subject: z.string().min(2).max(100),
   description: z.string().min(2).max(500),
   status: z.enum(RFQStatus),   // 👈 use the Prisma enum here
+  tools: z.string().optional(),
   wbtStatus: z.enum(RFQStatus),
+  estimationDate: z.date().nullable().optional(),
   connectionDesign: z.boolean(),
   customerDesign: z.boolean(),
   miscDesign: z.boolean(),
