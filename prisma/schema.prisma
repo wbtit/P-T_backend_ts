@@ -392,7 +392,7 @@ model Project{
   projectWorkBreakdown   WorkBreakdown[]        @relation("ProjectWorkBreakdown")
   lineItems              ProjectLineItems[]    @relation("LineItems")
   notes                  Notes[]               @relation("projectNotes")
-  rfq                     RFQ?                  @relation("ProjectRFQ", fields: [rfqId], references: [id])
+  rfq                    RFQ?                  @relation("ProjectRFQ", fields: [rfqId], references: [id])
 
   @@index([name])
   @@index([fabricatorID])

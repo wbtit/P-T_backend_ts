@@ -36,9 +36,8 @@ export const CreateProjectSchema = z.object({
   modelingHours:z.float32(),
   mailReminder:z.boolean(),
   submissionMailReminder:z.boolean()
-
-
 });
+export const UpdateProjectSchema = CreateProjectSchema.partial()
 
 export type CreateProjectInput = z.infer<typeof CreateProjectSchema>;
 export type UpdateprojectInput={id:string} & Partial<CreateProjectInput>;

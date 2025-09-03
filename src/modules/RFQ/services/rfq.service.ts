@@ -39,10 +39,10 @@ export class RFQService {
     async closeRfq(id:string){
         return await rfqrepo.closeRfq(id);
     }
-   async getFile(rfqId: string, fileId: string,req:Request) {
+   async getFile(rfqId: string, fileId: string) {
         const rfq = await rfqrepo.getById({ id: rfqId });
         if (!rfq) throw new AppError("RFQ not found", 404);
-        const files = req.files as unknown as FileObject[];
+        const files = rfq.files as unknown as FileObject[];
         const fileObject = files.find((file: FileObject) => file.id === fileId);
         if (!fileObject) throw new AppError("File not found", 404);
 

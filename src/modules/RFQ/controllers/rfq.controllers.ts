@@ -86,7 +86,7 @@ export class RFQController {
     }
     async handleGetFile(req:Request,res:Response){
         const { rfqId, fileId } = req.params;
-        const file = await rfqService.getFile(rfqId, fileId, req);
+        const file = await rfqService.getFile(rfqId, fileId);
         res.status(200).json({
             status: 'success',
             data: file,

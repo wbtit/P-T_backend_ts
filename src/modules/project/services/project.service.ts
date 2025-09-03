@@ -9,6 +9,7 @@ import { CreateProjectInput,
  import { ProjectRepository } from "../repositories";
  import { createWBSAndProjectLineItems } from "../WBS/utils/wbs.util";
  import { Prisma } from "@prisma/client";
+ import { FileObject } from "../../../shared/fileType";
 
  const projectRepository = new ProjectRepository();
 
@@ -89,4 +90,17 @@ import { CreateProjectInput,
      const projects = await projectRepository.getAll();
      return projects;
    }
+
+   async getFile(projectId: string, fileId: string) {
+   const project = await projectRepository.get({ id: projectId });
+   if (!project) {
+     throw new AppError("Project not found", 404);
+   }
+   const files = project.files as unknown as FileObject[];
+   const file = files.find((file:FileObject) => file.id === fileId);
+   if (!file) {
+     throw new AppError("File not found", 404);
+   }
+   return file;
  }
+}
