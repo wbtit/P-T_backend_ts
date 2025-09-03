@@ -52,7 +52,11 @@ import { CreateProjectInput,
         stageHistory:true,
         fabricator:true,
         manager:true,
-        team:true,
+        team:{
+          select:{
+            members:true,
+          }
+        },
         tasks:true,
         projectJobStudy:true,
         projectWorkBreakdown:true,

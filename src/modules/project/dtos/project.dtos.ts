@@ -34,6 +34,8 @@ export const CreateProjectSchema = z.object({
   executionHours:z.float32(),
   modelCheckingHours:z.float32(),
   modelingHours:z.float32(),
+  mailReminder:z.boolean(),
+  submissionMailReminder:z.boolean()
 
 
 });
