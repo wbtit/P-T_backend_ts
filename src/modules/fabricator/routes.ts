@@ -49,6 +49,18 @@ router.get(
     validate({params:z.object({id:z.string()})}),
     asyncHandler(fabCtrl.handleGetFabricatorByCreatedById.bind(fabCtrl))
 )
+router.get(
+    "/file/:fabricatorId/:fileId",
+    authMiddleware,
+    validate({params:z.object({fabricatorId:z.string(),fileId:z.string()})}),
+    asyncHandler(fabCtrl.handleGetFile.bind(fabCtrl))   
+)
+router.get(
+    "/viewFile/:fabricatorId/:fileId",
+    authMiddleware,
+    validate({params:z.object({fabricatorId:z.string(),fileId:z.string()})}),
+    asyncHandler(fabCtrl.handleViewFile.bind(fabCtrl))
+)
 router.delete(
     "/id/:id",
     authMiddleware,

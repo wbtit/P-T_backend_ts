@@ -33,6 +33,7 @@ router.put("/projects/:id", authMiddleware, validate({params:z.object({id:z.stri
 router.get("/projects/:id", authMiddleware, validate({params:z.object({id:z.string()})}), projectController.handleGetProject.bind(projectController));
 router.delete("/projects/:id", authMiddleware, validate({params:z.object({id:z.string()})}), projectController.handleDeleteProject.bind(projectController));
 router.get("/projects", authMiddleware, projectController.handleGetAllProjects.bind(projectController));
-router.get("/projects/:projectId/files/:fileId", authMiddleware, projectController.handleGetFile.bind(projectController));
+router.get("/projects/:projectId/files/:fileId", authMiddleware,validate({params:z.object({projectId:z.string(),fileId:z.string()})}), projectController.handleGetFile.bind(projectController));
+router.get("/viewFile/:projectId/:fileId", authMiddleware,validate({params:z.object({projectId:z.string(),fileId:z.string()})}), projectController.handleViewFile.bind(projectController));
 
 export default router;
