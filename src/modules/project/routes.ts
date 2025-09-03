@@ -14,6 +14,11 @@ import {
  import { projectUploads } from "../../utils/multerUploader.util";
 
 
+ import { PLIController } from "./projectLineItems";
+ import { ProjectLineItemSchema,
+    UpdateProjectLineItemSchema } from "./projectLineItems";
+
+
 const router = Router();
 
 
@@ -35,5 +40,25 @@ router.delete("/projects/:id", authMiddleware, validate({params:z.object({id:z.s
 router.get("/projects", authMiddleware, projectController.handleGetAllProjects.bind(projectController));
 router.get("/projects/:projectId/files/:fileId", authMiddleware,validate({params:z.object({projectId:z.string(),fileId:z.string()})}), projectController.handleGetFile.bind(projectController));
 router.get("/viewFile/:projectId/:fileId", authMiddleware,validate({params:z.object({projectId:z.string(),fileId:z.string()})}), projectController.handleViewFile.bind(projectController));
-
+// ===========================================================
+// PLI ROUTES
+// ===========================================================
+const pliController = new PLIController();
+router.post(
+    "/projects/:projectId/work-break-downs/:workBreakDownId/line-items",
+    authMiddleware,
+    validate({body: ProjectLineItemSchema}),
+    pliController.createPli.bind(pliController)
+);
+router.put(
+    "/projects/:projectId/work-break-downs/:workBreakDownId/line-items/:id",
+    authMiddleware,
+    validate({body: UpdateProjectLineItemSchema}),
+    pliController.updatePli.bind(pliController)
+);
+router.get(
+    "/projects/:projectId/work-break-downs/:workBreakDownId/line-items/:id",
+    authMiddleware,
+    pliController.getPliByStage.bind(pliController)
+);
 export default router;

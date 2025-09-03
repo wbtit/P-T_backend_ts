@@ -476,8 +476,9 @@ model ProjectLineItems {
   project           Project       @relation("LineItems", fields: [projectID], references: [id], onDelete: Cascade)
   WBSACTIVITY       WorkBreakdown @relation("subTasks", fields: [workBreakDownID], references: [id], onDelete: Cascade)
 
-  @@unique([workBreakDownID, parentTemplateKey, stage])
+
   @@index([projectID])
+  @@index([workBreakDownID])
   @@map("subTasks")
 }
 
