@@ -80,4 +80,8 @@ export class ProjectController {
           data: file
         });
     }
+    async handleViewFile(req:Request,res:Response){
+        const {projectId, fileId} = req.params;
+        await projectService.viewFile(projectId, fileId, res);
+    }
 }

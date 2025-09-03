@@ -7,6 +7,10 @@ import { AppError } from "../../../config/utils/AppError";
 import { Request } from "express";
 import { FileObject } from "../../../shared/fileType";
 
+import path from "path";
+import { streamFile } from "../../../utils/fileUtil";
+import { Response } from "express";
+
 const rfqrepo= new RFQRepository();
 
 export class RFQService {
@@ -47,5 +51,16 @@ export class RFQService {
         if (!fileObject) throw new AppError("File not found", 404);
 
         return fileObject;
+    }
+    async viewFile(id:string,fileId:string,res:Response){
+        const rfq = await rfqrepo.getById({ id });
+        if (!rfq) throw new AppError("RFQ not found", 404);
+        const files = rfq.files as unknown as FileObject[];
+        const fileObject = files.find((file: FileObject) => file.id === fileId);
+        if (!fileObject) throw new AppError("File not found", 404);
+
+        const __dirname=path.resolve();
+        const filePath = path.join(__dirname, fileObject.filename);
+        return streamFile(res, filePath, fileObject.originalName);
     }
 }

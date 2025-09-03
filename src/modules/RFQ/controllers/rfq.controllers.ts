@@ -92,4 +92,8 @@ export class RFQController {
             data: file,
         });
     }
+    async handleViewFile(req:Request,res:Response){
+        const { rfqId, fileId } = req.params;
+        await rfqService.viewFile(rfqId, fileId, res);
+    }
 }

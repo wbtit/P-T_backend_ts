@@ -51,3 +51,6 @@ export const rfqUploads=createMulterUploader("public/rfq",rfqDataMap)
 
 export const rfqResponseMap={}
 export const rfqResponseUploads=createMulterUploader("public/rfqResponses",rfqResponseMap)
+
+export const projectDataMap = {};
+export const projectUploads=createMulterUploader("public/projects",projectDataMap);

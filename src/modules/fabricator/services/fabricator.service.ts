@@ -1,7 +1,10 @@
+import path from "path";
 import { AppError } from "../../../config/utils/AppError";
 import { FileObject } from "../../../shared/fileType";
 import { CreateFabricatorInput } from "../dtos";
 import { FabricatorRepository } from "../repositories";
+import { streamFile } from "../../../utils/fileUtil";
+import { Response } from "express";
 
 
 const fabRepo = new FabricatorRepository();
@@ -50,5 +53,18 @@ export class FabricatorService {
         if (!fileObject) throw new AppError("File not found", 404);
 
         return fileObject;
+    }
+    async viewFile(fabricatorId: string, fileId: string,res:Response) {
+        const fabricator = await fabRepo.findById({ id: fabricatorId });
+        if (!fabricator) throw new AppError('Fabricator not found', 404);
+
+        const files = fabricator.files as unknown as FileObject[];
+        const fileObject = files.find((file: FileObject) => file.id === fileId);
+        if (!fileObject) throw new AppError("File not found", 404);
+        const __dirname=path.resolve();
+        const filePath = path.join(__dirname, fileObject.filename);
+        return streamFile(res, filePath, fileObject.originalName);
+
+        
     }
 }

@@ -54,12 +54,21 @@ router.get(
     validate({params:z.object({rfqId:z.string(),fileId:z.string()})}),
     rfqController.handleGetFile.bind(rfqController)
 );
+router.get(
+    "/viewFile/:rfqId/:fileId",
+    authMiddleware,
+    validate({params:z.object({rfqId:z.string(),fileId:z.string()})}),
+    rfqController.handleViewFile.bind(rfqController)
+);
 router.delete(
     "/:id",
     authMiddleware,
     validate({params:z.object({id:z.string()})}),
     rfqController.handleCloseRfq.bind(rfqController)
 );
+// ===========================================================
+// RFQ RESPONSE ROUTES
+// ===========================================================
 
 router.post(
     "/:rfqId/responses",
@@ -77,10 +86,17 @@ router.get(
 );
 
 router.get(
-    "/:rfqId/responses/:responseId/files/:fileId",
+    "responses/:rfqResId/files/:fileId",
     authMiddleware,
-    validate({params:z.object({rfqId:z.string(),responseId:z.string(),fileId:z.string()})}),
+    validate({params:z.object({rfqResId:z.string(),fileId:z.string()})}),
     rfqResponseController.handleGetFile.bind(rfqResponseController)
+);
+
+router.get(
+    "viewFile/:rfqResId/files/:fileId",
+    authMiddleware,
+    validate({params:z.object({rfqResId:z.string(),fileId:z.string()})}),
+    rfqResponseController.handleViewFile.bind(rfqResponseController)
 );
 
 export default router;

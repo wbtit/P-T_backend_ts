@@ -62,4 +62,12 @@ export class FabricatorController {
         await this.fabService.deleteFabricator(id);
         res.status(204).send();
     }
+    async handleGetFile(req: Request, res: Response) {
+        const { fabricatorId, fileId } = req.params;
+        await this.fabService.getFile(fabricatorId, fileId);
+    }
+    async handleViewFile(req: Request, res: Response) {
+        const { fabricatorId, fileId } = req.params;
+        await this.fabService.viewFile(fabricatorId, fileId, res);
+    }   
 }

@@ -31,10 +31,14 @@ export class RfqResponseController {
 
     async handleGetFile(req: Request, res: Response) {
         const { rfqResId, fileId } = req.params;
-        const file = await rfqResponseService.getFile(rfqResId, fileId, req);
+        const file = await rfqResponseService.getFile(rfqResId, fileId);
         return res.status(200).json({
             success: true,
             data: file
         });
+    }
+    async handleViewFile(req: Request, res: Response) {
+        const { rfqResId, fileId } = req.params;
+        await rfqResponseService.viewFile(rfqResId, fileId, res);
     }
 }

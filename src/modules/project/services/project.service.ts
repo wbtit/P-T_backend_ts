@@ -10,6 +10,9 @@ import { CreateProjectInput,
  import { createWBSAndProjectLineItems } from "../WBS/utils/wbs.util";
  import { Prisma } from "@prisma/client";
  import { FileObject } from "../../../shared/fileType";
+import { streamFile } from "../../../utils/fileUtil";
+import path from "path";
+import { Response } from "express";
 
  const projectRepository = new ProjectRepository();
 
@@ -101,6 +104,23 @@ import { CreateProjectInput,
    if (!file) {
      throw new AppError("File not found", 404);
    }
-   return file;
+    return file;
+   
+ }
+
+   async viewFile(projectId: string, fileId: string,res:Response) {
+   const project = await projectRepository.get({ id: projectId });
+   if (!project) {
+     throw new AppError("Project not found", 404);
+   }
+   const files = project.files as unknown as FileObject[];
+   const file = files.find((file:FileObject) => file.id === fileId);
+   if (!file) {
+     throw new AppError("File not found", 404);
+   }
+    const __dirname=path.resolve();
+    const filePath = path.join(__dirname, file.filename);
+    return streamFile(res, filePath, file.originalName);
+   
  }
 }
