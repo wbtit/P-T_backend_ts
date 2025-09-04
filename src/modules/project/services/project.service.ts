@@ -6,10 +6,10 @@ import { CreateProjectInput,
   GetProjectInput,
   DeleteProjectInput
  } from "../dtos";
- import { ProjectRepository } from "../repositories";
- import { createWBSAndProjectLineItems } from "../WBS/utils/wbs.util";
- import { Prisma } from "@prisma/client";
- import { FileObject } from "../../../shared/fileType";
+import { ProjectRepository } from "../repositories";
+import { createWBSAndProjectLineItems } from "../WBS/utils/wbs.util";
+import { Prisma } from "@prisma/client";
+import { FileObject } from "../../../shared/fileType";
 import { streamFile } from "../../../utils/fileUtil";
 import path from "path";
 import { Response } from "express";
@@ -94,7 +94,7 @@ import { Response } from "express";
      return projects;
    }
 
-   async getFile(projectId: string, fileId: string) {
+  async getFile(projectId: string, fileId: string) {
    const project = await projectRepository.get({ id: projectId });
    if (!project) {
      throw new AppError("Project not found", 404);
@@ -122,5 +122,9 @@ import { Response } from "express";
     const filePath = path.join(__dirname, file.filename);
     return streamFile(res, filePath, file.originalName);
    
+ }
+ async getProjectUpdateHistoryByProjectId(projectId: string) {
+   const updateHistory = await projectRepository.getProjectUpdateHistoryByProjectId(projectId);
+   return updateHistory;
  }
 }

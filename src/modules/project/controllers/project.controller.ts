@@ -84,4 +84,12 @@ export class ProjectController {
         const {projectId, fileId} = req.params;
         await projectService.viewFile(projectId, fileId, res);
     }
+    async handleGetProjectUpdateHistory(req:Request,res:Response){
+       const { projectId } = req.params;
+       const updateHistory = await projectService.getProjectUpdateHistoryByProjectId(projectId);
+       res.status(200).json({
+         status: 'success',
+         data: updateHistory
+       });
+    }
 }

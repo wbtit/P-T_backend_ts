@@ -7,6 +7,7 @@ import {
     JobStudySchema
  } from "./jobStudy/dtos";
  import z from "zod";
+ import { asyncHandler } from "../../config/utils/asyncHandler";
 
 
  import { ProjectController } from "./controllers";
@@ -21,6 +22,9 @@ import {
 import { WBSController } from "./WBS";
 import { WBSSchema } from "./WBS";
 
+import { NoteSchema,NoteUpdateSchema } from "./notes";
+import { NotesController } from "./notes";
+
 
 const router = Router();
 
@@ -29,20 +33,21 @@ const router = Router();
 // JOBSTUDY ROUTES
 // ===========================================================
 const jobStudyController = new JobStudyController();
-router.post("/job-studies", authMiddleware, validate({body: JobStudyRequestSchema}), jobStudyController.create.bind(jobStudyController));
-router.put("/job-studies/:id", authMiddleware, validate({body: JobStudySchema}), jobStudyController.update.bind(jobStudyController));
-router.get("/job-studies/:id", authMiddleware, validate({params:z.object({id:z.string()})}), jobStudyController.findByProjectId.bind(jobStudyController));
+router.post("/job-studies", authMiddleware, validate({body: JobStudyRequestSchema}), asyncHandler(jobStudyController.create.bind(jobStudyController)));
+router.put("/job-studies/:id", authMiddleware, validate({body: JobStudySchema}), asyncHandler(jobStudyController.update.bind(jobStudyController)));
+router.get("/job-studies/:id", authMiddleware, validate({params:z.object({id:z.string()})}), asyncHandler(jobStudyController.findByProjectId.bind(jobStudyController)));
 // ===========================================================
 // PROJECTS ROUTES
 // ===========================================================
 const projectController = new ProjectController();
-router.post("/projects", authMiddleware, validate({body: CreateProjectSchema}),projectUploads.array("files"), projectController.handleCreateProject.bind(projectController));
-router.put("/projects/:id", authMiddleware, validate({params:z.object({id:z.string()}),body: UpdateProjectSchema}),projectUploads.array("files"), projectController.handleUpdateProject.bind(projectController));
-router.get("/projects/:id", authMiddleware, validate({params:z.object({id:z.string()})}), projectController.handleGetProject.bind(projectController));
-router.delete("/projects/:id", authMiddleware, validate({params:z.object({id:z.string()})}), projectController.handleDeleteProject.bind(projectController));
-router.get("/projects", authMiddleware, projectController.handleGetAllProjects.bind(projectController));
-router.get("/projects/:projectId/files/:fileId", authMiddleware,validate({params:z.object({projectId:z.string(),fileId:z.string()})}), projectController.handleGetFile.bind(projectController));
-router.get("/viewFile/:projectId/:fileId", authMiddleware,validate({params:z.object({projectId:z.string(),fileId:z.string()})}), projectController.handleViewFile.bind(projectController));
+router.post("/projects", authMiddleware, validate({body: CreateProjectSchema}),projectUploads.array("files"), asyncHandler(projectController.handleCreateProject.bind(projectController)));
+router.put("/projects/:id", authMiddleware, validate({params:z.object({id:z.string()}),body: UpdateProjectSchema}),projectUploads.array("files"), asyncHandler(projectController.handleUpdateProject.bind(projectController)));
+router.get("/projects/:id", authMiddleware, validate({params:z.object({id:z.string()})}), asyncHandler(projectController.handleGetProject.bind(projectController)));
+router.delete("/projects/:id", authMiddleware, validate({params:z.object({id:z.string()})}), asyncHandler(projectController.handleDeleteProject.bind(projectController)));
+router.get("/projects", authMiddleware, asyncHandler(projectController.handleGetAllProjects.bind(projectController)));
+router.get("/projects/:projectId/files/:fileId", authMiddleware,validate({params:z.object({projectId:z.string(),fileId:z.string()})}), asyncHandler(projectController.handleGetFile.bind(projectController)));
+router.get("/viewFile/:projectId/:fileId", authMiddleware,validate({params:z.object({projectId:z.string(),fileId:z.string()})}), asyncHandler(projectController.handleViewFile.bind(projectController)));
+router.get("/projects/:projectId/update-history", authMiddleware,validate({params:z.object({projectId:z.string()})}), asyncHandler(projectController.handleGetProjectUpdateHistory.bind(projectController)));
 // ===========================================================
 // PLI ROUTES
 // ===========================================================
@@ -51,18 +56,18 @@ router.post(
     "/projects/:projectId/work-break-downs/:workBreakDownId/line-items",
     authMiddleware,
     validate({body: ProjectLineItemSchema}),
-    pliController.createPli.bind(pliController)
+    asyncHandler(pliController.createPli.bind(pliController))
 );
 router.put(
     "/projects/:projectId/work-break-downs/:workBreakDownId/line-items/:id",
     authMiddleware,
     validate({body: UpdateProjectLineItemSchema}),
-    pliController.updatePli.bind(pliController)
+    asyncHandler(pliController.updatePli.bind(pliController))
 );
 router.get(
     "/projects/:projectId/work-break-downs/:workBreakDownId/line-items/:id",
     authMiddleware,
-    pliController.getPliByStage.bind(pliController)
+    asyncHandler(pliController.getPliByStage.bind(pliController))
 );
 // ===========================================================
 // PLI ROUTES
@@ -74,39 +79,49 @@ router.post(
   "/projects/:projectId/wbs",
   authMiddleware,
   validate({ body: WBSSchema }),
-  wbsController.create.bind(wbsController)
+  asyncHandler(wbsController.create.bind(wbsController))
 );
 
 router.get(
   "/projects/:projectId/wbs",
   authMiddleware,
-  wbsController.getAll.bind(wbsController)
+  asyncHandler(wbsController.getAll.bind(wbsController))
 );
 
 // Single WBS
 router.get(
   "/projects/:projectId/wbs/:wbsId",
   authMiddleware,
-  wbsController.getWbsForProject.bind(wbsController)
+  asyncHandler(wbsController.getWbsForProject.bind(wbsController))
 );
 
 // WBS stats & totals
 router.get(
   "/projects/:projectId/wbs/:wbsId/total-hours",
   authMiddleware,
-  wbsController.getTotalWbsHours.bind(wbsController)
+  asyncHandler(wbsController.getTotalWbsHours.bind(wbsController))
 );
 
 router.get(
   "/projects/:projectId/wbs/:wbsId/total",
   authMiddleware,
-  wbsController.getWbsTotal.bind(wbsController)
+  asyncHandler(wbsController.getWbsTotal.bind(wbsController))
 );
 
 router.get(
   "/projects/:projectId/wbs/:wbsId/stats",
   authMiddleware,
-  wbsController.getWbsStats.bind(wbsController)
+  asyncHandler(wbsController.getWbsStats.bind(wbsController))
 );
+// ===========================================================
+// NOTES ROUTES
+// ===========================================================
+const notesController = new NotesController();
+
+router.post("/projects/:projectId/notes", authMiddleware, validate({ body: NoteSchema }), asyncHandler(notesController.create.bind(notesController)));
+router.put("/projects/:projectId/notes/:id", authMiddleware, validate({ body: NoteUpdateSchema }), asyncHandler(notesController.update.bind(notesController)));
+router.get("/projects/:projectId/notes/:id", authMiddleware, asyncHandler(notesController.findById.bind(notesController)));
+router.delete("/projects/:projectId/notes/:id", authMiddleware, asyncHandler(notesController.delete.bind(notesController)));
+router.get("/projects/:projectId/notes", authMiddleware, asyncHandler(notesController.findAll.bind(notesController)));
 
 export default router;

@@ -99,4 +99,13 @@ import { CreateProjectInput,
      });
      return projects;
    }
+   async getProjectUpdateHistoryByProjectId(projectId: string) {
+     const updateLog = await prisma.projectStageHistory.findMany({
+       where: { projectID:projectId },
+       include:{
+        project:true
+       }
+     });
+     return updateLog;
+   }
 }
