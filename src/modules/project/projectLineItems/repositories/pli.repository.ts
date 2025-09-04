@@ -5,6 +5,7 @@ import { PliInput,
     GetPliByStageInput
  } from "../dtos";
 import { cleandata} from "../../../../config/utils/cleanDataObject";
+import { Stage } from "@prisma/client";
 
 export class PLIRepository{
     async createPli(data:PliInput,projectID:string,workBreakDownID:string){
@@ -30,6 +31,20 @@ export class PLIRepository{
                 projectID: params.projectID,
                 workBreakDownID: params.workBreakDownID,
                 stage: params.stage
+            }
+        });
+    }
+    async getSumData(projectID:string,workBreakDownID:string,stage:Stage){
+        return await prisma.projectLineItems.aggregate({
+            where: {
+                projectID,
+                workBreakDownID,
+                stage
+            },
+            _sum: {
+                QtyNo: true,
+                execHr: true,
+                checkHr: true
             }
         });
     }

@@ -18,6 +18,9 @@ import {
  import { ProjectLineItemSchema,
     UpdateProjectLineItemSchema } from "./projectLineItems";
 
+import { WBSController } from "./WBS";
+import { WBSSchema,UpdateWBSSchema } from "./WBS";
+
 
 const router = Router();
 
@@ -61,4 +64,15 @@ router.get(
     authMiddleware,
     pliController.getPliByStage.bind(pliController)
 );
+// ===========================================================
+// PLI ROUTES
+// ===========================================================
+const wbsController= new WBSController();
+router.post("/projects/:projectId/work-break-downs/:workBreakDownId/wbs", authMiddleware, validate({body: WBSSchema}), wbsController.create.bind(wbsController));
+router.get("/projects/:projectId/work-break-downs/wbs", authMiddleware, wbsController.getAll.bind(wbsController));
+router.get("/projects/:projectId/work-break-downs/:workBreakDownId/wbs/:id", authMiddleware, wbsController.getWbsForProject.bind(wbsController));
+router.get("/projects/:projectId/work-break-downs/:workBreakDownId/wbs/:id/total-hours", authMiddleware, wbsController.getTotalWbsHours.bind(wbsController));
+router.get("/projects/:projectId/work-break-downs/:workBreakDownId/wbs/:id/total", authMiddleware, wbsController.getWbsTotal.bind(wbsController));
+router.get("/projects/:projectId/work-break-downs/:workBreakDownId/wbs/:id/stats", authMiddleware, wbsController.getWbsStats.bind(wbsController));
+
 export default router;
