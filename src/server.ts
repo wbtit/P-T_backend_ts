@@ -1,4 +1,6 @@
 import express from 'express'
+import dotenv from "dotenv";
+dotenv.config();
 
 import cors from 'cors'
 import {
@@ -14,7 +16,7 @@ import healthRouter from './system/health'
 
 app.use("/health",healthRouter)
 
-//  app.use("/v1",routes)
+app.use("/v1",routes)
 
  // app.ts or server.ts — after all routes
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
