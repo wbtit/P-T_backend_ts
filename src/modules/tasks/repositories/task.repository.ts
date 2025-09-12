@@ -40,7 +40,7 @@ export class TaskRepository {
         });
         return tasks;
     }
-    async getTasksForDepartmentManagerId(departmentManagerId: string) {
+    async findTasksForDepartmentManager(departmentManagerId: string) {
         const tasks = await prisma.task.findMany({
             where: {
                 department: {
@@ -59,7 +59,7 @@ export class TaskRepository {
         return tasks;
     }
 
-    async getTasksByProjectManagerId(projectManagerId: string) {
+    async findTasksByProjectManagerId(projectManagerId: string) {
         const tasks = await prisma.task.findMany({
             where: {
                 project: {
