@@ -19,7 +19,8 @@ import { CreateProjectInput,
         projectWorkBreakdown:true,
         lineItems:true,
         notes:true,
-        rfq:true
+        rfq:true,
+        department:true
        }
      });
      return project;
@@ -39,7 +40,8 @@ import { CreateProjectInput,
         projectWorkBreakdown:true,
         lineItems:true,
         notes:true,
-        rfq:true
+        rfq:true,
+        department:true
        }
      });
      return project;
@@ -62,7 +64,8 @@ import { CreateProjectInput,
         projectWorkBreakdown:true,
         lineItems:true,
         notes:true,
-        rfq:true
+        rfq:true,
+        department:true
        }
      });
      return project;
@@ -94,7 +97,8 @@ import { CreateProjectInput,
         projectWorkBreakdown:true,
         lineItems:true,
         notes:true,
-        rfq:true
+        rfq:true,
+        department:true
        }
      });
      return projects;

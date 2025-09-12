@@ -203,6 +203,7 @@ model Department {
   users       User[]    @relation("UserOfTheDepartment")
   teams       Team[]    @relation("DepartmentOfTeam")
   tasks       Task[]    @relation("TaskBelongsToDepartment")
+  projects    Project[] @relation("projectDepartment")
 
   @@map("department")
   @@index([createdById])
@@ -397,6 +398,7 @@ model Project{
   isDeleted              Boolean                @default(false)
   
   //Relations
+  department             Department            @relation("projectDepartment", fields: [departmentID], references: [id])
   stageHistory           ProjectStageHistory[]
   fabricator             Fabricator            @relation("projectFabricator", fields: [fabricatorID], references: [id])
   manager                User                  @relation("projectManager", fields: [managerID], references: [id])

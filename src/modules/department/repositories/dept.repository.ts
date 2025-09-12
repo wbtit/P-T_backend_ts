@@ -25,7 +25,14 @@ import { CreateDeptInput,
 
     async get(data:GetDeptInput){
         const dept = await prisma.department.findUnique({
-            where: { id: data.id }
+            where: { id: data.id },
+            include:{
+                users:true,
+                projects:true,
+                teams:true,
+                tasks:true,
+                manager:true,
+            }
         });
         return dept;
     }

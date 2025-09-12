@@ -14,12 +14,90 @@ export class TaskRepository {
     async findById(id: string) {
         const task = await prisma.task.findUnique({
             where: { id },
+            include:{
+                project:true,
+                user:true,
+                department:true,
+                workingHourTask:true,
+            }
         });
         return task;
     }
+    async findNonCompletedTasksByUserId(user_id: string) {
+        const tasks = await prisma.task.findMany({
+            where: { 
+                user_id,
+                NOT: {
+                    status: "COMPLETED"
+                }
+             },
+             include:{
+                project:true,
+                user:true,
+                department:true,
+                workingHourTask:true,
+            }
+        });
+        return tasks;
+    }
+    async getTasksForDepartmentManagerId(departmentManagerId: string) {
+        const tasks = await prisma.task.findMany({
+            where: {
+                department: {
+                    manager:{
+                        some:{id: departmentManagerId}
+                    }
+                }
+            },
+            include:{
+                project:true,
+                user:true,
+                department:true,
+                workingHourTask:true,
+            }
+        });
+        return tasks;
+    }
+
+    async getTasksByProjectManagerId(projectManagerId: string) {
+        const tasks = await prisma.task.findMany({
+            where: {
+                project: {
+                    managerID: projectManagerId
+                }
+            },
+            include:{
+                project:true,
+                user:true,
+                department:true,
+                workingHourTask:true,
+            }
+        });
+        return tasks;
+    }
+
+    async getAlltasksByUserId(user_id: string) {
+        const tasks = await prisma.task.findMany({
+            where: { user_id },
+            include:{
+                project:true,
+                user:true,
+                department:true,
+                workingHourTask:true,
+            }
+        });
+        return tasks;
+    }
 
     async findAll() {
-        const tasks = await prisma.task.findMany();
+        const tasks = await prisma.task.findMany({
+            include:{
+                project:true,
+                user:true,
+                department:true,
+                workingHourTask:true,
+            }
+        });
         return tasks;
     }
 
@@ -27,6 +105,12 @@ export class TaskRepository {
         const task = await prisma.task.update({
             where: { id },
             data,
+            include:{
+                project:true,
+                user:true,
+                department:true,
+                workingHourTask:true,
+            }
         });
         return task;
     }
