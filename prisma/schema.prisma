@@ -57,6 +57,20 @@ enum Status {
   COMPLETE
   ASSIGNED
 }
+enum TaskStatus {
+  ASSIGNED
+  IN_PROGRESS
+  BREAK
+  IN_REVIEW
+  REWORK
+  COMPLETED
+  ON_HOLD
+}
+
+enum WorkSegmentType{
+  WORK
+  REWORK
+}
 enum Stage {
   RFI
   IFA
@@ -163,7 +177,7 @@ model User {
   assignedTask      Task[]              @relation("usersTask")
   comments          Comment[]           @relation("taskcommentuser")
   notifications     Notification[]      @relation("Notification")
-  WorkSession       WorkSession[]       @relation("WorkSessionOfuser")
+  WorkSession       WorkingHours[]       @relation("WorkSessionOfuser")
   createdRFQ        RFQ[]               @relation("SenderRFQ")
   salesRFQ         RFQ[]               @relation("SalesPersonRFQ")
   receivedRFQ      RFQ[]               @relation("ReceiverRFQ")
@@ -500,15 +514,15 @@ model Task {
   id                 String          @id @default(uuid()) @db.Uuid
   name               String
   description        String
-  status             String
+  status             TaskStatus     @default(ASSIGNED)
   priority           Int
   created_on         DateTime        @default(now())
   reworkStartTime    DateTime?
-  due_date           String
+  due_date           DateTime
   duration           String
   project_id         String          @db.Uuid
   user_id            String          @db.Uuid
-  start_date         String
+  start_date         DateTime
   Stage              Stage           @default(IFA)
   departmentId       String          @db.Uuid
   updatedAt          DateTime        @updatedAt
@@ -516,8 +530,8 @@ model Task {
   //Relations
   taskcomment        Comment[]       @relation("taskcomment")
   project            Project         @relation("TaskBelongsToProject", fields: [project_id], references: [id])
+  workingHourTask    WorkingHours[]  @relation("workingHourTask")
   user               User           @relation("usersTask", fields: [user_id], references: [id])
-  workingHourTask    WorkSession[]  @relation("WorkSession")
   department         Department      @relation("TaskBelongsToDepartment",fields: [departmentId],references: [id])
 
   @@index([name])
@@ -529,40 +543,24 @@ model Task {
   @@map("task")
 }
 
+model WorkingHours {
+  id               String          @id @default(uuid()) @db.Uuid
+  task_id          String          @db.Uuid
+  user_id          String          @db.Uuid
+  type             WorkSegmentType
+  started_at       DateTime
+  ended_at         DateTime?
+  duration_seconds Int?            // calculated when ended_at is set
+  created_at       DateTime        @default(now())
+  updated_at       DateTime        @updatedAt
+//Relations 
+  task             Task            @relation("workingHourTask", fields: [task_id], references: [id], onDelete: Cascade)
+  user             User            @relation("WorkSessionOfuser",fields: [user_id], references: [id], onDelete: Cascade)
 
-model WorkSession {
-  id        String   @id @default(uuid()) @db.Uuid
-  userId    String   @db.Uuid
-  taskId    String   @db.Uuid
-  start     DateTime @default(now())
-  end       DateTime?
-  status    WorkSessionStatus @default(ACTIVE)
-  events    WorkEvent[]
-
-//Relations
-task              Task?           @relation("WorkSession", fields: [taskId], references: [id], onDelete: Cascade)
-user              User           @relation("WorkSessionOfuser", fields: [userId], references: [id], onDelete: Cascade)
-  
-
-  @@index([userId])
-  @@index([status])
-  @@index([taskId])
-
-  @@map("work_sessions")
+  @@index([task_id])
+  @@index([user_id])
 }
 
-model WorkEvent {
-  id          String        @id @default(uuid()) @db.Uuid
-  sessionId   String        @db.Uuid
-  eventType   WorkEventType
-  timestamp   DateTime      @default(now())
-  session     WorkSession   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-
-  @@index([sessionId])
-  @@index([eventType])
-
-  @@map("work_events")
-}
 
 
 model Comment {
