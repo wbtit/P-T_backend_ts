@@ -66,7 +66,7 @@ export class WHController {
             data: wh,
         });
     }
-    async handleStartRework(req:AuthenticateRequest,res:Response){
+    async handleReworkStartTask(req:AuthenticateRequest,res:Response){
         if (!req.user) {
             return res.status(404).json({ message: 'User not found' });
         }
@@ -81,7 +81,7 @@ export class WHController {
             data: wh,
         });
     }
-    async handleEndRework(req:AuthenticateRequest,res:Response){
+    async handleReworkEndTask(req:AuthenticateRequest,res:Response){
         if (!req.user) {
             return res.status(404).json({ message: 'User not found' });
         }
