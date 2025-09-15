@@ -10,7 +10,9 @@ export const handleSignup = async(req:Request,res:Response)=>{
 }
 
 export const handleSignin= async(req:Request,res:Response)=>{
+    console.log("Signin request body:", req.body); // Debugging line
     const result = await AuthService.signin(req.body);
+    
     res.status(200).json({success:true,data:result});
 }
 

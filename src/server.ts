@@ -11,8 +11,11 @@ import {
 import routes from "./app"
 import healthRouter from './system/health'
  export const app =express();
+
  app.use(cors())
  app.use(express.json())
+ app.use(express.urlencoded({ extended: true })); // for urlencoded
+
 
 app.use("/health",healthRouter)
 

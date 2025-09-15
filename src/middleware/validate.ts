@@ -12,6 +12,7 @@ const validate = (schemas: SchemaConfig) =>
   (req: Request, res: Response, next: NextFunction) => {
     try {
       if (schemas.body) {
+        console.log("Validating request body:", req.body); // Debugging line
         const parsed = schemas.body.safeParse(req.body);
         if (!parsed.success) throw new AppError(parsed.error.message, 400);
         req.body = parsed.data;
@@ -31,6 +32,7 @@ const validate = (schemas: SchemaConfig) =>
 
       next();
     } catch (err) {
+      console.error("Validation error:", err); // Debugging line
       next(err);
     }
   };

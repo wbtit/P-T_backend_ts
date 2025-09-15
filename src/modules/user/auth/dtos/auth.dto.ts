@@ -2,7 +2,7 @@ import z from "zod";
 import { createUserSchema } from "../../dtos"; 
 
 export const signinSchema = z.object({
-  username: z.string().email(),
+  username: z.string(),
   password: z.string(),
 });
 
