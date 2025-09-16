@@ -9,7 +9,6 @@ const router = Router();
 
 router.get("/me",
      authMiddleware, 
-     validate({ body: FetchUserSchema }), 
      asyncHandler(userCtrl.handleGetUserByToken).bind(userCtrl));
 
 export default router;

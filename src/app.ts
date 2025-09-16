@@ -6,6 +6,7 @@ import { TeamRoutes } from "./modules/team";
 import { taskRouter } from "./modules/tasks";
 import {userRouter} from "./modules/user/"
 import { whRoutes } from "./modules/workingHours";
+import { CommentRoutes } from "./modules/comments";
 
 const routes = express.Router();
 
@@ -16,5 +17,6 @@ routes.use("/employee",EmployeeRoutes)
 routes.use("/fabricator",fabricatorRoutes)
 routes.use("/team", TeamRoutes)
 routes.use("/task", taskRouter)
+routes.use("/commnet",CommentRoutes)
 
 export default routes
