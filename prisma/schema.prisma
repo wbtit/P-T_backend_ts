@@ -225,6 +225,7 @@ model Fabricator {
   branches     Branch[]    @relation("FabricatorBranches")
   createdBy    User        @relation("FabricatorCreatedBy", fields: [createdById], references: [id])
   project     Project[]    @relation("projectFabricator")
+  mileStones  MileStone[]  @relation("FabricatorMileStone")
 
   @@map("fabricators")
   @@index([createdById])
@@ -410,6 +411,8 @@ model Project{
   lineItems              ProjectLineItems[]    @relation("LineItems")
   notes                  Notes[]               @relation("projectNotes")
   rfq                    RFQ?                  @relation("ProjectRFQ", fields: [rfqId], references: [id])
+  mileStones           MileStone[]             @relation("ProjectMileStone")
+            
 
   @@index([name])
   @@index([fabricatorID])
@@ -513,6 +516,22 @@ model ProjectStageHistory {
   @@map("project_stage_history")
 }
 
+model MileStone{
+  id                 String              @id @default(uuid()) @db.Uuid
+  fabricator_id      String              @db.Uuid
+  date               DateTime            @default(now())
+  project_id         String              @db.Uuid
+  approvalDate      DateTime?
+  status             Status             @default(ACTIVE)
+  subject            String
+  description        String
+  //relations
+  fabricator         Fabricator          @relation("FabricatorMileStone", fields: [fabricator_id], references: [id], onDelete: Cascade)
+  project            Project             @relation("ProjectMileStone", fields: [project_id], references: [id], onDelete: Cascade)
+  // mileStoneSubmittals Submittals[]       @relation("mileStoneSubmittals")
+  Tasks             Task[]              @relation("mileStoneTasks") 
+}
+
 model Task {
   id                 String          @id @default(uuid()) @db.Uuid
   name               String
@@ -525,6 +544,7 @@ model Task {
   duration           String
   project_id         String          @db.Uuid
   user_id            String          @db.Uuid
+  mileStone_id        String?         @db.Uuid
   start_date         DateTime
   Stage              Stage           @default(IFA)
   departmentId       String          @db.Uuid
@@ -534,8 +554,9 @@ model Task {
   taskcomment        Comment[]       @relation("taskcomment")
   project            Project         @relation("TaskBelongsToProject", fields: [project_id], references: [id])
   workingHourTask    WorkingHours[]  @relation("workingHourTask")
-  user               User           @relation("usersTask", fields: [user_id], references: [id])
+  user               User            @relation("usersTask", fields: [user_id], references: [id])
   department         Department      @relation("TaskBelongsToDepartment",fields: [departmentId],references: [id])
+  mileStone          MileStone?      @relation("mileStoneTasks", fields: [mileStone_id], references: [id])
 
   @@index([name])
   @@index([status])
