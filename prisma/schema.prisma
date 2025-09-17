@@ -137,6 +137,15 @@ enum RFQStatus {
   RE_ESTIMATION_REQUESTED
   SENT
 }
+enum EstimationStatus {
+  DRAFT
+  IN_PROGRESS
+  PENDING_REVIEW
+  APPROVED
+  REJECTED
+  RE_ESTIMATION_REQUIRED
+  QUOTED
+}
 // ===========================================================
 // MODELS
 // ===========================================================
@@ -168,21 +177,25 @@ model User {
 
   // Relations
   
-  department        Department?         @relation("UserOfTheDepartment",fields: [departmentId], references: [id])
-  managedDepartment Department[]        @relation("ManagerOfDepartment")
-  managedFabricator Fabricator[]        @relation("FabricatorCreatedBy")
-  branchesPOC       Branch[]            @relation("BranchPointOfContacts")
-  managedTeam       Team[]              @relation("TeamManager")
-  teamMember        TeamMember[]        @relation("TeamMember")
-  managedProject    Project[]           @relation("projectManager")
-  assignedTask      Task[]              @relation("usersTask")
-  comments          Comment[]           @relation("taskcommentuser")
-  notifications     Notification[]      @relation("Notification")
-  WorkSession       WorkingHours[]       @relation("WorkSessionOfuser")
-  createdRFQ        RFQ[]               @relation("SenderRFQ")
-  salesRFQ         RFQ[]               @relation("SalesPersonRFQ")
-  receivedRFQ      RFQ[]               @relation("ReceiverRFQ")
-  rfqResponseBy     RFQResponse[]       @relation("rfqResponseBy")
+  department            Department?         @relation("UserOfTheDepartment",fields: [departmentId], references: [id])
+  managedDepartment     Department[]        @relation("ManagerOfDepartment")
+  managedFabricator     Fabricator[]        @relation("FabricatorCreatedBy")
+  branchesPOC           Branch[]            @relation("BranchPointOfContacts")
+  managedTeam           Team[]              @relation("TeamManager")
+  teamMember            TeamMember[]        @relation("TeamMember")
+  managedProject        Project[]           @relation("projectManager")
+  assignedTask          Task[]              @relation("usersTask")
+  comments              Comment[]           @relation("taskcommentuser")
+  notifications         Notification[]      @relation("Notification")
+  WorkSession           WorkingHours[]       @relation("WorkSessionOfuser")
+  createdRFQ            RFQ[]               @relation("SenderRFQ")
+  salesRFQ              RFQ[]               @relation("SalesPersonRFQ")
+  receivedRFQ           RFQ[]               @relation("ReceiverRFQ")
+  rfqResponseBy         RFQResponse[]       @relation("rfqResponseBy")
+  createdEstimations    Estimation[]         @relation("CreatedBy")
+  assignedEstimations   EstimationTask[]     @relation("AssignedEstimator")
+  AssignedByEstimations EstimationTask[]     @relation("AssignedBy")
+  reviewedEstimations   EstimationTask[]     @relation("ReviewedBy")
 
   @@map("user")
   @@index([email])
@@ -226,6 +239,7 @@ model Fabricator {
   createdBy    User        @relation("FabricatorCreatedBy", fields: [createdById], references: [id])
   project     Project[]    @relation("projectFabricator")
   mileStones  MileStone[]  @relation("FabricatorMileStone")
+  estimation  Estimation[] @relation("estimationUnderFabricator")
 
   @@map("fabricators")
   @@index([createdById])
@@ -326,6 +340,7 @@ model RFQ {
   sender           User         @relation("SenderRFQ", fields: [senderId], references: [id])
   responses        RFQResponse[]
   project          Project?     @relation("ProjectRFQ")
+  estimations      Estimation[]
 
   @@map("rfq")
   @@index([projectName])
@@ -580,7 +595,7 @@ model WorkingHours {
   updated_at       DateTime           @updatedAt
 //Relations 
   task             Task?            @relation("workingHourTask", fields: [task_id], references: [id], onDelete: Cascade)
-  // estimationTask EstimationTask?  @relation("estWorkingHourTask",fields:[estimationTaskId],references:[id],onDelete:Cascade)
+  estimationTask   EstimationTask?  @relation("workingHourEstimationTask",fields:[estimationTaskId],references:[id],onDelete:Cascade)
   user             User            @relation("WorkSessionOfuser",fields: [user_id], references: [id], onDelete: Cascade)
 
   @@index([task_id])
@@ -601,8 +616,8 @@ model Comment {
 
   //Relations   
 
-  // estimationTaskId   String?    @db.Uuid
-  // estimationTask     EstimationTask?   @relation("estComment",fields:[estimationTaskId],references:[id],onDelete:Cascade)
+  estimationTaskId   String?    @db.Uuid
+  estimationTask     EstimationTask?   @relation("estComment",fields:[estimationTaskId],references:[id],onDelete:Cascade)
   task                  Task?      @relation("taskcomment", fields: [task_id], references: [id], onDelete: Cascade)
   user                  User     @relation("taskcommentuser", fields: [user_id], references: [id], onDelete: Cascade)
 
@@ -610,6 +625,77 @@ model Comment {
   @@index([user_id])
 
   @@map("comment")
+}
+model Estimation {
+  estimationNumber String               @unique
+  fabricatorName   String?
+  projectName      String
+  description      String?
+  estimateDate     DateTime
+  status           EstimationStatus     @default(DRAFT)
+  assignedById     String?
+  finalHours       Float?
+  finalWeeks       Float?
+  finalPrice       Float?
+  files            Json?                 @default("[]")
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+  rfqId            String?              @db.Uuid
+  createdById      String               @db.Uuid
+  id               String               @id @default(uuid()) @db.Uuid
+  fabricatorId     String               @db.Uuid
+  tools            String?
+  startDate        DateTime             @default(now())
+  lineItems        EstimationLineItem[]
+  tasks            EstimationTask[]
+  // template         EstimationTemplate?
+  createdBy        User                @relation("CreatedBy", fields: [createdById], references: [id])
+  fabricators      Fabricator           @relation("estimationUnderFabricator", fields: [fabricatorId], references: [id])
+  rfq              RFQ?                  @relation(fields: [rfqId], references: [id])
+
+  @@map("estimations")
+}
+
+model EstimationTask {
+  assignedById String         @db.Uuid
+  status       TaskStatus     @default(ASSIGNED)
+  startDate    DateTime?
+  endDate      DateTime?
+  notes        String?
+  reviewNotes  String?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  estimationId String         @db.Uuid
+  assignedToId String         @db.Uuid
+  reviewedById String?        @db.Uuid
+  id           String         @id @default(uuid()) @db.Uuid
+  files        Json?          @default("[]")
+
+
+  assignedTo   User          @relation("AssignedEstimator", fields: [assignedToId], references: [id])
+  assignedBy   User          @relation("AssignedBy",fields: [assignedById],references: [id])
+  estimation   Estimation     @relation(fields: [estimationId], references: [id])
+  reviewedBy   User?         @relation("ReviewedBy", fields: [reviewedById], references: [id])
+  workinghours WorkingHours[] @relation("workingHourEstimationTask")
+  comment      Comment[]      @relation("estComment")
+
+  @@map("estimation_tasks")
+}
+
+model EstimationLineItem {
+  scopeOfWork  String
+  remarks      String
+  quantity     Float?
+  hoursPerQty  Float?
+  totalHours   Float?
+  weeks        Float?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  id           String     @id @default(uuid()) @db.Uuid
+  estimationId String     @db.Uuid
+  estimation   Estimation @relation(fields: [estimationId], references: [id], onDelete: Cascade)
+
+  @@map("estimation_line_items")
 }
 
 model Notification {
