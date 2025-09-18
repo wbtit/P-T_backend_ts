@@ -54,3 +54,6 @@ export const rfqResponseUploads=createMulterUploader("public/rfqResponses",rfqRe
 
 export const projectDataMap = {};
 export const projectUploads=createMulterUploader("public/projects",projectDataMap);
+
+export const estimationDataMap={};
+export const estimationUploads=createMulterUploader("public/estimationManage",estimationDataMap)

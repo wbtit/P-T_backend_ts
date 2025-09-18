@@ -51,6 +51,35 @@ export class EstManagementRepository{
             }
         })
     }
+    async getByCreatorId(id:string){
+        return await prisma.estimation.findMany({
+            where:{createdById:id},
+            include:{
+                 rfq:true,
+                 createdBy:true,
+                 tasks:{
+                    include:{
+                        assignedTo:{
+                            select:{
+                                firstName:true,
+                                middleName:true,
+                                lastName:true
+                            }
+                        },
+                        assignedBy:{
+                            select:{
+                                firstName:true,
+                                middleName:true,
+                                lastName:true
+                            }
+                        }
+                    }
+                 },
+                 lineItems:true,
+                 fabricators:true
+            }
+        })
+    }
     async update(id:string,data:UpdateEstimationDtoType){
         return await prisma.estimation.update({
             where:{id},
