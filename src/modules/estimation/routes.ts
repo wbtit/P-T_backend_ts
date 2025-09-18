@@ -6,6 +6,8 @@ import validate from "../../middleware/validate";
 import { z } from "zod";
 import { estimationUploads } from "../../utils/multerUploader.util";
 import { EstimationSchema,UpdateEstimationDto } from "./management/dtos";
+import { EstimationTaskDTO,UpdateEstimationTask } from "./estimationTask/dtos";
+import { EstimationTaskController } from "./estimationTask/controllers/estTask.controller";
 
 const router = express.Router();
 
@@ -115,4 +117,69 @@ router.get(
   asyncHandler(estController.handleViewFile.bind(estController))
 );
 
+// ===========================================================
+// ESTIMATION TASKS ROUTES
+// ===========================================================
+const taskController = new EstimationTaskController();
+// Zod Schemas
+const ParamsWithId = z.object({ id: z.string() });
+// Create Estimation Task
+router.post(
+  "/estimation-tasks",
+  authMiddleware,
+  validate({ body: EstimationTaskDTO }),
+  asyncHandler(taskController.handleCreateEstimationTask.bind(taskController))
+);
+
+// Review Estimation Task
+router.patch(
+  "/estimation-tasks/:id/review",
+  authMiddleware,
+  validate({
+    params: ParamsWithId,
+    body: UpdateEstimationTask,
+  }),
+  asyncHandler(taskController.handleReviewEstimationTask.bind(taskController))
+);
+
+// Get All Tasks (Admins only)
+router.get(
+  "/estimation-tasks",
+  authMiddleware,
+  asyncHandler(taskController.handleGetAllEstimationTasks.bind(taskController))
+);
+
+// Get My Assigned Tasks
+router.get(
+  "/estimation-tasks/my",
+  authMiddleware,
+  asyncHandler(taskController.handleGetMyEstimationTasks.bind(taskController))
+);
+
+// Get Task By ID
+router.get(
+  "/estimation-tasks/:id",
+  authMiddleware,
+  validate({ params: ParamsWithId }),
+  asyncHandler(taskController.handleGetEstimationTaskById.bind(taskController))
+);
+
+// Update Estimation Task
+router.patch(
+  "/estimation-tasks/:id",
+  authMiddleware,
+  validate({
+    params: ParamsWithId,
+    body: UpdateEstimationTask,
+  }),
+  asyncHandler(taskController.handleUpdateEstimationTask.bind(taskController))
+);
+
+// Delete Estimation Task
+router.delete(
+  "/estimation-tasks/:id",
+  authMiddleware,
+  validate({ params: ParamsWithId }),
+  asyncHandler(taskController.handleDeleteEstimationTask.bind(taskController))
+);
 export default router;
