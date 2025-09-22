@@ -8,6 +8,7 @@ import { estimationUploads } from "../../utils/multerUploader.util";
 import { EstimationSchema,UpdateEstimationDto } from "./management/dtos";
 import { EstimationTaskDTO,UpdateEstimationTask } from "./estimationTask/dtos";
 import { EstimationTaskController } from "./estimationTask/controllers/estTask.controller";
+import { TaskStatus } from "@prisma/client";
 
 const router = express.Router();
 
@@ -75,7 +76,7 @@ router.patch(
   validate({
     params: z.object({
       id: z.string(),
-      status: z.enum(["PENDING", "APPROVED", "REJECTED", "COMPLETED"]), // Adjust based on your EstimationStatus enum
+      status: z.enum(TaskStatus),
     }),
   }),
   asyncHandler(estController.handleUpdateStatus.bind(estController))
