@@ -146,6 +146,14 @@ enum EstimationStatus {
   RE_ESTIMATION_REQUIRED
   QUOTED
 }
+enum State {
+  PARTIAL
+  COMPLETE
+  OPEN
+  SENT
+  RECEIVED
+  IN_REVIEW
+}
 // ===========================================================
 // MODELS
 // ===========================================================
@@ -196,6 +204,9 @@ model User {
   assignedEstimations   EstimationTask[]     @relation("AssignedEstimator")
   AssignedByEstimations EstimationTask[]     @relation("AssignedBy")
   reviewedEstimations   EstimationTask[]     @relation("ReviewedBy")
+  rfiSender             RFI[]                  @relation("senderRFI")
+  rfiReceipient         RFI[]                  @relation("recipientRFI")
+  rfiResposedBy         RFIResponse[]        @relation("rfiresponseBy")
 
   @@map("user")
   @@index([email])
@@ -240,6 +251,7 @@ model Fabricator {
   project     Project[]    @relation("projectFabricator")
   mileStones  MileStone[]  @relation("FabricatorMileStone")
   estimation  Estimation[] @relation("estimationUnderFabricator")
+  rfi         RFI[]        @relation("FabricatorRFI")
 
   @@map("fabricators")
   @@index([createdById])
@@ -426,7 +438,8 @@ model Project{
   lineItems              ProjectLineItems[]    @relation("LineItems")
   notes                  Notes[]               @relation("projectNotes")
   rfq                    RFQ?                  @relation("ProjectRFQ", fields: [rfqId], references: [id])
-  mileStones           MileStone[]             @relation("ProjectMileStone")
+  mileStones             MileStone[]           @relation("ProjectMileStone")
+  rfi                    RFI[]                 @relation("ProjectRFI") 
             
 
   @@index([name])
@@ -708,4 +721,44 @@ model Notification {
 
   @@index([userID])
   @@map("notification")
+}
+
+model RFI {
+  id            String       @id @default(uuid()) @db.Uuid
+  fabricator_id String       @db.Uuid
+  date          DateTime     @default(now())
+  project_id    String       @db.Uuid
+  recepient_id  String       @unique @db.Uuid
+  sender_id     String       @unique @db.Uuid
+  status        Boolean      @default(false)
+  subject       String
+  description   String
+  files         Json       @default("[]")
+  isAproovedByAdmin   Boolean?   @default(false)
+  fabricator    Fabricator   @relation("FabricatorRFI", fields: [fabricator_id], references: [id], onDelete: Cascade)
+  project       Project      @relation("ProjectRFI", fields: [project_id], references: [id], onDelete: Cascade)
+  recepients    User        @relation("recipientRFI", fields: [recepient_id], references: [id], onDelete: Cascade)
+  sender        User        @relation("senderRFI", fields: [sender_id], references: [id], onDelete: Cascade)
+  rfiresponse   RFIResponse[] @relation("rfiresponse")
+
+  @@map("rfi")
+}
+
+model RFIResponse {
+  id               String        @id @default(uuid()) @db.Uuid
+  files            Json        @default("[]")
+  responseState    State         @default(SENT)
+  wbtStatus        State         @default(RECEIVED)
+  reason           String        @default("")
+  respondedAt      DateTime      @default(now())
+  createdAt        DateTime      @default(now())
+  rfiId            String        @db.Uuid
+  userId           String        @db.Uuid
+  parentResponseId String?       @db.Uuid
+  parentResponse   RFIResponse?  @relation("ParentChildResponse", fields: [parentResponseId], references: [id])
+  childResponses   RFIResponse[] @relation("ParentChildResponse")
+  rfi              RFI           @relation("rfiresponse", fields: [rfiId], references: [id], onDelete: Cascade)
+  user             User         @relation("rfiresponseBy", fields: [userId], references: [id])
+
+  @@map("rfiresponse")
 }
