@@ -735,6 +735,7 @@ model RFI {
   description   String
   files         Json       @default("[]")
   isAproovedByAdmin   Boolean?   @default(false)
+  //Relations
   fabricator    Fabricator   @relation("FabricatorRFI", fields: [fabricator_id], references: [id], onDelete: Cascade)
   project       Project      @relation("ProjectRFI", fields: [project_id], references: [id], onDelete: Cascade)
   recepients    User        @relation("recipientRFI", fields: [recepient_id], references: [id], onDelete: Cascade)
@@ -750,11 +751,11 @@ model RFIResponse {
   responseState    State         @default(SENT)
   wbtStatus        State         @default(RECEIVED)
   reason           String        @default("")
-  respondedAt      DateTime      @default(now())
   createdAt        DateTime      @default(now())
   rfiId            String        @db.Uuid
   userId           String        @db.Uuid
   parentResponseId String?       @db.Uuid
+  //Relations
   parentResponse   RFIResponse?  @relation("ParentChildResponse", fields: [parentResponseId], references: [id])
   childResponses   RFIResponse[] @relation("ParentChildResponse")
   rfi              RFI           @relation("rfiresponse", fields: [rfiId], references: [id], onDelete: Cascade)
