@@ -1,12 +1,15 @@
 import z from "zod";
 import { WorkSegmentType } from "@prisma/client";
+
 export const  findWhSchema=z.object({
     task_id:z.string().optional(),
     user_id:z.string(),
+    estimationTaskId:z.string().optional()
 })
 
 export const createWhSchema=z.object({
     task_id:z.string().optional(),
+    estimationTaskId:z.string().optional(),
     user_id:z.string(),
     type:z.enum(WorkSegmentType),
 })
@@ -16,6 +19,7 @@ export const updateWhSchema=z.object({
 })
 export const FindMany=z.object({
     task_id:z.string(),
+    estimationTaskId:z.string().optional(),
     user_id:z.string(),
 })
 

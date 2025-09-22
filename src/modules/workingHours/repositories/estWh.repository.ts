@@ -1,0 +1,65 @@
+import prisma from "../../../config/database/client";
+import { FindWhDTO,
+         CreateWhDTO,
+         UpdateWhDTO,
+         FindManyDTO
+ } from "../dtos/wh.dto";
+ import { cleandata } from "../../../config/utils/cleanDataObject";
+
+ 
+
+export class EstimationWHRepository {
+    async findFirst(data: FindWhDTO) {
+        const wh = await prisma.workingHours.findFirst({
+            where: {
+                user_id: data.user_id,
+                estimationTaskId: data.estimationTaskId,
+                ended_at:null  
+            },
+            orderBy: { started_at: "desc" }
+        });
+        return wh;
+    }
+    async create(data:CreateWhDTO){
+        const cleanData = cleandata(data)
+        const wh=await prisma.workingHours.create({
+            data:{
+                user_id:cleanData.user_id,
+                estimationTaskId:cleanData.estimationTaskId,
+                type:"WORK",
+            }
+        });
+        return wh;
+    }
+    async update(data:UpdateWhDTO){
+        const cleanData = cleandata(data)
+        const wh=await prisma.workingHours.update({
+            where:{id:cleanData.id},
+            data:{
+                ended_at:new Date(),
+                duration_seconds:cleanData.duration_seconds,
+            }
+        });
+        return wh;
+    }
+    async createrework(data:CreateWhDTO){
+        const cleanData = cleandata(data)
+        const wh=await prisma.workingHours.create({
+            data:{
+                user_id:cleanData.user_id,
+                estimationTaskId:cleanData.estimationTaskId,
+                type:"REWORK",
+            }
+        });
+        return wh;
+    }
+    async findManyByTaskIdAndUserId(data:FindManyDTO){
+        const wh = await prisma.workingHours.findMany({
+            where: {
+                user_id: data.user_id,
+                estimationTaskId: data.estimationTaskId,
+            }
+        });
+        return wh;
+    }
+}``
