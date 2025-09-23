@@ -154,6 +154,11 @@ enum State {
   RECEIVED
   IN_REVIEW
 }
+enum SubResStatus {
+  APPROVED
+  PARTIAL
+  NOT_APPROVED
+}
 // ===========================================================
 // MODELS
 // ===========================================================
@@ -207,6 +212,9 @@ model User {
   rfiSender             RFI[]                  @relation("senderRFI")
   rfiReceipient         RFI[]                  @relation("recipientRFI")
   rfiResposedBy         RFIResponse[]        @relation("rfiresponseBy")
+  submittalRecepients   Submittals[]         @relation("SubmittalsRecepient")
+  submittalsender       Submittals[]         @relation("SubmittalsSender")
+  submittalsresponseBy  SubmittalsResponse[] @relation("submittalsRespondedBy")
 
   @@map("user")
   @@index([email])
@@ -252,6 +260,7 @@ model Fabricator {
   mileStones  MileStone[]  @relation("FabricatorMileStone")
   estimation  Estimation[] @relation("estimationUnderFabricator")
   rfi         RFI[]        @relation("FabricatorRFI")
+  submittals  Submittals[] @relation("FabricatorSubmittals")
 
   @@map("fabricators")
   @@index([createdById])
@@ -439,7 +448,8 @@ model Project{
   notes                  Notes[]               @relation("projectNotes")
   rfq                    RFQ?                  @relation("ProjectRFQ", fields: [rfqId], references: [id])
   mileStones             MileStone[]           @relation("ProjectMileStone")
-  rfi                    RFI[]                 @relation("ProjectRFI") 
+  rfi                    RFI[]                 @relation("ProjectRFI")
+  submittals             Submittals[]  @relation("ProjectSubmittals") 
             
 
   @@index([name])
@@ -557,7 +567,8 @@ model MileStone{
   fabricator         Fabricator          @relation("FabricatorMileStone", fields: [fabricator_id], references: [id], onDelete: Cascade)
   project            Project             @relation("ProjectMileStone", fields: [project_id], references: [id], onDelete: Cascade)
   // mileStoneSubmittals Submittals[]       @relation("mileStoneSubmittals")
-  Tasks             Task[]              @relation("mileStoneTasks") 
+  Tasks             Task[]              @relation("mileStoneTasks")
+   mileStoneSubmittals Submittals[]       @relation("mileStoneSubmittals") 
 }
 
 model Task {
@@ -762,4 +773,49 @@ model RFIResponse {
   user             User         @relation("rfiresponseBy", fields: [userId], references: [id])
 
   @@map("rfiresponse")
+}
+
+model Submittals {
+  id                 String              @id @default(uuid()) @db.Uuid
+  fabricator_id      String              @db.Uuid
+  mileStoneId      String?               @db.Uuid 
+  date               DateTime            @default(now())
+  project_id         String              @db.Uuid
+  recepient_id       String              @db.Uuid
+  sender_id          String              @db.Uuid
+  status             Boolean             @default(false)
+  stage              Stage               @default(IFA)
+  subject            String
+  description        String
+  files              Json              @default("[]")
+  isAproovedByAdmin  Boolean?   @default(false)
+  mileStoneBelongsTo MileStone?          @relation("mileStoneSubmittals", fields: [mileStoneId], references: [id], onDelete: Cascade)
+  fabricator         Fabricator          @relation("FabricatorSubmittals", fields: [fabricator_id], references: [id], onDelete: Cascade)
+  project            Project             @relation("ProjectSubmittals", fields: [project_id], references: [id], onDelete: Cascade)
+  recepients         User               @relation("SubmittalsRecepient", fields: [recepient_id], references: [id], onDelete: Cascade)
+  sender             User               @relation("SubmittalsSender", fields: [sender_id], references: [id], onDelete: Cascade)
+  submittalsResponse SubmittalsResponse[] @relation("submittalsresponse")
+
+  @@map("submittals")
+}
+
+
+model SubmittalsResponse {
+  id               String               @id @default(uuid()) @db.Uuid
+  files            Json                 @default("[]")
+  reason           String               @default("")
+  respondedAt      String               @default("")
+  createdAt        DateTime             @default(now())
+  submittalsId     String               @db.Uuid
+  userId           String               @db.Uuid
+  description      String               @default("")
+  status           SubResStatus         @default(NOT_APPROVED)
+  wbtStatus        State                @default(RECEIVED)
+  parentResponseId String?              @db.Uuid
+  parentResponse   SubmittalsResponse?  @relation("ParentChildResponse", fields: [parentResponseId], references: [id])
+  childResponses   SubmittalsResponse[] @relation("ParentChildResponse")
+  submittals       Submittals           @relation("submittalsresponse", fields: [submittalsId], references: [id])
+  user             User                @relation("submittalsRespondedBy", fields: [userId], references: [id])
+
+  @@map("submittalsresponse")
 }
