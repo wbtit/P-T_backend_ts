@@ -1,14 +1,15 @@
 import { Router } from "express";
 import { RFIController } from "./controllers";
+import { RFIResponseController } from "./controllers";
 import validate from "../../middleware/validate";
 import authMiddleware from "../../middleware/authMiddleware";
-import { RFISchema,UpdateRFISchema } from "./dtos";
+import { RFISchema,UpdateRFISchema,RFIResponseSchema,UpdateRFIResponseDto} from "./dtos";
 import { rfiUploads, rfiResponseUploads } from "../../utils/multerUploader.util";
 import z from "zod";
 
 const router = Router();
 const rfiController = new RFIController();
-// const rfiResponseController = new RfiResponseController();
+const rfiResponseController = new RFIResponseController();
 
 // ===========================================================
 // RFI ROUTES
@@ -87,46 +88,46 @@ router.delete(
 // RFI RESPONSE ROUTES
 // ===========================================================
 
-// router.post(
-//   "/:rfiId/responses",
-//   authMiddleware,
-//   validate({
-//     params: z.object({ rfiId: z.string() }),
-//     body: RfiResponseSchema,
-//   }),
-//   rfiResponseUploads.array("files"),
-//   rfiResponseController.handleCreate.bind(rfiResponseController)
-// );
+router.post(
+  "/:rfiId/responses",
+  authMiddleware,
+  validate({
+    params: z.object({ rfiId: z.string() }),
+    body: RFIResponseSchema,
+  }),
+  rfiResponseUploads.array("files"),
+  rfiResponseController.handleCreateResponse.bind(rfiResponseController)
+);
 
-// router.get(
-//   "/responses/:id",
-//   authMiddleware,
-//   validate({ params: z.object({ id: z.string() }) }),
-//   rfiResponseController.handleGetById.bind(rfiResponseController)
-// );
+router.get(
+  "/responses/:id",
+  authMiddleware,
+  validate({ params: z.object({ id: z.string() }) }),
+  rfiResponseController.handleGetResponseById.bind(rfiResponseController)
+);
 
-// router.get(
-//   "/responses/:rfiResId/files/:fileId",
-//   authMiddleware,
-//   validate({
-//     params: z.object({
-//       rfiResId: z.string(),
-//       fileId: z.string(),
-//     }),
-//   }),
-//   rfiResponseController.handleGetFile.bind(rfiResponseController)
-// );
+router.get(
+  "/responses/:rfiResId/files/:fileId",
+  authMiddleware,
+  validate({
+    params: z.object({
+      rfiResId: z.string(),
+      fileId: z.string(),
+    }),
+  }),
+  rfiResponseController.handleGetFile.bind(rfiResponseController)
+);
 
-// router.get(
-//   "/viewFile/:rfiResId/files/:fileId",
-//   authMiddleware,
-//   validate({
-//     params: z.object({
-//       rfiResId: z.string(),
-//       fileId: z.string(),
-//     }),
-//   }),
-//   rfiResponseController.handleViewFile.bind(rfiResponseController)
-// );
+router.get(
+  "/viewFile/:rfiResId/files/:fileId",
+  authMiddleware,
+  validate({
+    params: z.object({
+      rfiResId: z.string(),
+      fileId: z.string(),
+    }),
+  }),
+  rfiResponseController.handleViewFile.bind(rfiResponseController)
+);
 
-// export default router;
+export default router;

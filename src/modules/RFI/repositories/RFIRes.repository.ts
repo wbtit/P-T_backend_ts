@@ -1,6 +1,4 @@
 import { CreateRfiResDto,
-    UpdateRFIDto,
-    CreateRFIDto,
     UpdateRfiResDto
 } from "../dtos";
 import prisma from "../../../config/database/client";
