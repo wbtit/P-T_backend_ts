@@ -57,3 +57,10 @@ export const projectUploads=createMulterUploader("public/projects",projectDataMa
 
 export const estimationDataMap={};
 export const estimationUploads=createMulterUploader("public/estimationManage",estimationDataMap)
+
+export const rfiDataMap={}
+export const rfiUploads= createMulterUploader("public/rfi",rfiDataMap)
+
+export const rfiResponseDataMap={}
+export const rfiResponseUploads=createMulterUploader("public/rfiResponse",rfiResponseDataMap)
+
