@@ -64,3 +64,9 @@ export const rfiUploads= createMulterUploader("public/rfi",rfiDataMap)
 export const rfiResponseDataMap={}
 export const rfiResponseUploads=createMulterUploader("public/rfiResponse",rfiResponseDataMap)
 
+export const submittalsDataMap={}
+export const submittalUploads=createMulterUploader("/public/submittals",submittalsDataMap)
+
+
+export const submittalsResDataMap={}
+export const submittalResponseUploads=createMulterUploader("public/submittalResponse",submittalsResDataMap)
