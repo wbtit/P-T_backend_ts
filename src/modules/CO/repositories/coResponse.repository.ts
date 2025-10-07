@@ -28,4 +28,9 @@ async getResponseById(id: string) {
       }
     })
 }
+async findbyId(id:string){
+  return await prisma.cOResponse.findUnique({
+    where:{id:id}
+  })            
+}
 }
