@@ -23,8 +23,12 @@ export const CreateCoSchema = z.object({
         .optional(),
         link: z.string().nullable().optional(),
 });
+export const UpdateCoSchema = CreateCoSchema.partial();
 
-export const CreateCOTableSchema = z.object({
+export type CreateCoInput = z.infer<typeof CreateCoSchema>;
+export type UpdateCoInput = z.infer<typeof UpdateCoSchema>;
+
+export const CreateTableSchema = z.object({
     description: z.string().min(2).max(500),
     referenceDoc: z.string().min(2).max(100),
     elements: z.string().min(2).max(100),
@@ -34,3 +38,10 @@ export const CreateCOTableSchema = z.object({
     cost: z.number().min(1),
     CoId: z.string(),
 })
+
+// 👇 Accepts multiple table entries
+export const CreateCOTableSchema = z.array(CreateTableSchema);
+
+
+export type CreateCOTableInput = z.infer<typeof CreateCOTableSchema>;
+export type CotableRowInput = z.infer<typeof CreateTableSchema>;
