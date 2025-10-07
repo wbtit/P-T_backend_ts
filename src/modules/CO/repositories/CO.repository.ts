@@ -1,8 +1,8 @@
 import prisma from "../../../config/database/client";
-import { CotableRowInput, CreateCoInput, CreateCOTableInput, UpdateCoInput } from "../dtos/co.dto";
+import { CotableRowInput, CreateCoInput, CreateCOTableInput, UpdateCoInput } from "../dtos";
 
 export class CORepository {
-    async create(data:CreateCoInput,coNum:string,userId:string){
+    async create(data:CreateCoInput,coNum:string,userId:string,approval:boolean){
         return await prisma.changeOrder.create({
       data: {
         changeOrderNumber: coNum,
@@ -12,7 +12,7 @@ export class CORepository {
         stage: data.stage || "IFA",
         recipients:data.recipients,
         remarks:data.remarks,
-        isAproovedByAdmin:data.isAproovedByAdmin,
+        isAproovedByAdmin:approval,
         sender: userId,
       },
     });
@@ -90,7 +90,7 @@ export class CORepository {
     //CO TABLE
 
 
-    
+
     async createCoTable(data: CreateCOTableInput, coId: string, userId: string) {
   // data will be an array of items validated by Zod
   const dataToInsert = data.map((co) => ({

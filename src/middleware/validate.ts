@@ -1,9 +1,9 @@
-import { ZodSchema, ZodObject } from "zod";
+import { ZodType, ZodObject } from "zod";
 import { AppError } from "../config/utils/AppError";
 import { Request, Response, NextFunction } from 'express';
 
 type SchemaConfig = {
-  body?: ZodObject<any, any>;
+  body?: ZodType<any>;
   params?: ZodObject<any, any>;
   query?: ZodObject<any, any>;
 };
@@ -12,7 +12,7 @@ const validate = (schemas: SchemaConfig) =>
   (req: Request, res: Response, next: NextFunction) => {
     try {
       if (schemas.body) {
-        console.log("Validating request body:", req.body); // Debugging line
+        console.log("Validating request body:", req.body);
         const parsed = schemas.body.safeParse(req.body);
         if (!parsed.success) throw new AppError(parsed.error.message, 400);
         req.body = parsed.data;
@@ -32,7 +32,7 @@ const validate = (schemas: SchemaConfig) =>
 
       next();
     } catch (err) {
-      console.error("Validation error:", err); // Debugging line
+      console.error("Validation error:", err);
       next(err);
     }
   };

@@ -70,3 +70,6 @@ export const submittalUploads=createMulterUploader("/public/submittals",submitta
 
 export const submittalsResDataMap={}
 export const submittalResponseUploads=createMulterUploader("public/submittalResponse",submittalsResDataMap)
+
+export const coDataMap={}
+export const coUploads=createMulterUploader("public/changeOrders",coDataMap)
