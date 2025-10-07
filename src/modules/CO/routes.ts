@@ -7,9 +7,11 @@ import {
   UpdateCoSchema,
   CreateCOTableSchema,
   CreateTableSchema,
+  CoResponseSchema,
 } from "./dtos";
 import z from "zod";
-import { coUploads } from "../../utils/multerUploader.util"; // similar to rfqUploads
+import { coResponseUploads, coUploads } from "../../utils/multerUploader.util"; // similar to rfqUploads
+import { CoResponseController } from "./controllers/coResponse.controller";
 
 const router = Router();
 const coController = new COController();
@@ -117,6 +119,65 @@ router.get(
     params: z.object({ coId: z.string(), fileId: z.string() }),
   }),
   coController.handleViewFile.bind(coController)
+);
+const coResponseController = new CoResponseController();
+
+// ===========================================================
+// CO RESPONSE ROUTES
+// ===========================================================
+
+// CREATE CO RESPONSE
+router.post(
+  "/:coId/responses",
+  authMiddleware,
+  validate({
+    params: z.object({ coId: z.string() }),
+    body: CoResponseSchema,
+  }),
+  coResponseUploads.array("files"),
+  coResponseController.handleCreateCoResponse.bind(coResponseController)
+);
+
+// GET CO RESPONSE BY ID
+router.get(
+  "/responses/:id",
+  authMiddleware,
+  validate({ params: z.object({ id: z.string() }) }),
+  coResponseController.handleGetResponseById.bind(coResponseController)
+);
+
+// GET ALL RESPONSES BY CO ID
+router.get(
+  "/:coId/responses",
+  authMiddleware,
+  validate({ params: z.object({ coId: z.string() }) }),
+  coResponseController.handleGetResponsesByCoId.bind(coResponseController)
+);
+
+// GET a specific file metadata from CO response
+router.get(
+  "/responses/:responseId/files/:fileId",
+  authMiddleware,
+  validate({
+    params: z.object({
+      responseId: z.string(),
+      fileId: z.string(),
+    }),
+  }),
+  coResponseController.handleGetFile.bind(coResponseController)
+);
+
+// STREAM file from CO response
+router.get(
+  "/viewFile/:responseId/files/:fileId",
+  authMiddleware,
+  validate({
+    params: z.object({
+      responseId: z.string(),
+      fileId: z.string(),
+    }),
+  }),
+  coResponseController.handleViewFile.bind(coResponseController)
 );
 
 export default router;
