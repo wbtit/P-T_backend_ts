@@ -404,7 +404,7 @@ model RFQResponse {
   rfq              RFQ           @relation(fields: [rfqId], references: [id])
   user             User         @relation("rfqResponseBy", fields: [userId], references: [id])
 
-  @@map("rfqResponse")
+  @@map("rfqresponse")
   @@index([rfqId])
   @@index([userId])
   @@index([parentResponseId])

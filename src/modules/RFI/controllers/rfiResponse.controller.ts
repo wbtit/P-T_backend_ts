@@ -16,7 +16,7 @@ export class RFIResponseController {
     // map uploaded files (if any)
     const uploadedFiles = mapUploadedFiles(
       (req.files as Express.Multer.File[]) || [],
-      "rfiResponse"
+      "rfiresponse"
     );
 
     const response = await rfiResponseService.create(rfiId, userId, {

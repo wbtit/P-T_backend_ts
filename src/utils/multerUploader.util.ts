@@ -50,26 +50,26 @@ export const rfqDataMap = {};
 export const rfqUploads=createMulterUploader("public/rfq",rfqDataMap)
 
 export const rfqResponseMap={}
-export const rfqResponseUploads=createMulterUploader("public/rfqResponses",rfqResponseMap)
+export const rfqResponseUploads=createMulterUploader("public/rfqresponse",rfqResponseMap)
 
 export const projectDataMap = {};
-export const projectUploads=createMulterUploader("public/projects",projectDataMap);
+export const projectUploads=createMulterUploader("public/project",projectDataMap);
 
 export const estimationDataMap={};
-export const estimationUploads=createMulterUploader("public/estimationManage",estimationDataMap)
+export const estimationUploads=createMulterUploader("public/estimations",estimationDataMap)
 
 export const rfiDataMap={}
 export const rfiUploads= createMulterUploader("public/rfi",rfiDataMap)
 
 export const rfiResponseDataMap={}
-export const rfiResponseUploads=createMulterUploader("public/rfiResponse",rfiResponseDataMap)
+export const rfiResponseUploads=createMulterUploader("public/rfiresponse",rfiResponseDataMap)
 
 export const submittalsDataMap={}
 export const submittalUploads=createMulterUploader("/public/submittals",submittalsDataMap)
 
 
 export const submittalsResDataMap={}
-export const submittalResponseUploads=createMulterUploader("public/submittalResponse",submittalsResDataMap)
+export const submittalResponseUploads=createMulterUploader("public/submittalsresponse",submittalsResDataMap)
 
 export const coDataMap={}
-export const coUploads=createMulterUploader("public/changeOrders",coDataMap)
+export const coUploads=createMulterUploader("public/changeorder",coDataMap)

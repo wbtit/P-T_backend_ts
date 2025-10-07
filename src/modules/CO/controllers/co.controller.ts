@@ -17,7 +17,7 @@ export class COController {
 
     const uploadedFiles = mapUploadedFiles(
       (req.files as Express.Multer.File[]) || [],
-      "co"
+      "changeorder"
     );
 
     const coNum = req.body.changeOrderNumber || ""; // optional, could be auto-generated

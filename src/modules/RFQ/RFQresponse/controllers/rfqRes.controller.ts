@@ -8,7 +8,7 @@ export class RfqResponseController {
     async handleCreate(req: Request, res: Response) {
         const uploadedFiles = mapUploadedFiles(
               (req.files as Express.Multer.File[]) || [],
-              "rfqResponses"
+              "rfqresponse"
             );
         const payload = {
       ...req.body,

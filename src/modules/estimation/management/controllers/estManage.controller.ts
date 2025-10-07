@@ -12,7 +12,7 @@ export class EstManageController{
        const user= req.user
        const uploadedFiles = mapUploadedFiles(
         req.files as Express.Multer.File[] || [],
-        "estimationManage"
+        "estimations"
        )
        if(user?.id){
            const estimation = await estService.create({

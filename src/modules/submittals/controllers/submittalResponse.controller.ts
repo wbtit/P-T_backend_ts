@@ -16,7 +16,7 @@ export class SubmittalResponseController {
     // map uploaded files (if any)
     const uploadedFiles = mapUploadedFiles(
       (req.files as Express.Multer.File[]) || [],
-      "submittalResponse"
+      "submittalsresponse"
     );
 
     const response = await submittalResponseService.createResponse(
