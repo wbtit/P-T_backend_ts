@@ -30,9 +30,9 @@ import { CreateMeetingInput,
         });
     }
 
- async getAttendance(data:MeetingAttendeeInput){
+ async getAttendance(meetingId:string){
     return await prisma.meetingAttendee.findMany({
-  where: { meetingId: data.meetingId },
+  where: { meetingId: meetingId },
   include: { user: true }
 });
  }

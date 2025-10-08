@@ -28,9 +28,9 @@ export class MeetingAttendeeService {
   }
 
   /** ---------------- GET ATTENDANCE LIST ---------------- **/
-  async getAttendance(data: MeetingAttendeeInput) {
-    if (!data.meetingId) throw new AppError("Meeting ID is required", 400);
-    const attendees = await meetingAttendeeRepo.getAttendance(data);
+  async getAttendance(meetingId: string) {
+    if (!meetingId) throw new AppError("Meeting ID is required", 400);
+    const attendees = await meetingAttendeeRepo.getAttendance(meetingId);
     if (!attendees || attendees.length === 0) throw new AppError("No attendees found", 404);
     return attendees;
   }
