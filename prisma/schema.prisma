@@ -931,16 +931,18 @@ model Meeting {
   files       Json         @default("[]")
   status      MeetingStatus            @default(SCHEDULED) // optional
   reminderSent Boolean @default(false)
-
+  createdById String            @db.Uuid
 
   // relation to who created the meeting
-  createdById String            @db.Uuid
+  
   createdBy   User             @relation("MeetingCreatedBy", fields: [createdById], references: [id])
 
   participants MeetingAttendee[]
 
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
+
+  @@map("meetings")
 }
 
 model MeetingAttendee {
@@ -951,7 +953,10 @@ model MeetingAttendee {
   rsvp      RSVPStatus  
   joined    Boolean     @default(false) // true if they actually attended
   role      MeetingRole @default(ATTENDEE) // role in the meeting
-
+ //Relations
   meeting   Meeting  @relation(fields: [meetingId], references: [id], onDelete: Cascade)
   user      User?   @relation("MeetingAttendeeUser", fields: [userId], references: [id])
+
+  @@unique([meetingId, userId])
+  @@map("meeting_attendees")
 }
