@@ -93,5 +93,10 @@ export class DesignDrawingsRepository {
       },
     });
     }
+    async getResponseById(id:string){
+        return await prisma.designDrawingsResponses.findUnique({
+      where: { id },
+        })
+    }
         
 }
