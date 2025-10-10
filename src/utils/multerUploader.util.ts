@@ -76,3 +76,9 @@ export const coUploads=createMulterUploader("public/changeorder",coDataMap)
 
 export const coResponseDataMap={}
 export const coResponseUploads=createMulterUploader("public/coresponse",coResponseDataMap)
+
+export const designDrawingsDataMap={}
+export const designUploads=createMulterUploader("public/designdrawings",designDrawingsDataMap)
+
+export const designDrawingResponseDataMap={}
+export const designResponseUploads=createMulterUploader("public/designdrawingresponse",designDrawingResponseDataMap)
