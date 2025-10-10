@@ -1,7 +1,7 @@
 // cloneWBSAndSubtasks.ts
-import newWBSActivity from "../../../../config/data/newWbsActivityData.js";
-import newSubTasks from "../../../../config/data/newsubtaskdata.js";
-import prisma from "../../../../config/database/client.js";
+import newWBSActivity from "../../../../config/data/newWbsActivityData";
+import newSubTasks from "../../../../config/data/newsubtaskdata";
+import prisma from "../../../../config/database/client";
 import { Stage, Activity } from "@prisma/client";
 
 export async function createWBSAndProjectLineItems(projectId: string, stage: Stage) {
