@@ -9,6 +9,7 @@ import { whRoutes } from "./modules/workingHours";
 import { CommentRoutes } from "./modules/comments";
 import { MileStoneRoutes } from "./modules/milestone";
 import { coRouter } from "./modules/CO";
+import {projectRoutes} from "./modules/project"
 
 const routes = express.Router();
 
@@ -22,5 +23,6 @@ routes.use("/task", taskRouter)
 routes.use("/commnet",CommentRoutes)
 routes.use("/mileStone",MileStoneRoutes)
 routes.use("/changeOrder",coRouter)
+routes.use("/project",projectRoutes)
 
 export default routes

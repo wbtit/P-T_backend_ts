@@ -3,7 +3,7 @@ import { EmployeeServices } from "../service/employee.service";
 import { userRole } from "../../dtos";
 
 export class EmployeeController{
-    empService = new EmployeeServices
+    empService = new EmployeeServices()
     
     async handleCreateEmp(req:Request,res:Response){
         const result = await this.empService.create(req.body);

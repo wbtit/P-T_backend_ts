@@ -24,6 +24,7 @@ import { WBSSchema } from "./WBS";
 
 import { NoteSchema,NoteUpdateSchema } from "./notes";
 import { NotesController } from "./notes";
+import { Project } from "@prisma/client";
 
 
 const router = Router();
