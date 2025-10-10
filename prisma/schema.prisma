@@ -972,6 +972,7 @@ model DesignDrawings{
   files       Json     @default("[]")
   uploadedBy  String   @db.Uuid
   uploadedAt  DateTime @default(now())
+  //Relations
   project     Project  @relation("designdrawingsproject",fields: [projectId], references: [id], onDelete: Cascade)
   user        User    @relation("designdrawingsuser",fields: [uploadedBy], references: [id], onDelete: Cascade)
   responses   DesignDrawingsResponses[] @relation("designDrawingsresponse")
@@ -991,6 +992,7 @@ model DesignDrawingsResponses{
   status           SubResStatus    @default(NOT_APPROVED)
   wbtStatus        State           @default(RECEIVED)
   parentResponseId String?         @db.Uuid
+  //Relations
   parentResponse   DesignDrawingsResponses? @relation("ParentChildResponse", fields: [parentResponseId], references: [id])
   childResponses   DesignDrawingsResponses[] @relation("ParentChildResponse")
   designDrawings   DesignDrawings  @relation("designDrawingsresponse", fields: [designDrawingsId], references: [id], onDelete: Cascade)
