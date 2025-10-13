@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { AuthenticateRequest } from "../../../middleware/authMiddleware";
 import { AppError } from "../../../config/utils/AppError";
 import { MeetingService } from "../services";
+import { sendEmail } from "../../../services/mailServices/mailconfig";
 
 const meetingService = new MeetingService();
 
@@ -15,6 +16,30 @@ export class MeetingController {
     const meeting = await meetingService.create({
       ...req.body,
     }, userId);
+
+    await sendEmail({
+      to: meeting.participants.map(p => p.email).join(","), // <-- safer
+      subject: `📅 Meeting Scheduled: ${meeting.title}`,
+      text: `You have been invited to the meeting "${meeting.title}".\n\nAgenda: ${meeting.agenda}\n\n🕒 Start: ${meeting.startTime}\n🔗 Link: ${meeting.link}`,
+      html: `
+        <h2>📅 New Meeting Scheduled</h2>
+        <p><strong>Title:</strong> ${meeting.title}</p>
+        <p><strong>Agenda:</strong> ${meeting.agenda}</p>
+        <p><strong>Description:</strong> ${meeting.description ?? "N/A"}</p>
+        <p><strong>Start:</strong> ${
+  meeting.startTime
+    ? new Date(meeting.startTime).toLocaleString()
+    : "Not specified"
+}</p>
+<p><strong>End:</strong> ${
+  meeting.endTime
+    ? new Date(meeting.endTime).toLocaleString()
+    : "Not specified"
+}</p>
+
+        <p><a href="${meeting.link}">🔗 Join Meeting</a></p>
+      `
+    });
 
     res.status(201).json({
       message: "Meeting created",
