@@ -18,16 +18,16 @@ import { branchSchema } from "./branches";
 router.post(
     "/",
     authMiddleware,
-    validate({body:CreateFabricatorSchema}),
     fabricatorsUploads.array("files"),
+    validate({body:CreateFabricatorSchema}),
     asyncHandler(fabCtrl.handleCreateFabricator)
 );
 
 router.put(
     "/update/:id",
     authMiddleware,
+    fabricatorsUploads.array("files"),
     validate({params:z.object({id:z.string()}),body:UpdateFabricatorSchema}),
-     fabricatorsUploads.array("files"),
     asyncHandler(fabCtrl.handleUpdateFabricator.bind(fabCtrl))
 )
 

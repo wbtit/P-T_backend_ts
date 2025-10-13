@@ -1,7 +1,7 @@
 import authMiddleware from "../../middleware/authMiddleware";
 import validate from "../../middleware/validate";
 import { createMileStoneSchema,updateMileStoneSchema } from "./dtos";
-import z, { string } from "zod"
+import z from "zod"
 import { MileStoneController } from "./controllers";
 import {Router} from "express"
 

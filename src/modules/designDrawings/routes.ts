@@ -21,8 +21,8 @@ const designController = new DesignDrawingsController();
 router.post(
   "/",
   authMiddleware,
-  validate({ body: CreateDesignDrawingsSchema }),
   designUploads.array("files"),
+  validate({ body: CreateDesignDrawingsSchema }),
   designController.handleCreateDesignDrawing.bind(designController)
 );
 
@@ -30,11 +30,11 @@ router.post(
 router.put(
   "/:id",
   authMiddleware,
+  designUploads.array("files"),
   validate({
     params: z.object({ id: z.string() }),
     body: UpdateDesignDrawingsSchema,
   }),
-  designUploads.array("files"),
   designController.handleUpdateStage.bind(designController)
 );
 
@@ -105,11 +105,11 @@ router.get(
 router.post(
   "/:designId/responses",
   authMiddleware,
+  designResponseUploads.array("files"),
   validate({
     params: z.object({ designId: z.string() }),
     body: CreateDesignDrawingsResponsesSchema,
   }),
-  designResponseUploads.array("files"),
   designController.handleCreateResponse.bind(designController)
 );
 

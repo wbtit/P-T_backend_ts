@@ -23,8 +23,8 @@ const estController = new EstManageController();
 router.post(
   "/estimations",
   authMiddleware,
-  validate({ body: EstimationSchema }),
   estimationUploads.array("files"),
+  validate({ body: EstimationSchema }),
   asyncHandler(estController.handleCreateEstimation.bind(estController))
 );
 
