@@ -3,6 +3,8 @@ import { AuthenticateRequest } from "../../../middleware/authMiddleware";
 import { AppError } from "../../../config/utils/AppError";
 import { RFIService } from "../services";
 import { mapUploadedFiles } from "../../uploads/fileUtil";
+import { sendEmail } from "../../../services/mailServices/mailconfig";
+import { rfihtmlContent } from "../../../services/mailServices/mailtemplates/rfiMailtemplate";
 
 const rfiService = new RFIService();
 
@@ -25,7 +27,7 @@ export class RFIController {
             isAproovedByAdmin=true
     }
 
-    const rfi = await rfiService.createRfi(
+    const newrfi = await rfiService.createRfi(
       {
         ...req.body,
         files: uploadedFiles,
@@ -34,10 +36,22 @@ export class RFIController {
       isAproovedByAdmin
     );
 
+    const email = newrfi.recepients.email; // This might be null
+
+if (!email) {
+  throw new Error("No recipient email provided");
+}
+    await sendEmail({
+      html: rfihtmlContent(newrfi),
+      to: email,
+      subject: newrfi.subject,
+      text: newrfi.description,
+    }); 
+
     res.status(201).json({
       message:"RFI created",
       status: "success",
-      data: rfi,
+      data: newrfi,
     });
   }
 

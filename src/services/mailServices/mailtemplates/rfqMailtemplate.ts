@@ -1,4 +1,4 @@
-const rfqhtmlContent=(newrfq:any)=>{
+export const rfqhtmlContent=(newrfq:any)=>{
     return `<!DOCTYPE html>
           <html lang="en">
           <head>

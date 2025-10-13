@@ -1,4 +1,4 @@
-const rfihtmlContent = (newrfi: any) => {
+export const rfihtmlContent = (newrfi: any) => {
   return `<!DOCTYPE html>
 <html lang="en">
 <head>

@@ -1,4 +1,4 @@
-const submittalhtmlContent =(submitals:any)=>{
+export const submittalhtmlContent =(submitals:any)=>{
     return `<!DOCTYPE html>
 <html lang="en">
 <head>

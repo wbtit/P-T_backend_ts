@@ -3,6 +3,8 @@ import { AuthenticateRequest } from "../../../middleware/authMiddleware";
 import { AppError } from "../../../config/utils/AppError";
 import { SubmittalService } from "../services";
 import { mapUploadedFiles } from "../../uploads/fileUtil";
+import { sendEmail } from "../../../services/mailServices/mailconfig";
+import { submittalhtmlContent } from "../../../services/mailServices/mailtemplates/submittalMailtemplate";
 
 const submittalService = new SubmittalService();
 
@@ -24,16 +26,27 @@ export class SubmittalController {
       isAproovedByAdmin = true;
     }
 
-    const submittal = await submittalService.createSubmittal(
+    const newsubmitals = await submittalService.createSubmittal(
       { ...req.body, files: uploadedFiles },
       userId,
       isAproovedByAdmin
     );
+    const email = newsubmitals.recepients.email; // This might be null
+    
+    if (!email) {
+      throw new Error("No recipient email provided");
+    }
+    sendEmail({
+      to: email,
+      subject: newsubmitals.subject,
+      text: newsubmitals.description,
+      html: submittalhtmlContent(newsubmitals),
+    });
 
     res.status(201).json({
       message: "Submittal created",
       status: "success",
-      data: submittal,
+      data: newsubmitals,
     });
   }
 
