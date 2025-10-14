@@ -7,12 +7,11 @@
     "test": "test"
   },
   "scripts": {
-  "dev": "ts-node-dev --respawn src/server.ts",
-  "run": "ts-node src/server.ts",
-  "build": "tsc",
-  "serve": "node build/server.js"
-}
-,
+    "dev": "ts-node-dev --respawn src/server.ts",
+    "run": "ts-node src/server.ts",
+    "build": "tsc",
+    "serve": "node build/server.js"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/wbtit/P-T_backend_ts.git"
@@ -25,13 +24,17 @@
   },
   "homepage": "https://github.com/wbtit/P-T_backend_ts#readme",
   "dependencies": {
+    "@mongodb-js/zstd": "^2.0.1",
     "@prisma/client": "^6.13.0",
+    "@socket.io/redis-adapter": "^8.3.0",
     "@types/cron": "^2.0.1",
+    "@types/ioredis": "^4.28.10",
     "@types/nodemailer": "^7.0.2",
     "bcrypt": "^6.0.0",
     "bcrypt-ts": "^7.1.0",
     "cors": "^2.8.5",
     "express": "^5.1.0",
+    "ioredis": "^5.8.1",
     "jsonwebtoken": "^9.0.2",
     "mime": "^4.0.7",
     "multer": "^2.0.2",
@@ -39,6 +42,9 @@
     "nodemailer": "^7.0.9",
     "pg": "^8.16.3",
     "prisma": "^6.13.0",
+    "redis": "^5.8.3",
+    "socket.io": "^4.8.1",
+    "socket.io-adapter": "^2.5.5",
     "uuid": "^11.1.0",
     "zod": "^4.0.14"
   },
@@ -48,11 +54,11 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/mime": "^3.0.4",
     "@types/multer": "^2.0.0",
-    "@types/node": "^24.1.0",
+    "@types/node": "^24.7.2",
     "@types/uuid": "^10.0.0",
     "nodemon": "^3.1.10",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
-    "typescript": "^5.8.3"
+    "typescript": "^5.9.3"
   }
 }

@@ -38,15 +38,15 @@ export class RFIController {
 
     const email = newrfi.recepients.email; // This might be null
 
-if (!email) {
-  throw new Error("No recipient email provided");
-}
-    await sendEmail({
-      html: rfihtmlContent(newrfi),
-      to: email,
-      subject: newrfi.subject,
-      text: newrfi.description,
-    }); 
+    if (!email) {
+      throw new Error("No recipient email provided");
+    }
+        await sendEmail({
+          html: rfihtmlContent(newrfi),
+          to: email,
+          subject: newrfi.subject,
+          text: newrfi.description,
+        }); 
 
     res.status(201).json({
       message:"RFI created",
