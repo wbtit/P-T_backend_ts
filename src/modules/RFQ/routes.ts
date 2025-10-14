@@ -27,7 +27,7 @@ router.put(
     authMiddleware,
     validate({params:z.object({id:z.string()}),body:CreateRfqSchema}),
     rfqUploads.array("files"),
-    rfqController.hanleUpdateRfq.bind(rfqController)
+    rfqController.handleUpdateRfq.bind(rfqController)
 );
 
 router.get(

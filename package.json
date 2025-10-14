@@ -7,10 +7,12 @@
     "test": "test"
   },
   "scripts": {
-    "dev": "ts-node-dev --respawn src/server.ts",
-    "build": "tsc",
-    "start": "node build/server.js"
-  },
+  "dev": "ts-node-dev --respawn src/server.ts",
+  "run": "ts-node src/server.ts",
+  "build": "tsc",
+  "serve": "node build/server.js"
+}
+,
   "repository": {
     "type": "git",
     "url": "git+https://github.com/wbtit/P-T_backend_ts.git"
