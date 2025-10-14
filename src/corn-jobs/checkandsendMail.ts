@@ -1,8 +1,8 @@
 import nodeCron from "node-cron";
-import prisma from "../src/config/database/client";
-import sendApprovalReminder from "../src/services/mailServices/approvalMailReminder";
-import sendSubmissionReminder from "../src/services/mailServices/sendSubmissionMailReminder";
-import {sendMeetingReminder} from "../src/services/mailServices/sendMeetingReminder";
+import prisma from "../config/database/client";
+import sendApprovalReminder from "../services/mailServices/approvalMailReminder";
+import sendSubmissionReminder from "../services/mailServices/sendSubmissionMailReminder";
+import {sendMeetingReminder} from "../services/mailServices/sendMeetingReminder";
 
 // ───────────────────────────────
 // Reminder Checker
