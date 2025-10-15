@@ -768,6 +768,7 @@ model Notification {
   userID    String   @db.Uuid
   payload   Json
   delivered Boolean  @default(false)
+  read      Boolean  @default(false)
   user      User    @relation("Notification", fields: [userID], references: [id], onDelete: Cascade)
 
   @@index([userID])
