@@ -249,7 +249,11 @@ model User {
   meetingAttendee      MeetingAttendee[]    @relation("MeetingAttendeeUser")
   designDrawnBy        DesignDrawings[]      @relation("designdrawingsuser")
   designDrwingRespondedBy DesignDrawingsResponses[] @relation("designdrawingsresponseuser")
-
+  groupadmin              Group[]         @relation("groupAdmin")
+  groupmembers            GroupUser[]     @relation("groupMembers")
+  messageReceivedBy         Message[]       @relation("messageReceivedBy")
+  messageSentBy             Message[]        @relation("messageSentBy")
+  taggedUsers               Message[]       @relation("TaggedUsers")
   @@map("user")
   @@index([email])
   @@index([phone])
@@ -999,4 +1003,42 @@ model DesignDrawingsResponses{
   user             User           @relation("designdrawingsresponseuser", fields: [userId], references: [id])
 
   @@map("designdrawingsresponses")
+}
+
+model Group {
+  id        String      @id @default(uuid()) @db.Uuid
+  name      String
+  adminId   String      @db.Uuid
+  createdAt DateTime    @default(now())
+  admin     User       @relation("groupAdmin", fields: [adminId], references: [id])
+  members   GroupUser[] @relation("groupOfUsers")
+  messages  Message[]   @relation("groupMessages")
+
+  @@map("group")
+}
+
+model GroupUser {
+  id       String @id @default(uuid()) @db.Uuid
+  memberId String @db.Uuid
+  groupId  String @db.Uuid
+  group    Group  @relation("groupOfUsers", fields: [groupId], references: [id])
+  members  User  @relation("groupMembers", fields: [memberId], references: [id])
+
+  @@map("groupuser")
+}
+
+model Message {
+  id                String   @id @default(uuid()) @db.Uuid
+  createdAt         DateTime @default(now())
+  senderId          String   @db.Uuid
+  receiverId        String?  @db.Uuid
+  groupId           String?  @db.Uuid
+  contentCompressed Bytes?
+  content           String?
+  groups            Group?   @relation("groupMessages", fields: [groupId], references: [id])
+  receiver          User?   @relation("messageReceivedBy", fields: [receiverId], references: [id])
+  sender            User    @relation("messageSentBy", fields: [senderId], references: [id])
+  taggedUsers       User[]  @relation("TaggedUsers")
+
+  @@map("message")
 }
