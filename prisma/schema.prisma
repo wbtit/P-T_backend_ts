@@ -716,7 +716,7 @@ model Estimation {
   createdBy        User                @relation("CreatedBy", fields: [createdById], references: [id])
   fabricators      Fabricator           @relation("estimationUnderFabricator", fields: [fabricatorId], references: [id])
   rfq              RFQ?                  @relation(fields: [rfqId], references: [id])
-
+  @@index([createdById])
   @@map("estimations")
 }
 
@@ -744,6 +744,8 @@ model EstimationTask {
   comment      Comment[]      @relation("estComment")
 
   @@map("estimation_tasks")
+  @@index([assignedById])
+  @@index([assignedToId])
 }
 
 model EstimationLineItem {
@@ -795,6 +797,9 @@ model RFI {
   rfiresponse   RFIResponse[] @relation("rfiresponse")
 
   @@map("rfi")
+  @@index([recepient_id])
+  @@index([sender_id])
+  @@index([project_id])
 }
 
 model RFIResponse {
@@ -814,6 +819,7 @@ model RFIResponse {
   user             User         @relation("rfiresponseBy", fields: [userId], references: [id])
 
   @@map("rfiresponse")
+  @@index([rfiId])
 }
 
 model Submittals {
@@ -839,6 +845,10 @@ model Submittals {
   submittalsResponse SubmittalsResponse[] @relation("submittalsresponse")
 
   @@map("submittals")
+
+  @@index([recepient_id])
+  @@index([sender_id])
+  @@index([project_id])
 }
 
 
@@ -861,6 +871,7 @@ model SubmittalsResponse {
   user             User                @relation("submittalsRespondedBy", fields: [userId], references: [id])
 
   @@map("submittalsresponse")
+  @@index([submittalsId])
 }
 
 model ChangeOrder {
@@ -888,6 +899,9 @@ model ChangeOrder {
 
 
   @@map("changeorder")
+  @@index([recipients])
+  @@index([sender])
+  @@index([project])
 }
 
 model ChangeOrdertable {
@@ -910,6 +924,7 @@ model ChangeOrdertable {
  
 
   @@map("changeordertable")
+  @@index([CoId])
 }
 
 
@@ -926,7 +941,7 @@ model COResponse {
   parentResponse   COResponse?  @relation("ParentChildResponse", fields: [parentResponseId], references: [id])
   childResponses   COResponse[] @relation("ParentChildResponse")
   user             User        @relation("COrespondedby", fields: [userId], references: [id])
-  
+  @@map("coresponse")
 }
 
 model Meeting {
@@ -952,6 +967,7 @@ model Meeting {
   updatedAt   DateTime          @updatedAt
 
   @@map("meetings")
+  @@index([createdById])
 }
 
 model MeetingAttendee {
@@ -967,6 +983,8 @@ model MeetingAttendee {
   user      User?   @relation("MeetingAttendeeUser", fields: [userId], references: [id])
 
   @@unique([meetingId, userId])
+  @@index([meetingId])
+  @@index([userId])
   @@map("meeting_attendees")
 }
 model DesignDrawings{
@@ -983,6 +1001,8 @@ model DesignDrawings{
   responses   DesignDrawingsResponses[] @relation("designDrawingsresponse")
 
   @@map("designdrawings")
+  @@index([projectId])
+  
 }
 
 model DesignDrawingsResponses{
@@ -1004,6 +1024,7 @@ model DesignDrawingsResponses{
   user             User           @relation("designdrawingsresponseuser", fields: [userId], references: [id])
 
   @@map("designdrawingsresponses")
+  @@index([designDrawingsId])
 }
 
 model Group {
@@ -1026,6 +1047,7 @@ model GroupUser {
   members  User  @relation("groupMembers", fields: [memberId], references: [id])
 
   @@map("groupuser")
+  @@index([memberId])
 }
 
 model Message {
@@ -1042,4 +1064,5 @@ model Message {
   taggedUsers       User[]  @relation("TaggedUsers")
 
   @@map("message")
+  @@index([groupId])
 }
