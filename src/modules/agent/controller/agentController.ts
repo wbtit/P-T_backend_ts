@@ -29,6 +29,9 @@ import { AppError } from "../../../config/utils/AppError";
 
 
 export const agnetQueryController=async(req:AuthenticateRequest,res:Response)=>{
+    const taskService = new TaskService();
+    const projectService = new ProjectService();
+
         const {query} = req.body;
         const user = req.user;
 
@@ -42,16 +45,16 @@ export const agnetQueryController=async(req:AuthenticateRequest,res:Response)=>{
         });
         let data:any
         switch (intent.type) {
-            // case "GET_TASKS_DUE_THIS_WEEK":
-            //   data = await TaskService.getTasksDueThisWeek(user.id);
-            //   break;
+            case "GET_ALL_TASKS":
+              data = await taskService.getAllTasks();
+              break;
 
-            // case "GET_PROJECT_PROGRESS":
-            //   data = await ProjectService.getProjectProgress(intent.projectId);
-            //   break;
+            case "GET_ALL_PROJECTS":
+              data = await projectService.getAll();
+              break;
 
-            // default:
-            //   return res.status(400).json({ message: "Unknown intent type" });
+            default:
+              return res.status(400).json({ message: "Unknown intent type" });
         }
         const summary = await summarizeWithGemini(user.role, data);
         return res.json({message:summary,data});
