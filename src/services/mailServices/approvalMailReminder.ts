@@ -1,5 +1,5 @@
 import {transporter}  from "./transporter";
-import prisma from "../../config/database/client.js";
+import prisma from "../../config/database/client";
 import { approvalReminderTemplate } from "./mailtemplates/approvalMailReminderTemplate";
 import dotenv from "dotenv";
 dotenv.config();

@@ -1,6 +1,6 @@
 import { transporter } from "./transporter";
-import { submissionReminderTemplate } from "./mailtemplates/submissionMailReminderTemplate.js";
-import prisma from "../../config/database/client.js";
+import { submissionReminderTemplate } from "./mailtemplates/submissionMailReminderTemplate";
+import prisma from "../../config/database/client";
 import dotenv from "dotenv";
 dotenv.config();
 

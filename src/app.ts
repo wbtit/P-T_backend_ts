@@ -11,7 +11,7 @@ import { MileStoneRoutes } from "./modules/milestone";
 import { coRouter } from "./modules/CO";
 import {projectRoutes} from "./modules/project"
 import { NotificationRouter } from "./modules/notifications/routes";
-import{agentRoutes} from "./modules/agent/router"
+import {agentRoutes}  from "./modules/agent/router"
 
 const routes = express.Router();
 
