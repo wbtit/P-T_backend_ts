@@ -56,7 +56,7 @@ export const agnetQueryController=async(req:AuthenticateRequest,res:Response)=>{
             default:
               return res.status(400).json({ message: "Unknown intent type" });
         }
-        const summary = await summarizeWithGemini(user.role, data);
+        const summary = await summarizeWithGemini(user.role, data,query);
         return res.json({message:summary,data});
 
 }
