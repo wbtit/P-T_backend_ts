@@ -12,6 +12,8 @@ import { coRouter } from "./modules/CO";
 import {projectRoutes} from "./modules/project"
 import { NotificationRouter } from "./modules/notifications/routes";
 import {agentRoutes}  from "./modules/agent/router"
+import { departmentRoutes } from "./modules/department";
+
 
 const routes = express.Router();
 
@@ -20,6 +22,7 @@ routes.use("/user", userRouter);
 routes.use("/task/workingHours", whRoutes);
 routes.use("/employee",EmployeeRoutes)
 routes.use("/fabricator",fabricatorRoutes)
+routes.use("/department",departmentRoutes)
 routes.use("/team", TeamRoutes)
 routes.use("/task", taskRouter)
 routes.use("/commnet",CommentRoutes)
