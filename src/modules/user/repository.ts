@@ -20,7 +20,7 @@ export const createUser = async (user: createUserInput) => {
   return prisma.user.create({
     data: {
       username: user.username,
-      password: user.password,
+      password: user.password as string,
       email: user.email,
       firstName: user.firstName,
       middleName: user.middleName,
@@ -36,7 +36,7 @@ export const createUser = async (user: createUserInput) => {
       country: user.country,
       address: user.address,
       role: user.role as userRole,
-      departmentId: user.departmentId
+      departmentId: user.departmentId || null, // 👈 Fix
     },
   });
 };

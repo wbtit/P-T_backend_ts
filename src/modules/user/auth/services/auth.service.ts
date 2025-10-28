@@ -17,7 +17,7 @@ export const signup=async(data:SignupInput)=>{
     const exsiting = await findUserByUsername(data.username);
     if(exsiting) throw new AppError('User already exists',409);
 
-    const hashedPassword = await bcrypt.hash(data.password,10);
+    const hashedPassword = await bcrypt.hash(data.password as string,10);
     const user = await createUser({...data,password:hashedPassword})
    
     const token=generateToken(user as UserJwt);

@@ -17,7 +17,7 @@ export type userRole='STAFF'|
 
 export const createUserSchema = z.object({
   username: z.string(),
-  password: z.string().min(6),
+  password: z.string().min(6).optional(),
   email: z.string().nullable().optional(),
   firstName:z.string(),
   middleName:z.string().nullable().optional(),
