@@ -8,7 +8,7 @@ import {
  import prisma from "../../../config/database/client";
 
  export class FabricatorRepository {
-      async create(data: CreateFabricatorInput & {files:any[]}, userId: string) {
+      async create(data: CreateFabricatorInput, userId: string) {
     return prisma.fabricator.create({
       data: {
         ...data,
@@ -21,7 +21,7 @@ import {
     });
   }
 
-  // Get all fabricators
+  // Get all fafiles: z.union([z.array(z.any()), z.null()]).optional(),bricators
   async findAll() {
     return prisma.fabricator.findMany({
       orderBy: { createdAt: "desc" },
