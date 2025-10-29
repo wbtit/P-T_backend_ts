@@ -1066,3 +1066,13 @@ model Message {
   @@map("message")
   @@index([groupId])
 }
+
+model CronLog {
+  id           String   @id @default(uuid())
+  jobName      String
+  startedAt    DateTime @default(now())
+  completedAt  DateTime?
+  status       String   @default("RUNNING") // RUNNING | SUCCESS | FAILED
+  errorMessage String?
+  durationMs   Int?
+}

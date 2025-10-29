@@ -113,16 +113,3 @@ export async function checkAndSendReminders(): Promise<void> {
   console.log("Reminder check completed.");
 }
 
-// ───────────────────────────────
-// CRON SCHEDULER
-// ───────────────────────────────
-// Run every minute to ensure meeting reminders trigger correctly
-nodeCron.schedule(
-  "*/1 * * * *",
-  () => {
-    void checkAndSendReminders();
-  },
-  { timezone: "Asia/Kolkata" }
-);
-
-console.log("Scheduler started for project & meeting reminders.");
