@@ -20,7 +20,7 @@ router.post(
     authMiddleware,
     fabricatorsUploads.array("files"),
     validate({body:CreateFabricatorSchema}),
-    asyncHandler(fabCtrl.handleCreateFabricator)
+    asyncHandler(fabCtrl.handleCreateFabricator.bind(fabCtrl))
 );
 
 router.put(
@@ -31,6 +31,13 @@ router.put(
     asyncHandler(fabCtrl.handleUpdateFabricator.bind(fabCtrl))
 )
 
+
+router.get(
+    "/all",
+    authMiddleware,
+    asyncHandler(fabCtrl.handleGetAllFabricators.bind(fabCtrl))
+)
+
 router.get(
     "/:id",
     authMiddleware,
@@ -38,11 +45,7 @@ router.get(
     asyncHandler(fabCtrl.handleGetFabricatorById.bind(fabCtrl))
 )
 
-router.get(
-    "/all",
-    authMiddleware,
-    asyncHandler(fabCtrl.handleGetAllFabricators.bind(fabCtrl))
-)
+
 router.get(
     "/createdBy/:id",
     authMiddleware,

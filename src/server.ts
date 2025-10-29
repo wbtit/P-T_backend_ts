@@ -13,11 +13,54 @@ import {
 import routes from "./app"
 import healthRouter from './system/health'
 import { globalErrorHandler } from './config/utils/globalErrorhandler';
+
+
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
+import slowDown from "express-slow-down";
+import compression from "compression";
+import cookieParser from "cookie-parser";
+
+
  export const app =express();
 
  app.use(cors())
  app.use(express.json())
  app.use(express.urlencoded({ extended: true })); // for urlencoded
+
+// 🧱 Secure headers
+app.use(helmet());
+
+// ⚙️ Compression for performance
+app.use(compression());
+
+// 🍪 Cookie parsing (if needed later for JWT/session)
+app.use(cookieParser());
+
+// 🚧 Limit request body size (prevents DoS)
+app.use(express.json({ limit: "10kb" }));
+app.use(express.urlencoded({ extended: true, limit: "10kb" }));
+
+// ⚡ Rate limit to prevent brute-force
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 min window
+  max: 200, // limit each IP to 200 requests per window
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: "Too many requests from this IP, please try again later.",
+  },
+});
+app.use("/v1", apiLimiter);
+
+// 🐢 Slow down after many requests (to deter bots)
+const speedLimiter = slowDown({
+  windowMs: 15 * 60 * 1000,
+  delayAfter: 100, // allow 100 requests before slowing down
+  delayMs: 500, // add 500ms per request above delayAfter
+});
+app.use("/v1", speedLimiter);
 
 
 app.use("/health",healthRouter)
