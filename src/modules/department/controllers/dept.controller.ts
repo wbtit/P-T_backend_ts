@@ -1,23 +1,27 @@
 import { AppError} from "../../../config/utils/AppError";
+import { AuthenticateRequest } from "../../../middleware/authMiddleware";
 import { DeptService } from "../services";
 import {Request,Response} from "express"
 
 const deptService = new DeptService();
 
 export class DeptController{
-    async handleCreateDept(req:Request,res:Response){
+    async handleCreateDept(req:AuthenticateRequest,res:Response){
         const data= req.body;
-        
+        const user = req?.user
         const existing = await deptService.findByName(data);
         
         if (existing.dept) {
             throw new AppError("Department already exists", 409);
         }
-        const result = await deptService.create(data);
-        res.status(201).json({
+        if( user){
+            const result = await deptService.create(data,user?.id);
+            res.status(201).json({
             message: "Department created successfully",
             data: result.dept
         });
+        }
+        
     }
     async handleUpdateDept(req:Request,res:Response){
         const data = req.body;

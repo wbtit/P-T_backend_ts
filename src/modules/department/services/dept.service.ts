@@ -5,8 +5,8 @@ import { DeptRepository } from "../repositories";
 const deptRepo = new DeptRepository();
 
 export class DeptService {
-    async create(data: CreateDeptInput) {
-        const dept = await deptRepo.create(data);
+    async create(data: CreateDeptInput,userId:string) {
+        const dept = await deptRepo.create(data,userId);
         return {dept};
     }
 

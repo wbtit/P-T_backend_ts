@@ -8,7 +8,7 @@ import { CreateDeptInput,
  import prisma from "../../../config/database/client";
 
  export class DeptRepository{
-    async create(data: CreateDeptInput) {
+    async create(data: CreateDeptInput,userId:string) {
     const { name, managerIds } = data;
 
     const dept = await prisma.department.create({
@@ -17,6 +17,7 @@ import { CreateDeptInput,
         managerIds: {
           connect: managerIds.map((id) => ({ id })),
         },
+        createdById:userId
       },
     });
     return dept;
