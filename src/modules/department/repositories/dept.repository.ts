@@ -8,20 +8,37 @@ import { CreateDeptInput,
  import prisma from "../../../config/database/client";
 
  export class DeptRepository{
-    async create(data:CreateDeptInput){
-        const dept = await prisma.department.create({
-            data
-        });
-        return dept;
-    }
+    async create(data: CreateDeptInput) {
+    const { name, managerIds } = data;
 
-    async update(data:UpdateDeptInput){
-        const dept = await prisma.department.update({
-            where: { id: data.id },
-            data
-        });
-        return dept;
-    }
+    const dept = await prisma.department.create({
+      data: {
+        name,
+        managerIds: {
+          connect: managerIds.map((id) => ({ id })),
+        },
+      },
+    });
+    return dept;
+  }
+
+  async update(data: UpdateDeptInput) {
+    const { id, name, managerIds } = data;
+
+    const dept = await prisma.department.update({
+      where: { id },
+      data: {
+        name,
+        ...(managerIds && {
+          managerIds: {
+            set: [], // optional: clear old managers first
+            connect: managerIds.map((id) => ({ id })),
+          },
+        }),
+      },
+    });
+    return dept;
+  }
 
     async get(data:GetDeptInput){
         const dept = await prisma.department.findUnique({
@@ -31,7 +48,7 @@ import { CreateDeptInput,
                 projects:true,
                 teams:true,
                 tasks:true,
-                manager:true,
+                managerIds:true,
             }
         });
         return dept;
@@ -48,9 +65,9 @@ import { CreateDeptInput,
         });
         return dept;
     }
-    async findByName(data:FindByNameInput){
+    async findByName(data:string){
         const dept = await prisma.department.findUnique({
-        where: { name: data.name }
+        where: { name: data}
         });
         return dept;
     }

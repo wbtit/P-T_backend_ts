@@ -44,7 +44,7 @@ export class TaskRepository {
         const tasks = await prisma.task.findMany({
             where: {
                 department: {
-                    manager:{
+                    managerIds:{
                         some:{id: departmentManagerId}
                     }
                 }

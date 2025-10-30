@@ -9,7 +9,7 @@ import z from "zod";
 const deptController = new DeptController();
 const router = Router();
 
-router.post("/departments",
+router.post("/",
     authMiddleware,
     validate({ body: createDeptZod }),
     asyncHandler(deptController.handleCreateDept.bind(deptController)));

@@ -270,7 +270,7 @@ model Department {
   isDeleted   Boolean  @default(false) @map("is_bin")
 
   // Relations
-  manager     User[]    @relation("ManagerOfDepartment")
+  managerIds     User[]    @relation("ManagerOfDepartment")
   users       User[]    @relation("UserOfTheDepartment")
   teams       Team[]    @relation("DepartmentOfTeam")
   tasks       Task[]    @relation("TaskBelongsToDepartment")

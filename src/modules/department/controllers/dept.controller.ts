@@ -6,9 +6,11 @@ const deptService = new DeptService();
 
 export class DeptController{
     async handleCreateDept(req:Request,res:Response){
-        const data = req.body;
+        const data= req.body;
+        
         const existing = await deptService.findByName(data);
-        if (existing) {
+        
+        if (existing.dept) {
             throw new AppError("Department already exists", 409);
         }
         const result = await deptService.create(data);

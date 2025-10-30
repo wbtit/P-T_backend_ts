@@ -30,7 +30,7 @@ export class DeptService {
         return {dept};
     }
     async findByName(data: FindByNameInput) {
-        const dept = await deptRepo.findByName(data);
+        const dept = await deptRepo.findByName(data.name);
         return {dept};
     }
 }

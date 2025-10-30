@@ -12,7 +12,7 @@ export class EmployeRepository{
     }
 
     async getAllEmployee(){
-        return await prisma.user.findMany({where:{role:'STAFF'}})
+        return await prisma.user.findMany()
     }
     
 }

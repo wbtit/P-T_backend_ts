@@ -56,9 +56,9 @@ app.use("/v1", apiLimiter);
 
 // 🐢 Slow down after many requests (to deter bots)
 const speedLimiter = slowDown({
-  windowMs: 15 * 60 * 1000,
-  delayAfter: 100, // allow 100 requests before slowing down
-  delayMs: 500, // add 500ms per request above delayAfter
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  delayAfter: 100, // start slowing down after 100 requests
+  delayMs: () => 500, // 500ms delay per request after the limit
 });
 app.use("/v1", speedLimiter);
 
