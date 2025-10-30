@@ -36,8 +36,8 @@ export class DeptController{
         });
     }
     async handleGetDept(req:Request,res:Response){
-        const data = req.body;
-        const existing = await deptService.get(data);
+        const {id} = req.params;
+        const existing = await deptService.get({id});
         if (!existing) {
             throw new AppError("Department not found", 404);
         }

@@ -24,7 +24,7 @@ router.get("/department/:id",
     validate({params:z.object({id:z.string()})}),
     asyncHandler(deptController.handleGetDept.bind(deptController))
 )
-router.get("/departments",
+router.get("/",
     authMiddleware,
     asyncHandler(deptController.handleGetAllDepts.bind(deptController))
 );

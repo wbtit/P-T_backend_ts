@@ -7,6 +7,7 @@ import { CreateDeptInput,
 
  import prisma from "../../../config/database/client";
 
+
  export class DeptRepository{
     async create(data: CreateDeptInput,userId:string) {
     const { name, managerIds } = data;
@@ -49,13 +50,25 @@ import { CreateDeptInput,
                 projects:true,
                 teams:true,
                 tasks:true,
-                managerIds:true,
+                managerIds:{select:{
+                    firstName:true,
+                    middleName:true,
+                    lastName:true
+                }},
             }
         });
         return dept;
     }
     async getAll(){
-        const depts = await prisma.department.findMany();
+        const depts = await prisma.department.findMany(
+            {include:{
+                managerIds:{select:{
+                    firstName:true,
+                    middleName:true,
+                    lastName:true
+                }},
+            }}
+        );
         return depts;
     }
 
