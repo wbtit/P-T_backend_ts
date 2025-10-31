@@ -62,3 +62,10 @@ export const updateUser=async(id:string,user:updateUserInput)=>{
         }
     })
   }
+  export const findUsersByRole= async(role:userRole)=>{
+    return await prisma.user.findMany({
+      where:{
+        role:role
+      }
+    })
+  }

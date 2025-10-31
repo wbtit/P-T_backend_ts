@@ -38,6 +38,14 @@ import {
       }
     });
   }
+  async findByIdHeadquaters(id:string){
+    return await prisma.fabricator.findFirst({
+      where:{
+        id,
+        
+      }
+    })
+  }
 
   //Get by fabName
   async findByName(fabName: string) {

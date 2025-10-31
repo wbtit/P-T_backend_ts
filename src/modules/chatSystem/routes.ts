@@ -26,8 +26,8 @@ router.post(
   authMiddleware,
   validate({
     body: z.object({
-      groupId: z.string().uuid("Invalid group ID"),
-      memberIds: z.array(z.string().uuid("Invalid member ID")).min(1, "At least one member required"),
+      groupId: z.string(),
+      memberIds: z.array(z.string()).min(1, "At least one member required"),
     }),
   }),
   asyncHandler(chatCtrlr.handleAddMembers).bind(chatCtrlr)
@@ -37,11 +37,11 @@ router.post(
 // Get Group Chat History
 // -------------------------------------------------------------
 router.get(
-  "/group/:groupId/history/:lastMessageId?",
+  "/group/:groupId/history/:lastMessageId",
   authMiddleware,
   validate({
     params: z.object({
-      groupId: z.string().uuid("Invalid group ID"),
+      groupId: z.string(),
       lastMessageId: z.string().optional(),
     }),
   }),
@@ -55,7 +55,7 @@ router.get(
   "/private/:userId",
   authMiddleware,
   validate({
-    params: z.object({ userId: z.string().uuid("Invalid user ID") }),
+    params: z.object({ userId: z.string() }),
     query: z.object({ lastMessageId: z.string().optional() }),
   }),
   asyncHandler(chatCtrlr.handlePrivateChatHistory).bind(chatCtrlr)
@@ -78,8 +78,8 @@ router.delete(
   authMiddleware,
   validate({
     params: z.object({
-      groupId: z.string().uuid("Invalid group ID"),
-      memberId: z.string().uuid("Invalid member ID"),
+      groupId: z.string(),
+      memberId: z.string(),
     }),
   }),
   asyncHandler(chatCtrlr.handleDeleteGroupMember).bind(chatCtrlr)
@@ -91,7 +91,7 @@ router.delete(
 router.get(
   "/group/:groupId/members",
   authMiddleware,
-  validate({ params: z.object({ groupId: z.string().uuid("Invalid group ID") }) }),
+  validate({ params: z.object({ groupId: z.string() }) }),
   asyncHandler(chatCtrlr.handleGetGroupMembers).bind(chatCtrlr)
 );
 
@@ -101,7 +101,7 @@ router.get(
 router.delete(
   "/group/:groupId",
   authMiddleware,
-  validate({ params: z.object({ groupId: z.string().uuid("Invalid group ID") }) }),
+  validate({ params: z.object({ groupId: z.string() }) }),
   asyncHandler(chatCtrlr.handleDeleteGroup).bind(chatCtrlr)
 );
 

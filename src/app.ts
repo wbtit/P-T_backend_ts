@@ -13,6 +13,7 @@ import {projectRoutes} from "./modules/project"
 import { NotificationRouter } from "./modules/notifications/routes";
 import {agentRoutes}  from "./modules/agent/router"
 import { departmentRoutes } from "./modules/department";
+import { chatRoutes } from "./modules/chatSystem";
 
 
 const routes = express.Router();
@@ -31,5 +32,6 @@ routes.use("/changeOrder",coRouter)
 routes.use("/project",projectRoutes)
 routes.use("/notifications",NotificationRouter)
 routes.use("/agent",agentRoutes)
+routes.use("/chat",chatRoutes)
 
 export default routes

@@ -5,7 +5,7 @@ import { CreateFabricatorInput } from "../dtos";
 import { FabricatorRepository } from "../repositories";
 import { streamFile } from "../../../utils/fileUtil";
 import { Response } from "express";
-
+import fs from "fs"
 
 const fabRepo = new FabricatorRepository();
 
@@ -54,18 +54,45 @@ export class FabricatorService {
 
         return fileObject;
     }
-    async viewFile(fabricatorId: string, fileId: string,res:Response) {
-        const fabricator = await fabRepo.findById({ id: fabricatorId });
-        if (!fabricator) throw new AppError('Fabricator not found', 404);
+    async viewFile(fabricatorId: string, fileId: string, res: Response) {
+  console.log("📥 [viewFile] Called with:", { fabricatorId, fileId });
 
-        const files = fabricator.files as unknown as FileObject[];
-        const fileObject = files.find((file: FileObject) => file.id === fileId);
-        if (!fileObject) throw new AppError("File not found", 404);
-        
-        const __dirname=path.resolve();
-        const filePath = path.join(__dirname, fileObject.filename);
-        return streamFile(res, filePath, fileObject.originalName);
+  const fabricator = await fabRepo.findById({ id: fabricatorId });
+  if (!fabricator) {
+    console.error("❌ [viewFile] Fabricator not found:", fabricatorId);
+    throw new AppError("Fabricator not found", 404);
+  }
 
-        
-    }
+  const files = fabricator.files as unknown as FileObject[];
+  console.log("📂 [viewFile] Available files:", files.map(f => ({
+    id: f.id,
+    path: f.path,
+    filename: f.filename,
+    originalName: f.originalName,
+  })));
+
+  // ✅ Fix here: remove .jpg extension from lookup, only compare the UUID part
+  const cleanFileId = fileId.replace(/\.[^/.]+$/, "");
+  const fileObject = files.find((file: FileObject) => file.id === cleanFileId);
+
+  if (!fileObject) {
+    console.warn("⚠️ [viewFile] File not found in fabricator.files", {
+      fileId,
+      availableFileIds: files.map(f => f.id),
+    });
+    throw new AppError("File not found", 404);
+  }
+
+  const __dirname = path.resolve();
+  const filePath = path.join(__dirname, fileObject.path); // ✅ use path, not filename
+  console.log("📁 [viewFile] Resolved file path:", filePath);
+
+  if (!fs.existsSync(filePath)) {
+    console.error("🚨 [viewFile] File does not exist on disk:", filePath);
+    throw new AppError("File not found on server", 404);
+  }
+
+  return streamFile(res, filePath, fileObject.originalName);
+}
+
 }

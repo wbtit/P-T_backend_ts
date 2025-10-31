@@ -21,4 +21,9 @@ export class BranchRepository{
             }
         })
     }
+    async finndByFabricatorId(fabricatorId:string){
+        return await prisma.branch.findFirst({where:{
+            fabricatorId:fabricatorId,
+        }})
+    }
 }
