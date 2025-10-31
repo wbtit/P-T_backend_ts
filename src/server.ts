@@ -21,10 +21,30 @@ import slowDown from "express-slow-down";
 import compression from "compression";
 import cookieParser from "cookie-parser";
 
+import {Server} from "socket.io"
+import { createServer } from 'http';
+import { initSocket } from './sockets/socket';
+
 
  export const app =express();
 
- app.use(cors())
+ const server = createServer(app)
+const io=new Server(server,{
+  cors:{
+    origin:"*"
+  },
+});
+
+(globalThis as any).io = io;
+
+initSocket(io)
+
+app.use(
+  cors({
+    origin: "*",
+    credentials: true,
+  })
+);
  app.use(express.json())
  app.use(express.urlencoded({ extended: true })); // for urlencoded
 
@@ -95,6 +115,6 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
 
 
  const PORT=process.env.PORT || 3000
- app.listen(PORT,()=>{
+ server.listen(PORT,()=>{
     console.log(`server running http://localhost:${PORT}`)
  })
