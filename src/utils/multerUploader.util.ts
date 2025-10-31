@@ -1,9 +1,7 @@
-// src/utils/multer.ts
 import multer, { StorageEngine } from "multer";
 import { v4 as uuidv4 } from "uuid";
 import path from "path";
 import fs from "fs";
-import { fileTypeFromBuffer } from "file-type";
 import { Request } from "express";
 
 export interface FileMeta {
@@ -13,7 +11,7 @@ export interface FileMeta {
 }
 
 // -----------------------------------------------------------------------------
-// Civil-engineering safe lists
+// Safe lists
 // -----------------------------------------------------------------------------
 const SAFE_EXTENSIONS = [
   ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx",
@@ -32,7 +30,7 @@ const BLOCKED_EXTENSIONS = [
 ];
 
 const SAFE_MIME_TYPES = [
-  "image/jpeg", "image/png", "image/webp", "image/tiff",
+  "image/jpeg", "image/png", "image/webp", "image/tiff","application/zip",
   "application/pdf", "application/msword",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   "application/vnd.ms-excel",
@@ -41,46 +39,51 @@ const SAFE_MIME_TYPES = [
   "application/vnd.openxmlformats-officedocument.presentationml.presentation",
   "text/plain", "text/csv", "text/rtf",
   "application/json", "application/geo+json",
-  "application/octet-stream", "application/zip"
+  "application/octet-stream", ""
 ];
 
 // -----------------------------------------------------------------------------
-// Validation helper
+// Validation helper (safe for array uploads)
 // -----------------------------------------------------------------------------
-async function validateFile(req: Request, file: Express.Multer.File, cb: Function) {
+function validateFile(req: Request, file: Express.Multer.File, cb: Function) {
   try {
+    console.log(`🧩 Validating file: ${file.originalname}`);
     const ext = path.extname(file.originalname).toLowerCase();
+    const mime = file.mimetype;
+    console.log(`➡️  Extension: ${ext}, MIME (reported): ${mime}`);
 
-    if (!ext) return cb(new Error("Missing file extension"));
-    if (BLOCKED_EXTENSIONS.includes(ext)) return cb(new Error("Blocked file type"));
-    if (!SAFE_EXTENSIONS.includes(ext))
+    if (!ext) {
+      console.log("❌ Missing file extension");
+      return cb(new Error("Missing file extension"));
+    }
+
+    if (BLOCKED_EXTENSIONS.includes(ext)) {
+      console.log(`🚫 Blocked extension detected: ${ext}`);
+      return cb(new Error("Blocked file type"));
+    }
+
+    if (!SAFE_EXTENSIONS.includes(ext)) {
+      console.log(`❌ Not in SAFE_EXTENSIONS: ${ext}`);
       return cb(new Error("File type not allowed (extension check failed)"));
+    }
 
-    const chunks: Buffer[] = [];
-    for await (const chunk of file.stream) {
-      chunks.push(chunk as Buffer);
-      if (Buffer.concat(chunks).length > 4100) break; // read small sample
+    if (!SAFE_MIME_TYPES.includes(mime)) {
+      console.log(`❌ Not in SAFE_MIME_TYPES: ${mime}`);
+      return cb(new Error("File type not allowed (MIME check failed)"));
     }
-    const buffer = Buffer.concat(chunks);
-    if (buffer.length > 0) {
-      const fileType = await fileTypeFromBuffer(buffer);
-      if (fileType && !SAFE_MIME_TYPES.includes(fileType.mime)) {
-        return cb(new Error(`Unsafe or unrecognized MIME type: ${fileType.mime}`));
-      }
-    }
+
+    console.log("✅ File passed validation");
     cb(null, true);
-  } catch {
+  } catch (err) {
+    console.error("💥 File validation error:", err);
     cb(new Error("File validation failed"));
   }
 }
 
 // -----------------------------------------------------------------------------
-// Multer factory with validation
+// Multer factory
 // -----------------------------------------------------------------------------
-export function createMulterUploader(
-  uploadDir: string,
-  fileMap: Record<string, FileMeta>
-) {
+export function createMulterUploader(uploadDir: string, fileMap: Record<string, FileMeta>) {
   if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
 
   const storage: StorageEngine = multer.diskStorage({
@@ -100,7 +103,7 @@ export function createMulterUploader(
 
   return multer({
     storage,
-    limits: { fileSize: 3000 * 1024 * 1024 }, // 200 MB for CAD/BIM
+    limits: { fileSize: 3000 * 1024 * 1024 }, // 3GB
     fileFilter: (req, file, cb) => validateFile(req, file, cb),
   });
 }

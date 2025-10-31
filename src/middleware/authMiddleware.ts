@@ -16,7 +16,6 @@ const authMiddleware = (
 ) => {
   const authHeader = req.headers['authorization'];
 
-  // Check if header is missing or doesn't start with "Bearer "
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     throw new AppError('Authorization header must be provided in Bearer format', 401);
   }
@@ -25,11 +24,13 @@ const authMiddleware = (
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as UserJwt;
-    
     req.user = decoded;
     next();
-  } catch (err) {
-    throw new AppError('Invalid or expired token', 401);
+  } catch (err: any) {
+    if (err.name === 'TokenExpiredError') {
+      throw new AppError('Token expired. Please log in again.', 401);
+    }
+    throw new AppError('Invalid token', 401);
   }
 };
 

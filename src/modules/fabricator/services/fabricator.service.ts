@@ -61,6 +61,7 @@ export class FabricatorService {
         const files = fabricator.files as unknown as FileObject[];
         const fileObject = files.find((file: FileObject) => file.id === fileId);
         if (!fileObject) throw new AppError("File not found", 404);
+        
         const __dirname=path.resolve();
         const filePath = path.join(__dirname, fileObject.filename);
         return streamFile(res, filePath, fileObject.originalName);
