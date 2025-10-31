@@ -10,10 +10,7 @@ constructor() {
 }
 
 async createBranch(req: Request, res: Response) {
-    const existingBranch = await this.branchService.findBranchByName(req.body.name);
-   if (!existingBranch) {
-       throw new AppError("Branch with this name already exists", 400);
-   }
+    console.log("The req body of the create branch",req.body.name)
    const branch = await this.branchService.createBranch(req.body);
    return res.status(201).json({
     message:"Branch created successfully",
