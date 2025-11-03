@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+
+
 export const createInvoiceItemSchema = z.object({
   description: z.string().min(1, "Description is required"),
   sacCode: z.string().optional(),
@@ -10,8 +12,8 @@ export const createInvoiceItemSchema = z.object({
 });
 
 export const updateInvoiceItemSchema = createInvoiceItemSchema.partial();
-export type createInvoceData= z.infer<typeof createInvoiceItemSchema>
-export type updateInvoiceData = z.infer<typeof updateInvoiceItemSchema>
+export type createInvoiceItemSchemaData =z.infer<typeof createInvoiceItemSchema>
+export type updateInvoiceItemSchema = z.infer<typeof updateInvoiceItemSchema>
 
 
 export const createAccountInfoSchema = z.object({
@@ -27,5 +29,42 @@ export const createAccountInfoSchema = z.object({
 export const updateAccountInfoSchema = createAccountInfoSchema.partial();
 export type createAccountInfoSchemaData =z.infer<typeof createAccountInfoSchema>
 export type updateAccountInfoSchemaData = z.infer<typeof updateAccountInfoSchema>
+
+
+
+
+export const createInvoiceSchema = z.object({
+  projectId: z.string(),
+  fabricatorId: z.string(),
+  clientId: z.string().optional(),
+  customerName: z.string().min(1),
+  contactName: z.string().optional(),
+  address: z.string().optional(),
+  stateCode: z.string().optional(),
+  GSTIN: z.string().optional(),
+  invoiceNumber: z.string().min(1),
+  invoiceDate: z.string().optional(),
+  dateOfSupply: z.string().optional(),
+  placeOfSupply: z.string().optional(),
+  jobName: z.string().min(1),
+  signature: z.any().optional(),
+  currencyType: z.string().default("USD"),
+  totalInvoiceValue: z.number().default(0),
+  totalInvoiceValueInWords: z.string().optional(),
+  paymentStatus: z.boolean().optional(),
+invoiceItems: z.array(createInvoiceItemSchema).optional(),
+  accountInfo: z.array(createAccountInfoSchema).optional(),
+});
+
+export const updateInvoiceSchema = createInvoiceSchema.partial();
+export type createInvoceData= z.infer<typeof createInvoiceSchema>
+export type updateInvoiceData = z.infer<typeof updateInvoiceSchema>
+
+
+
+
+
+
+
 
 
