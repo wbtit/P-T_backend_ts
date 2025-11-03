@@ -1116,7 +1116,7 @@ model Invoice {
 
 model InvoiceItem {
   id             String   @id @default(uuid()) @db.Uuid
-  invoiceId      String   @db.Uuid
+  invoiceId      String?   @db.Uuid
   description    String
   sacCode        String?
   unit           Int?
@@ -1126,7 +1126,7 @@ model InvoiceItem {
   createdAt      DateTime @default(now())
 
   // 🔗 Relation
-  invoice        Invoice  @relation(fields: [invoiceId], references: [id])
+  invoice        Invoice?  @relation(fields: [invoiceId], references: [id])
 }
 
 model AccountInfo {
