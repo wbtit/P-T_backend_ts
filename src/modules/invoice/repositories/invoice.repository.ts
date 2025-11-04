@@ -52,7 +52,7 @@ export class Invoicerepository{
       include: { invoiceItems: true, accountInfo: true,pointOfContact:true },
     });
     }
-//why the data is throwing the warning in the prisma update
+
     async delete(id:string){
         return await prisma.invoice.delete({
             where:{id}

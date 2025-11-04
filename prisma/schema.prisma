@@ -256,6 +256,8 @@ model User {
   taggedUsers               Message[]       @relation("TaggedUsers")
   invoicePointOfContact     Invoice[]       @relation("invoicePointOfContact")
   invoiceCreatedBy          Invoice[]       @relation("invoiceCreatedBy")
+  FabricatorPointOfContacts Fabricator[]    @relation("FabricatorPointOfContacts")
+  
   @@map("user")
   @@index([email])
   @@index([phone])
@@ -302,6 +304,8 @@ model Fabricator {
   rfi         RFI[]        @relation("FabricatorRFI")
   submittals  Submittals[] @relation("FabricatorSubmittals")
   fabricatorInvoice   Invoice[]  @relation("fabricatorInvoice")
+  pointOfContact User[]      @relation("FabricatorPointOfContacts")
+
 
   @@map("fabricators")
   @@index([createdById])

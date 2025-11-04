@@ -9,11 +9,17 @@ export const findUserByUsername = async (username: string) => {
 };
 
 export const findUserById=async(id:string)=>{
-    return prisma.user.findUnique({where:{id}});
+    return prisma.user.findUnique({where:{
+      id},include:{
+        FabricatorPointOfContacts:true
+      }});
 }
   
 export const  findAllUsers=async()=>{
-  return await prisma.user.findMany();
+  return await prisma.user.findMany({include:{
+    FabricatorPointOfContacts:true
+  
+  }});
 }
 
 export const createUser = async (user: createUserInput) => {
@@ -37,12 +43,15 @@ export const createUser = async (user: createUserInput) => {
       address: user.address,
       role: user.role as userRole,
       departmentId: user.departmentId || null, // 👈 Fix
+      ...(user.fabricatorId
+        ? { FabricatorPointOfContacts: { connect: { id: user.fabricatorId } } }
+        : {}),
     },
   });
 };
 
 export const updateUser=async(id:string,user:updateUserInput)=>{
-    const safeData =cleandata(user);
+    const safeData =cleandata(user); FabricatorPointOfContacts:true
 
     return prisma.user.update({
         where:{id},
@@ -66,6 +75,8 @@ export const updateUser=async(id:string,user:updateUserInput)=>{
     return await prisma.user.findMany({
       where:{
         role:role
+      },include:{
+        FabricatorPointOfContacts:true
       }
     })
   }

@@ -16,7 +16,8 @@ import {
       },
     include:{
       branches:true,
-      project:true
+      project:true,
+      pointOfContact:true
     }
     });
   }
@@ -25,6 +26,11 @@ import {
   async findAll() {
     return prisma.fabricator.findMany({
       orderBy: { createdAt: "desc" },
+       include:{
+      branches:true,
+      project:true,
+      pointOfContact:true
+    }
     });
   }
 
@@ -34,7 +40,8 @@ import {
       where: { id: input.id },
       include:{
         branches:true,
-        project:true
+        project:true,
+        pointOfContact:true
       }
     });
   }
@@ -53,7 +60,8 @@ import {
       where: { fabName },
       include:{
         branches:true,
-        project:true
+        project:true,
+        pointOfContact:true
       }
     });
   }
@@ -63,7 +71,8 @@ import {
       where: { createdById: createdById.id },
       include:{
         branches:true,
-        project:true
+        project:true,
+        pointOfContact:true
       }
     });
   }
@@ -80,7 +89,8 @@ import {
       },
       include:{
         branches:true,
-        project:true
+        project:true,
+        pointOfContact:true
       }
     });
   }

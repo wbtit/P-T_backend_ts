@@ -33,7 +33,8 @@ export const createUserSchema = z.object({
   country: z.string().nullable().optional(),
   address: z.string().nullable().optional(),
   role: z.string(),
-  departmentId: z.string().nullable().optional()
+  departmentId: z.string().nullable().optional(),
+  fabricatorId:z.string().optional()
 });
 
 export const UpdateUserSchema=createUserSchema.partial()

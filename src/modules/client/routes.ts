@@ -78,4 +78,14 @@ router.get(
   asyncHandler(clientCtrlr.handleGetClientById.bind(clientCtrlr))
 );
 
+router.get(
+  "/byFabricator/:fabricatorId",
+  authMiddleware,
+  validate({
+    params: z.object({
+      fabricatorId: z.string(),
+    }),
+  }),
+  asyncHandler(clientCtrlr.handleGetClientByFabricatorId.bind(clientCtrlr))
+);
 export default router;

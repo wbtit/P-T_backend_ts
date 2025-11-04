@@ -108,4 +108,23 @@ export class ClientController {
             data: client,
         });
     }
+    async handleGetClientByFabricatorId(req: Request, res: Response) {
+        const { fabricatorId } = req.params;
+
+        if (!fabricatorId) {
+            throw new AppError("fabricator ID is missing", 400);
+        }
+
+        const client = await clientService.getAllClinetByFabricatorId(fabricatorId);
+
+        if (!client) {
+            throw new AppError("Client not found", 404);
+        }
+
+        return res.status(200).json({
+            message: "Client fetched successfully",
+            success: true,
+            data: client,
+        });
+    }
 }
