@@ -36,7 +36,12 @@ import {
                 include:{
                     department:true,
                     members:true,
-                    project:true
+                    project:true,
+                    manager:{
+                        select:{
+                            id:true,firstName:true,lastName:true,middleName:true,email:true,phone:true
+                        }
+                    }
                 }
             });
             return team;
@@ -47,7 +52,12 @@ import {
                 include:{
                     department:true,
                     members:true,
-                    project:true
+                    project:true,
+                    manager:{
+                        select:{
+                            id:true,firstName:true,lastName:true,middleName:true,email:true,phone:true
+                        }
+                    }
                 }
             });
             return teams;
@@ -73,7 +83,12 @@ import {
                 include:{
                     department:true,
                     members:true,
-                    project:true
+                    project:true,
+                    manager:{
+                        select:{
+                            id:true,firstName:true,lastName:true,middleName:true,email:true,phone:true
+                        }
+                    }
                 }
             });
             return team;
