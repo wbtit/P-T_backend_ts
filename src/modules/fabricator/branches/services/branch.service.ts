@@ -1,5 +1,5 @@
 import { BranchRepository } from "../repositories";
-import { CreateBranchInput, DeleteBranchInput } from "../dtos";
+import { CreateBranchInput, DeleteBranchInput, UpdateBranchInput } from "../dtos";
 
 export class BranchService {
     private branchRepository: BranchRepository;
@@ -10,6 +10,10 @@ export class BranchService {
 
     async createBranch(input: CreateBranchInput) {
         return await this.branchRepository.createBranch(input);
+    }
+
+    async updateBranch(input: UpdateBranchInput & {id:string}) {
+        return await this.branchRepository.updateBranch(input);
     }
 
     async deleteBranch(input: DeleteBranchInput) {

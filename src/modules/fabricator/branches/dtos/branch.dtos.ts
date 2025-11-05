@@ -12,6 +12,8 @@ export const branchSchema = z.object({
   email: z.string().max(150).optional(),
   isHeadquarters: z.boolean().default(false),
 });
+export const updateBranchSchema = branchSchema.partial()
 
 export type CreateBranchInput = z.infer<typeof branchSchema>;
+export type UpdateBranchInput = z.infer<typeof updateBranchSchema> & {id:string};
 export type DeleteBranchInput={id:string}

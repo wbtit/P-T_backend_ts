@@ -1,9 +1,17 @@
 import prisma from "../../../../config/database/client";
-import { CreateBranchInput,DeleteBranchInput } from "../dtos";
+import { CreateBranchInput,DeleteBranchInput,UpdateBranchInput } from "../dtos";
 
 export class BranchRepository{
     async createBranch(input:CreateBranchInput){
         return await prisma.branch.create({
+            data:input
+        })
+    }
+    async updateBranch(input:UpdateBranchInput & {id:string}){
+        return await prisma.branch.update({
+            where:{
+                id:input.id
+            },
             data:input
         })
     }

@@ -54,6 +54,7 @@ export class FabricatorService {
 
         return fileObject;
     }
+    
     async viewFile(fabricatorId: string, fileId: string, res: Response) {
   console.log("📥 [viewFile] Called with:", { fabricatorId, fileId });
 

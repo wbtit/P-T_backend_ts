@@ -17,6 +17,14 @@ async createBranch(req: Request, res: Response) {
     data: branch
    });
 }
+async updateBranch(req: Request, res: Response) {
+    const { id } = req.params;
+    const updatedBranch = await this.branchService.updateBranch({ ...req.body, id });
+    return res.status(200).json({
+        message:"Branch updated successfully",
+       data: updatedBranch
+      });
+}
 
 async deleteBranch(req: Request, res: Response) {
      const existingBranch = await this.branchService.findBranchByName(req.body.name);

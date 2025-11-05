@@ -76,7 +76,12 @@ router.post(
     validate({body:branchSchema}),
     asyncHandler(branchCtrl.createBranch.bind(branchCtrl))
 )
-
+router.put(
+    "/branch/:id",
+    authMiddleware,
+    validate({params:z.object({id:z.string()}),body:branchSchema}),
+    asyncHandler(branchCtrl.updateBranch.bind(branchCtrl))
+)
 router.delete(
     "/branch/:id",
     authMiddleware,
