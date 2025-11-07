@@ -121,4 +121,9 @@ export class FabricatorController {
     // here we stream/send file directly so no wrapping in {message,success}
     await this.fabService.viewFile(fabricatorId, fileId, res);
   }
+  async handleDeleteFile(req: Request, res: Response) {
+    const { fabricatorId, fileId } = req.params;
+    await this.fabService.deleteFile(fabricatorId, fileId);
+    return res.status(204).send();
+}
 }

@@ -1,7 +1,7 @@
 import path from "path";
 import { AppError } from "../../../config/utils/AppError";
 import { FileObject } from "../../../shared/fileType";
-import { CreateFabricatorInput } from "../dtos";
+import { CreateFabricatorInput, UpdateFabricatorInput } from "../dtos";
 import { FabricatorRepository } from "../repositories";
 import { streamFile } from "../../../utils/fileUtil";
 import { Response } from "express";
@@ -30,11 +30,16 @@ export class FabricatorService {
     async getFabricatorByCreatedById(createdById: string) {
         return fabRepo.findByCreatedById({id: createdById});
     }
-    async updateFabricator(id: string, data: CreateFabricatorInput) {
+    async updateFabricator(id: string, data: UpdateFabricatorInput & { files?: FileObject[] }) {
         const existing = await fabRepo.findById({id});
         if(!existing) throw new AppError('Fabricator not found', 404);
 
-        const fabricator = await fabRepo.update({id}, {...data,files:data.files??[]});
+        const existingFiles = (existing.files as unknown as FileObject[]) ?? [];
+        const newFiles = (data.files as unknown as FileObject[]) ?? [];
+
+        const fabricator = await fabRepo.update({id}, {
+            ...data, files: [...existingFiles, ...newFiles]
+        });
         return fabricator;
     }
     async deleteFabricator(id: string) {
@@ -95,5 +100,14 @@ export class FabricatorService {
 
   return streamFile(res, filePath, fileObject.originalName);
 }
+ //Delete file
+ async deleteFile(fabricatorId: string, fileId: string) {
+    const fabricator = await fabRepo.findById({ id: fabricatorId });
+    if (!fabricator) throw new Error("Fabricator not found");
 
+    const files = fabricator.files as unknown as { id: string }[];
+    const updatedFiles = files.filter((file) => file.id !== fileId);
+
+    return fabRepo.update({ id: fabricatorId }, { files: updatedFiles });
+  }
 }

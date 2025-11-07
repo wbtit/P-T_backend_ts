@@ -22,7 +22,9 @@ import {
     });
   }
 
-  // Get all fafiles: z.union([z.array(z.any()), z.null()]).optional(),bricators
+
+
+  // Get all fabricators
   async findAll() {
     return prisma.fabricator.findMany({
       orderBy: { createdAt: "desc" },

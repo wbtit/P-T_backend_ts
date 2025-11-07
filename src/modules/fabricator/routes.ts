@@ -76,6 +76,12 @@ router.post(
     validate({body:branchSchema}),
     asyncHandler(branchCtrl.createBranch.bind(branchCtrl))
 )
+router.delete(
+    "/files/:fabricatorId/:fileId",
+    authMiddleware,
+    validate({params:z.object({fabricatorId:z.string(),fileId:z.string()})}),
+    asyncHandler(fabCtrl.handleDeleteFile.bind(fabCtrl))
+)
 router.put(
     "/branch/:id",
     authMiddleware,
@@ -88,5 +94,6 @@ router.delete(
     validate({params:z.object({id:z.string()})}),
     asyncHandler(branchCtrl.deleteBranch.bind(branchCtrl))
 )
+
 
 export default router;
