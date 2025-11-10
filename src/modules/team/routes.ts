@@ -17,7 +17,7 @@ router.post("/",
     
 router.post("/addMembers/:role",
     authMiddleware,
-    validate({params:z.object({role:TeamMemberRole})}),
+    validate({params:z.object({role:z.string()})}),
     teamController.addTeamMembers.bind(teamController));
 
 router.get("/:id", 

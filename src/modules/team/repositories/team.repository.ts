@@ -35,7 +35,15 @@ import {
                 },
                 include:{
                     department:true,
-                    members:true,
+                    members:{
+                        include:{
+                            member:{
+                                select:{
+                                    id:true,firstName:true,lastName:true,middleName:true,email:true,phone:true,username:true
+                                }
+                            }
+                        },
+                    },
                     project:true,
                     manager:{
                         select:{

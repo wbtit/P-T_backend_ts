@@ -294,6 +294,7 @@ model Fabricator {
   updatedAt    DateTime    @updatedAt
   files        Json?        @default("[]")
   isDeleted    Boolean     @default(false) @map("is_bin")
+  currencyType String     @default("")
 
   // Relations      
   branches     Branch[]    @relation("FabricatorBranches")

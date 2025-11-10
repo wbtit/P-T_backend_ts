@@ -22,7 +22,8 @@ export class TeamController {
     async addTeamMembers(req: Request, res: Response) {
     const role = req.params.role as TeamMemberRole; // cast
     // better: validate with Zod if needed
-
+        console.log("Role in controller:", role);
+        console.log("Request body:", req.body);
     const result = await teamService.addTeamMembers(req.body, role);
     return res.status(200).json({
         message: "Team members added successfully",
