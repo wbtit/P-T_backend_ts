@@ -1,0 +1,22 @@
+# Docker-specific files
+Dockerfile
+docker-compose.yml
+Infra/
+
+# Git history
+.git
+.gitignore
+
+# Dependencies are installed in the container
+node_modules
+
+# Build artifacts are created in the container
+build/
+
+# Logs and runtime data
+*.log
+npm-debug.log*
+
+# Environment variables should not be in the image
+.env
+.env.*

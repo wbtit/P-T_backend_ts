@@ -45,9 +45,9 @@ export const initSocket = async (
   console.log("🚀 Initializing Socket.IO with Redis adapter...");
 
   // ✅ Redis Pub/Sub adapter for scaling
-  const pubClient = createClient({ url: "redis://127.0.0.1:6379" });
+  const pubClient = createClient({ url: process.env.REDIS_URL || "redis://127.0.0.1:6379" });
   const subClient = pubClient.duplicate();
-  const redis = createClient({ url: "redis://127.0.0.1:6379" });
+  const redis = createClient({ url: process.env.REDIS_URL || "redis://127.0.0.1:6379" });
   
 // ✅ Prevent "missing error handler" crashes
 for (const client of [pubClient, subClient, redis]) {
