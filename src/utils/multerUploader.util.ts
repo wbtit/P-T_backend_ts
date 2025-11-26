@@ -149,3 +149,7 @@ export const designUploads = createMulterUploader("public/designdrawings", desig
 
 export const designDrawingResponseDataMap = {};
 export const designResponseUploads = createMulterUploader("public/designdrawingresponse", designDrawingResponseDataMap);
+
+export const connectionDesignerDataMap={}
+export const connectionDesignerUploads = createMulterUploader("public/connectiondesigners", connectionDesignerDataMap);
+
