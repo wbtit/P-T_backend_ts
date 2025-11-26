@@ -17,13 +17,13 @@ const rfqResponseController = new RfqResponseController();
 router.post(
     "/",
     authMiddleware,
-    validate({body: CreateRfqSchema}),
     rfqUploads.array("files"),
+    validate({body: CreateRfqSchema}),
     rfqController.handleCreateRfq.bind(rfqController)
 );
 
 router.put(
-    "/:id",
+    "/update/:id",
     authMiddleware,
     validate({params:z.object({id:z.string()}),body:CreateRfqSchema}),
     rfqUploads.array("files"),
@@ -31,7 +31,7 @@ router.put(
 );
 
 router.get(
-    "/:id",
+    "/getById/:id",
     authMiddleware,
     validate({params:z.object({id:z.string()})}),
     rfqController.handleGetRfqById.bind(rfqController)

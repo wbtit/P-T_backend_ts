@@ -25,6 +25,7 @@ enum UserRole {
   SALES_PERSON
   SYSTEM_ADMIN
   DEPT_MANAGER
+  CONNECTION_DESIGNER
   ESTIMATION_HEAD
   ESTIMATOR
   PROJECT_MANAGER
@@ -306,6 +307,7 @@ model Fabricator {
   submittals  Submittals[] @relation("FabricatorSubmittals")
   fabricatorInvoice   Invoice[]  @relation("fabricatorInvoice")
   pointOfContact User[]      @relation("FabricatorPointOfContacts")
+  rfq         RFQ[]        @relation("fabricatorRFQ")
 
 
   @@map("fabricators")
@@ -379,19 +381,23 @@ model RFQ {
   id               String        @id @default(uuid()) @db.Uuid
   projectNumber    String        @unique
   projectName      String
-  senderId         String        @db.Uuid
+  bidPrice         String?
+  senderId         String?       @db.Uuid
   recipientId      String        @db.Uuid
   salesPersonId    String?       @db.Uuid
+  fabricatorId     String?        @db.Uuid
   subject          String
   description      String
-  status           RFQStatus     @default(RECEIVED)
-  wbtStatus        RFQStatus     @default(SENT)
+  status           RFQStatus     @default(SENT)
+  wbtStatus        RFQStatus     @default(RECEIVED)
   estimationDate   DateTime?
   tools            String?
   
   connectionDesign Boolean       @default(false)
   customerDesign   Boolean       @default(false)
   miscDesign       Boolean       @default(false)
+  detailingMain    Boolean       @default(false)
+  detailingMisc    Boolean       @default(false)
   files            Json?          @default("[]")
   link             String?       @default("")
 
@@ -402,9 +408,10 @@ model RFQ {
   deletedAt        DateTime?
 
   //Relations
+  fabricator      Fabricator?  @relation("fabricatorRFQ",fields: [fabricatorId], references: [id])
   recipient        User         @relation("ReceiverRFQ", fields: [recipientId], references: [id])
   salesPerson      User?        @relation("SalesPersonRFQ", fields: [salesPersonId], references: [id])
-  sender           User         @relation("SenderRFQ", fields: [senderId], references: [id])
+  sender           User?         @relation("SenderRFQ", fields: [senderId], references: [id])
   responses        RFQResponse[]
   project          Project?     @relation("ProjectRFQ")
   estimations      Estimation[]

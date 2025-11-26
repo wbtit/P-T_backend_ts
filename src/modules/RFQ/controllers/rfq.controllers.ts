@@ -19,7 +19,7 @@ export class RFQController {
     const uploadedFiles = mapUploadedFiles(
       (req.files as Express.Multer.File[]) || [],
       "rfq"
-    );
+    );  console.log("req.body of rfq: ", req.body);
         const newrfq = await rfqService.createRfq({
           ...req.body,
           files: uploadedFiles

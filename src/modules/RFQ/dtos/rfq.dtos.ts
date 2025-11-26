@@ -2,22 +2,37 @@ import z from "zod";
 import { RFQStatus } from "@prisma/client";
 import { Prisma } from "@prisma/client";
 
+const zBooleanString = z
+  .union([z.boolean(), z.string()])
+  .transform(val => val === true || val === "true");
+
+
 export const CreateRfqSchema = z.object({
   projectNumber: z.string().min(2).max(100),
   projectName: z.string().min(2).max(100),
-  senderId: z.string(),
+  bidPrice: z.string().optional(),
+  fabricatorId: z.string().nullable().optional(),
+  senderId: z.string().optional(),
   recipientId: z.string(),
   salesPersonId: z.string().nullable().optional(),
   subject: z.string().min(2).max(100),
   description: z.string().min(2).max(500),
-  status: z.enum(RFQStatus),   // 👈 use the Prisma enum here
+  status: z.enum(RFQStatus).default("SENT"),  
   tools: z.string().optional(),
-  wbtStatus: z.enum(RFQStatus),
-  estimationDate: z.date().nullable().optional(),
-  connectionDesign: z.boolean(),
-  customerDesign: z.boolean(),
-  miscDesign: z.boolean(),
-  createdById: z.string(),
+  wbtStatus: z.enum(RFQStatus).default("RECEIVED"),
+  estimationDate: z
+  .preprocess(
+    (val) => (typeof val === "string" ? new Date(val) : val),
+    z.date().nullable().optional()
+  ),
+
+  connectionDesign: zBooleanString,
+  customerDesign: zBooleanString,
+  miscDesign: zBooleanString,
+  detailingMain: zBooleanString,
+  detailingMisc: zBooleanString,
+
+  createdById: z.string().optional(),
   files: z
       .union([
         z.array(z.any()),

@@ -16,6 +16,7 @@ import { departmentRoutes } from "./modules/department";
 import { chatRoutes } from "./modules/chatSystem";
 import { ClientRoutes } from "./modules/client";
 import { invoiceRoutes } from "./modules/invoice";
+import {RFQRoutes} from "./modules/RFQ"
 
 
 const routes = express.Router();
@@ -31,6 +32,7 @@ routes.use("/task", taskRouter)
 routes.use("/commnet",CommentRoutes)
 routes.use("/mileStone",MileStoneRoutes)
 routes.use("/changeOrder",coRouter)
+routes.use("/rfq",RFQRoutes)
 routes.use("/project",projectRoutes)
 routes.use("/notifications",NotificationRouter)
 routes.use("/agent",agentRoutes)

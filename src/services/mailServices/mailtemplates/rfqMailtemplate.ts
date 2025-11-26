@@ -121,7 +121,7 @@ export const rfqhtmlContent=(newrfq:any)=>{
                   </div>
               </div>
                   <div class="email-body">
-                      <h2>Welcome to Project Station, <b>${newrfq.recepients.username}</b>!</h2>
+                      <h2>Welcome to Project Station, <b>${newrfq.recipient.username}</b>!</h2>
                       <p>You have received a new RFI notification. Here are the details:</p>
           
                       <p><strong>Project Name:</strong> ${newrfq.projectName}</p>

@@ -18,7 +18,7 @@ export class RFQService {
         const existing = await rfqrepo.getByName(data.projectNumber);
         if(existing) throw new AppError('RFQ with this project number already exists', 409);
 
-        const rfq = await rfqrepo.create(data);
+        const rfq = await rfqrepo.create({...data, createdById});
         return rfq;
     }
     async updateRfq(id:string,data:UpdateRfqInput){
