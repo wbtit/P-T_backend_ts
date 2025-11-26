@@ -25,7 +25,7 @@ enum UserRole {
   SALES_PERSON
   SYSTEM_ADMIN
   DEPT_MANAGER
-  CONNECTION_DESIGNER
+  CONNECTION_DESIGNER_ENGINEER
   ESTIMATION_HEAD
   ESTIMATOR
   PROJECT_MANAGER
@@ -210,6 +210,7 @@ model User {
   country         String?     @default("")
   address         String?     @default("")
   role            UserRole
+  connectionDesignerId String?   @db.Uuid
   departmentId    String?     @db.Uuid
   isActive        Boolean     @default(true) @map("is_active")
   isFirstLogin    Boolean     @default(true) @map("is_firstLogin")
@@ -217,11 +218,12 @@ model User {
   createdAt       DateTime    @default(now())
 
   // Relations
-  
+  connectionDesigner ConnectionDesigner? @relation("userOfConnectionDesigner", fields: [connectionDesignerId], references: [id])
   department            Department?          @relation("UserOfTheDepartment",fields: [departmentId], references: [id])
   managedDepartment     Department[]         @relation("ManagerOfDepartment")
   managedFabricator     Fabricator[]         @relation("FabricatorCreatedBy")
   branchesPOC           Branch[]             @relation("BranchPointOfContacts")
+  connectionDesignerPOC   Project[]            @relation("pocOfConnectionDesignerProjects")
   managedTeam           Team[]               @relation("TeamManager")
   teamMember            TeamMember[]         @relation("TeamMember")
   managedProject        Project[]            @relation("projectManager")
@@ -315,6 +317,54 @@ model Fabricator {
   @@index([fabName])
 }
 
+ model ConnectionDesigner{
+  id           String       @id @default(uuid()) @db.Uuid
+  name         String       @default("")
+  state        Json         @default("[]")
+  contactInfo  String?       @default("")
+  websiteLink  String?      @default("")
+  email        String?      @default("")
+  location     String?      @default("")
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  isDeleted    Boolean      @default(false) @map("is_bin")
+  files        Json?        @default("[]")
+
+  // Relations
+  CDEngineers  User[]       @relation("userOfConnectionDesigner") 
+  CDQuotations ConnectionDesignerQuota[] @relation("connectionDesignerQuotas")
+  project     Project[]     @relation("awardedConnectionDesignerProjects")
+
+  @@map("connectionDesigner")
+ }
+
+
+model ConnectionDesignerQuota{
+  id                   String      @id @default(uuid()) @db.Uuid
+  connectionDesignerId String      @db.Uuid
+  rfqId                String?      @db.Uuid
+  bidprice            String? 
+  estimatedHours      String
+  weeks               String
+  approvalStatus      Boolean      @default(false)
+  approvalDate        DateTime?
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
+  isDeleted           Boolean     @default(false)
+  deletedAt           DateTime?
+
+
+
+  // Relations
+  connectionDesigner  ConnectionDesigner  @relation("connectionDesignerQuotas",fields: [connectionDesignerId], references: [id])
+  rfq                 RFQ?                 @relation("referRFQs",fields: [rfqId], references: [id])
+  awardedProjects    Project?            @relation("awardedQuota")
+
+  @@index([connectionDesignerId])
+  @@map("connection_designer_quota")
+
+}
+
 model Branch {
   id             String      @id @default(uuid()) @db.Uuid
   fabricatorId   String      @db.Uuid
@@ -377,6 +427,8 @@ model TeamMember {
   @@map("team_members")
 }
 
+
+
 model RFQ {
   id               String        @id @default(uuid()) @db.Uuid
   projectNumber    String        @unique
@@ -408,7 +460,8 @@ model RFQ {
   deletedAt        DateTime?
 
   //Relations
-  fabricator      Fabricator?  @relation("fabricatorRFQ",fields: [fabricatorId], references: [id])
+  CDQuotas         ConnectionDesignerQuota[] @relation("referRFQs")
+  fabricator       Fabricator?  @relation("fabricatorRFQ",fields: [fabricatorId], references: [id])
   recipient        User         @relation("ReceiverRFQ", fields: [recipientId], references: [id])
   salesPerson      User?        @relation("SalesPersonRFQ", fields: [salesPersonId], references: [id])
   sender           User?         @relation("SenderRFQ", fields: [senderId], references: [id])
@@ -464,6 +517,8 @@ model Project{
   departmentID           String                 @db.Uuid
   teamID                 String?                @db.Uuid
   managerID              String                 @db.Uuid
+  connectionDesignerID   String?                @db.Uuid
+  CDQuataionID           String?                @unique @db.Uuid
   rfqId                  String?                @unique @db.Uuid
   status                 Status                 @default(ACTIVE)
   stage                  Stage                  @default(RFI)
@@ -489,6 +544,9 @@ model Project{
   isDeleted              Boolean                @default(false)
   
   //Relations
+  awardedQuota ConnectionDesignerQuota? @relation("awardedQuota", fields: [CDQuataionID], references: [id])
+  connectionDesigner      ConnectionDesigner?  @relation("awardedConnectionDesignerProjects", fields: [connectionDesignerID], references: [id])
+  pocOfConnectionDesigner User[]               @relation("pocOfConnectionDesignerProjects")
   department             Department            @relation("projectDepartment", fields: [departmentID], references: [id])
   stageHistory           ProjectStageHistory[]
   fabricator             Fabricator            @relation("projectFabricator", fields: [fabricatorID], references: [id])

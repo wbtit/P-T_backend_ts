@@ -22,8 +22,9 @@ export class RFQController {
     );  console.log("req.body of rfq: ", req.body);
         const newrfq = await rfqService.createRfq({
           ...req.body,
-          files: uploadedFiles
+          files: uploadedFiles,
         }, id);
+        console.log("newrfq created: ", newrfq);
         const email = newrfq.recipient.email; // This might be null
         if (!email) {
           throw new Error("No recipient email provided");
