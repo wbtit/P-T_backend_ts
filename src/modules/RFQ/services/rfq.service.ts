@@ -14,13 +14,23 @@ import { Response } from "express";
 const rfqrepo= new RFQRepository();
 
 export class RFQService {
-    async createRfq(data:CreateRfqInput,createdById:string){
-        const existing = await rfqrepo.getByName(data.projectNumber);
-        if(existing) throw new AppError('RFQ with this project number already exists', 409);
-
-        const rfq = await rfqrepo.create({...data, senderId:createdById});
-        return rfq;
+    async createRfq(data: CreateRfqInput, createdById: string) {
+    const existing = await rfqrepo.getByName(data.projectNumber);
+    if (existing) {
+        throw new AppError('RFQ with this project number already exists', 409);
     }
+
+    // Use senderId from data if provided, otherwise fallback to createdById
+    const senderId = data.senderId ?? createdById;
+
+    const rfq = await rfqrepo.create({
+        ...data,
+        senderId
+    });
+
+    return rfq;
+}
+
     async updateRfq(id:string,data:UpdateRfqInput){
         const existing = await rfqrepo.getById({id});
         if(!existing) throw new AppError('RFQ not found', 404);

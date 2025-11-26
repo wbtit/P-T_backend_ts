@@ -73,6 +73,7 @@ export class RFQController {
         }
         const { id } = req.user;
         const rfq = await rfqService.sents(id);
+        
         res.status(200).json({
             status: 'success',
             data: rfq,

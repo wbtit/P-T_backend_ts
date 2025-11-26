@@ -59,7 +59,7 @@ export class RFQRepository {
 
     }
     async sentTouser(senderId:string){
-        await prisma.rFQ.findMany({
+        return await prisma.rFQ.findMany({
             where:{
                 senderId
             },
@@ -73,7 +73,7 @@ export class RFQRepository {
     }
 
     async Inbox(recipientId:string){
-        await prisma.rFQ.findMany({
+        return await prisma.rFQ.findMany({
             where:{
                 recipientId
             },
@@ -87,7 +87,7 @@ export class RFQRepository {
     }
 
     async closeRfq(id: string) {
-        await prisma.rFQ.update({
+        return await prisma.rFQ.update({
             where: { id },
             data: { status: "CLOSED" },
             include: {
