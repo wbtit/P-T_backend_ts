@@ -19,7 +19,7 @@ import { invoiceRoutes } from "./modules/invoice";
 import {RFQRoutes} from "./modules/RFQ"
 import { CDroutes } from "./modules/connectionDesign";
 import { CDQroutes } from "./modules/connectionDesign";
-
+import { estimationTaskRoutes } from "./modules/estimation";
 
 const routes = express.Router();
 
@@ -31,6 +31,7 @@ routes.use("/fabricator",fabricatorRoutes)
 routes.use("/department",departmentRoutes)
 routes.use("/team", TeamRoutes)
 routes.use("/task", taskRouter)
+routes.use("/estimation",estimationTaskRoutes)
 routes.use("/commnet",CommentRoutes)
 routes.use("/mileStone",MileStoneRoutes)
 routes.use("/changeOrder",coRouter)
