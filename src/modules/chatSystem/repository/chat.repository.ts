@@ -10,6 +10,8 @@ export class ChatRepository{
        })
     }
     async createGroupUser(memberId:string,groupId:string){
+        
+
         return await prisma.groupUser.create({
             data:{
                 memberId,

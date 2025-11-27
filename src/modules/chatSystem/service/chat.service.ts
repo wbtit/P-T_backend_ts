@@ -7,14 +7,35 @@ const chatRepo = new ChatRepository();
 export class ChatService{
 
     async createGroup(name:string,userId:string){
+        
         const newGroup = await chatRepo.createGroup(name,userId)
         await chatRepo.createGroupUser(userId,newGroup.id)
         return newGroup
     }
 
-    async addMemberToGroup(memberIds:string[],groupId:string){
-        return await chatRepo.addMembersToGroup(memberIds,groupId);
+    async addMemberToGroup(memberIds: string[], groupId: string) {
+    // Find members who are already in the group
+    const existingMembers = [];
+
+    for (const memberId of memberIds) {
+        const membership = await chatRepo.getGroupMembership(memberId);
+
+        if (membership && membership.some(m => m.groupId === groupId)) {
+            existingMembers.push(memberId);
+        }
     }
+
+    if (existingMembers.length > 0) {
+        throw new AppError(
+            `Members already exist in the group: ${existingMembers.join(", ")}`,
+            400
+        );
+    }
+
+    // Add all members since none of them exist in the group
+    return await chatRepo.addMembersToGroup(memberIds, groupId);
+}
+
 
     async groupChatHistory(groupId:string,lastMessageId:string){
         const groupMessages = await chatRepo.getGroupChats(groupId,lastMessageId,"20");
