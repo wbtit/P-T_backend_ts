@@ -42,10 +42,20 @@ export const createUser = async (user: createUserInput) => {
       country: user.country,
       address: user.address,
       role: user.role as userRole,
-      departmentId: user.departmentId || null, // 👈 Fix
+      ...(user.departmentId
+        ? { Department: { connect: { id: user.departmentId } } }
+        : {}),
       ...(user.fabricatorId
         ? { FabricatorPointOfContacts: { connect: { id: user.fabricatorId } } }
         : {}),
+      ...(user.connectionDesignerId
+        ? { connectionDesigner: { connect: { id: user.connectionDesignerId } } }
+        : {}),
+      ...(user.connectionDesignerPOCId
+        ? {
+            connectionDesignerPOC: { connect: { id: user.connectionDesignerPOCId } },
+          }
+        : {})
     },
   });
 };

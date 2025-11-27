@@ -17,6 +17,8 @@ import { chatRoutes } from "./modules/chatSystem";
 import { ClientRoutes } from "./modules/client";
 import { invoiceRoutes } from "./modules/invoice";
 import {RFQRoutes} from "./modules/RFQ"
+import { CDroutes } from "./modules/connectionDesign";
+import { CDQroutes } from "./modules/connectionDesign";
 
 
 const routes = express.Router();
@@ -39,5 +41,7 @@ routes.use("/agent",agentRoutes)
 routes.use("/chat",chatRoutes)
 routes.use("/client",ClientRoutes)
 routes.use("/invoice",invoiceRoutes)
+routes.use("/connectionDesign",CDroutes)
+routes.use("/connectionDesignerQuota",CDQroutes)
 
 export default routes

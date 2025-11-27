@@ -12,6 +12,8 @@ export const CreateProjectSchema = z.object({
   status:z.enum(Status),
   stage:z.enum(Stage),
   tools:z.enum(Tools),
+  CDQuataionID:z.string().min(1).optional(),
+  connectionDesignerID:z.string().min(1).optional(),
   files: z
         .union([
           z.array(z.any()),
