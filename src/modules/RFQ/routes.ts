@@ -73,8 +73,8 @@ router.delete(
 router.post(
     "/:rfqId/responses",
     authMiddleware,
-    validate({params:z.object({rfqId:z.string()}),body:RfqResponseSchema}),
     rfqResponseUploads.array("files"),
+    validate({params:z.object({rfqId:z.string()}),body:RfqResponseSchema}),
     rfqResponseController.handleCreate.bind(rfqResponseController)
 );
 

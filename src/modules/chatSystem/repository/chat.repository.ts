@@ -29,42 +29,54 @@ export class ChatRepository{
         )
       );
     }
-    async getGroupChats(groupId:string,lastMessageId:string,limit:string){
-        return await prisma.message.findMany({
-            where:{groupId:groupId},
-            include:{
-                sender:true,
-                taggedUsers :true,
-            },
-            ...(lastMessageId && {
-                skip: 1,
-                cursor: { id: lastMessageId },
-              }),
-              take: parseInt(limit),
-            orderBy:{createdAt:'desc'},
-            
-        })
-    }
-    async getPrivateChats(user1:string,user2:string,lastMessageId:string,limit:string){
-        return await prisma.message.findMany({
-            where:{
-                OR:[
-                    {senderId:user1,receiverId:user2},
-                    {senderId:user2,receiverId:user1},
-                ]
-            },
-            include:{
-                sender:true,
-                receiver:true
-            },
-            ...(lastMessageId && {
-                skip: 1,
-                cursor: { id: lastMessageId },
-              }),
-              take: parseInt(limit),  
-            orderBy:{createdAt:'desc'}
-        })
-    }
+    async getGroupChats(groupId: string, lastMessageId: string, limit: string) {
+  const query: any = {
+    where: { groupId },
+    include: {
+      sender: true,
+      taggedUsers: true,
+    },
+    take: parseInt(limit),
+    orderBy: { createdAt: "desc" },
+  };
+
+  if (lastMessageId && lastMessageId !== "undefined") {
+    query.cursor = { id: lastMessageId };
+    query.skip = 1;
+  }
+
+  return await prisma.message.findMany(query);
+}
+
+    async getPrivateChats(
+  user1: string,
+  user2: string,
+  lastMessageId: string,
+  limit: string
+) {
+  const query: any = {
+    where: {
+      OR: [
+        { senderId: user1, receiverId: user2 },
+        { senderId: user2, receiverId: user1 },
+      ],
+    },
+    include: {
+      sender: true,
+      receiver: true,
+    },
+    take: parseInt(limit),
+    orderBy: { createdAt: "desc" },
+  };
+
+  if (lastMessageId && lastMessageId !== "undefined") {
+    query.cursor = { id: lastMessageId };
+    query.skip = 1;
+  }
+
+  return await prisma.message.findMany(query);
+}
+
     async privateMessages(id:string){
         return await prisma.message.findMany({
       where: {
@@ -111,7 +123,7 @@ export class ChatRepository{
 
     }
     async findGroup(msg:any){
-        return await prisma.group.findUnique({ where: { id: msg.groupId } });
+        return await prisma.group.findUnique({ where: { id: msg } });
     }
     async allGroups(groupIds:string[]){
         return await prisma.group.findMany({

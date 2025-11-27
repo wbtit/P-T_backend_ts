@@ -5,7 +5,7 @@ import { RFQStatus } from "@prisma/client";
 export const RfqResponseSchema = z.object({
     rfqId: z.string(),
     userId: z.string(),
-    parentResponseId:z.string().optional(),
+    parentResponseId:z.string().optional().nullable(),
     description:z.string(),
     status: z.enum(RFQStatus),
     wbtStatus: z.enum(RFQStatus),
