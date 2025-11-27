@@ -111,6 +111,15 @@ export class ChatRepository{
         where:{
           memberId:memberId,
           groupId:groupId
+        },include:{
+          members:{select:{
+            id:true,
+            username:true,
+            firstName:true,
+            middleName:true,
+            lastName:true,
+            role:true
+          }}
         }
       })
     }
@@ -142,7 +151,16 @@ export class ChatRepository{
         include:{
           members:{
             include:{
-              members:true
+              members:{
+                select:{
+                  id:true,
+            username:true,
+            firstName:true,
+            middleName:true,
+            lastName:true,
+            role:true 
+                }
+              }
             }
           }
         }
