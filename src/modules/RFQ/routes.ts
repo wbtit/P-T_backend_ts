@@ -86,14 +86,14 @@ router.get(
 );
 
 router.get(
-    "responses/:rfqResId/files/:fileId",
+    "/responses/:rfqResId/files/:fileId",
     authMiddleware,
     validate({params:z.object({rfqResId:z.string(),fileId:z.string()})}),
     rfqResponseController.handleGetFile.bind(rfqResponseController)
 );
 
 router.get(
-    "viewFile/:rfqResId/files/:fileId",
+    "/response/viewFile/:rfqResId/:fileId",
     authMiddleware,
     validate({params:z.object({rfqResId:z.string(),fileId:z.string()})}),
     rfqResponseController.handleViewFile.bind(rfqResponseController)

@@ -7,6 +7,8 @@ import { FileObject } from "../../../../shared/fileType";
 import { streamFile } from "../../../../utils/fileUtil";
 import path from "path";
 import { Response } from "express";
+import fs from "fs"
+
 
 export class RfqResponseService {
     private repository = new RfqResponseRepository();
@@ -41,15 +43,33 @@ export class RfqResponseService {
 
         return fileObject;
     }
+
+
     async viewFile(rfqResId:string,fileId:string,res:Response){
         const rfqRes= await this.repository.getById({id:rfqResId});
+
         if(!rfqRes) throw new AppError("RFQ Response not found",404);
         const files= rfqRes?.files as unknown as FileObject[];
-        const fileObject = files.find((file: FileObject) => file.id === fileId);
-        if (!fileObject) throw new AppError("File not found", 404);
+        
+        const cleanFileId = fileId.replace(/\.[^/.]+$/, "");
+        const fileObject = files.find((file: FileObject) => file.id === cleanFileId);
+        
+        if (!fileObject) {
+    console.warn("⚠️ [viewFile] File not found in fabricator.files", {
+      fileId,
+      availableFileIds: files.map(f => f.id),
+    });
+    throw new AppError("File not found", 404);
+  }
         const __dirname=path.resolve();
-        const filePath = path.join(__dirname, fileObject.filename);
-        return streamFile(res, filePath, fileObject.originalName);
+                const filePath = path.join(__dirname, fileObject.path); // ✅ use path, not filename
+                console.log("📁 [viewFile] Resolved file path:", filePath);
+        
+                if (!fs.existsSync(filePath)) {
+                    console.error("🚨 [viewFile] File does not exist on disk:", filePath);
+                    throw new AppError("File not found on server", 404);
+                      }
+                return streamFile(res, filePath, fileObject.originalName);
     }
 
 }
