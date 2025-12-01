@@ -693,6 +693,7 @@ model Task {
   priority           Int
   created_on         DateTime        @default(now())
   reworkStartTime    DateTime?
+  userFault          String          @default("")
   due_date           DateTime
   duration           String
   project_id         String          @db.Uuid
@@ -801,6 +802,7 @@ model EstimationTask {
   endDate      DateTime?
   notes        String?
   reviewNotes  String?
+  userFault    String         @default("")
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
   estimationId String         @db.Uuid

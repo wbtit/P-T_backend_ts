@@ -7,6 +7,7 @@ export const EstimationTaskDTO = z.object({
   startDate: z.coerce.date(),
   endDate: z.coerce.date(),
   notes: z.string().optional(),
+  userFault: z.string().optional(),
   reviewNotes: z.string().optional(),
   estimationId: z.string(),
   assignedToId: z.string(),

@@ -11,6 +11,7 @@ export const createTaskDto = z.object({
     due_date: z.preprocess((val) => val ? new Date(val as string) : undefined, z.date()),
     start_date: z.preprocess((val) => val ? new Date(val as string) : undefined, z.date()),
     duration: z.string(),
+    userFault:z.string().optional(),
     stage: z.enum(Stage),
     project_id: z.string(),
     user_id: z.string(),
