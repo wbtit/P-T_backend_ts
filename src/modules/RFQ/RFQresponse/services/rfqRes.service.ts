@@ -21,7 +21,7 @@ export class RfqResponseService {
             await this.repository.update(
                 data.parentResponseId,
                 data.status,
-                data.status
+                data.wbtStatus
             );
         }
         const createdResponse = await this.repository.create(data);

@@ -41,7 +41,8 @@ export class RFQRepository {
                 sender: true,
                 recipient: true,
                 salesPerson: true,
-                responses:true
+                responses:true,
+                fabricator:true
             }
         });
     }
@@ -67,7 +68,8 @@ export class RFQRepository {
                 sender: true,
                 recipient: true,
                 salesPerson: true,
-                responses:true
+                responses:true,
+                fabricator:true
             }
         })
     }
@@ -81,7 +83,8 @@ export class RFQRepository {
                 sender: true,
                 recipient: true,
                 salesPerson: true,
-                responses:true
+                responses:true,
+                fabricator:true
             }
         })
     }

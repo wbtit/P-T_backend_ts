@@ -1,5 +1,5 @@
-import lineItems from "../../../../config/data/estimationLineItemsData.js";
-import prisma from "../../../../config/database/client.js";
+import lineItems from "../../../../config/data/estimationLineItemsData";
+import prisma from "../../../../config/database/client";
 
 async function createEstimationLineItem(estimationId:string) {
     if (!estimationId) {

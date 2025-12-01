@@ -38,7 +38,7 @@ export class RfqResponseRepository {
     async update(parentResponseId: string,status:RFQStatus,wbtStatus:RFQStatus) {
         return await prisma.rFQResponse.update({
             where: {
-                parentResponseId
+                id:parentResponseId
             },
             data: { status,wbtStatus }
         });
