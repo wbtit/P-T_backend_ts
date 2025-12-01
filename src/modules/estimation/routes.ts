@@ -4,7 +4,7 @@ import authMiddleware from "../../middleware/authMiddleware";
 import { asyncHandler } from "../../config/utils/asyncHandler";
 import validate from "../../middleware/validate";
 import { z } from "zod";
-import { estimationUploads } from "../../utils/multerUploader.util";
+import { estimationUploads,estimationTaskUploads } from "../../utils/multerUploader.util";
 import { EstimationSchema,UpdateEstimationDto } from "./management/dtos";
 import { EstimationTaskDTO,UpdateEstimationTask } from "./estimationTask/dtos";
 import { EstimationTaskController } from "./estimationTask/controllers/estTask.controller";
@@ -128,6 +128,7 @@ const ParamsWithId = z.object({ id: z.string() });
 router.post(
   "/estimation-tasks",
   authMiddleware,
+  estimationTaskUploads.array("files"),
   validate({ body: EstimationTaskDTO }),
   asyncHandler(taskController.handleCreateEstimationTask.bind(taskController))
 );
