@@ -485,7 +485,7 @@ model RFQResponse {
   id               String        @id @default(uuid()) @db.Uuid
   rfqId            String        @db.Uuid
   userId           String        @db.Uuid
-  parentResponseId String?       @unique @db.Uuid
+  parentResponseId String?       @db.Uuid
   description      String        @default("")
   status           RFQStatus     @default(RECEIVED)
   wbtStatus        RFQStatus     @default(SENT)
@@ -533,15 +533,17 @@ model Project{
   approvalDate           DateTime               @default(now())         
   fabricationDate        DateTime               @default(now())
   estimatedHours         Float                  @default(0)
-  detailCheckingHours    Float                  @default(0)
-  detailingHours         Float                  @default(0)
-  executionCheckingHours Float                  @default(0)
-  executionHours         Float                  @default(0)
-  modelCheckingHours     Float                  @default(0)
-  modelingHours          Float                  @default(0)
+  detailCheckingHours    Float?                  @default(0)
+  detailingHours         Float?                  @default(0)
+  executionCheckingHours Float?                  @default(0)
+  executionHours         Float?                  @default(0)
+  modelCheckingHours     Float?                  @default(0)
+  modelingHours          Float?                  @default(0)
   mailReminder           Boolean                @default(false)
   submissionMailReminder Boolean                @default(false)
   isDeleted              Boolean                @default(false)
+  detailingMain          Boolean                @default(false)
+  detailingMisc          Boolean                @default(false)   
   
   //Relations
   awardedQuota ConnectionDesignerQuota? @relation("awardedQuota", fields: [CDQuataionID], references: [id])

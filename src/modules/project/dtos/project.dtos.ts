@@ -1,5 +1,12 @@
 import z from "zod"
 import {Status,Stage,Tools, Prisma} from "@prisma/client"
+
+
+const zBooleanString = z
+  .union([z.boolean(), z.string()])
+  .transform(val => val === true || val === "true").optional();
+
+
 export const CreateProjectSchema = z.object({
   projectNumber:z.string().min(1),
   name:z.string().min(1),
@@ -21,9 +28,11 @@ export const CreateProjectSchema = z.object({
         ])
         .transform((val) => (val === null ? Prisma.JsonNull : val))
         .optional(),
-  connectionDesign:z.boolean(),
-  miscDesign:z.boolean(),
-  customerDesign:z.boolean(),
+  connectionDesign:zBooleanString,
+  miscDesign:zBooleanString,
+  customerDesign:zBooleanString,
+  detailingMain:zBooleanString,
+  detailingMisc:zBooleanString,
   startdate:z.date().min(new Date()),
   endDate:z.date().min(new Date()),
   endDateChangeLog:z.array(z.string()).optional(),
@@ -36,8 +45,8 @@ export const CreateProjectSchema = z.object({
   executionHours:z.float32(),
   modelCheckingHours:z.float32(),
   modelingHours:z.float32(),
-  mailReminder:z.boolean(),
-  submissionMailReminder:z.boolean()
+  mailReminder:zBooleanString,
+  submissionMailReminder:zBooleanString
 });
 export const UpdateProjectSchema = CreateProjectSchema.partial()
 

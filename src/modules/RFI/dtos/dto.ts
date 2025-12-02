@@ -1,13 +1,17 @@
 import { Prisma,State } from "@prisma/client";
 import z from "zod"
 
+const zBooleanString = z
+  .union([z.boolean(), z.string()])
+  .transform(val => val === true || val === "true");
+
 /* -------------------- RFI DTO -------------------- */
 export const RFISchema = z.object({
   fabricator_id: z.string(),
   project_id: z.string(),
   recepient_id: z.string(),
   sender_id: z.string(),
-  status: z.boolean(),
+  status: zBooleanString,
   subject: z.string(),
   description: z.string(),
   isAproovedByAdmin:z.string(),

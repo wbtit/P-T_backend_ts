@@ -20,6 +20,7 @@ import {RFQRoutes} from "./modules/RFQ"
 import { CDroutes } from "./modules/connectionDesign";
 import { CDQroutes } from "./modules/connectionDesign";
 import { estimationTaskRoutes } from "./modules/estimation";
+import { RFIRoutes} from "./modules/RFI"
 
 const routes = express.Router();
 
@@ -36,6 +37,7 @@ routes.use("/commnet",CommentRoutes)
 routes.use("/mileStone",MileStoneRoutes)
 routes.use("/changeOrder",coRouter)
 routes.use("/rfq",RFQRoutes)
+routes.use("/rfi",RFIRoutes)
 routes.use("/project",projectRoutes)
 routes.use("/notifications",NotificationRouter)
 routes.use("/agent",agentRoutes)

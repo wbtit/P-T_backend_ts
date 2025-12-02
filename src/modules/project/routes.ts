@@ -41,7 +41,7 @@ router.get("/job-studies/:id", authMiddleware, validate({params:z.object({id:z.s
 // PROJECTS ROUTES
 // ===========================================================
 const projectController = new ProjectController();
-router.post("/projects", authMiddleware, validate({body: CreateProjectSchema}),projectUploads.array("files"), asyncHandler(projectController.handleCreateProject.bind(projectController)));
+router.post("/projects", authMiddleware,projectUploads.array("files"), validate({body: CreateProjectSchema}), asyncHandler(projectController.handleCreateProject.bind(projectController)));
 router.put("/projects/:id", authMiddleware, validate({params:z.object({id:z.string()}),body: UpdateProjectSchema}),projectUploads.array("files"), asyncHandler(projectController.handleUpdateProject.bind(projectController)));
 router.get("/projects/:id", authMiddleware, validate({params:z.object({id:z.string()})}), asyncHandler(projectController.handleGetProject.bind(projectController)));
 router.delete("/projects/:id", authMiddleware, validate({params:z.object({id:z.string()})}), asyncHandler(projectController.handleDeleteProject.bind(projectController)));
