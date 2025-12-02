@@ -8,22 +8,29 @@ import { cleandata } from "../../../config/utils/cleanDataObject";
 
 export class RFQRepository {
     async create(data: CreateRfqInput) {
-        const cleanedData = cleandata(data);
-            return await prisma.rFQ.create({
-            data:cleanedData,
-        include: {
-          sender: true,
-          recipient: true,
-          salesPerson: true,
-          responses:true
-        }
-            });
+  const cleanedData = cleandata(data);
+
+  return await prisma.rFQ.create({
+    data: cleanedData,
+    include: {
+      sender: true,
+      recipient: true,
+      salesPerson: true,
+      responses: true
     }
+  });
+}
+
     async update(id: string, data: UpdateRfqInput) {
         return await prisma.rFQ.update({
             where: { id },
             data: {
                 ...data,
+                connectionDesignerRFQ: data.ConnectionDesignerIds
+        ? {
+            connect: data.ConnectionDesignerIds.map(id => ({ id }))
+          }
+        : undefined,
                 files: data.files === null ? Prisma.JsonNull : data.files, // 👈 convert null
             },include:{
                 sender: true,

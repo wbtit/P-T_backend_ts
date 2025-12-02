@@ -14,6 +14,7 @@ export const CreateRfqSchema = z.object({
   fabricatorId: z.string().nullable().optional(),
   senderId: z.string().optional(),
   recipientId: z.string(),
+  ConnectionDesignerIds: z.array(z.string()).optional(),
   salesPersonId: z.string().optional(),
   subject: z.string().min(2).max(100),
   description: z.string().min(2).max(500),
