@@ -22,13 +22,15 @@ export class RFQRepository {
 }
 
     async update(id: string, data: UpdateRfqInput) {
+        const { ConnectionDesignerIds, ...rest } = data;
         return await prisma.rFQ.update({
             where: { id },
             data: {
-                ...data,
-                connectionDesignerRFQ: data.ConnectionDesignerIds
+                ...rest,
+                connectionDesignerRFQ: ConnectionDesignerIds
         ? {
-            connect: data.ConnectionDesignerIds.map(id => ({ id }))
+             set: [],
+            connect: ConnectionDesignerIds.map(id => ({ id }))
           }
         : undefined,
                 files: data.files === null ? Prisma.JsonNull : data.files, // 👈 convert null

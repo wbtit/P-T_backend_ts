@@ -2,7 +2,7 @@ import { Router } from "express";
 import { RFQController } from "./controllers";
 import validate from "../../middleware/validate";
 import authMiddleware from "../../middleware/authMiddleware";
-import { CreateRfqSchema } from "./dtos";
+import { CreateRfqSchema,UpdateRfqSchema } from "./dtos";
 
 import { RfqResponseSchema} from "./RFQresponse";
 import { RfqResponseController } from "./RFQresponse";
@@ -25,8 +25,8 @@ router.post(
 router.put(
     "/update/:id",
     authMiddleware,
-    validate({params:z.object({id:z.string()}),body:CreateRfqSchema}),
     rfqUploads.array("files"),
+    validate({params:z.object({id:z.string()}),body:UpdateRfqSchema}),
     rfqController.handleUpdateRfq.bind(rfqController)
 );
 

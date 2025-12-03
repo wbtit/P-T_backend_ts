@@ -44,8 +44,8 @@ export class RFQController {
         if (!req.user) {
             throw new AppError('User not found', 404);
         }
-        const { id } = req.user;
-        if(!id) throw new AppError('User not found', 404);
+        const {id}=req.params;
+        
         const uploadedFiles = mapUploadedFiles(
       (req.files as Express.Multer.File[]) || [],
       "rfq"
