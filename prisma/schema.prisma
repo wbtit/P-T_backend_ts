@@ -532,10 +532,10 @@ model Project{
   miscDesign             Boolean                @default(false)
   customerDesign         Boolean                @default(false)
   startDate              DateTime               @default(now())
-  endDate                DateTime               @default(now())
+  endDate                DateTime?              
   endDateChangeLog       Json                   @default("[]")
-  approvalDate           DateTime               @default(now())         
-  fabricationDate        DateTime               @default(now())
+  approvalDate           DateTime?                        
+  fabricationDate        DateTime?               
   estimatedHours         Float                  @default(0)
   detailCheckingHours    Float?                  @default(0)
   detailingHours         Float?                  @default(0)
@@ -628,7 +628,7 @@ model WorkBreakdown {
 
   // Relations
   LineItems               ProjectLineItems[] @relation("subTasks")
-  project                Project            @relation("ProjectWorkBreakdown",fields: [projectId], references: [id])
+  project                Project            @relation("ProjectWorkBreakdown",fields: [projectId], references: [id],onDelete: Cascade)
   @@index([projectId])
   @@index([stage])
   @@index([type])
@@ -864,8 +864,8 @@ model RFI {
   fabricator_id String       @db.Uuid
   date          DateTime     @default(now())
   project_id    String       @db.Uuid
-  recepient_id  String       @unique @db.Uuid
-  sender_id     String       @unique @db.Uuid
+  recepient_id  String       @db.Uuid
+  sender_id     String       @db.Uuid
   status        Boolean      @default(false)
   subject       String
   description   String

@@ -18,8 +18,8 @@ const rfiResponseController = new RFIResponseController();
 router.post(
   "/",
   authMiddleware,
-  validate({ body: RFISchema }),
   rfiUploads.array("files"),
+  validate({ body: RFISchema }),
   rfiController.handleCreateRfi.bind(rfiController)
 );
 
@@ -35,7 +35,7 @@ router.put(
 );
 
 router.get(
-  "/:id",
+  "/getById/:id",
   authMiddleware,
   validate({ params: z.object({ id: z.string() }) }),
   rfiController.handleGetRfiById.bind(rfiController)

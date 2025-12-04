@@ -11,16 +11,23 @@ import { CreateProjectInput,
        data,
        include:{
         stageHistory:true,
-        fabricator:true,
-        manager:true,
+        fabricator:{select:{
+          files:true,
+          fabName:true,
+          id:true
+        }},
+        manager:{select:{
+          firstName:true,
+          middleName:true,
+          lastName:true,
+          username:true,
+          id:true
+        }},
         team:true,
-        tasks:true,
-        projectJobStudy:true,
-        projectWorkBreakdown:true,
-        lineItems:true,
-        notes:true,
-        rfq:true,
-        department:true
+        department:{select:{
+          name:true,
+          id:true
+        }}
        }
      });
      return project;
@@ -32,16 +39,23 @@ import { CreateProjectInput,
        data,
        include:{
         stageHistory:true,
-        fabricator:true,
-        manager:true,
+        fabricator:{select:{
+          files:true,
+          fabName:true,
+          id:true
+        }},
+        manager:{select:{
+          firstName:true,
+          middleName:true,
+          lastName:true,
+          username:true,
+          id:true
+        }},
         team:true,
-        tasks:true,
-        projectJobStudy:true,
-        projectWorkBreakdown:true,
-        lineItems:true,
-        notes:true,
-        rfq:true,
-        department:true
+        department:{select:{
+          name:true,
+          id:true
+        }}
        }
      });
      return project;
@@ -52,20 +66,23 @@ import { CreateProjectInput,
        where: { id: data.id },
        include:{
         stageHistory:true,
-        fabricator:true,
-        manager:true,
-        team:{
-          select:{
-            members:true,
-          }
-        },
-        tasks:true,
-        projectJobStudy:true,
-        projectWorkBreakdown:true,
-        lineItems:true,
-        notes:true,
-        rfq:true,
-        department:true
+        fabricator:{select:{
+          files:true,
+          fabName:true,
+          id:true
+        }},
+        manager:{select:{
+          firstName:true,
+          middleName:true,
+          lastName:true,
+          username:true,
+          id:true
+        }},
+        team:true,
+        department:{select:{
+          name:true,
+          id:true
+        }}
        }
      });
      return project;
@@ -89,16 +106,23 @@ import { CreateProjectInput,
      const projects = await prisma.project.findMany({
        include:{
         stageHistory:true,
-        fabricator:true,
-        manager:true,
+        fabricator:{select:{
+          files:true,
+          fabName:true,
+          id:true
+        }},
+        manager:{select:{
+          firstName:true,
+          middleName:true,
+          lastName:true,
+          username:true,
+          id:true
+        }},
         team:true,
-        tasks:true,
-        projectJobStudy:true,
-        projectWorkBreakdown:true,
-        lineItems:true,
-        notes:true,
-        rfq:true,
-        department:true
+        department:{select:{
+          name:true,
+          id:true
+        }}
        }
      });
      return projects;
