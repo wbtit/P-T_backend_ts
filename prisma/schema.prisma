@@ -91,6 +91,7 @@ enum Tools {
   TEKLA
   SDS2
   PEMB
+  BOTH
 }
 
 enum WorkSessionStatus {

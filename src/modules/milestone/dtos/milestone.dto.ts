@@ -1,10 +1,21 @@
 import z from "zod";
 import { Status} from "@prisma/client";
 
+
+const zDateString = z
+  .union([z.string(), z.date(), z.literal("")])
+  .optional()
+  .transform((val) => {
+    if (!val) return undefined;
+    if (val instanceof Date) return val;
+    const d = new Date(val);
+    return isNaN(d.getTime()) ? undefined : d;
+  });
+
 export const createMileStoneSchema=z.object({
     fabricator_id:z.string(),
     project_id:z.string(),
-    approvalDate:z.date().optional(),
+    approvalDate:zDateString,
     status:z.enum(Status),
     subject:z.string(),
     description:z.string()  

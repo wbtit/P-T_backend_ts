@@ -39,8 +39,8 @@ export const RFIResponseSchema = z.object({
           ])
           .transform((val) => (val === null ? Prisma.JsonNull : val))
           .optional(),
-  responseState: z.enum(State),
-  wbtStatus: z.enum(State),
+  responseState: z.enum(State).optional(),
+wbtStatus: z.enum(State).default("OPEN"),
   reason:z.string().optional(),
   rfiId: z.string(),
   parentResponseId: z.string().optional()

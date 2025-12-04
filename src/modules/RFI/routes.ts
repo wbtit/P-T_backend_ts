@@ -91,11 +91,11 @@ router.delete(
 router.post(
   "/:rfiId/responses",
   authMiddleware,
+  rfiResponseUploads.array("files"),
   validate({
     params: z.object({ rfiId: z.string() }),
     body: RFIResponseSchema,
   }),
-  rfiResponseUploads.array("files"),
   rfiResponseController.handleCreateResponse.bind(rfiResponseController)
 );
 

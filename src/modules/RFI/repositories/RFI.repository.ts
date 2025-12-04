@@ -20,9 +20,9 @@ export class RFIRepository{
         isAproovedByAdmin
       },
       include: {
-        recepients: true,
+        recepients:  {select:{firstName:true,middleName:true,lastName:true,email:true,id:true}},
         project: true,
-        sender : true,
+        sender :  {select:{firstName:true,middleName:true,lastName:true,email:true,id:true}},
         rfiresponse:true
       },
     });
@@ -33,6 +33,12 @@ export class RFIRepository{
         return await prisma.rFI.findUnique({
       where: { id },
       include: {
+        fabricator:{select:{
+          fabName:true,
+          id:true,
+        }},
+        project: true,
+        sender :  {select:{firstName:true,middleName:true,lastName:true,email:true,id:true}},
         recepients: {
           include: {
             managedFabricator: {
@@ -90,7 +96,8 @@ export class RFIRepository{
       include: {
         fabricator: true,
         project: true,
-        recepients: true,
+        recepients: {select:{firstName:true,middleName:true,lastName:true,email:true,id:true}},
+        sender : {select:{firstName:true,middleName:true,lastName:true,email:true,id:true}},
         rfiresponse:true,
       },
     });
@@ -104,7 +111,8 @@ export class RFIRepository{
       include: {
         fabricator: true,
         project: true,
-        recepients: true,
+        recepients:  {select:{firstName:true,middleName:true,lastName:true,email:true,id:true}},
+        sender :  {select:{firstName:true,middleName:true,lastName:true,email:true,id:true}},
         rfiresponse:true,
       },
     });

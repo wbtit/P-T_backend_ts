@@ -6,8 +6,8 @@ const mileStoneService = new MileStoneService();
 
 export class MileStoneController {
   async handleCreate(req: Request, res: Response) {
-    const { data } = req.body;
-    const result = await mileStoneService.create(data);
+
+    const result = await mileStoneService.create(req.body);
 
     return res.status(201).json({
       message: "MileStone created successfully",
