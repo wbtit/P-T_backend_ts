@@ -71,7 +71,7 @@ router.get(
     asyncHandler(pliController.getPliByStage.bind(pliController))
 );
 // ===========================================================
-// PLI ROUTES
+// WBS` ROUTES
 // ===========================================================
 const wbsController = new WBSController();
 
