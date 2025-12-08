@@ -49,7 +49,12 @@ export class RFIRepository{
             },
           },
         },
-        rfiresponse: true,
+        rfiresponse:{
+          include:{
+            childResponses:true
+          }
+        },
+        
       },
     });
     }
