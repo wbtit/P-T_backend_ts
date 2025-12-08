@@ -21,6 +21,12 @@ import { CreateDeptInput,
         createdById:userId
       },
     });
+    await prisma.user.updateMany({
+      where: { id: { in: managerIds } },
+      data: { role: "DEPT_MANAGER" ,
+        departmentId: dept.id
+      }
+    });
     return dept;
   }
 
