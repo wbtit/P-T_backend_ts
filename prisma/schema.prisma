@@ -902,7 +902,7 @@ model EstimationLineItem {
   quantity     Float?
   hoursPerQty  Float?
   totalHours   Float?
-  weeks      CoRefersTo  Float?
+  weeks        Float?
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
   id           String     @id @default(uuid()) @db.Uuid
