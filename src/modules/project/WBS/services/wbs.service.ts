@@ -18,6 +18,9 @@ export class WbsService {
     async getAllWbs() {
         return await wbsRepository.getAll();
     }
+    async getById(id: string) {
+        return await wbsRepository.getById(id);
+    }
 
     async getWbsForProject(projectId: string, stage: Stage, type: Activity) {
         return await wbsRepository.getWbsForProject(projectId, stage, type);

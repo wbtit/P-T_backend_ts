@@ -15,6 +15,11 @@ export class WBSController{
         const result = await wbsService.getAllWbs();
         return res.status(200).json(result);
     }
+    async getById(req: Request, res: Response) {
+        const { wbsId } = req.params;
+        const result = await wbsService.getById(wbsId);
+        return res.status(200).json(result);
+    }
 
     async getWbsForProject(req: Request, res: Response) {
         const { projectId, stage, type } = req.params;

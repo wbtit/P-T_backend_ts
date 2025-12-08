@@ -91,9 +91,9 @@ router.get(
 
 // Single WBS
 router.get(
-  "/projects/:projectId/wbs/:wbsId",
+  "/wbs/:wbsId",
   authMiddleware,
-  asyncHandler(wbsController.getWbsForProject.bind(wbsController))
+  asyncHandler(wbsController.getById.bind(wbsController))
 );
 
 // WBS stats & totals

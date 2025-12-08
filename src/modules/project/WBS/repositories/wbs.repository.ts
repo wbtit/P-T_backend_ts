@@ -11,7 +11,20 @@ export class WbsRepository{
         });
     }
     async getAll(){
-        return await prisma.workBreakdown.findMany();
+        return await prisma.workBreakdown.findMany({
+            include:{
+                LineItems:true
+            }
+        
+        });
+    }
+    async getById(id:string){
+        return await prisma.workBreakdown.findUnique({
+            where:{id},
+            include:{
+                LineItems:true
+            }
+        });
     }
     async getWbsForProject(projectId:string,stage:Stage,type:Activity){
         return await prisma.workBreakdown.findMany({
