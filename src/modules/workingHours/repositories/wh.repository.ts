@@ -20,6 +20,16 @@ export class WHRepository {
         });
         return wh;
     }
+    async closeSession(data: { id: string; ended_at: Date; duration_seconds: number }) {
+    return prisma.workingHours.update({
+        where: { id: data.id },
+        data: {
+            ended_at: data.ended_at,
+            duration_seconds: data.duration_seconds
+        }
+    });
+}
+
     async create(data:CreateWhDTO){
         const cleanData = cleandata(data)
         const wh=await prisma.workingHours.create({
@@ -27,6 +37,7 @@ export class WHRepository {
                 user_id:cleanData.user_id,
                 task_id:cleanData.task_id,
                 type:"WORK",
+                started_at:new Date(),
             }
         });
         return wh;
