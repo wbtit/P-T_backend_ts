@@ -65,6 +65,13 @@ import { CreateProjectInput,
      const project = await prisma.project.findUnique({
        where: { id: data.id },
        include:{
+        rfi:{include:{recepients:{select:{firstName:true,middleName:true,lastName:true,id:true}},
+                      sender:{select:{firstName:true,middleName:true,lastName:true,id:true}}}},
+        submittals:{include:{recepients:{select:{firstName:true,middleName:true,lastName:true,id:true}},
+                      sender:{select:{firstName:true,middleName:true,lastName:true,id:true}}}},
+        changeOrders:{include:{Recipients:{select:{firstName:true,middleName:true,lastName:true,id:true}},
+                      senders:{select:{firstName:true,middleName:true,lastName:true,id:true}}}},
+        designDrawings:{include:{user:{select:{firstName:true,middleName:true,lastName:true,id:true}}}},
         stageHistory:true,
         fabricator:{select:{
           files:true,
