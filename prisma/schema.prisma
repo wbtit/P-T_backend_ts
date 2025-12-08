@@ -149,14 +149,7 @@ enum EstimationStatus {
   QUOTED
 }
 
-enum TimeLogAction {
-  START
-  PAUSE
-  RESUME
-  END
-  AUTO_END
-  MANUAL_ADJUST
-}
+
 
 enum AlertType {
   APPROACHING_75_PERCENT
@@ -286,7 +279,6 @@ model User {
   invoicePointOfContact     Invoice[]       @relation("invoicePointOfContact")
   invoiceCreatedBy          Invoice[]       @relation("invoiceCreatedBy")
   FabricatorPointOfContacts Fabricator[]    @relation("FabricatorPointOfContacts")
-  taslLogs                 TaskTimeLog[]   @relation("taskTimeLogsofUpdate")
   taskCreatedByUser        Task[]          @relation("taskCreatedByUser")
   
   @@map("user")
@@ -746,7 +738,6 @@ model Task {
   credatedByUser     User            @relation("taskCreatedByUser", fields: [created_by], references: [id])
   department         Department      @relation("TaskBelongsToDepartment",fields: [departmentId],references: [id])
   mileStone          MileStone?      @relation("mileStoneTasks", fields: [mileStone_id], references: [id])
-  timeLogs           TaskTimeLog[]   @relation("taskTimeLogs")
   allocationLog      TaskAllocation? @relation("allocationLog")
   alert              TaskAlert[] @relation("taskAllocationAlerts")
   flags              TaskFlag[]   @relation("taskAllocationFlags")
@@ -760,24 +751,6 @@ model Task {
   @@map("task")
 }
 
-model TaskTimeLog {
-  id         String   @id @default(uuid()) @db.Uuid
-  taskId     String   @db.Uuid
-  userId     String   @db.Uuid
-
-  action     TimeLogAction   // START | PAUSE | RESUME | END | AUTO_END | MANUAL_ADJUST
-  timestamp  DateTime        @default(now())
-  reason     String?         // for manual adjustments or comments
-  meta       Json?
-
-  task       Task     @relation("taskTimeLogs",fields: [taskId], references: [id])
-  user       User     @relation("taskTimeLogsofUpdate",fields: [userId], references: [id])
-
-
-  @@index([taskId])
-  @@index([userId])
-  @@map("task_time_log")
-}
 model TaskAllocation {
   id              String    @id @default(uuid()) @db.Uuid
   taskId          String    @unique @db.Uuid
