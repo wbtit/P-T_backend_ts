@@ -110,7 +110,7 @@ import { CreateProjectInput,
      return project;
    }
    async getAll() {
-     const projects = await prisma.project.findMany({
+      return await prisma.project.findMany({
        include:{
         stageHistory:true,
         fabricator:{select:{
@@ -132,7 +132,6 @@ import { CreateProjectInput,
         }}
        }
      });
-     return projects;
    }
    async getProjectUpdateHistoryByProjectId(projectId: string) {
      const updateLog = await prisma.projectStageHistory.findMany({
@@ -142,5 +141,134 @@ import { CreateProjectInput,
        }
      });
      return updateLog;
+   }
+   async getForProjectManager(projectManagerId: string) {
+      return await prisma.project.findMany({
+       where: { managerID:projectManagerId },
+       include:{
+        stageHistory:true,
+        fabricator:{select:{
+          files:true,
+          fabName:true,
+          id:true
+        }},
+        manager:{select:{
+          firstName:true,
+          middleName:true,
+          lastName:true,
+          username:true,
+          id:true
+        }},
+        team:true,
+        department:{select:{
+          name:true,
+          id:true
+        }}
+       }
+     });
+   }
+
+   async getForDepartmentManager(departmentId: string) {
+      return await prisma.project.findMany({
+       where: { departmentID:departmentId },
+       include:{
+        stageHistory:true,
+        fabricator:{select:{
+          files:true,
+          fabName:true,
+          id:true
+        }},
+        manager:{select:{
+          firstName:true,
+          middleName:true,
+          lastName:true,
+          username:true,
+          id:true
+        }},
+        team:true,
+        department:{select:{
+          name:true,
+          id:true
+        }}
+       }
+     });
+   }
+
+   async getForConnectionDesignerEngineer(userId: string) {
+      return await prisma.project.findMany({
+        where:{connectionDesignerID:userId},
+        include:{
+        stageHistory:true,
+        fabricator:{select:{
+          files:true,
+          fabName:true,
+          id:true
+        }},
+        manager:{select:{
+          firstName:true,
+          middleName:true,
+          lastName:true,
+          username:true,
+          id:true
+        }},
+        team:true,
+        department:{select:{
+          name:true,
+          id:true
+        }}
+       }
+      })
+   }
+
+   async getProjectsForClientAdmin(clientAdminId: string) {
+    return await prisma.project.findMany({
+      where:{fabricatorID:clientAdminId},
+      include:{
+        stageHistory:true,
+        fabricator:{select:{
+          files:true,
+          fabName:true,
+          id:true
+        }},
+        manager:{select:{
+          firstName:true,
+          middleName:true,
+          lastName:true,
+          username:true,
+          id:true
+        }},
+        team:true,
+        department:{select:{
+          name:true,
+          id:true
+        }}
+       }
+    })
+   }
+
+   async getProjectsForClient(clientId: string){
+    return await prisma.project.findMany({
+      where:{fabricator:{pointOfContact: { some: { id: clientId } }}},
+      include:{
+        stageHistory:true,
+        fabricator:{select:{
+          files:true,
+          fabName:true,
+          id:true
+        }},
+        manager:{select:{
+          firstName:true,
+          middleName:true,
+          lastName:true,
+          username:true,
+          id:true
+        }},
+        team:true,
+        department:{select:{
+          name:true,
+          id:true
+        }}
+       }
+    })
    }
 }

@@ -1,6 +1,7 @@
 import { Response,Request } from "express";
 import { ProjectService } from "../services";
 import { mapUploadedFiles } from "../../uploads/fileUtil";
+import { AuthenticateRequest } from "../../../middleware/authMiddleware";
 
 const projectService = new ProjectService();
 
@@ -59,8 +60,15 @@ export class ProjectController {
           data: null
         });
     }
-    async handleGetAllProjects(req:Request,res:Response){
-        const projects = await projectService.getAll();
+    async handleGetAllProjects(req:AuthenticateRequest,res:Response){
+      if(!req.user){
+        return  res.status(401).json({
+          status: 'error',
+          message: 'Unauthorized'
+        });
+      } 
+        const { id} = req.user;
+        const projects = await projectService.getAll(id);
         res.status(200).json({
           status: 'success',
           data: projects

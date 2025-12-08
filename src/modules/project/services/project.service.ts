@@ -13,6 +13,7 @@ import { FileObject } from "../../../shared/fileType";
 import { streamFile } from "../../../utils/fileUtil";
 import path from "path";
 import { Response } from "express";
+import { UserJwt } from "../../../shared/types";
 
  const projectRepository = new ProjectRepository();
 
@@ -89,8 +90,38 @@ import { Response } from "express";
      return project;
    }
 
-   async getAll() {
-     const projects = await projectRepository.getAll();
+   async getAll(id:string) {
+    const user = await prisma.user.findUnique({where:{id}});
+    if(!user){
+      throw new AppError("User not found", 404);
+    }
+     let projects;
+     if(user.role==="ADMIN"|| user.role==="SYSTEM_ADMIN"|| user.role==="PROJECT_MANAGER_OFFICER"
+      || user.role==="DEPUTY_MANAGER"|| user.role==="OPERATION_EXECUTIVE"){
+        //all projects
+        projects = await projectRepository.getAll();
+     }
+     if(user.role==="PROJECT_MANAGER"|| user.role ==="TEAM_LEAD"){
+      //only his project 
+      projects = await projectRepository.getForProjectManager(user.id);
+     }  
+     if(user.role==="DEPT_MANAGER"){
+      //only of his department
+      projects = await projectRepository.getForDepartmentManager(user.departmentId!);
+     }
+     if(user.role==="CONNECTION_DESIGNER_ENGINEER"){
+      //only his assigned projects
+      projects = await projectRepository.getForConnectionDesignerEngineer(user.id);
+     }
+     if(user.role==="CLIENT_ADMIN"){
+      //acts as fab represnentative
+      projects = await projectRepository.getProjectsForClientAdmin(user.id);
+     }
+     if(user.role==="CLIENT"){
+      //acts as point of contact
+      projects = await projectRepository.getProjectsForClient(user.id);
+     }
+
      return projects;
    }
 

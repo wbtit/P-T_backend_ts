@@ -7,6 +7,9 @@ interface UserJwt extends JwtPayload{
           'CLIENT'|
           'VENDOR'|
           'ADMIN'|
+          'SYSTEM_ADMIN'|
+          'CLIENT_ADMIN'|
+          'CONNECTION_DESIGNER_ENGINEER'|
           'SALES_MANAGER'|
           'SALES_PERSON'|
           'DEPT_MANAGER'|

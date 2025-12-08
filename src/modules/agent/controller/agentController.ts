@@ -49,9 +49,9 @@ export const agnetQueryController=async(req:AuthenticateRequest,res:Response)=>{
               data = await taskService.getAllTasks();
               break;
 
-            case "GET_ALL_PROJECTS":
-              data = await projectService.getAll();
-              break;
+            // case "GET_ALL_PROJECTS":
+            //   data = await projectService.getAll();
+            //   break;
 
             default:
               return res.status(400).json({ message: "Unknown intent type" });
