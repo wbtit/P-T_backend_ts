@@ -6,8 +6,12 @@ import { AppError } from "../../../config/utils/AppError";
 const taskService = new TaskService();
 
 export class TaskController {
-    async handleCreateTask(req:Request, res: Response) {
-        const task = await taskService.createTask(req.body);
+    async handleCreateTask(req:AuthenticateRequest, res: Response) {
+        const { id } = req.user || {};
+        if (!id) {
+            throw new AppError('User not found', 404);
+        }
+        const task = await taskService.createTask(req.body,id);
         res.status(201).json({
             status: 'success',
             data: task,

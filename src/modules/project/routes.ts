@@ -86,7 +86,7 @@ router.post(
 router.get(
   "/projects/:projectId/wbs",
   authMiddleware,
-  asyncHandler(wbsController.getAll.bind(wbsController))
+  asyncHandler(wbsController.getWbsForProject.bind(wbsController))
 );
 
 // Single WBS

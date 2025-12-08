@@ -148,6 +148,31 @@ enum EstimationStatus {
   RE_ESTIMATION_REQUIRED
   QUOTED
 }
+
+enum TimeLogAction {
+  START
+  PAUSE
+  RESUME
+  END
+  AUTO_END
+  MANUAL_ADJUST
+}
+
+enum AlertType {
+  APPROACHING_75_PERCENT
+  AUTO_END_APPLIED
+  USER_FORGOT_TO_END
+  OVER_TIME_EXCEEDED
+}
+
+enum FlagType {
+  USER_FORGOT_TO_END
+  USER_OVERRAN_ALLOCATION
+  USER_MANUAL_CORRECTION
+  MANAGER_UNDER_ALLOCATED
+  MANAGER_OVER_ALLOCATED
+  FREQUENT_75_PERCENT_ALERTS
+}
 enum State {
   PARTIAL
   COMPLETE
@@ -261,6 +286,8 @@ model User {
   invoicePointOfContact     Invoice[]       @relation("invoicePointOfContact")
   invoiceCreatedBy          Invoice[]       @relation("invoiceCreatedBy")
   FabricatorPointOfContacts Fabricator[]    @relation("FabricatorPointOfContacts")
+  taslLogs                 TaskTimeLog[]   @relation("taskTimeLogsofUpdate")
+  taskCreatedByUser        Task[]          @relation("taskCreatedByUser")
   
   @@map("user")
   @@index([email])
@@ -702,9 +729,9 @@ model Task {
   reworkStartTime    DateTime?
   userFault          String          @default("")
   due_date           DateTime
-  duration           String
   project_id         String          @db.Uuid
   user_id            String          @db.Uuid
+  created_by         String          @db.Uuid
   mileStone_id        String?         @db.Uuid
   start_date         DateTime
   Stage              Stage           @default(IFA)
@@ -716,8 +743,13 @@ model Task {
   project            Project         @relation("TaskBelongsToProject", fields: [project_id], references: [id])
   workingHourTask    WorkingHours[]  @relation("workingHourTask")
   user               User            @relation("usersTask", fields: [user_id], references: [id])
+  credatedByUser     User            @relation("taskCreatedByUser", fields: [created_by], references: [id])
   department         Department      @relation("TaskBelongsToDepartment",fields: [departmentId],references: [id])
   mileStone          MileStone?      @relation("mileStoneTasks", fields: [mileStone_id], references: [id])
+  timeLogs           TaskTimeLog[]   @relation("taskTimeLogs")
+  allocationLog      TaskAllocation? @relation("allocationLog")
+  alert              TaskAlert[] @relation("taskAllocationAlerts")
+  flags              TaskFlag[]   @relation("taskAllocationFlags")
 
   @@index([name])
   @@index([status])
@@ -727,6 +759,66 @@ model Task {
 
   @@map("task")
 }
+
+model TaskTimeLog {
+  id         String   @id @default(uuid()) @db.Uuid
+  taskId     String   @db.Uuid
+  userId     String   @db.Uuid
+
+  action     TimeLogAction   // START | PAUSE | RESUME | END | AUTO_END | MANUAL_ADJUST
+  timestamp  DateTime        @default(now())
+  reason     String?         // for manual adjustments or comments
+  meta       Json?
+
+  task       Task     @relation("taskTimeLogs",fields: [taskId], references: [id])
+  user       User     @relation("taskTimeLogsofUpdate",fields: [userId], references: [id])
+
+
+  @@index([taskId])
+  @@index([userId])
+  @@map("task_time_log")
+}
+model TaskAllocation {
+  id              String    @id @default(uuid()) @db.Uuid
+  taskId          String    @unique @db.Uuid
+  allocatedHours  String
+  createdBy       String    @db.Uuid
+  createdAt       DateTime  @default(now())
+
+  task            Task      @relation("allocationLog",fields: [taskId], references: [id])
+
+ 
+}
+
+model TaskAlert {
+  id         String    @id @default(uuid()) @db.Uuid
+  taskId     String    @db.Uuid
+  userId     String?   @db.Uuid      // optional, if alert sent to user
+  managerId  String?   @db.Uuid      // optional, if alert sent to manager
+
+  type       AlertType
+  createdAt  DateTime  @default(now())
+
+  meta       Json?
+
+  task       Task      @relation("taskAllocationAlerts",fields: [taskId], references: [id])
+}
+
+model TaskFlag {
+  id         String     @id @default(uuid()) @db.Uuid
+  taskId     String?    @db.Uuid
+  userId     String?    @db.Uuid
+  managerId  String?    @db.Uuid
+
+  type       FlagType
+  severity   Int
+  reason     String?
+  createdAt  DateTime    @default(now())
+
+  task       Task?       @relation("taskAllocationFlags",fields: [taskId], references: [id])
+}
+
+
 
 model WorkingHours {
   id               String             @id @default(uuid()) @db.Uuid

@@ -3,12 +3,37 @@ import { createTaskInput,updateTaskInput } from "../dtos";
 import { cleandata } from "../../../config/utils/cleanDataObject";
 
 export class TaskRepository {
-    async create(data: createTaskInput) {
+    async create(data: createTaskInput,userId:string) {
         const cleanData = cleandata(data)
-        const task = await prisma.task.create({
-            data: cleanData,
-        });
-        return task;
+        await prisma.$transaction(async(tx)=>{
+            const task = await tx.task.create({
+                data:{
+                    name: cleanData.name,
+                    description: cleanData.description,
+                    mileStone_id: cleanData.mileStone_id,
+                    status: cleanData.status,
+                    priority: cleanData.priority,
+                    due_date: cleanData.due_date,
+                    start_date: cleanData.start_date,
+                    userFault: cleanData.userFault,
+                    Stage: cleanData.stage,
+                    project_id: cleanData.project_id,
+                    user_id: cleanData.user_id,
+                    departmentId: cleanData.departmentId,
+                    reworkStartTime: cleanData.reworkStartTime,
+                    created_by:userId
+                }
+            })
+
+            await tx.taskAllocation.create({
+                data:{
+                    taskId:task.id,
+                    allocatedHours:cleanData.duration,
+                    createdBy:userId
+                }
+            })
+            return task;
+        })
     }
 
     async findById(id: string) {
