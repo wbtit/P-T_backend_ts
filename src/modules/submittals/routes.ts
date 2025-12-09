@@ -43,13 +43,6 @@ router.put(
 );
 
 router.get(
-  "/:id",
-  authMiddleware,
-  validate({ params: z.object({ id: z.string() }) }),
-  submittalController.handleGetSubmittalById.bind(submittalController)
-);
-
-router.get(
   "/sent",
   authMiddleware,
   submittalController.handleSent.bind(submittalController)
@@ -59,6 +52,13 @@ router.get(
   "/received",
   authMiddleware,
   submittalController.handleReceived.bind(submittalController)
+);
+
+router.get(
+  "/:id",
+  authMiddleware,
+  validate({ params: z.object({ id: z.string() }) }),
+  submittalController.handleGetSubmittalById.bind(submittalController)
 );
 
 router.get(

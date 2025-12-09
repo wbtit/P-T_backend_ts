@@ -11,6 +11,7 @@ export class SubmitalRepository {
         files: data.files ?? [], // ✅ safer default
         project_id: data.project_id,
         recepient_id: data.recepient_id,
+        mileStoneId: data.mileStoneId,
         sender_id: userId,
         isAproovedByAdmin: approval,
         status: true, // ✅ matches your model (boolean)
@@ -25,12 +26,12 @@ export class SubmitalRepository {
     return await prisma.submittals.findFirst({
       where: { id },
       include: {
-        sender: {
-          include: {
-            managedFabricator: true, // ✅ assuming relation exists
-          },
-        },
+        fabricator: true,
+        project: true,
+        recepients: true,
+        sender: true,
         submittalsResponse: true,
+        mileStoneBelongsTo: true,
       },
     });
   }
