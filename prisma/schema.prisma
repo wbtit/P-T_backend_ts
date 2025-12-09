@@ -662,6 +662,8 @@ model ProjectLineItems {
   CheckUnitTime     Float         @default(0.0)
   QtyNo             Int           @default(0)
   checkHr           Float         @default(0.0)
+  checkHrWithRework Float         @default(0.0)
+  execHrWithRework  Float         @default(0.0)
   execHr            Float         @default(0.0)
   projectID         String        @db.Uuid
   workBreakDownID   String        @db.Uuid

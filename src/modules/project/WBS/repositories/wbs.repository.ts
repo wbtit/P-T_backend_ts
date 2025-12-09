@@ -19,24 +19,49 @@ export class WbsRepository{
         });
     }
     async getById(id:string){
-        return await prisma.workBreakdown.findUnique({
+        const wbs =await prisma.workBreakdown.findUnique({
             where:{id},
             include:{
                 LineItems:true
             }
         });
+        return wbs;
+    
     }
-    async getWbsForProject(projectId:string,stage:Stage,type:Activity){
-        return await prisma.workBreakdown.findMany({
-            where: {
-                projectId,
-                stage,
-                type
-            },include:{
-                LineItems:true
+   async getWbsForProject(projectId: string, stage: Stage, type: Activity) {
+    // 1. Fetch all WBS for the project + their line items
+    const wbsList = await prisma.workBreakdown.findMany({
+        where: { projectId, stage, type },
+        include: { LineItems: true }
+    });
+
+    // 2. Iterate + aggregate + update each WorkBreakdown
+    for (const wbs of wbsList) {
+        const items = wbs.LineItems;
+
+        const totalCheckHr = items.reduce((sum, item) => sum + (item.checkHr || 0), 0);
+        const totalExecHr = items.reduce((sum, item) => sum + (item.execHr || 0), 0);
+        const totalQtyNo = items.reduce((sum, item) => sum + (item.QtyNo || 0), 0);
+
+        // If "with rework" is also based on a field in items, compute here:
+        const totalCheckHrWithRework = items.reduce((sum, item) => sum + (item.checkHrWithRework || 0), 0);
+        const totalExecHrWithRework = items.reduce((sum, item) => sum + (item.execHrWithRework || 0), 0);
+
+        await prisma.workBreakdown.update({
+            where: { id: wbs.id },
+            data: {
+                totalCheckHr,
+                totalExecHr,
+                totalCheckHrWithRework,
+                totalExecHrWithRework,
+                totalQtyNo
             }
         });
     }
+
+    return wbsList;
+}
+
     async getTotalWbsHours(projectId:string,stage:Stage){
         return await prisma.workBreakdown.aggregate({
             where:{
