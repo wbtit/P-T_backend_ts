@@ -3,6 +3,10 @@ import { z } from "zod";
 // ---------- ENUMS ----------
 import { Stage,SubResStatus,State, Prisma } from "@prisma/client";
 
+const zBooleanString = z
+  .union([z.boolean(), z.string()])
+  .transform(val => val === true || val === "true");
+
 // ---------- SUBMITTALS DTO ----------
 export const createSubmittalsDto = z.object({
   fabricator_id: z.string(),
@@ -10,8 +14,8 @@ export const createSubmittalsDto = z.object({
   project_id: z.string(),
   recepient_id: z.string(),
   sender_id: z.string(),
-  status: z.boolean().optional(),
-  stage: z.enum(Stage),
+  status: zBooleanString.optional(),
+  stage: z.enum(Stage).optional(),
   subject: z.string().min(1, "Subject is required"),
   description: z.string().min(1, "Description is required"),
   files: z
@@ -21,7 +25,7 @@ export const createSubmittalsDto = z.object({
             ])
             .transform((val) => (val === null ? Prisma.JsonNull : val))
             .optional(),
-  isAproovedByAdmin: z.boolean().optional(),
+  isAproovedByAdmin:zBooleanString.optional(),
 });
 
 export const updateSubmittalsDto = createSubmittalsDto.partial();

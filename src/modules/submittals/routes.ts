@@ -24,19 +24,21 @@ const submittalResponseController = new SubmittalResponseController();
 router.post(
   "/",
   authMiddleware,
-  validate({ body: createSubmittalsDto }),
   submittalUploads.array("files"),
+  validate({ body: createSubmittalsDto }),
+  
   submittalController.handleCreateSubmittal.bind(submittalController)
 );
 
 router.put(
   "/:id",
   authMiddleware,
+  submittalUploads.array("files"),
   validate({
     params: z.object({ id: z.string() }),
     body: updateSubmittalsDto,
   }),
-  submittalUploads.array("files"),
+  
   submittalController.handleUpdateSubmittal.bind(submittalController)
 );
 
@@ -97,11 +99,12 @@ router.get(
 router.post(
   "/:submittalId/responses",
   authMiddleware,
+  submittalResponseUploads.array("files"),
   validate({
     params: z.object({ submittalId: z.string() }),
     body: createSubmittalsResponseDto,
   }),
-  submittalResponseUploads.array("files"),
+  
   submittalResponseController.handleCreateResponse.bind(
     submittalResponseController
   )
