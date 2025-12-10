@@ -5,7 +5,7 @@ export const NoteSchema = z.object({
     content: z.string().min(2).max(100),
     stage: z.enum(Stage),
     projectId: z.string(),
-    iles: z
+    files: z
             .union([
               z.array(z.any()),
               z.literal(null),

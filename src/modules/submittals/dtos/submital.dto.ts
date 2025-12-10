@@ -46,8 +46,8 @@ export const createSubmittalsResponseDto = z.object({
   reason: z.string().optional(),
   submittalsId: z.string(),
   description: z.string().optional(),
-  status: z.enum(SubResStatus),
-  wbtStatus: z.enum(State),
+  status: z.enum(SubResStatus).optional(),
+  wbtStatus: z.enum(State).optional(),
   parentResponseId: z.string().optional(),
 });
 
