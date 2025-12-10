@@ -39,7 +39,7 @@ export const sendNotification = async (userId:string, payload:any) => {
     });
 
     console.log(
-      `✅ Notification stored for user ${userId} | delivered: ${delivered ? "YES" : "NO"}`
+      `Notification stored for user ${userId} | delivered: ${delivered ? "YES" : "NO"}`
     );
   } catch (err) {
     console.error(" Error in sendNotification:", err);
