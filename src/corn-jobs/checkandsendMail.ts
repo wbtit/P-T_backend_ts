@@ -1,4 +1,3 @@
-import nodeCron from "node-cron";
 import prisma from "../config/database/client";
 import sendApprovalReminder from "../services/mailServices/approvalMailReminder";
 import sendSubmissionReminder from "../services/mailServices/sendSubmissionMailReminder";

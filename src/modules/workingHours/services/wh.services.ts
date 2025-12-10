@@ -148,7 +148,7 @@ export class WHService {
 
     const total = work + rework;
 
-    // 🔥 Fetch allocated hours
+    //Fetch allocated hours
     const allocation = await prisma.taskAllocation.findUnique({
         where: { taskId: data.task_id }
     });
@@ -158,13 +158,13 @@ export class WHService {
         workSeconds: work,
         reworkSeconds: rework,
 
-        // 🔥 NEW: whether the timer is running
+        //NEW: whether the timer is running
         isActive: activeSession != null,
 
-        // 🔥 NEW: start time of current session
+        //NEW: start time of current session
         activeSessionStartedAt: activeSession?.started_at ?? null,
 
-        // 🔥 NEW: allocated hours for FE calculations
+        //NEW: allocated hours for FE calculations
         allocatedHours: allocation?.allocatedHours ?? null,
 
         // (optional) nicely formatted values
@@ -172,8 +172,7 @@ export class WHService {
         workHours:   (work / 3600).toFixed(2),
         reworkHours: (rework / 3600).toFixed(2),
         totalMinutes: Math.floor(total / 60),
+
     };
 }
-
-
 }

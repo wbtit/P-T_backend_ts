@@ -1,9 +1,10 @@
 import nodeCron from "node-cron";
 import prisma from "../config/database/client";
-import { checkAndSendReminders } from "./checkandsendMail"; // your existing function
+import { checkAndSendReminders } from "./checkandsendMail"; 
+import { autoCloseStaleTasks } from "./autoCloseTask";
 
 // ───────────────────────────────
-// Advisory Lock Helper Functions
+// Advisory Lock Helper Functions 
 // ───────────────────────────────
 async function acquireLock(lockKey = 987654321): Promise<boolean> {
   try {
@@ -12,7 +13,7 @@ async function acquireLock(lockKey = 987654321): Promise<boolean> {
     `;
     return result[0]?.pg_try_advisory_lock ?? false;
   } catch (err) {
-    console.error("❌ Failed to acquire lock:", err);
+    console.error(" Failed to acquire lock:", err);
     return false;
   }
 }
@@ -21,7 +22,7 @@ async function releaseLock(lockKey = 987654321): Promise<void> {
   try {
     await prisma.$executeRaw`SELECT pg_advisory_unlock(${lockKey});`;
   } catch (err) {
-    console.error("⚠️ Failed to release lock:", err);
+    console.error(" Failed to release lock:", err);
   }
 }
 
@@ -46,7 +47,7 @@ async function safeCheckAndSendReminders() {
   });
 
   try {
-    console.log(`🚀 ${jobName}: Started at ${new Date().toISOString()}`);
+    console.log(`${jobName}: Started at ${new Date().toISOString()}`);
     await checkAndSendReminders();
 
     // 3. Update success log
@@ -59,9 +60,9 @@ async function safeCheckAndSendReminders() {
       },
     });
 
-    console.log(`✅ ${jobName}: Completed successfully.`);
+    console.log(` ${jobName}: Completed successfully.`);
   } catch (err: any) {
-    console.error(`❌ ${jobName}: Failed - ${err.message}`);
+    console.error(` ${jobName}: Failed - ${err.message}`);
 
     // 4. Update failed log
     await prisma.cronLog.update({
@@ -78,6 +79,52 @@ async function safeCheckAndSendReminders() {
     await releaseLock();
   }
 }
+async function safeAutoCloseTasks() {
+  const jobName = "autoCloseTasks";
+  const lockKey = 123456789; // different lock key from your reminders job!
+
+  const lockAcquired = await acquireLock(lockKey);
+  if (!lockAcquired) {
+    console.log(`🚫 ${jobName}: Another instance running. Skipping.`);
+    return;
+  }
+
+  const start = Date.now();
+
+  const log = await prisma.cronLog.create({ data: { jobName } });
+
+  try {
+    console.log(`${jobName}: Started at ${new Date().toISOString()}`);
+
+    await autoCloseStaleTasks(); 
+
+    await prisma.cronLog.update({
+      where: { id: log.id },
+      data: {
+        completedAt: new Date(),
+        status: "SUCCESS",
+        durationMs: Date.now() - start,
+      },
+    });
+
+    console.log(` ${jobName}: Completed successfully.`);
+
+  } catch (err: any) {
+
+    await prisma.cronLog.update({
+      where: { id: log.id },
+      data: {
+        completedAt: new Date(),
+        status: "FAILED",
+        errorMessage: err.message,
+        durationMs: Date.now() - start,
+      },
+    });
+
+  } finally {
+    await releaseLock(lockKey);
+  }
+}
 
 // ───────────────────────────────
 // CRON SCHEDULER (Every minute)
@@ -88,7 +135,14 @@ if (process.env.ENABLE_CRON === "true") {
     () => void safeCheckAndSendReminders(),
     { timezone: "Asia/Kolkata" }
   );
-  console.log("✅ Scheduler started for reminders with DB lock protection.");
+
+  nodeCron.schedule(
+    "*/10 * * * *",
+    () => void safeAutoCloseTasks(),
+    { timezone: "Asia/Kolkata" }
+  );
+
+  console.log(" Scheduler started for reminders with DB lock protection.");
 } else {
-  console.log("⏸️ Cron jobs are disabled for this environment.");
+  console.log("⏸ Cron jobs are disabled for this environment.");
 }

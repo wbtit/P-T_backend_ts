@@ -2,7 +2,7 @@ import express from 'express'
 import dotenv from "dotenv";
 dotenv.config();
 
-import "./corn-jobs/checkandsendMail"
+import "./corn-jobs/safeCorn"
 
 import cors from 'cors'
 import {
