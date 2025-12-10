@@ -721,6 +721,7 @@ model Task {
   priority           Int
   created_on         DateTime        @default(now())
   reworkStartTime    DateTime?
+  seventyFiveAlertSent Boolean @default(false)
   userFault          String          @default("")
   due_date           DateTime
   project_id         String          @db.Uuid

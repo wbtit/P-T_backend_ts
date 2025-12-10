@@ -2,7 +2,7 @@ import nodeCron from "node-cron";
 import prisma from "../config/database/client";
 import { checkAndSendReminders } from "./checkandsendMail"; 
 import { autoCloseStaleTasks } from "./autoCloseTask";
-
+import { check75Alert } from "./check75Alert";
 // ───────────────────────────────
 // Advisory Lock Helper Functions 
 // ───────────────────────────────
@@ -79,6 +79,7 @@ async function safeCheckAndSendReminders() {
     await releaseLock();
   }
 }
+//autoclose stale tasks
 async function safeAutoCloseTasks() {
   const jobName = "autoCloseTasks";
   const lockKey = 123456789; // different lock key from your reminders job!
@@ -125,6 +126,49 @@ async function safeAutoCloseTasks() {
     await releaseLock(lockKey);
   }
 }
+//75 percent alert cron
+async function safeCheck75Alert() {
+  const jobName = "check75Alert";
+  const lockKey = 123123123; // unique lock key
+
+  const lockAcquired = await acquireLock(lockKey);
+  if (!lockAcquired) {
+    console.log(`🚫 ${jobName}: Another instance running. Skipping.`);
+    return;
+  }
+
+  const start = Date.now();
+  const log = await prisma.cronLog.create({ data: { jobName } });
+
+  try {
+    console.log(`${jobName}: Started at ${new Date().toISOString()}`);
+
+    await check75Alert();
+
+    await prisma.cronLog.update({
+      where: { id: log.id },
+      data: {
+        completedAt: new Date(),
+        status: "SUCCESS",
+        durationMs: Date.now() - start,
+      },
+    });
+
+    console.log(` ${jobName}: Completed successfully.`);
+  } catch (err: any) {
+    await prisma.cronLog.update({
+      where: { id: log.id },
+      data: {
+        completedAt: new Date(),
+        status: "FAILED",
+        errorMessage: err.message,
+        durationMs: Date.now() - start,
+      },
+    });
+  } finally {
+    await releaseLock(lockKey);
+  }
+}
 
 // ───────────────────────────────
 // CRON SCHEDULER (Every minute)
@@ -135,10 +179,16 @@ if (process.env.ENABLE_CRON === "true") {
     () => void safeCheckAndSendReminders(),
     { timezone: "Asia/Kolkata" }
   );
-
+//autoclose
   nodeCron.schedule(
     "*/10 * * * *",
     () => void safeAutoCloseTasks(),
+    { timezone: "Asia/Kolkata" }
+  );
+  //75 percent alert
+  nodeCron.schedule(
+    "*/10 * * * *",
+    () => void safeCheck75Alert(),
     { timezone: "Asia/Kolkata" }
   );
 
