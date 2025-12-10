@@ -35,7 +35,8 @@ const io=new Server(server,{
   },
 });
 
-(globalThis as any).io = io;
+(global as any).io = io;
+
 
 initSocket(io)
 

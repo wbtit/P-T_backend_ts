@@ -114,7 +114,7 @@ export async function check75Alert() {
                 await sendNotification(task.project.managerID, managerPayload);
             }
 
-            console.log(`🔔 75% alert triggered for task ${task.id}`);
+            console.log(`75% alert triggered for task ${task.id}`);
         }
     }
 }

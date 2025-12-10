@@ -1,5 +1,5 @@
-import redis from "../redis/redisClient.js";
-import prisma from "../config/database/client.js";
+import redis from "../redis/redisClient";
+import prisma from "../config/database/client";
 
 /**
  * Send notification to a user using the new socket architecture.
@@ -16,13 +16,13 @@ export const sendNotification = async (userId:string, payload:any) => {
 
     let delivered = false;
 
-    if (userIsOnline && globalThis.io) {
+    if (userIsOnline && (globalThis as any).io) {
       console.log(
         ` User ${userId} is ONLINE → Sending to room user:${userId} (${socketIds.length} sockets)`
       );
 
       // Emit to all sockets belonging to this user
-      globalThis.io.to(`user:${userId}`).emit("customNotification", payload);
+      (globalThis as any).io.to(`user:${userId}`).emit("customNotification", payload);
       delivered = true;
     } else {
       console.warn(` User ${userId} OFFLINE → will store undelivered notification`);
