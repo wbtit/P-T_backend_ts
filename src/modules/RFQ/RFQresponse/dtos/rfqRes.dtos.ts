@@ -7,8 +7,8 @@ export const RfqResponseSchema = z.object({
     userId: z.string(),
     parentResponseId:z.string().optional().nullable(),
     description:z.string(),
-    status: z.enum(RFQStatus),
-    wbtStatus: z.enum(RFQStatus),
+    status: z.enum(RFQStatus).optional(),
+    wbtStatus: z.enum(RFQStatus).optional(),
     files: z
     .union([
       z.array(z.any()),
