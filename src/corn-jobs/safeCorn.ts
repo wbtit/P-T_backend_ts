@@ -4,6 +4,7 @@ import { checkAndSendReminders } from "./checkandsendMail";
 import { autoCloseStaleTasks } from "./autoCloseTask";
 import { check75Alert } from "./check75Alert";
 import { checkOverrunAlert } from "./checkOverrunAlert";
+import { runMonthlyMEAS } from "./runMonthlyMEAS";  
 // ───────────────────────────────
 // Advisory Lock Helper Functions 
 // ───────────────────────────────
@@ -195,7 +196,19 @@ async function safeCheckOverrunAlert() {
     await releaseLock(lockKey);
   }
 }
+async function safeMEAS(){
+    const lockKey = 555777999; // unique key
+    const gotLock = await acquireLock(lockKey);
+    if (!gotLock) return console.log("MEAS already running elsewhere.");
 
+    try {
+      await runMonthlyMEAS();
+    } catch (err) {
+      console.error("MEAS job failed", err);
+    } finally {
+      await releaseLock(lockKey);
+    }
+} 
 
 // ───────────────────────────────
 // CRON SCHEDULER (Every minute)
@@ -224,7 +237,12 @@ if (process.env.ENABLE_CRON === "true") {
   () => void safeCheckOverrunAlert(),
   { timezone: "Asia/Kolkata" }
 );
-
+//monthly MEAS job
+  nodeCron.schedule(
+    "0 0 1 * *",
+    () => void safeMEAS(),
+    { timezone: "Asia/Kolkata" }
+  );
 
   console.log(" Scheduler started for reminders with DB lock protection.");
 } else {

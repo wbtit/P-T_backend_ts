@@ -280,6 +280,7 @@ model User {
   invoiceCreatedBy          Invoice[]       @relation("invoiceCreatedBy")
   FabricatorPointOfContacts Fabricator[]    @relation("FabricatorPointOfContacts")
   taskCreatedByUser        Task[]          @relation("taskCreatedByUser")
+  ManagerEstimationScore   ManagerEstimationScore[] @relation("ManagerEstimationScore")
   
   @@map("user")
   @@index([email])
@@ -590,6 +591,7 @@ model Project{
   changeOrders          ChangeOrder[]    @relation("ChangeOrderProject")
   designDrawings        DesignDrawings[]      @relation("designdrawingsproject")  
   invoice                 Invoice[]       @relation("projectInvoice")
+  ManagerEstimationScore   ManagerEstimationScore[] @relation("ManagerEstimationScore")
             
 
   @@index([name])
@@ -1293,4 +1295,21 @@ model AccountInfo {
   // 🔗 Relation
   invoice             Invoice  @relation("invoice", fields: [invoiceId], references: [id])
 }
+
+model ManagerEstimationScore {
+  id          String   @id @default(uuid())
+  managerId   String   @db.Uuid
+  projectId     String   @db.Uuid
+  score       Float
+  period      String   
+  calculatedAt DateTime @default(now())
+
+  // Relations
+  manager     User     @relation("ManagerEstimationScore", fields: [managerId], references: [id])
+  project     Project  @relation("ManagerEstimationScore", fields: [projectId], references: [id])
+
+  @@unique([managerId, projectId, period])
+  @@map("manager_estimation_score")
+}
+
 
