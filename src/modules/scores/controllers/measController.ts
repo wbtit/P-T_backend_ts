@@ -3,6 +3,7 @@ import { calculateManagerEstimationScore } from "../../../services/managerEstima
 import { runMonthlyMEAS } from "../../../corn-jobs/runMonthlyMEAS";
 import { calculateManagerBias } from "../../../services/biasDetector";
 import { getMEASTrendline } from "../../../services/measTrendService";
+import { getManagerDashboardData } from "../../../services/managerDashboardService";
 
 export async function runMEASManually(req: Request, res: Response) {
   try {
@@ -90,6 +91,34 @@ export async function getMEASTrendlineHandler(req: Request, res: Response) {
 
   } catch (err: any) {
     console.error("Trendline error:", err);
+    return res.status(500).json({
+      success: false,
+      message: err.message
+    });
+  }
+
+  
+}
+export async function managerDashboardHandler(req: Request, res: Response) {
+  try {
+    const { managerId, projectId } = req.query;
+
+    if (!managerId || !projectId) {
+      return res.status(400).json({
+        success: false,
+        message: "managerId and projectId are required"
+      });
+    }
+
+    const data = await getManagerDashboardData(managerId as string, projectId as string);
+
+    return res.json({
+      success: true,
+      data
+    });
+
+  } catch (err:any) {
+    console.error("Dashboard error:", err);
     return res.status(500).json({
       success: false,
       message: err.message

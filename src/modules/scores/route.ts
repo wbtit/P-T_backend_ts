@@ -1,4 +1,4 @@
-import { getMEASTrendlineHandler, runBiasDetector, runMEASManually } from "./controllers/measController";
+import { getMEASTrendlineHandler, managerDashboardHandler, runBiasDetector, runMEASManually } from "./controllers/measController";
 import { Router } from "express";
 import { runMEASMonthly } from "./controllers/measController";
 
@@ -10,6 +10,8 @@ router.post("/meas/run-manually", runMEASManually);
 router.post("/meas/run-monthly", runMEASMonthly);
 router.post("/manager/bias", runBiasDetector);
 router.get("/admin/analytics/meas/trendline", getMEASTrendlineHandler);
+router.get("/admin/analytics/manager/dashboard", managerDashboardHandler);
+
 
 
 
