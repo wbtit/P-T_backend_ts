@@ -39,7 +39,7 @@ export async function check75Alert() {
 
         //If 75% threshold reached
         if (totalSeconds >= threshold75) {
-            // 3A️⃣ Mark alert as triggered
+            //  Mark alert as triggered
             await prisma.task.update({
                 where: { id: task.id },
                 data: { seventyFiveAlertSent: true },
