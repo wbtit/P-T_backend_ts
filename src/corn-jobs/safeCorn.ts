@@ -3,6 +3,7 @@ import prisma from "../config/database/client";
 import { checkAndSendReminders } from "./checkandsendMail"; 
 import { autoCloseStaleTasks } from "./autoCloseTask";
 import { check75Alert } from "./check75Alert";
+import { checkOverrunAlert } from "./checkOverrunAlert";
 // ───────────────────────────────
 // Advisory Lock Helper Functions 
 // ───────────────────────────────
@@ -169,6 +170,32 @@ async function safeCheck75Alert() {
     await releaseLock(lockKey);
   }
 }
+//100 percent overrun alert cron
+
+async function safeCheckOverrunAlert() {
+  const lockKey = 222333444;
+
+  if (!(await acquireLock(lockKey))) return;
+
+  const log = await prisma.cronLog.create({ data: { jobName: "checkOverrunAlert" } });
+  const start = Date.now();
+
+  try {
+    await checkOverrunAlert();
+    await prisma.cronLog.update({
+      where: { id: log.id },
+      data: { status: "SUCCESS", completedAt: new Date(), durationMs: Date.now() - start }
+    });
+  } catch (err: any) {
+    await prisma.cronLog.update({
+      where: { id: log.id },
+      data: { status: "FAILED", completedAt: new Date(), errorMessage: err.message }
+    });
+  } finally {
+    await releaseLock(lockKey);
+  }
+}
+
 
 // ───────────────────────────────
 // CRON SCHEDULER (Every minute)
@@ -191,6 +218,13 @@ if (process.env.ENABLE_CRON === "true") {
     () => void safeCheck75Alert(),
     { timezone: "Asia/Kolkata" }
   );
+  //100 percent overrun alert
+  nodeCron.schedule(
+  "*/10 * * * *",
+  () => void safeCheckOverrunAlert(),
+  { timezone: "Asia/Kolkata" }
+);
+
 
   console.log(" Scheduler started for reminders with DB lock protection.");
 } else {
