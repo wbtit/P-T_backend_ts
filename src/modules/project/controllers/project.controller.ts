@@ -21,6 +21,7 @@ export class ProjectController {
         });
     }
     async handleUpdateProject(req:Request,res:Response){
+      const { id } = req.params;
         const uploadedFiles = mapUploadedFiles(
           (req.files as Express.Multer.File[]) || [],
           "project"
@@ -28,7 +29,7 @@ export class ProjectController {
         const project = await projectService.update({
           ...req.body,
           files: uploadedFiles
-        });
+        }, id);
         res.status(200).json({
           status: 'success',
           data: project

@@ -33,9 +33,9 @@ import { CreateProjectInput,
      return project;
    }
 
-   async update(data: UpdateprojectInput) {
+   async update(id:string,data: UpdateprojectInput) {
      const project = await prisma.project.update({
-       where: { id: data.id },
+       where: { id: id },
        data,
        include:{
         stageHistory:true,

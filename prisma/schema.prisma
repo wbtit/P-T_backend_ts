@@ -1013,7 +1013,7 @@ model SubmittalsResponse {
   userId           String               @db.Uuid
   description      String               @default("")
   status           SubResStatus         @default(NOT_APPROVED)
-  wbtStatus        State                @default(RECEIVED)
+  wbtStatus        State                @default(SENT)
   parentResponseId String?              @db.Uuid
   //Relations
   parentResponse   SubmittalsResponse?  @relation("ParentChildResponse", fields: [parentResponseId], references: [id])

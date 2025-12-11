@@ -30,7 +30,7 @@ export class SubmitalRepository {
         project: true,
         recepients: true,
         sender: true,
-        submittalsResponse: true,
+        submittalsResponse: {include:{childResponses:true}},
         mileStoneBelongsTo: true,
       },
     });
@@ -69,7 +69,7 @@ export class SubmitalRepository {
         project: true,
         recepients: true,
         sender: true,
-        submittalsResponse: true,
+        submittalsResponse:{include:{childResponses:true}},
       },
     });
   }
@@ -82,7 +82,7 @@ export class SubmitalRepository {
         project: true,
         recepients: true,
         sender: true,
-        submittalsResponse: true,
+        submittalsResponse: {include:{childResponses:true}},
       },
     });
   }
@@ -96,7 +96,7 @@ export class SubmitalRepository {
         project: true,
         recepients: true,
         sender: true,
-        submittalsResponse: true,
+        submittalsResponse: {include:{childResponses:true}},
       },
     });
   }

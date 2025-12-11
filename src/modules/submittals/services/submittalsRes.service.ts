@@ -12,15 +12,15 @@ const submittalRepo = new SubmitalRepository();
 
 export class SubmittalResponseService {
   async createResponse(data: createSubResDto, userId: string) {
-     await submittalRepo.update(data.submittalsId, {
-    status: false,           // assuming status is boolean
-  });
-  if(data.parentResponseId!=undefined){
-    await submittalResponseRepo.update(data.parentResponseId,data.wbtStatus)
+    await submittalRepo.update(data.submittalsId, {
+      status: false,           // assuming status is boolean
+    });
+    if(data.parentResponseId!=undefined){
+      await submittalResponseRepo.update(data.parentResponseId,"SENT")
+    }
 
     return await submittalResponseRepo.create(data, userId);
   }
-}
 
   async updateStatus(parentResponseId: string, status: State) {
     if (!parentResponseId) throw new AppError("parentResponseId is required", 400);

@@ -157,3 +157,8 @@ export const designResponseUploads = createMulterUploader("public/designdrawingr
 export const connectionDesignerDataMap={}
 export const connectionDesignerUploads = createMulterUploader("public/connectiondesigners", connectionDesignerDataMap);
 
+export const notesDataMap={}
+export const notesUploads = createMulterUploader("public/notes", notesDataMap);
+
+
+

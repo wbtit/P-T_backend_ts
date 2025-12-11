@@ -34,23 +34,23 @@ import { UserJwt } from "../../../shared/types";
 
 
 
-   async update(data: UpdateprojectInput) {
-        const existing = await projectRepository.get(data);
+   async update(data: UpdateprojectInput,id:string) {
+        const existing = await projectRepository.get({id});
         //1** Check if the stage has changed and update the history accordingly
         if(existing?.stage!==data.stage){
          await prisma.projectStageHistory.updateMany({
-          where:{projectID:data.id,endDate:null},
+          where:{projectID:id,endDate:null},
           data:{endDate:new Date()}
          });
          await prisma.projectStageHistory.create({
            data:{
-             projectID:data.id,
+             projectID:id,
              stage:data.stage as Stage,
              startDate:new Date()
            }
          });
          //1.1** Create WBS and Project Line Items
-         await createWBSAndProjectLineItems(data.id,data.stage as Stage);
+         await createWBSAndProjectLineItems(id,data.stage as Stage);
         }
         //2.1** Check if the end date has changed to track the  automated mail
         if(existing?.endDate !== data.endDate){
@@ -71,7 +71,7 @@ import { UserJwt } from "../../../shared/types";
           data.mailReminder=false;
         }
       //update project
-     const project = await projectRepository.update(data);
+     const project = await projectRepository.update(id,data);
      return project;
    }
 
