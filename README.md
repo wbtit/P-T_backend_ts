@@ -24,3 +24,17 @@ Managers who estimate well (high-performing)
 Projects at risk due to poor planning
 
 Employees who are overloaded or underutilized
+===========================================================
+How Bias Is Calculated
+
+For each completed task:
+
+bias = (actualHours - allocatedHours) / allocatedHours
+
+
+Interpretation:
+
+Bias Value	Meaning	Behavior
+> +0.20 (20% under-allocation)	Manager consistently underestimates	BAD – unrealistic deadlines
+< -0.20 (20% over-allocation)	Manager overestimates	INEFFICIENT – padding
+between -0.20 and +0.20	Healthy	GOOD

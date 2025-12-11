@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { calculateManagerEstimationScore } from "../../../services/managerEstimationService";
 import { runMonthlyMEAS } from "../../../corn-jobs/runMonthlyMEAS";
+import { calculateManagerBias } from "../../../services/biasDetector";
 
 export async function runMEASManually(req: Request, res: Response) {
   try {
@@ -43,3 +44,27 @@ export async function runMEASMonthly(req: Request, res: Response){
         
     }
 } 
+export async function runBiasDetector(req: Request, res: Response) {
+  try {
+    const { managerId, projectId } = req.body;
+
+    if (!managerId) {
+      return res.status(400).json({
+        success: false,
+        message: "managerId is required"
+      });
+    }
+
+    const result = await calculateManagerBias(managerId, projectId);
+
+    return res.json({
+      success: true,
+      data: result
+    });
+  } catch (err:any) {
+    return res.status(500).json({
+      success: false,
+      message: err.message
+    });
+  }
+}

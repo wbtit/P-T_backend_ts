@@ -1312,4 +1312,19 @@ model ManagerEstimationScore {
   @@map("manager_estimation_score")
 }
 
+model ManagerBiasRecord {
+  id            String   @id @default(uuid())
+  managerId     String   @db.Uuid
+  projectId     String?  @db.Uuid
+  period        String   
+  biasScore     Float    
+  calculatedAt  DateTime @default(now())
+
+  manager User @relation(fields: [managerId], references: [id])
+  project Project? @relation(fields: [projectId], references: [id])
+
+  @@map("manager_bias_record")
+}
+
+
 

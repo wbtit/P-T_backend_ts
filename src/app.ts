@@ -22,6 +22,7 @@ import { CDQroutes } from "./modules/connectionDesign";
 import { estimationTaskRoutes } from "./modules/estimation";
 import { RFIRoutes} from "./modules/RFI"
 import { SbmittalRoutes} from "./modules/submittals"
+import { analyticsScoresRouter } from "./modules/scores/route";
 
 const routes = express.Router();
 
@@ -48,4 +49,5 @@ routes.use("/invoice",invoiceRoutes)
 routes.use("/connectionDesign",CDroutes)
 routes.use("/connectionDesignerQuota",CDQroutes)
 routes.use("/submittal",SbmittalRoutes)
+routes.use("/analytics/scores",analyticsScoresRouter)
 export default routes

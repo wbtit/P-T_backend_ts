@@ -1,4 +1,4 @@
-import { runMEASManually } from "./controllers/measController";
+import { runBiasDetector, runMEASManually } from "./controllers/measController";
 import { Router } from "express";
 import { runMEASMonthly } from "./controllers/measController";
 
@@ -8,5 +8,7 @@ const router = Router();
 router.post("/meas/run-manually", runMEASManually);
 // Route to trigger monthly MEAS calculation
 router.post("/meas/run-monthly", runMEASMonthly);
+router.post("/manager/bias", runBiasDetector);
 
-export default router;
+
+export { router as analyticsScoresRouter };
