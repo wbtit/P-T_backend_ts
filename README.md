@@ -38,3 +38,16 @@ Bias Value	Meaning	Behavior
 > +0.20 (20% under-allocation)	Manager consistently underestimates	BAD – unrealistic deadlines
 < -0.20 (20% over-allocation)	Manager overestimates	INEFFICIENT – padding
 between -0.20 and +0.20	Healthy	GOOD
+================================================================
+MEAS Trendline Generator (last 6 months).
+This is one of the MOST valuable analytics features for managers and leadership because it reveals:
+
+Whether a manager is improving or getting worse over time
+
+Patterns of estimation behavior
+
+Impact of training or project complexity
+
+Predictability and reliability of a manager
+
+This will generate a 6-month line graph for MEAS scores per project or across all projects.
