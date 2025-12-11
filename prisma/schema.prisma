@@ -281,6 +281,8 @@ model User {
   FabricatorPointOfContacts Fabricator[]    @relation("FabricatorPointOfContacts")
   taskCreatedByUser        Task[]          @relation("taskCreatedByUser")
   ManagerEstimationScore   ManagerEstimationScore[] @relation("ManagerEstimationScore")
+  managerbias              ManagerBiasRecord[]      @relation("managerbias")
+  employeeperformance      EmployeePerformanceScore[] @relation("employeeperformance")
   
   @@map("user")
   @@index([email])
@@ -592,6 +594,7 @@ model Project{
   designDrawings        DesignDrawings[]      @relation("designdrawingsproject")  
   invoice                 Invoice[]       @relation("projectInvoice")
   ManagerEstimationScore   ManagerEstimationScore[] @relation("ManagerEstimationScore")
+  projectbias              ManagerBiasRecord[]      @relation("projectbias")
             
 
   @@index([name])
@@ -1320,10 +1323,23 @@ model ManagerBiasRecord {
   biasScore     Float    
   calculatedAt  DateTime @default(now())
 
-  manager User @relation(fields: [managerId], references: [id])
-  project Project? @relation(fields: [projectId], references: [id])
+  manager User @relation("managerbias",fields: [managerId], references: [id])
+  project Project? @relation("projectbias",fields: [projectId], references: [id])
 
   @@map("manager_bias_record")
+}
+
+model EmployeePerformanceScore {
+  id           String   @id @default(uuid())
+  employeeId   String   @db.Uuid
+  period       String   // "YYYY-MM"
+  score        Float
+  calculatedAt DateTime @default(now())
+
+  employee User @relation("employeeperformance",fields: [employeeId], references: [id])
+
+  @@unique([employeeId, period])
+  @@map("employee_performance_score")
 }
 
 

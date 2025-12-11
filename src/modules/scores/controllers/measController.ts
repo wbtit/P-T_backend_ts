@@ -4,6 +4,7 @@ import { runMonthlyMEAS } from "../../../corn-jobs/runMonthlyMEAS";
 import { calculateManagerBias } from "../../../services/biasDetector";
 import { getMEASTrendline } from "../../../services/measTrendService";
 import { getManagerDashboardData } from "../../../services/managerDashboardService";
+import { calculateEPSForEmployee } from "../../../services/employeePerformanceService";
 
 export async function runMEASManually(req: Request, res: Response) {
   try {
@@ -123,5 +124,20 @@ export async function managerDashboardHandler(req: Request, res: Response) {
       success: false,
       message: err.message
     });
+  }
+}
+
+export async function runEPSManually(req: Request, res: Response) {
+  try {
+    const { employeeId, year, month } = req.body;
+    if (!employeeId || !year || !month) {
+      return res.status(400).json({ success: false, message: "employeeId, year, month required" });
+    }
+
+    const result = await calculateEPSForEmployee(employeeId, Number(year), Number(month));
+    return res.json({ success: true, data: result });
+  } catch (err: any) {
+    console.error("Error running EPS manually", err);
+    return res.status(500).json({ success: false, message: err.message });
   }
 }

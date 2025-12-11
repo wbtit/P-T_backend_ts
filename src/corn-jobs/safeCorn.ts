@@ -5,6 +5,7 @@ import { autoCloseStaleTasks } from "./autoCloseTask";
 import { check75Alert } from "./check75Alert";
 import { checkOverrunAlert } from "./checkOverrunAlert";
 import { runMonthlyMEAS } from "./runMonthlyMEAS";  
+import {runMonthlyEPS } from "./runMonthlyEPS";
 // ───────────────────────────────
 // Advisory Lock Helper Functions 
 // ───────────────────────────────
@@ -210,6 +211,20 @@ async function safeMEAS(){
     }
 } 
 
+async function safeEPS(){
+    const lockKey = 666888000; // unique key
+    const gotLock = await acquireLock(lockKey);
+    if (!gotLock) return console.log("EPS already running elsewhere.");
+
+    try {
+      await runMonthlyEPS();
+    } catch (err) {
+      console.error("EPS job failed", err);
+    } finally {
+      await releaseLock(lockKey);
+    }
+}
+
 // ───────────────────────────────
 // CRON SCHEDULER (Every minute)
 // ───────────────────────────────
@@ -241,6 +256,13 @@ if (process.env.ENABLE_CRON === "true") {
   nodeCron.schedule(
     "0 0 1 * *",
     () => void safeMEAS(),
+    { timezone: "Asia/Kolkata" }
+  );
+
+//monthly EPS job
+  nodeCron.schedule(
+    "0 2 1 * *",
+    () => void safeEPS(),
     { timezone: "Asia/Kolkata" }
   );
 
