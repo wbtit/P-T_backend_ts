@@ -20,6 +20,16 @@ export class EstimationWHRepository {
         });
         return wh;
     }
+    async closeSession(data: { id: string; ended_at: Date; duration_seconds: number }) {
+    return prisma.workingHours.update({
+        where: { id: data.id },
+        data: {
+            ended_at: data.ended_at,
+            duration_seconds: data.duration_seconds
+        }
+    });
+}
+
     async create(data:CreateWhDTO){
         const cleanData = cleandata(data)
         const wh=await prisma.workingHours.create({

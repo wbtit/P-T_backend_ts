@@ -900,12 +900,23 @@ model EstimationTask {
   reviewedBy   User?         @relation("ReviewedBy", fields: [reviewedById], references: [id])
   workinghours WorkingHours[] @relation("workingHourEstimationTask")
   comment      Comment[]      @relation("estComment")
+  allocationLog EstimationTaskAllocation? @relation("allocationLog")
 
   @@map("estimation_tasks")
   @@index([assignedById])
   @@index([assignedToId])
 }
+model EstimationTaskAllocation {
+  id              String    @id @default(uuid()) @db.Uuid
+  EstimationtaskId          String    @unique @db.Uuid
+  allocatedHours  String
+  createdBy       String    @db.Uuid
+  createdAt       DateTime  @default(now())
 
+  task            EstimationTask?      @relation("allocationLog",fields: [EstimationtaskId], references: [id])
+
+ 
+}
 model EstimationLineItemGroup {
   id           String                @id @default(uuid()) @db.Uuid
   name         String                // e.g., "Structural", "Electrical", "Phase 1"
