@@ -26,10 +26,12 @@ export class EstManagementRepository{
         return await prisma.estimation.findUnique({
             where:{id:id},
             include:{
+                lineItemGroups:true,
                  rfq:true,
                  createdBy:true,
                  tasks:{
                     include:{
+                        
                         assignedTo:{
                             select:{
                                 firstName:true,
@@ -114,6 +116,7 @@ export class EstManagementRepository{
             data:{
                 finalPrice:finalPrice
             },include:{
+                lineItemGroups:true,
                 rfq:true,
                 createdBy:true,
                 tasks:true,

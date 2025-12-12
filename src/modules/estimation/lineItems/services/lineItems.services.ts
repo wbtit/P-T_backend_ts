@@ -1,3 +1,4 @@
+import createEstimationLineItem from "../../management/utils/estimation.util";
 import {lineItemDto,
         updateLineItemDto,
         lineItemGroupDto,
@@ -12,7 +13,11 @@ export class LineItemsService{
     }
 //Line Item Groups
     async createLineItemGroup(data:lineItemGroupDto){
-        return await this.lineItemsRepo.createLineItemGroup(data);
+        const group =  await this.lineItemsRepo.createLineItemGroup(data);
+        if(group.id){
+            await createEstimationLineItem(group.id);
+        }
+        return group;
     }
     async updateLineItemGroup(id:string,data:updateLineItemGroupDto){
         return await this.lineItemsRepo.updateLineItemGroup(id,data);

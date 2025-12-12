@@ -19,7 +19,7 @@ export class RfqResponseService {
         if (!rfqToInReview) {
             throw new AppError("RFQ not found", 404);
         }
-        if(data.parentResponseId){
+        if(data.parentResponseId && data.status && data.wbtStatus){
             await this.repository.update(
                 data.parentResponseId,
                 data.status,
