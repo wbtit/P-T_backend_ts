@@ -927,7 +927,6 @@ model EstimationLineItem {
   updatedAt    DateTime   @updatedAt
   id           String     @id @default(uuid()) @db.Uuid
   groupId      String?     @db.Uuid @default(uuid())
-  estimationId String     @db.Uuid @default(uuid())
   //Relations
   group        EstimationLineItemGroup?    @relation(fields: [groupId], references: [id], onDelete: Cascade)
 
