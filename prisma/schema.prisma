@@ -866,7 +866,8 @@ model Estimation {
   fabricatorId     String               @db.Uuid
   tools            String?
   startDate        DateTime             @default(now())
-  lineItems        EstimationLineItem[]
+  //Relations
+  lineItemGroups   EstimationLineItemGroup[]
   tasks            EstimationTask[]
   // template         EstimationTemplate?
   createdBy        User                @relation("CreatedBy", fields: [createdById], references: [id])
@@ -892,7 +893,7 @@ model EstimationTask {
   id           String         @id @default(uuid()) @db.Uuid
   files        Json?          @default("[]")
 
-
+  //Relations
   assignedTo   User          @relation("AssignedEstimator", fields: [assignedToId], references: [id])
   assignedBy   User          @relation("AssignedBy",fields: [assignedById],references: [id])
   estimation   Estimation     @relation(fields: [estimationId], references: [id])
@@ -905,6 +906,16 @@ model EstimationTask {
   @@index([assignedToId])
 }
 
+model EstimationLineItemGroup {
+  id           String                @id @default(uuid()) @db.Uuid
+  name         String                // e.g., "Structural", "Electrical", "Phase 1"
+  description  String?
+  estimationId String                @db.Uuid
+  estimation   Estimation            @relation(fields: [estimationId], references: [id], onDelete: Cascade)
+
+  lineItems    EstimationLineItem[]  // each group can have many line items
+}
+
 model EstimationLineItem {
   scopeOfWork  String
   remarks      String
@@ -915,8 +926,10 @@ model EstimationLineItem {
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
   id           String     @id @default(uuid()) @db.Uuid
-  estimationId String     @db.Uuid
-  estimation   Estimation @relation(fields: [estimationId], references: [id], onDelete: Cascade)
+  groupId      String?     @db.Uuid @default(uuid())
+  estimationId String     @db.Uuid @default(uuid())
+  //Relations
+  group        EstimationLineItemGroup?    @relation(fields: [groupId], references: [id], onDelete: Cascade)
 
   @@map("estimation_line_items")
 }

@@ -46,7 +46,6 @@ export class EstManagementRepository{
                         }
                     }
                  },
-                 lineItems:true,
                  fabricators:true
             }
         })
@@ -75,7 +74,6 @@ export class EstManagementRepository{
                         }
                     }
                  },
-                 lineItems:true,
                  fabricators:true
             }
         })
@@ -88,7 +86,7 @@ export class EstManagementRepository{
                  rfq:true,
                  createdBy:true,
                  tasks:true,
-                 lineItems:true,
+                 
             }
         })
     }
@@ -106,7 +104,7 @@ export class EstManagementRepository{
                  rfq:true,
                  createdBy:true,
                  tasks:true,
-                 lineItems:true,
+                 
             }
     })
     }
@@ -119,7 +117,6 @@ export class EstManagementRepository{
                 rfq:true,
                 createdBy:true,
                 tasks:true,
-                lineItems:true,
             }
         })
     }

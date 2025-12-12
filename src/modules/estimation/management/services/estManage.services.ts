@@ -6,7 +6,7 @@ import { EstimationStatus } from "@prisma/client";
 import { streamFile } from "../../../../utils/fileUtil";
 import path from "path";
 import { Response } from "express";
-import createEstimationLineItem from "../utils/estimation.util";
+
 
 
 const estManage= new EstManagementRepository();
@@ -14,7 +14,6 @@ const estManage= new EstManagementRepository();
 export class EstimationManageService{
     async create(data:CreateEstimationDtoType,createdById:string){
         const estimantion = await estManage.create(data,createdById)
-        await createEstimationLineItem(estimantion.id);
 
         return estimantion
     }
