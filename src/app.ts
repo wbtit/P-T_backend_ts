@@ -29,7 +29,7 @@ const routes = express.Router();
 
 routes.use("/auth", AuthRoutes);
 routes.use("/user", userRouter);
-routes.use("/task/workingHours", whRoutes);
+routes.use("/task", whRoutes);
 routes.use("/employee",EmployeeRoutes)
 routes.use("/fabricator",fabricatorRoutes)
 routes.use("/department",departmentRoutes)

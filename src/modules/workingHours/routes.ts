@@ -2,8 +2,7 @@ import { asyncHandler } from "../../config/utils/asyncHandler";
 import validate from "../../middleware/validate";
 import {createWhSchema,updateWhSchema} from "./dtos";
 import authMiddleware from "../../middleware/authMiddleware";
-import { WHController } from "../workingHours/controller/wh.controller";
-import { EstWHController } from "./controller";
+import { EstWHController,WHController } from "./controller";
 import { Router } from "express";
 import z from "zod";
 
@@ -15,7 +14,7 @@ const EstController= new EstWHController()
 // ====================================================
 router.post('/start/:id',
     authMiddleware,
-    validate({params:z.object({id:z.string()}),body:createWhSchema}),
+    validate({params:z.object({id:z.string()})}),
     asyncHandler(whController.handleStartTask.bind(whController))
 );
 router.patch('/pause/:id',
@@ -25,7 +24,7 @@ router.patch('/pause/:id',
 );
 router.post('/resume/:id',
     authMiddleware,
-    validate({params:z.object({id:z.string()}),body:createWhSchema}),
+    validate({params:z.object({id:z.string()})}),
     asyncHandler(whController.handleResumeTask.bind(whController))
 );
 router.post('/end/:id',
@@ -35,7 +34,7 @@ router.post('/end/:id',
 );
 router.post("/reworkStart/:id",
     authMiddleware,
-    validate({params:z.object({id:z.string()}),body:createWhSchema}),
+    validate({params:z.object({id:z.string()})}),
     asyncHandler(whController.handleReworkStartTask.bind(whController))
 );
 router.post("/reworkEnd/:id",
@@ -50,39 +49,98 @@ router.get('/',
 // ==============================================================
 // ESTIMATION TASK WORKING HOURS
 // ==============================================================
-router.post('EST/start/:id',
-    authMiddleware,
-    validate({params:z.object({id:z.string()}),body:createWhSchema}),
-    asyncHandler(EstController.handleStartTask.bind(EstController))
+// ------------------------------------------
+// START TASK
+// ------------------------------------------
+router.post(
+  "/EST/start/:id",
+  authMiddleware,
+  validate({
+    params: z.object({ id: z.string() })  // estimationTaskId
+  }),
+  asyncHandler(EstController.handleStartTask.bind(EstController))
 );
-router.patch('EST/pause/:id',
-    authMiddleware,
-    validate({params:z.object({id:z.string()}),body:updateWhSchema}),
-    asyncHandler(EstController.handlePauseTask.bind(EstController))
+
+// ------------------------------------------
+// PAUSE TASK (requires whId in body)
+// ------------------------------------------
+router.patch(
+  "/EST/pause/:id",
+  authMiddleware,
+  validate({
+    params: z.object({ id: z.string() }),
+    body: z.object({
+      whId: z.string()
+    })
+  }),
+  asyncHandler(EstController.handlePauseTask.bind(EstController))
 );
-router.post('EST/resume/:id',
-    authMiddleware,
-    validate({params:z.object({id:z.string()}),body:createWhSchema}),
-    asyncHandler(EstController.handleResumeTask.bind(EstController))
+
+// ------------------------------------------
+// RESUME TASK (NO BODY)
+// ------------------------------------------
+router.post(
+  "/EST/resume/:id",
+  authMiddleware,
+  validate({
+    params: z.object({ id: z.string() })
+  }),
+  asyncHandler(EstController.handleResumeTask.bind(EstController))
 );
-router.post('EST/end/:id',
-    authMiddleware,
-    validate({params:z.object({id:z.string()}),body:updateWhSchema}),
-    asyncHandler(EstController.handleEndTask.bind(EstController))
+
+// ------------------------------------------
+// END TASK (requires whId)
+// ------------------------------------------
+router.post(
+  "/EST/end/:id",
+  authMiddleware,
+  validate({
+    params: z.object({ id: z.string() }),
+    body: z.object({
+      whId: z.string()
+    })
+  }),
+  asyncHandler(EstController.handleEndTask.bind(EstController))
 );
-router.post("EST/reworkStart/:id",
-    authMiddleware,
-    validate({params:z.object({id:z.string()}),body:createWhSchema}),
-    asyncHandler(EstController.handleReworkStartTask.bind(EstController))
+
+// ------------------------------------------
+// START REWORK (NO BODY)
+// ------------------------------------------
+router.post(
+  "/EST/reworkStart/:id",
+  authMiddleware,
+  validate({
+    params: z.object({ id: z.string() })
+  }),
+  asyncHandler(EstController.handleReworkStartTask.bind(EstController))
 );
-router.post("EST/reworkEnd/:id",
-    authMiddleware,
-    validate({params:z.object({id:z.string()}),body:updateWhSchema}),
-    asyncHandler(EstController.handleReworkEndTask.bind(EstController))
+
+// ------------------------------------------
+// END REWORK (requires whId)
+// ------------------------------------------
+router.post(
+  "/EST/reworkEnd/:id",
+  authMiddleware,
+  validate({
+    params: z.object({ id: z.string() }),
+    body: z.object({
+      whId: z.string()
+    })
+  }),
+  asyncHandler(EstController.handleReworkEndTask.bind(EstController))
 );
-router.get('EST/',
-    authMiddleware,
-    asyncHandler(EstController.handleGetTaskSummary.bind(EstController))
+
+// ------------------------------------------
+// GET TASK SUMMARY
+// ------------------------------------------
+router.get(
+  "/EST/:id",
+  authMiddleware,
+  validate({
+    params: z.object({ id: z.string() })
+  }),
+  asyncHandler(EstController.handleGetTaskSummary.bind(EstController))
 );
+
 export default router;
         

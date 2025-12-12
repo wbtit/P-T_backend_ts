@@ -6,19 +6,14 @@ import { secondsBetween } from "../utils/calculateSecs";
 const whRepository = new WHRepository();
 
 export class WHService {
-    async startTask(findData: FindWhDTO, createData: CreateWhDTO) {
+    async startTask(findData: FindWhDTO,taskId:string,userId:string) {
         const active = await whRepository.findFirst(findData);
         if (active) {
             throw new Error("You have an active task. Please end it before starting a new one.");
         }
-        const wh = await whRepository.create({
-        task_id: createData.task_id,
-        user_id: createData.user_id,
-        type: "WORK",            // always WORK for startTask()
-        estimationTaskId: createData.estimationTaskId
-    });
+        const wh = await whRepository.create(userId,taskId);
         await prisma.task.update({
-            where: { id: createData.task_id },
+            where: { id: taskId },
             data: { status: "IN_PROGRESS" }
         });
         return wh;
@@ -43,18 +38,18 @@ export class WHService {
     });
         return wh;
     }
-    async resumeTask(findData: FindWhDTO, createData: CreateWhDTO) {
+    async resumeTask(findData: FindWhDTO,userId:string,taskId:string) {
         const active = await whRepository.findFirst(findData);
         if (active) {
             throw new Error("You have an active task. Please end it before resuming.");
         }
-         const wh = await whRepository.create({
-        task_id: createData.task_id,
-        user_id: createData.user_id,
-        type: "WORK",  // resume ALWAYS continues normal work
-    });
+         const wh = await whRepository.create(
+        taskId,
+        userId,
+    );
+       
         await prisma.task.update({
-            where: { id: createData.task_id },
+            where: { id: taskId },
             data: { status: "IN_PROGRESS" }
         });
         return wh;
@@ -80,7 +75,7 @@ export class WHService {
         return wh;
      
     }
-    async startRework(findData: FindWhDTO, createData: CreateWhDTO) {
+    async startRework(findData: FindWhDTO, userId:string,taskId:string) {
         const active = await whRepository.findFirst(findData);
         if(active){
             const now = new Date();
@@ -93,14 +88,10 @@ export class WHService {
         });
         }
         await prisma.task.update({
-            where: { id: createData.task_id },
+            where: { id: taskId},
             data: { status: "REWORK" }
         });
-        return await whRepository.create({
-        task_id: createData.task_id,
-        user_id: createData.user_id,
-        type: "REWORK"
-    });
+        return await whRepository.create(taskId,userId);
     }
 
 

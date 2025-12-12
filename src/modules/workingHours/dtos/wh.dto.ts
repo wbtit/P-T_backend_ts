@@ -8,9 +8,6 @@ export const  findWhSchema=z.object({
 })
 
 export const createWhSchema=z.object({
-    task_id:z.string().optional(),
-    estimationTaskId:z.string().optional(),
-    user_id:z.string(),
     type:z.enum(WorkSegmentType),
 })
 export const updateWhSchema=z.object({
@@ -18,7 +15,7 @@ export const updateWhSchema=z.object({
     duration_seconds:z.number().optional(),
 })
 export const FindMany=z.object({
-    task_id:z.string(),
+    task_id:z.string().optional(),
     estimationTaskId:z.string().optional(),
     user_id:z.string(),
 })

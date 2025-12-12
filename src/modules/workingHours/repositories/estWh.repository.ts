@@ -30,12 +30,11 @@ export class EstimationWHRepository {
     });
 }
 
-    async create(data:CreateWhDTO){
-        const cleanData = cleandata(data)
+    async create(userId:string,estimationTaskId:string){
         const wh=await prisma.workingHours.create({
             data:{
-                user_id:cleanData.user_id,
-                estimationTaskId:cleanData.estimationTaskId,
+                user_id:userId,
+                estimationTaskId:estimationTaskId,
                 type:"WORK",
             }
         });
@@ -52,12 +51,12 @@ export class EstimationWHRepository {
         });
         return wh;
     }
-    async createrework(data:CreateWhDTO){
+    async createrework(data:CreateWhDTO,userId:string,estimationTaskId:string){
         const cleanData = cleandata(data)
         const wh=await prisma.workingHours.create({
             data:{
-                user_id:cleanData.user_id,
-                estimationTaskId:cleanData.estimationTaskId,
+                user_id:userId,
+                estimationTaskId:estimationTaskId,
                 type:"REWORK",
             }
         });
@@ -72,4 +71,4 @@ export class EstimationWHRepository {
         });
         return wh;
     }
-}``
+}

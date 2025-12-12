@@ -3,7 +3,7 @@ import { WHService } from "../services";
 import { Request,Response } from "express";
 
 const whService = new WHService();
-export class EstWHController {
+export class WHController {
     async handleStartTask(req:AuthenticateRequest,res:Response){
         if (!req.user) {
             return res.status(404).json({ message: 'User not found' });
@@ -12,8 +12,7 @@ export class EstWHController {
         const { id: taskId } = req.params;
         if (!id || !taskId) return res.status(404).json({ message: 'User or task not found' });
         const findData = { user_id: id, task_id: taskId };
-        const createData = { user_id: id, task_id: taskId, type: req.body.type };
-        const wh = await whService.startTask(findData, createData);
+        const wh = await whService.startTask(findData,taskId,id);
         res.status(201).json({
             status: 'success',
             data: wh,
@@ -45,7 +44,7 @@ export class EstWHController {
         if (!id || !taskId || !whId) return res.status(404).json({ message: 'User, task or working hours not found' });
         const findData = { user_id: id, task_id: taskId };
         const createData = { user_id: id, task_id: taskId, type: req.body.type };
-        const wh = await whService.resumeTask(findData, createData);
+        const wh = await whService.resumeTask(findData, id,taskId);
         res.status(200).json({
             status: 'success',
             data: wh,
@@ -75,7 +74,7 @@ export class EstWHController {
         if (!id || !taskId) return res.status(404).json({ message: 'User or task not found' });
         const findData = { user_id: id, task_id: taskId };
         const createData = { user_id: id, task_id: taskId, type: req.body.type };
-        const wh = await whService.startRework(findData, createData);
+        const wh = await whService.startRework(findData,id,taskId);
         res.status(201).json({
             status: 'success',
             data: wh,

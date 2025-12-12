@@ -2,28 +2,35 @@ import { EstimationWHRepository } from "../repositories";
 import { FindWhDTO, CreateWhDTO, UpdateWhDTO, FindManyDTO } from "../dtos/wh.dto";
 import prisma from "../../../config/database/client";
 import { secondsBetween } from "../utils/calculateSecs";
+import { EstimationTaskRepository } from "../../estimation/estimationTask/repositories/estTask.repository";
 
 const whRepository = new EstimationWHRepository();
+const estTaskRepository = new EstimationTaskRepository();
 
 export class EstWHService {
 
     // -------------------------
     // START TASK
     // -------------------------
-    async startTask(findData: FindWhDTO, createData: CreateWhDTO) {
+    async startTask(findData: FindWhDTO,estimationTaskId:string,userId:string) {
+        // Validate that the estimation task exists
+        const task = await estTaskRepository.getById(estimationTaskId);
+        if (!task) {
+            throw new Error("Estimation task not found.");
+        }
+
         const active = await whRepository.findFirst(findData);
         if (active) {
             throw new Error("You already have an active session. Please end it before starting a new one.");
         }
 
-        const wh = await whRepository.create({
-            estimationTaskId: createData.estimationTaskId,
-            user_id: createData.user_id,
-            type: "WORK"
-        });
+        const wh = await whRepository.create(
+            userId,
+            estimationTaskId,
+        );
 
         await prisma.estimationTask.update({
-            where: { id: createData.estimationTaskId },
+            where: { id:estimationTaskId },
             data: { status: "IN_PROGRESS" }
         });
 
@@ -57,18 +64,23 @@ export class EstWHService {
     // -------------------------
     // RESUME TASK
     // -------------------------
-    async resumeTask(findData: FindWhDTO, createData: CreateWhDTO) {
+    async resumeTask(findData: FindWhDTO,estimationTaskId:string,userId:string) {
+        // Validate that the estimation task exists
+        const task = await estTaskRepository.getById(estimationTaskId);
+        if (!task) {
+            throw new Error("Estimation task not found.");
+        }
+
         const active = await whRepository.findFirst(findData);
         if (active) throw new Error("You already have an active session. Please pause/end it first.");
 
-        const wh = await whRepository.create({
-            estimationTaskId: createData.estimationTaskId,
-            user_id: createData.user_id,
-            type: "WORK"
-        });
+        const wh = await whRepository.create(
+            userId,
+            estimationTaskId
+        );
 
         await prisma.estimationTask.update({
-            where: { id: createData.estimationTaskId },
+            where: { id: estimationTaskId },
             data: { status: "IN_PROGRESS" }
         });
 
@@ -102,7 +114,13 @@ export class EstWHService {
     // -------------------------
     // START REWORK
     // -------------------------
-    async startRework(findData: FindWhDTO, createData: CreateWhDTO) {
+    async startRework(findData: FindWhDTO,estimationTaskId:string,userId:string) {
+        // Validate that the estimation task exists
+        const task = await estTaskRepository.getById(estimationTaskId);
+        if (!task) {
+            throw new Error("Estimation task not found.");
+        }
+
         const active = await whRepository.findFirst(findData);
 
         // If an active session exists, close it first
@@ -118,15 +136,14 @@ export class EstWHService {
         }
 
         await prisma.estimationTask.update({
-            where: { id: createData.estimationTaskId },
+            where: { id: estimationTaskId },
             data: { status: "REWORK" }
         });
 
-        return await whRepository.create({
-            estimationTaskId: createData.estimationTaskId,
-            user_id: createData.user_id,
-            type: "REWORK"
-        });
+        return await whRepository.create(
+            userId,
+            estimationTaskId
+        );
     }
 
     // -------------------------
