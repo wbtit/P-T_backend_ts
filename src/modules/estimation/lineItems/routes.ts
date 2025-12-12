@@ -4,17 +4,23 @@ import { Router } from "express";
 import { LineItemsController } from "./controllers";
 import { asyncHandler } from "../../../config/utils/asyncHandler";
 import z from "zod";
+import { createLineItemGroupSchema,
+    updateLineItemGroupSchema,
+    createLineItemSchema,
+    updateLineItemSchema
+ } from "./dtos";
 
 const lineItemCtrlr = new LineItemsController();
 const router = Router();
 
 router.post("/",
     authMiddleware,
+    validate({ body: createLineItemGroupSchema }),
     asyncHandler(lineItemCtrlr.handleCreateLineItemGroup).bind(LineItemsController)
 );
 router.put("/:id",
     authMiddleware,
-    validate({ params: z.object({ id: z.string() }) }),
+    validate({ params: z.object({ id: z.string() }), body: updateLineItemGroupSchema }),
     asyncHandler(lineItemCtrlr.handleUpdateLineItemGroup).bind(LineItemsController)
 );
 router.get("/groups/:id",
@@ -40,11 +46,12 @@ router.delete("/:id",
 // Line Items
 router.post("/item",
     authMiddleware,
+    validate({ body: createLineItemSchema }),
     asyncHandler(lineItemCtrlr.handleCreateLineItem).bind(LineItemsController)
 );
 router.put("/update/:id",
     authMiddleware,
-    validate({ params: z.object({ id: z.string() }) }),
+    validate({ params: z.object({ id: z.string() }), body: updateLineItemSchema }),
     asyncHandler(lineItemCtrlr.handleUpdateLineItem).bind(LineItemsController)
 );
 router.get("/Bygroup/:groupId",
