@@ -1,4 +1,5 @@
 import prisma from "../../../config/database/client";
+import { AppError } from "../../../config/utils/AppError";
 import { CreateProjectInput,
   UpdateprojectInput,
   GetProjectInput,
@@ -8,39 +9,49 @@ import { createProjectWbsForStage } from "../utils/createProjectWbsForStorage";
 import { setProjectWbsSelection } from "../utils/setProjectWbsSelection";
 
  export class ProjectRepository {
-   async create(data: CreateProjectInput,userId:string) {
-    return prisma.$transaction(async tx=>{
-      const project = await tx.project.create({
-       data,
-       include:{
-        stageHistory:true,
-        fabricator:{select:{
-          files:true,
-          fabName:true,
-          id:true
-        }},
-        manager:{select:{
-          firstName:true,
-          middleName:true,
-          lastName:true,
-          username:true,
-          id:true
-        }},
-        team:true,
-        department:{select:{
-          name:true,
-          id:true
-        }}
-       }
-     });
-
-     await setProjectWbsSelection(project.id, data.wbsTemplateIds || [], userId);
-     await createProjectWbsForStage(project.id,project.stage);
-     return project;
+   async create(data: CreateProjectInput, userId: string) {
+  return prisma.$transaction(async tx => {
+    const project = await tx.project.create({
+      data,
+      include: {
+        stageHistory: true,
+        fabricator: { select: { files: true, fabName: true, id: true } },
+        manager: { select: { firstName: true, middleName: true, lastName: true, username: true, id: true } },
+        team: true,
+        department: { select: { name: true, id: true } },
+      },
     });
-   }
+    const validTemplates = await tx.wbsTemplate.findMany({
+    where: {
+      id: { in: data.wbsTemplateIds },
+      isActive: true,
+      isDeleted: false,
+    },
+      select: { id: true },
+  });
 
-   async update(id:string,data: UpdateprojectInput) {
+if (validTemplates.length !== data.wbsTemplateIds?.length) {
+  throw new AppError("Invalid WBS template selection", 400);
+}
+
+    await setProjectWbsSelection(
+      tx,
+      project.id,
+      data.wbsTemplateIds || [],
+      userId
+    );
+
+    await createProjectWbsForStage(
+      tx,
+      project.id,
+      project.stage
+    );
+
+    return project;
+  });
+}
+
+  async update(id:string,data: UpdateprojectInput) {
      const project = await prisma.project.update({
        where: { id: id },
        data,
