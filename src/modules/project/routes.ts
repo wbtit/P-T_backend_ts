@@ -76,43 +76,16 @@ router.get(
 const wbsController = new WBSController();
 
 // WBS under a project
+router.get(
+  "/wbs-templates",
+  authMiddleware,
+  asyncHandler(wbsController.getWbsTemplates.bind(wbsController))
+);
+
 router.post(
-  "/projects/:projectId/wbs",
+  "/wbs-templates",
   authMiddleware,
-  validate({ body: WBSSchema }),
-  asyncHandler(wbsController.create.bind(wbsController))
-);
-//efghjkl;
-router.get(
-  "/projects/:projectId/wbs",
-  authMiddleware,
-  asyncHandler(wbsController.getWbsForProject.bind(wbsController))
-);
-
-// Single WBSertyui
-router.get(
-  "/wbs/:wbsId",
-  authMiddleware,
-  asyncHandler(wbsController.getById.bind(wbsController))
-);
-
-// WBS stats & totals
-router.get(
-  "/projects/:projectId/wbs/:wbsId/total-hours",
-  authMiddleware,
-  asyncHandler(wbsController.getTotalWbsHours.bind(wbsController))
-);
-
-router.get(
-  "/projects/:projectId/wbs/:wbsId/total",
-  authMiddleware,
-  asyncHandler(wbsController.getWbsTotal.bind(wbsController))
-);
-
-router.get(
-  "/projects/:projectId/wbs/:wbsId/stats",
-  authMiddleware,
-  asyncHandler(wbsController.getWbsStats.bind(wbsController))
+  asyncHandler(wbsController.createWbsTemplate.bind(wbsController))
 );
 // ===========================================================
 // NOTES ROUTES

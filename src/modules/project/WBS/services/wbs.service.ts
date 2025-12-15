@@ -4,6 +4,7 @@ import { Stage,Activity } from "@prisma/client";
 import { PLIRepository } from "../../projectLineItems";
 import { ProjectRepository } from "../../repositories";
 import { AppError } from "../../../../config/utils/AppError";
+import prisma from "../../../../config/database/client";
 
 
 const wbsRepository = new WbsRepository();
@@ -11,6 +12,72 @@ const pliRepository = new PLIRepository();
 const projectRepository = new ProjectRepository();
 
 export class WbsService {
+
+    async  list() {
+  return prisma.wbsTemplate.findMany({
+    where: {
+      isActive: true,
+      isDeleted: false,
+    },
+    include: {
+      lineItems: {
+        where: {
+          isActive: true,
+          isDeleted: false,
+        },
+      },
+    },
+    orderBy: { name: "asc" },
+  });
+}
+
+
+  async create(data: {
+  name: string;
+  type: Activity;
+  templateKey: string;
+  lineItems: {
+    description: string;
+    unitTime: number;
+    checkUnitTime: number;
+  }[];
+}) {
+  return prisma.$transaction(async tx => {
+    // prevent duplicate templateKey+version
+    const existing = await tx.wbsTemplate.findFirst({
+      where: {
+        templateKey: data.templateKey,
+        version: 1,
+      },
+    });
+
+    if (existing) {
+      throw new AppError("Template already exists", 409);
+    }
+
+    const template = await tx.wbsTemplate.create({
+      data: {
+        name: data.name,
+        type: data.type,
+        templateKey: data.templateKey,
+        version: 1,
+      },
+    });
+
+    await tx.wbsLineItemTemplate.createMany({
+      data: data.lineItems.map((li, index) => ({
+        wbsTemplateId: template.id,
+        description: li.description,
+        unitTime: li.unitTime,
+        checkUnitTime: li.checkUnitTime,
+        templateKey: `${data.templateKey}-${index + 1}`,
+      })),
+    });
+
+    return template;
+  });
+}
+
     async createWbs(data: WBSInput) {
         return await wbsRepository.create(data);
     }

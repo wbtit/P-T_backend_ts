@@ -5,6 +5,18 @@ import { Stage,Activity } from "@prisma/client";
 const wbsService = new WbsService();
 
 export class WBSController{
+
+    async getWbsTemplates(req: Request, res: Response) {
+  const templates = await wbsService.list();
+  res.json({ status: "success", data: templates });
+}
+
+async createWbsTemplate(req: Request, res: Response) {
+  const template = await wbsService.create(req.body);
+  res.status(201).json({ status: "success", data: template });
+}
+
+
     async create(req: Request, res: Response) {
         const data = req.body;
         const result = await wbsService.createWbs(data);
