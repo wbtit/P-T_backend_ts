@@ -157,6 +157,12 @@ router.get(
   authMiddleware,
   asyncHandler(taskController.handleGetMyEstimationTasks.bind(taskController))
 );
+// Get My All Assigned Tasks
+router.get(
+  "/estimation-tasks/my/all",
+  authMiddleware,
+  asyncHandler(taskController.handleGetMyAllEstimationTasks.bind(taskController))
+);
 
 // Get Task By ID
 router.get(

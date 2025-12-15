@@ -56,6 +56,20 @@ export class EstimationTaskRepository{
         }
         })
     }
+    async getMyAllTask(userId:string){
+        return await prisma.estimationTask.findMany({
+        where:{
+          assignedToId:userId 
+        },
+        include:{
+            workinghours:true,
+            assignedBy:{select:{firstName:true,middleName:true,lastName:true}},
+            assignedTo:{select:{firstName:true,middleName:true,lastName:true}},
+            reviewedBy:{select:{firstName:true,middleName:true,lastName:true}},
+            estimation:{select:{projectName:true,fabricatorName:true,fabricators:{select:{fabName:true}}}}
+        }
+        })
+    }
     async update(id:string,data:updateEstimationTaskInput){
         return await prisma.estimationTask.update({
             where:{id},

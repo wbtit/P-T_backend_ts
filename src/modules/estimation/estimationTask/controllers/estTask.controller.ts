@@ -65,6 +65,16 @@ export class EstimationTaskController {
             data: tasks,
         });
     }
+    async handleGetMyAllEstimationTasks(req: AuthenticateRequest, res: Response) {
+        if (!req.user) throw new AppError("User not authenticated", 401);
+
+        const tasks = await estimationTaskService.getUserAllTasks(req.user.id);
+
+        res.status(200).json({
+            status: "success",
+            data: tasks,
+        });
+    }
 
     async handleUpdateEstimationTask(req: Request, res: Response) {
         const { id } = req.params;

@@ -34,7 +34,9 @@ export class EstimationTaskService {
     async getUserTasks(userId: string) {
         return await this.estimationTaskRepo.getMyTask(userId);
     }
-
+    async getUserAllTasks(userId: string) {
+        return await this.estimationTaskRepo.getMyAllTask(userId);
+    }
     async updateTask(taskId: string, data: updateEstimationTaskInput) {
         // Optionally validate if task exists before updating
         return await this.estimationTaskRepo.update(taskId, data);
