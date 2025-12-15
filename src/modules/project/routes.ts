@@ -93,6 +93,18 @@ router.get(
   authMiddleware,
   asyncHandler(wbsController.getWbsStats.bind(wbsController))
 );
+
+router.get(
+  "/projects/:projectId/dashboard/stats/:stage",
+  authMiddleware,
+  asyncHandler(wbsController.getProjectDashboardStats.bind(wbsController))
+);
+
+router.get(
+  "/projects/:projectId/dashboard/activity-stats/:stage",
+  authMiddleware,
+  asyncHandler(wbsController.getActivityDashboardStats.bind(wbsController))
+);
 // ===========================================================
 // NOTES ROUTES
 // ===========================================================

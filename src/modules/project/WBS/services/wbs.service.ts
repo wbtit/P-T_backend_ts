@@ -79,6 +79,26 @@ export class WbsService {
 }
 
     
+async getProjectDashboardStats(
+  projectId: string,
+  stage: Stage
+) {
+  return wbsRepository.getProjectDashboardStats(
+    projectId,
+    stage
+  );
+}
+
+async getActivityDashboardStats(
+  projectId: string,
+  stage: Stage
+) {
+  return wbsRepository.getActivityDashboardStats(
+    projectId,
+    stage
+  );
+}
+
   async getWbsStats(projectId: string,stage: Stage,type: Activity) {
   const project = await projectRepository.get({ id: projectId });
   if (!project) throw new Error("Project not found");

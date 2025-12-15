@@ -16,6 +16,19 @@ async createWbsTemplate(req: Request, res: Response) {
   res.status(201).json({ status: "success", data: template });
 }
 
+async getProjectDashboardStats(req: Request, res: Response) {   
+    const { projectId, stage } = req.params;
+    const result = await wbsService.getProjectDashboardStats(projectId, stage as Stage);
+    return res.status(200).json(result);
+}
+
+async getActivityDashboardStats(req: Request, res: Response) {
+    const { projectId, stage } = req.params;
+    const result = await wbsService.getActivityDashboardStats(projectId, stage as Stage);
+    return res.status(200).json(result);
+}
+
+
 async getWbsStats(req: Request, res: Response) {
         const { projectId, stage, type } = req.params;
         const result = await wbsService.getWbsStats(projectId, stage as Stage, type as Activity);
