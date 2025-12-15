@@ -84,6 +84,106 @@ import { handleEndDateChange } from "../utils/handleEndDateChange";
   });
 }
 
+async expandProjectWbs(
+  projectId: string,
+  wbsTemplateIds: string[],
+  userId?: string
+) {
+  return prisma.$transaction(async tx => {
+    // 1️⃣ Load project (need current stage)
+    const project = await tx.project.findUnique({
+      where: { id: projectId },
+      select: { stage: true },
+    });
+
+    if (!project) {
+      throw new AppError("Project not found", 404);
+    }
+
+    const currentStage = project.stage;
+
+    // 2️⃣ Fetch existing selections
+    const existingSelections = await tx.projectWbsSelection.findMany({
+      where: {
+        projectId,
+        isActive: true,
+      },
+      select: { wbsTemplateId: true },
+    });
+
+    const selectedSet = new Set(
+      existingSelections.map(s => s.wbsTemplateId)
+    );
+
+    // 3️⃣ Filter only NEW templates
+    const newTemplateIds = wbsTemplateIds.filter(
+      id => !selectedSet.has(id)
+    );
+
+    if (newTemplateIds.length === 0) {
+      return { added: 0, message: "No new WBS to add" };
+    }
+
+    // 4️⃣ Persist new selections
+    await tx.projectWbsSelection.createMany({
+      data: newTemplateIds.map(id => ({
+        projectId,
+        wbsTemplateId: id,
+        selectedById: userId,
+      })),
+    });
+
+    // 5️⃣ Fetch templates + line items
+    const templates = await tx.wbsTemplate.findMany({
+      where: {
+        id: { in: newTemplateIds },
+        isActive: true,
+        isDeleted: false,
+      },
+      include: { lineItems: true },
+    });
+
+    // 6️⃣ Create ProjectWbs + LineItems (CURRENT STAGE ONLY)
+    for (const tpl of templates) {
+      const exists = await tx.projectWbs.findFirst({
+        where: {
+          projectId,
+          stage: currentStage,
+          wbsTemplateId: tpl.id,
+        },
+      });
+
+      if (exists) continue; // safety net
+
+      const wbs = await tx.projectWbs.create({
+        data: {
+          projectId,
+          stage: currentStage,
+          wbsTemplateId: tpl.id,
+          templateVersion: tpl.version,
+          name: tpl.name,
+          type: tpl.type,
+        },
+      });
+
+      await tx.projectLineItem.createMany({
+        data: tpl.lineItems.map(li => ({
+          projectWbsId: wbs.id,
+          lineItemTemplateId: li.id,
+          description: li.description,
+          unitTime: li.unitTime,
+          checkUnitTime: li.checkUnitTime,
+        })),
+      });
+    }
+
+    return {
+      added: newTemplateIds.length,
+      stage: currentStage,
+    };
+  });
+}
+
 
   
    async get(data: GetProjectInput) {

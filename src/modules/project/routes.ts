@@ -49,6 +49,7 @@ router.get("/projects", authMiddleware, asyncHandler(projectController.handleGet
 router.get("/projects/:projectId/files/:fileId", authMiddleware,validate({params:z.object({projectId:z.string(),fileId:z.string()})}), asyncHandler(projectController.handleGetFile.bind(projectController)));
 router.get("/viewFile/:projectId/:fileId", authMiddleware,validate({params:z.object({projectId:z.string(),fileId:z.string()})}), asyncHandler(projectController.handleViewFile.bind(projectController)));
 router.get("/projects/:projectId/update-history", authMiddleware,validate({params:z.object({projectId:z.string()})}), asyncHandler(projectController.handleGetProjectUpdateHistory.bind(projectController)));
+router.post("/projects/:projectId/wbs/expand",authMiddleware,asyncHandler(projectController.expandWbs.bind(projectController)))
 // ===========================================================
 // PLI ROUTES
 // ===========================================================

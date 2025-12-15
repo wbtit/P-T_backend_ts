@@ -61,6 +61,22 @@ export class ProjectController {
           data: null
         });
     }
+    async expandWbs(req: AuthenticateRequest, res: Response) {
+  const { projectId } = req.params;
+  const { wbsTemplateIds } = req.body;
+
+  const result = await projectService.expandProjectWbs(
+    projectId,
+    wbsTemplateIds,
+    req.user?.id
+  );
+
+  res.status(200).json({
+    status: "success",
+    data: result,
+  });
+}
+
     async handleGetAllProjects(req:AuthenticateRequest,res:Response){
       if(!req.user){
         return  res.status(401).json({
