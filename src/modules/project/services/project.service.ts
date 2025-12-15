@@ -14,13 +14,14 @@ import { streamFile } from "../../../utils/fileUtil";
 import path from "path";
 import { Response } from "express";
 import { UserJwt } from "../../../shared/types";
+import { updateProjectStage } from "../utils/updateProjectStage";
 
  const projectRepository = new ProjectRepository();
 
  export class ProjectService {
    
   
-  async create(data: CreateProjectInput & {wbsTemplateIds:string[]},userId:string) {
+  async create(data: CreateProjectInput,userId:string) {
      const existing = await projectRepository.getByProjectNumber(data.projectNumber);
      if (existing) {
        throw new AppError("Project with this number already exists", 409);
@@ -44,7 +45,7 @@ import { UserJwt } from "../../../shared/types";
            }
          });
          //1.1** Create WBS and Project Line Items
-         await createWBSAndProjectLineItems(id,data.stage as Stage);
+         updateProjectStage(id,data.stage as Stage)
         }
         //2.1** Check if the end date has changed to track the  automated mail
         if(existing?.endDate !== data.endDate){

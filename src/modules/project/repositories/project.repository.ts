@@ -8,7 +8,7 @@ import { createProjectWbsForStage } from "../utils/createProjectWbsForStorage";
 import { setProjectWbsSelection } from "../utils/setProjectWbsSelection";
 
  export class ProjectRepository {
-   async create(data: CreateProjectInput & {wbsTemplateIds:string[]},userId:string) {
+   async create(data: CreateProjectInput,userId:string) {
     return prisma.$transaction(async tx=>{
       const project = await tx.project.create({
        data,
@@ -34,7 +34,7 @@ import { setProjectWbsSelection } from "../utils/setProjectWbsSelection";
        }
      });
 
-     await setProjectWbsSelection(project.id,data.wbsTemplateIds,userId);
+     await setProjectWbsSelection(project.id, data.wbsTemplateIds || [], userId);
      await createProjectWbsForStage(project.id,project.stage);
      return project;
     });

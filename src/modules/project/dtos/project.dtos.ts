@@ -55,6 +55,10 @@ export const CreateProjectSchema = z.object({
   customerDesign: zBooleanString,
   detailingMain: zBooleanString,
   detailingMisc: zBooleanString,
+  
+  //wbsTemplateIds:string[] optional field
+  wbsTemplateIds: z.array(z.string()).optional(),
+
 
   // DATE fields
   startDate: zDateString,

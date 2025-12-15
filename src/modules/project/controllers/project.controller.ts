@@ -6,7 +6,7 @@ import { AuthenticateRequest } from "../../../middleware/authMiddleware";
 const projectService = new ProjectService();
 
 export class ProjectController {
-    async handleCreateProject(req:Request,res:Response){
+    async handleCreateProject(req:AuthenticateRequest,res:Response){
         const uploadedFiles = mapUploadedFiles(
           (req.files as Express.Multer.File[]) || [],
           "project"
@@ -14,7 +14,7 @@ export class ProjectController {
         const project = await projectService.create({
           ...req.body,
           files: uploadedFiles
-        });
+        }, req.user?.id || "");
         res.status(201).json({
           status: 'success',
           data: project
