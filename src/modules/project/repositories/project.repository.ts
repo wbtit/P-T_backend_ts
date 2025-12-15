@@ -4,10 +4,13 @@ import { CreateProjectInput,
   GetProjectInput,
   DeleteProjectInput
  } from "../dtos";
+import { createProjectWbsForStage } from "../utils/createProjectWbsForStorage";
+import { setProjectWbsSelection } from "../utils/setProjectWbsSelection";
 
  export class ProjectRepository {
-   async create(data: CreateProjectInput) {
-     const project = await prisma.project.create({
+   async create(data: CreateProjectInput & {wbsTemplateIds:string[]},userId:string) {
+    return prisma.$transaction(async tx=>{
+      const project = await tx.project.create({
        data,
        include:{
         stageHistory:true,
@@ -30,7 +33,11 @@ import { CreateProjectInput,
         }}
        }
      });
+
+     await setProjectWbsSelection(project.id,data.wbsTemplateIds,userId);
+     await createProjectWbsForStage(project.id,project.stage);
      return project;
+    });
    }
 
    async update(id:string,data: UpdateprojectInput) {

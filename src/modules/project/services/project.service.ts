@@ -20,33 +20,14 @@ import { UserJwt } from "../../../shared/types";
  export class ProjectService {
    
   
-  async create(data: CreateProjectInput) {
+  async create(data: CreateProjectInput & {wbsTemplateIds:string[]},userId:string) {
      const existing = await projectRepository.getByProjectNumber(data.projectNumber);
      if (existing) {
        throw new AppError("Project with this number already exists", 409);
      }
-     const project = await projectRepository.create(data);
+     const project = await projectRepository.create(data,userId);
      return project;
    }
-
-   async setProjectWbsSelection(projectId:string,wbsTemplateIds:string[],userId:string){
-    return prisma.$transaction(async tx =>{
-      await tx.projectWbsSelection.updateMany({
-        where:{projectId,isActive:true},
-        data:{isActive:false}
-      });
-      await tx.projectWbsSelection.createMany({
-        data:wbsTemplateIds.map(id=>({
-          projectId,
-          wbsTemplateId:id,
-          selectedById:userId,
-        })),
-      });
-    });
-   }
-   
-
-
    async update(data: UpdateprojectInput,id:string) {
         const existing = await projectRepository.get({id});
         //1** Check if the stage has changed and update the history accordingly
