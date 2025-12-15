@@ -78,88 +78,86 @@ export class WbsService {
   });
 }
 
-    async createWbs(data: WBSInput) {
-        return await wbsRepository.create(data);
-    }
+    
+  async getWbsStats(projectId: string,stage: Stage,type: Activity) {
+  const project = await projectRepository.get({ id: projectId });
+  if (!project) throw new Error("Project not found");
 
-    async getAllWbs() {
-        return await wbsRepository.getAll();
-    }
-    async getById(id: string) {
-        return await wbsRepository.getById(id);
-    }
+  const estimatedMins = (project.estimatedHours || 0) * 60;
 
-    async getWbsForProject(projectId: string, stage: Stage, type: Activity) {
-        return await wbsRepository.getWbsForProject(projectId, stage, type);
-    }
+  // 1️⃣ Fetch WBS + LineItems
+  const wbsList = await wbsRepository.getProjectWbs(
+    projectId,
+    stage,
+    type
+  );
 
-    async getTotalWbsHours(projectId: string, stage: Stage) {
-        return await wbsRepository.getTotalWbsHours(projectId, stage);
-    }
-
-    async getWbsTotal(projectId: string, stage: Stage, type: Activity) {
-        return await wbsRepository.getWbsTotal(projectId, stage, type);
-    }
-
-    async getWbsStats(projectId: string, stage: Stage, type: Activity) {
-    // Fetch once at the beginning
-    const project = await projectRepository.get({ id: projectId });
-    if (!project) {
-      throw new Error(`Project ${projectId} not found`);
-    }
-  
-    const estimatedMins = (project.estimatedHours || 0) * 60;
-  
-    const wbsActivities = await wbsRepository.getWbsForProject(projectId, stage, type);
-  
-    // Pre-fetch total WBS hours once (not per activity)
-    const getHours = await wbsRepository.getTotalWbsHours(projectId, stage);
-    const totalSubTaskHours = (getHours._sum.totalExecHr || 0) + (getHours._sum.totalCheckHr || 0);
-  
-    const reworkPercentage = estimatedMins
-      ? ((estimatedMins - totalSubTaskHours) / estimatedMins) * 100
-      : 0;
-  
-    // Better: make divisor dynamic, not hardcoded
-    const divisor = wbsActivities.length || 1;
-    const reworkPercentPerLineItems = reworkPercentage / divisor;
-  
-    const results = await Promise.all(
-      wbsActivities.map(async (activity) => {
-        const sumData = await pliRepository.getSumData(projectId, activity.id, stage);
-        
-        const execHr = sumData._sum.execHr || 0;
-        const checkHr = sumData._sum.checkHr || 0;
-        
-        const totalExecHrWithRework = execHr * reworkPercentPerLineItems;
-        const totalCheckHrWithRework = checkHr * reworkPercentPerLineItems;
-        
-        const data: UpdateWBSInput = {
-          totalQtyNo: sumData._sum.QtyNo || 0,
-          totalExecHr: execHr,
-          totalCheckHr: checkHr,
-          totalExecHrWithRework,
-          totalCheckHrWithRework,
-        };
-      
-        await wbsRepository.Update(activity.id, data, projectId, stage);
-      
-        return {
-          id: activity.id,
-          name: activity.name,
-          totalQtyNo: data.totalQtyNo,
-          totalExecHr: data.totalExecHr,
-          totalCheckHr: data.totalCheckHr,
-          subTasks: activity.LineItems || [],
-          reworkPercentage,
-          reworkPercentPerLineItems,
-          totalExecHrWithRework,
-          totalCheckHrWithRework,
-        };
-      })
+  // 2️⃣ Project-level totals
+  const projectTotals =
+    await wbsRepository.getTotalProjectWbsHours(
+      projectId,
+      stage
     );
-  
-    return results;
-}   
+
+  const totalSubTaskHours =
+    (projectTotals._sum.totalExecHr || 0) +
+    (projectTotals._sum.totalCheckHr || 0);
+
+  const reworkPercentage = estimatedMins
+    ? ((estimatedMins - totalSubTaskHours) / estimatedMins) * 100
+    : 0;
+
+  const divisor = wbsList.length || 1;
+  const reworkPercentPerWbs = reworkPercentage / divisor;
+
+  // 3️⃣ Per-WBS computation
+  const results = await Promise.all(
+    wbsList.map(async (wbs) => {
+      const items = wbs.lineItems;
+
+      const execHr = items.reduce(
+        (sum, i) => sum + (i.execHr || 0),
+        0
+      );
+      const checkHr = items.reduce(
+        (sum, i) => sum + (i.checkHr || 0),
+        0
+      );
+      const qtyNo = items.reduce(
+        (sum, i) => sum + (i.qtyNo || 0),
+        0
+      );
+
+      const totalExecHrWithRework =
+        execHr * reworkPercentPerWbs;
+      const totalCheckHrWithRework =
+        checkHr * reworkPercentPerWbs;
+
+      await wbsRepository.updateProjectWbs(wbs.id, {
+        totalQtyNo: qtyNo,
+        totalExecHr: execHr,
+        totalCheckHr: checkHr,
+        totalExecHrWithRework,
+        totalCheckHrWithRework,
+      });
+
+      return {
+        id: wbs.id,
+        name: wbs.name,
+        totalQtyNo: qtyNo,
+        totalExecHr: execHr,
+        totalCheckHr: checkHr,
+        totalExecHrWithRework,
+        totalCheckHrWithRework,
+        reworkPercentage,
+        reworkPercentPerWbs,
+        lineItems: items,
+      };
+    })
+  );
+
+  return results;
+}
+   
 
 }

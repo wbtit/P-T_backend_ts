@@ -87,6 +87,12 @@ router.post(
   authMiddleware,
   asyncHandler(wbsController.createWbsTemplate.bind(wbsController))
 );
+
+router.get(
+  "/projects/:projectId/wbs/:wbsId/stats",
+  authMiddleware,
+  asyncHandler(wbsController.getWbsStats.bind(wbsController))
+);
 // ===========================================================
 // NOTES ROUTES
 // ===========================================================
