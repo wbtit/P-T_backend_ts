@@ -15,6 +15,8 @@ import path from "path";
 import { Response } from "express";
 import { UserJwt } from "../../../shared/types";
 import { updateProjectStage } from "../utils/updateProjectStage";
+import { handleStageChange } from "../utils/handleStageChange";
+import { handleEndDateChange } from "../utils/handleEndDateChange";
 
  const projectRepository = new ProjectRepository();
 
@@ -29,46 +31,59 @@ import { updateProjectStage } from "../utils/updateProjectStage";
      const project = await projectRepository.create(data,userId);
      return project;
    }
-   async update(data: UpdateprojectInput,id:string) {
-        const existing = await projectRepository.get({id});
-        //1** Check if the stage has changed and update the history accordingly
-        if(existing?.stage!==data.stage){
-         await prisma.projectStageHistory.updateMany({
-          where:{projectID:id,endDate:null},
-          data:{endDate:new Date()}
-         });
-         await prisma.projectStageHistory.create({
-           data:{
-             projectID:id,
-             stage:data.stage as Stage,
-             startDate:new Date()
-           }
-         });
-         //1.1** Create WBS and Project Line Items
-         updateProjectStage(id,data.stage as Stage)
-        }
-        //2.1** Check if the end date has changed to track the  automated mail
-        if(existing?.endDate !== data.endDate){
-          data.submissionMailReminder=false;
-          //3** Check if the end date change log exists and update it
-          const existingLog = data.endDateChangeLog as Prisma.JsonValue;
-          const newLogEntry={
-            oldEndDate:existing?.endDate,
-            newEndDate:data.endDate,
-            changedAt:new Date()
-          }
-          const updatedLog = Array.isArray(existingLog) ? [...existingLog, JSON.stringify(newLogEntry)] : [JSON.stringify(newLogEntry)];
-          data.endDateChangeLog = updatedLog as string[];
-        }
+   async update(data: UpdateprojectInput, id: string) {
+  return prisma.$transaction(async tx => {
+    // 1️⃣ Load current state
+    const existing = await tx.project.findUnique({
+      where: { id },
+    });
 
-        //2.2** Check if the approval date has changed to track the  automated mail
-        if(existing?.approvalDate !==data.approvalDate){
-          data.mailReminder=false;
-        }
-      //update project
-     const project = await projectRepository.update(id,data);
-     return project;
-   }
+    if (!existing) {
+      throw new AppError("Project not found", 404);
+    }
+
+    // 2️⃣ Detect changes
+    const stageChanged =
+      data.stage && existing.stage !== data.stage;
+
+    const endDateChanged =
+      "endDate" in data && existing.endDate !== data.endDate;
+
+    const approvalDateChanged =
+      "approvalDate" in data &&
+      existing.approvalDate !== data.approvalDate;
+
+    // 3️⃣ Stage change side-effects
+    if (stageChanged) {
+      await handleStageChange(
+        tx,
+        id,
+        existing.stage,
+        data.stage as Stage
+      );
+    }
+
+    // 4️⃣ End-date side-effects
+    if (endDateChanged) {
+      handleEndDateChange(existing, data);
+    }
+
+    // 5️⃣ Approval-date side-effects
+    if (approvalDateChanged) {
+      data.mailReminder = false;
+    }
+
+    // 6️⃣ Persist project update (generic)
+    const project = await projectRepository.updateWithTx(
+      tx,
+      id,
+      data
+    );
+
+    return project;
+  });
+}
+
 
   
    async get(data: GetProjectInput) {

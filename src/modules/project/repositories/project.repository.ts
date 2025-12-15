@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import prisma from "../../../config/database/client";
 import { AppError } from "../../../config/utils/AppError";
 import { CreateProjectInput,
@@ -51,33 +52,36 @@ if (validTemplates.length !== data.wbsTemplateIds?.length) {
   });
 }
 
-  async update(id:string,data: UpdateprojectInput) {
-     const project = await prisma.project.update({
-       where: { id: id },
-       data,
-       include:{
-        stageHistory:true,
-        fabricator:{select:{
-          files:true,
-          fabName:true,
-          id:true
-        }},
-        manager:{select:{
-          firstName:true,
-          middleName:true,
-          lastName:true,
-          username:true,
-          id:true
-        }},
-        team:true,
-        department:{select:{
-          name:true,
-          id:true
-        }}
-       }
-     });
-     return project;
-   }
+  async updateWithTx(
+  tx: Prisma.TransactionClient,
+  id: string,
+  data: UpdateprojectInput
+) {
+  return tx.project.update({
+    where: { id },
+    data,
+    include: {
+      stageHistory: true,
+      fabricator: {
+        select: { files: true, fabName: true, id: true },
+      },
+      manager: {
+        select: {
+          firstName: true,
+          middleName: true,
+          lastName: true,
+          username: true,
+          id: true,
+        },
+      },
+      team: true,
+      department: {
+        select: { name: true, id: true },
+      },
+    },
+  });
+}
+
 
    async get(data: GetProjectInput) {
      const project = await prisma.project.findUnique({
