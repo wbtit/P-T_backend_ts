@@ -75,7 +75,7 @@ export async function createWBSAndProjectLineItems(projectId: string, stage: Sta
         continue;
       }
 
-      const lineItemsUniqueKey = `${mappedWbsId}-${templateLineItem.parentTemplateKey}`;
+      const lineItemsUniqueKey = `${mappedWbsId}-${templateLineItem.wbsTemplateKey}`;
 
       if (!existingLineItemsPairs.has(lineItemsUniqueKey)) {
         try {
@@ -85,7 +85,7 @@ export async function createWBSAndProjectLineItems(projectId: string, stage: Sta
               stage,
               unitTime: templateLineItem.unitTime,
               CheckUnitTime: templateLineItem.CheckUnitTime,
-              parentTemplateKey: templateLineItem.parentTemplateKey,
+              parentTemplateKey: templateLineItem.wbsTemplateKey,
               projectID: projectId,
               workBreakDownID: mappedWbsId,
             },

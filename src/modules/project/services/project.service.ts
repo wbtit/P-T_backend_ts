@@ -26,12 +26,25 @@ import { UserJwt } from "../../../shared/types";
        throw new AppError("Project with this number already exists", 409);
      }
      const project = await projectRepository.create(data);
-     //lineItems creation
-     console.log("ProjectLine Items created for the project:",project.name);
-     await createWBSAndProjectLineItems(project.id,project.stage);
      return project;
    }
 
+   async setProjectWbsSelection(projectId:string,wbsTemplateIds:string[],userId:string){
+    return prisma.$transaction(async tx =>{
+      await tx.projectWbsSelection.updateMany({
+        where:{projectId,isActive:true},
+        data:{isActive:false}
+      });
+      await tx.projectWbsSelection.createMany({
+        data:wbsTemplateIds.map(id=>({
+          projectId,
+          wbsTemplateId:id,
+          selectedById:userId,
+        })),
+      });
+    });
+   }
+   
 
 
    async update(data: UpdateprojectInput,id:string) {
