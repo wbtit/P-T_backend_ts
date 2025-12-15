@@ -20,11 +20,10 @@ import {
     UpdateProjectLineItemSchema } from "./projectLineItems";
 
 import { WBSController } from "./WBS";
-import { WBSSchema } from "./WBS";
 
 import { NoteSchema,NoteUpdateSchema } from "./notes";
 import { NotesController } from "./notes";
-import { Project } from "@prisma/client";
+
 
 
 const router = Router();
@@ -54,22 +53,22 @@ router.post("/projects/:projectId/wbs/expand",authMiddleware,asyncHandler(projec
 // PLI ROUTES
 // ===========================================================
 const pliController = new PLIController();
-router.post(
-    "/projects/:projectId/work-break-downs/:workBreakDownId/line-items",
+router.patch(
+    "/projects/:projectId/line-items/bulk",
     authMiddleware,
     validate({body: ProjectLineItemSchema}),
-    asyncHandler(pliController.createPli.bind(pliController))
+    asyncHandler(pliController.bulkUpdateLineItems.bind(pliController))
 );
-router.put(
-    "/projects/:projectId/work-break-downs/:workBreakDownId/line-items/:id",
+router.patch(
+    "/projects/:projectId/line-items/:lineItemId",
     authMiddleware,
     validate({body: UpdateProjectLineItemSchema}),
-    asyncHandler(pliController.updatePli.bind(pliController))
+    asyncHandler(pliController.updateLineItem.bind(pliController))
 );
 router.get(
-    "/projects/:projectId/work-break-downs/:workBreakDownId/line-items/:id",
+    "/projects/:projectId/stages/:stage/wbs/:projectWbsId/line-items",
     authMiddleware,
-    asyncHandler(pliController.getPliByStage.bind(pliController))
+    asyncHandler(pliController.getLineItems.bind(pliController))
 );
 // ===========================================================
 // WBS` ROUTES

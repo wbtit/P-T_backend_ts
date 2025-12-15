@@ -4,31 +4,77 @@ import { PliInput,
     UpdatePliInput,
     GetPliByStageInput
  } from "../dtos";
+import prisma from "../../../../config/database/client";
+import { recomputeProjectWbsTotals } from "../utils/recomputeWbsTotal";
 
- const pliRepository = new PLIRepository();
+ const projectLineItemRepository = new PLIRepository();
 
  export class PLIService{
-    async createPli(data:PliInput,projectID:string,workBreakDownID:string){
-        try {
-            return await pliRepository.createPli(data, projectID, workBreakDownID);
-        } catch (error) {
-            throw new AppError("Error creating PLI", 500);
-        }
+    async getByWbs(projectWbsId: string) {
+  return projectLineItemRepository.findByWbs(projectWbsId);
+}
+async updateOne(
+  id: string,
+  data: {
+    qtyNo?: number;
+    execHr?: number;
+    checkHr?: number;
+    execHrWithRework?: number;
+    checkHrWithRework?: number;
+  }
+) {
+  return prisma.$transaction(async tx => {
+    const item = await projectLineItemRepository.findById(tx, id);
+    if (!item) throw new AppError("Line item not found", 404);
+
+    const updated = await projectLineItemRepository.update(
+      tx,
+      id,
+      data
+    );
+
+    // Important side-effect
+    await recomputeProjectWbsTotals(
+      tx,
+      item.projectWbsId
+    );
+
+    return updated;
+  });
+}
+async bulkUpdate(
+  items: {
+    id: string;
+    qtyNo?: number;
+    execHr?: number;
+    checkHr?: number;
+  }[]
+) {
+  return prisma.$transaction(async tx => {
+    const wbsIds = new Set<string>();
+
+    for (const item of items) {
+      const existing = await projectLineItemRepository.findById(
+        tx,
+        item.id
+      );
+
+      if (!existing) continue;
+
+      wbsIds.add(existing.projectWbsId);
+
+      await projectLineItemRepository.update(
+        tx,
+        item.id,
+        item
+      );
     }
 
-    async updatePli(id:string,data:UpdatePliInput){
-        try {
-            return await pliRepository.updatePli(id, data);
-        } catch (error) {
-            throw new AppError("Error updating PLI", 500);
-        }
+    // Recompute affected WBS ONLY ONCE
+    for (const wbsId of wbsIds) {
+      await recomputeProjectWbsTotals(tx, wbsId);
     }
+  });
+}
 
-    async getPliByStage(params:GetPliByStageInput){
-        try {
-            return await pliRepository.getPliByStage(params);
-        } catch (error) {
-            throw new AppError("Error fetching PLI by stage", 500);
-        }
-    }
 }

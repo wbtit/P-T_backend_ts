@@ -5,47 +5,32 @@ import { PliInput,
     GetPliByStageInput
  } from "../dtos";
 import { cleandata} from "../../../../config/utils/cleanDataObject";
-import { Stage } from "@prisma/client";
+import { Prisma, Stage } from "@prisma/client";
 
 export class PLIRepository{
-    async createPli(data:PliInput,projectID:string,workBreakDownID:string){
-       return await prisma.projectLineItems.create({
-           data: {
-               ...cleandata(data),
-               projectID,
-               workBreakDownID
-           }
-       });
-    }
+    async findByWbs(projectWbsId: string) {
+  return prisma.projectLineItem.findMany({
+    where: { projectWbsId },
+    orderBy: { createdAt: "asc" },
+  });
+}
+async findById(
+  tx: Prisma.TransactionClient,
+  id: string
+) {
+  return tx.projectLineItem.findUnique({
+    where: { id },
+  });
+}
+async update(
+  tx: Prisma.TransactionClient,
+  id: string,
+  data: any
+) {
+  return tx.projectLineItem.update({
+    where: { id },
+    data,
+  });
+}
 
-    async updatePli(id:string,data:UpdatePliInput){
-        return await prisma.projectLineItems.update({
-            where: { id },
-            data
-        });
-    }
-
-    async getPliByStage(params:GetPliByStageInput){
-        return await prisma.projectLineItems.findMany({
-            where: {
-                projectID: params.projectID,
-                workBreakDownID: params.workBreakDownID,
-                stage: params.stage
-            }
-        });
-    }
-    async getSumData(projectID:string,workBreakDownID:string,stage:Stage){
-        return await prisma.projectLineItems.aggregate({
-            where: {
-                projectID,
-                workBreakDownID,
-                stage
-            },
-            _sum: {
-                QtyNo: true,
-                execHr: true,
-                checkHr: true
-            }
-        });
-    }
 }
