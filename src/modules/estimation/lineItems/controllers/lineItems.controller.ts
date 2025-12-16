@@ -70,9 +70,8 @@ async handleUpdateLineItemGroup(req:Request,res:Response){
     async handleGetGroupById(req:Request,res:Response){
         const {id}=req.params
         const result=await lineItemsService.getLineItemGroupById(id)    
-        if(!result){
-            throw new AppError("Failed to fetch Line Item Group by Id",500)
-        }
+        
+        
         return res.status(200).json({
             message:"Line Item Group fetched successfully",
             success:true,
@@ -94,6 +93,7 @@ async handleUpdateLineItemGroup(req:Request,res:Response){
     async handleUpdateLineItem(req:Request,res:Response){
         const {id}=req.params
         const data=req.body
+        console.log("Line Item update data:",data)
         const result=await lineItemsService.updateLineItem(id,data)
         if(!result){
             throw new AppError("Failed to update Line Item",400)
@@ -105,8 +105,10 @@ async handleUpdateLineItemGroup(req:Request,res:Response){
         })
     }
     async handleGetLineItemsGroupById(req:Request,res:Response){
-        const {id}=req.params
-        const result=await lineItemsService.getLineItemsByGroupId(id)
+        const {groupId}=req.params
+        
+        const result=await lineItemsService.getLineItemsByGroupId(groupId)
+        
         if(!result){
             throw new AppError("Failed to fetch Line Item Group by Id",500)
         }

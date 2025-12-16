@@ -16,6 +16,7 @@ export const createLineItemSchema = z.object({
     remarks: z.string(),
     quantity: z.number().optional(),
     hoursPerQty: z.number().optional(),
+    totalHours: z.number().optional(),
     unitCost: z.number().optional(),
     groupId: z.string(),
 })

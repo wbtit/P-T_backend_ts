@@ -42,7 +42,7 @@ export class LineItemsService{
         return await this.lineItemsRepo.updateLineItem(id,data);
     }
     async getLineItemsByGroupId(groupId:string){
-        return await this.lineItemsRepo.getLineItemsByGroupId(groupId);
+        return await this.lineItemsRepo.getByGroupId(groupId);
     }
     async deleteLineItem(id:string){
         return await this.lineItemsRepo.deleteLineItem(id);

@@ -37,16 +37,29 @@ export class LineItemsRepository{
         return await prisma.estimationLineItemGroup.findMany()
     }
     async getLineItemGroupById(id:string){
-        return await prisma.estimationLineItemGroup.findUnique({
-            where:{id}
-        })
+        const group=await prisma.estimationLineItemGroup.findUnique({
+            where:{id},
+        });
+       const items=await prisma.estimationLineItem.aggregate({
+        where:{groupId:group?.id},
+        _sum:{
+            totalHours:true
+        },
+        _count:{
+            id:true 
+        }
+       })
+       const totalHours = items._sum.totalHours;
+        
+       
+       return {
+            group,
+            totalHours
+        }
+
     }
 
-    async getLineItemsByGroupId(groupId:string){
-        return await prisma.estimationLineItem.findMany({
-            where:{groupId}
-        })
-    }
+    
 //Line Items
     async createLineItem(data:lineItemDto){
         const cleanData=cleandata(data)
@@ -71,7 +84,7 @@ export class LineItemsRepository{
             where:{id}
         })
     }
-    async getByGroupId(groupId:string){
+    async getByGroupId(groupId:string|undefined){
         return await prisma.estimationLineItem.findMany({
             where:{groupId}
         })
