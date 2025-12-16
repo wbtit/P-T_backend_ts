@@ -3,7 +3,8 @@ import z from "zod";
 export const createLineItemGroupSchema = z.object({
     name: z.string(),
     description: z.string().optional(),
-    estimationId: z.string()
+    estimationId: z.string(),
+    divisor: z.number().optional()
 })
 export const updateLineItemGroupSchema = createLineItemGroupSchema.partial();
 
