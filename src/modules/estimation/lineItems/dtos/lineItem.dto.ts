@@ -4,6 +4,7 @@ export const createLineItemGroupSchema = z.object({
     name: z.string(),
     description: z.string().optional(),
     estimationId: z.string(),
+    notes: z.string().optional(),
     divisor: z.number().optional()
 })
 export const updateLineItemGroupSchema = createLineItemGroupSchema.partial();

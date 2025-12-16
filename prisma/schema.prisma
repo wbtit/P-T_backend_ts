@@ -1049,6 +1049,7 @@ model EstimationLineItemGroup {
   estimationId String                @db.Uuid
   estimation   Estimation            @relation(fields: [estimationId], references: [id], onDelete: Cascade)
   divisor      Float                 @default(150.0)
+  notes        String                @default("")
 
   lineItems    EstimationLineItem[]  // each group can have many line items
 }
