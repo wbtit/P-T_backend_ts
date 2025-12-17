@@ -119,7 +119,7 @@ router.get(
 );
 
 router.get(
-  "/viewFile/:rfiResId/files/:fileId",
+  "/response/viewFile/:rfiResId/:fileId",
   authMiddleware,
   validate({
     params: z.object({

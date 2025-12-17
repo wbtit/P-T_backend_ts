@@ -66,7 +66,7 @@ export class RFIResponseController {
 
   // STREAM file from response
   async handleViewFile(req: Request, res: Response) {
-    const { responseId, fileId } = req.params;
-    await rfiResponseService.viewFile(responseId, fileId, res);
+    const { rfiResId, fileId } = req.params;
+    await rfiResponseService.viewFile(rfiResId, fileId, res);
   }
 }

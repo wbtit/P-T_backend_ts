@@ -2,7 +2,9 @@ import { CreateEstimationDtoType,UpdateEstimationDtoType } from "../dtos";
 import prisma from "../../../../config/database/client";
 import { cleandata } from "../../../../config/utils/cleanDataObject";
 import { EstimationStatus } from "@prisma/client";
+import { LineItemsRepository } from "../../lineItems";
 
+const GroupRepo = new LineItemsRepository()
 export class EstManagementRepository{
     async create(data:CreateEstimationDtoType,createdById:string){
         const cleanData=cleandata(data)
@@ -23,7 +25,7 @@ export class EstManagementRepository{
         })
     }
     async getById(id:string){
-        return await prisma.estimation.findUnique({
+        const estimation =  await prisma.estimation.findUnique({
             where:{id:id},
             include:{
                 lineItemGroups:true,
@@ -51,6 +53,16 @@ export class EstManagementRepository{
                  fabricators:true
             }
         })
+        const groups = estimation?.lineItemGroups
+        let totalAgreatedHours  = 0;
+        for( const group of groups as any){
+             const agregattedHours = await GroupRepo.getLineItemGroupById(group.id)
+             totalAgreatedHours += agregattedHours.totalHours ?? 0;
+        }
+        return {
+            ...estimation,
+            totalAgreatedHours
+        }
     }
     async getByCreatorId(id:string){
         return await prisma.estimation.findMany({

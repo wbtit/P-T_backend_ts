@@ -25,7 +25,9 @@ export class LineItemsRepository{
     }
     async getGroupsByEstimationId(estimationId:string){
         return await prisma.estimationLineItemGroup.findMany({
-            where:{estimationId}
+            where:{estimationId},include:{
+                lineItems:true
+            }
         })
     }
     async deleteLineItemGroup(id:string){
