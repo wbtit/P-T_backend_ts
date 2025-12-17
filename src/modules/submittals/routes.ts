@@ -143,7 +143,7 @@ router.get(
 );
 
 router.get(
-  "/viewFile/responses/:responseId/:fileId",
+  "/response/viewFile/:responseId/:fileId",
   authMiddleware,
   validate({
     params: z.object({

@@ -6,6 +6,7 @@ import path from "path";
 import { Response } from "express";
 import { streamFile } from "../../../utils/fileUtil";
 import { State } from "@prisma/client";
+import fs from "fs";
 
 const submittalResponseRepo = new SubmittalResponse();
 const submittalRepo = new SubmitalRepository();
@@ -54,16 +55,50 @@ export class SubmittalResponseService {
   }
 
   async viewFile(id: string, fileId: string, res: Response) {
-    const response = await submittalResponseRepo.getById(id);
-    if (!response) throw new AppError("Response not found", 404);
+  console.log("📥 [submittalResponse:viewFile] Called with:", { id, fileId });
 
-    const files = response.files as unknown as FileObject[];
-    const fileObject = files.find((file: FileObject) => file.id === fileId);
-    if (!fileObject) throw new AppError("File not found", 404);
-
-    const __dirname = path.resolve();
-    const filePath = path.join(__dirname, fileObject.filename);
-
-    return streamFile(res, filePath, fileObject.originalName);
+  const response = await submittalResponseRepo.getById(id);
+  if (!response) {
+    console.error("❌ [submittalResponse:viewFile] Response not found:", id);
+    throw new AppError("Response not found", 404);
   }
+
+  const files = response.files as unknown as FileObject[];
+
+  console.log("📂 [submittalResponse:viewFile] Available files:", files.map(f => ({
+    id: f.id,
+    path: f.path,
+    filename: f.filename,
+    originalName: f.originalName,
+  })));
+
+  // Remove extension if present (e.g. fileId.pdf → fileId)
+  const cleanFileId = fileId.replace(/\.[^/.]+$/, "");
+
+  const fileObject = files.find(
+    (file: FileObject) => file.id === cleanFileId
+  );
+
+  if (!fileObject) {
+    console.warn("⚠️ [submittalResponse:viewFile] File not found in response.files", {
+      fileId,
+      availableFileIds: files.map(f => f.id),
+    });
+    throw new AppError("File not found", 404);
+  }
+
+  const __dirname = path.resolve();
+  const filePath = path.join(__dirname, fileObject.path); // ✅ use path, not filename
+
+  if (!fs.existsSync(filePath)) {
+    console.error(
+      "🚨 [submittalResponse:viewFile] File does not exist on disk:",
+      filePath
+    );
+    throw new AppError("File not found on server", 404);
+  }
+
+  return streamFile(res, filePath, fileObject.originalName);
+}
+
 }

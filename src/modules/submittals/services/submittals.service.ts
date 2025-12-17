@@ -5,6 +5,8 @@ import { FileObject } from "../../../shared/fileType";
 import path from "path";
 import { Response } from "express";
 import { streamFile } from "../../../utils/fileUtil";
+import fs from "fs";
+
 
 const submittalRepo = new SubmitalRepository();
 
@@ -59,16 +61,47 @@ export class SubmittalService {
   }
 
   async viewFile(id: string, fileId: string, res: Response) {
-    const submittal = await submittalRepo.findById(id);
-    if (!submittal) throw new AppError("Submittal not found", 404);
+  console.log("📥 [submittal:viewFile] Called with:", { id, fileId });
 
-    const files = submittal.files as unknown as FileObject[];
-    const fileObject = files.find((file: FileObject) => file.id === fileId);
-    if (!fileObject) throw new AppError("File not found", 404);
-
-    const __dirname = path.resolve();
-    const filePath = path.join(__dirname, fileObject.filename);
-
-    return streamFile(res, filePath, fileObject.originalName);
+  const submittal = await submittalRepo.findById(id);
+  if (!submittal) {
+    console.error("❌ [submittal:viewFile] Submittal not found:", id);
+    throw new AppError("Submittal not found", 404);
   }
+
+  const files = submittal.files as unknown as FileObject[];
+
+  console.log("📂 [submittal:viewFile] Available files:", files.map(f => ({
+    id: f.id,
+    path: f.path,
+    filename: f.filename,
+    originalName: f.originalName,
+  })));
+
+  // Remove extension if passed (e.g. abc123.pdf → abc123)
+  const cleanFileId = fileId.replace(/\.[^/.]+$/, "");
+
+  const fileObject = files.find(
+    (file: FileObject) => file.id === cleanFileId
+  );
+
+  if (!fileObject) {
+    console.warn("⚠️ [submittal:viewFile] File not found in submittal.files", {
+      fileId,
+      availableFileIds: files.map(f => f.id),
+    });
+    throw new AppError("File not found", 404);
+  }
+
+  const __dirname = path.resolve();
+  const filePath = path.join(__dirname, fileObject.path); // ✅ use stored path
+
+  if (!fs.existsSync(filePath)) {
+    console.error("🚨 [submittal:viewFile] File does not exist on disk:", filePath);
+    throw new AppError("File not found on server", 404);
+  }
+
+  return streamFile(res, filePath, fileObject.originalName);
+}
+
 }
