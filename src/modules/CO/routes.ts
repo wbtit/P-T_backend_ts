@@ -24,8 +24,8 @@ const coController = new COController();
 router.post(
   "/",
   authMiddleware,
+   coUploads.array("files"),
   validate({ body: CreateCoSchema }),
-  coUploads.array("files"),
   coController.handleCreateCo.bind(coController)
 );
 
@@ -33,11 +33,12 @@ router.post(
 router.put(
   "/:id",
   authMiddleware,
+  coUploads.array("files"),
   validate({
     params: z.object({ id: z.string() }),
     body: UpdateCoSchema,
   }),
-  coUploads.array("files"),
+
   coController.handleUpdateCo.bind(coController)
 );
 
@@ -130,11 +131,12 @@ const coResponseController = new CoResponseController();
 router.post(
   "/:coId/responses",
   authMiddleware,
+  coResponseUploads.array("files"),
   validate({
     params: z.object({ coId: z.string() }),
     body: CoResponseSchema,
   }),
-  coResponseUploads.array("files"),
+  
   coResponseController.handleCreateCoResponse.bind(coResponseController)
 );
 

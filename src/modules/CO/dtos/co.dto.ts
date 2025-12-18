@@ -1,6 +1,9 @@
 import z from "zod";
 import { COSTATUS,Stage} from "@prisma/client";
 import { Prisma } from "@prisma/client";
+const zBooleanString = z
+  .union([z.boolean(), z.string()])
+  .transform(val => val === true || val === "true");
 
 export const CreateCoSchema = z.object({
   project: z.string(),
@@ -10,10 +13,10 @@ export const CreateCoSchema = z.object({
     changeOrderNumber: z.string().min(2).max(100),
     description: z.string().min(2).max(500),
     sentOn: z.date().optional(),
-    stage: z.enum(Stage),
-    status: z.enum(COSTATUS),   // 👈 use the Prisma enum here
+    stage: z.enum(Stage).default("IFA"),
+    status: z.enum(COSTATUS).default("NOT_REPLIED"),   // 👈 use the Prisma enum here
     reason: z.string().optional(),
-    isAproovedByAdmin: z.boolean().optional(),
+    isAproovedByAdmin: zBooleanString,
     files: z
         .union([
           z.array(z.any()),
