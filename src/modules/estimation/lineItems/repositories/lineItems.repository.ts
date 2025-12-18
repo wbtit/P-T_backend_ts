@@ -45,18 +45,21 @@ export class LineItemsRepository{
        const items=await prisma.estimationLineItem.aggregate({
         where:{groupId:group?.id},
         _sum:{
-            totalHours:true
+            totalHours:true,
+            weeks:true
         },
         _count:{
             id:true 
         }
        })
        const totalHours = items._sum.totalHours;
+       const totalWeeks = items._sum.weeks;
         
        
        return {
             group,
-            totalHours
+            totalHours,
+            totalWeeks
         }
 
     }
