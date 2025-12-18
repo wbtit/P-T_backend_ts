@@ -13,6 +13,7 @@ export class COController {
     if (!req.user) throw new AppError("User not found", 404);
 
     const { id } = req.user;
+    console.log("The files from the request are:",req.files)
     if (!id) throw new AppError("User not found", 404);
 
     const uploadedFiles = mapUploadedFiles(

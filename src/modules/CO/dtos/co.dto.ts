@@ -12,7 +12,11 @@ export const CreateCoSchema = z.object({
     remarks: z.string().min(2).max(100),
     changeOrderNumber: z.string().min(2).max(100),
     description: z.string().min(2).max(500),
-    sentOn: z.date().optional(),
+    sentOn: z
+      .preprocess(
+        (val) => (typeof val === "string" ? new Date(val) : val),
+        z.date().nullable().optional()
+      ),
     stage: z.enum(Stage).default("IFA"),
     status: z.enum(COSTATUS).default("NOT_REPLIED"),   // 👈 use the Prisma enum here
     reason: z.string().optional(),
@@ -24,7 +28,7 @@ export const CreateCoSchema = z.object({
         ])
         .transform((val) => (val === null ? Prisma.JsonNull : val))
         .optional(),
-        link: z.string().nullable().optional(),
+    link: z.string().nullable().optional(),
 });
 export const UpdateCoSchema = CreateCoSchema.partial();
 

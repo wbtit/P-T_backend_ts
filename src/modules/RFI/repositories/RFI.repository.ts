@@ -20,6 +20,7 @@ export class RFIRepository{
         isAproovedByAdmin
       },
       include: {
+        
         recepients:  {select:{firstName:true,middleName:true,lastName:true,email:true,id:true}},
         project: true,
         sender :  {select:{firstName:true,middleName:true,lastName:true,email:true,id:true}},
@@ -37,7 +38,7 @@ export class RFIRepository{
           fabName:true,
           id:true,
         }},
-        project: true,
+        project: {select:{name:true}},
         sender :  {select:{firstName:true,middleName:true,lastName:true,email:true,id:true}},
         recepients: {
           include: {
@@ -100,7 +101,7 @@ export class RFIRepository{
       },
       include: {
         fabricator: true,
-        project: true,
+        project: {select:{name:true}},
         recepients: {select:{firstName:true,middleName:true,lastName:true,email:true,id:true}},
         sender : {select:{firstName:true,middleName:true,lastName:true,email:true,id:true}},
         rfiresponse:true,
@@ -115,7 +116,7 @@ export class RFIRepository{
       },
       include: {
         fabricator: true,
-        project: true,
+        project: {select:{name:true}},
         recepients:  {select:{firstName:true,middleName:true,lastName:true,email:true,id:true}},
         sender :  {select:{firstName:true,middleName:true,lastName:true,email:true,id:true}},
         rfiresponse:true,

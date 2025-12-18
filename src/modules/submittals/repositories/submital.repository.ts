@@ -27,11 +27,12 @@ export class SubmitalRepository {
       where: { id },
       include: {
         fabricator: true,
-        project: true,
+        project: {select:{name:true}},
         recepients: true,
         sender: true,
         submittalsResponse: {include:{childResponses:true}},
         mileStoneBelongsTo: true,
+        
       },
     });
   }
@@ -66,7 +67,7 @@ export class SubmitalRepository {
       where: { sender_id: id },
       include: {
         fabricator: true,
-        project: true,
+        project: {select:{name:true}},
         recepients: true,
         sender: true,
         submittalsResponse:{include:{childResponses:true}},
@@ -79,7 +80,7 @@ export class SubmitalRepository {
       where: { recepient_id: id },
       include: {
         fabricator: true,
-        project: true,
+        project: {select:{name:true}},
         recepients: true,
         sender: true,
         submittalsResponse: {include:{childResponses:true}},
@@ -93,7 +94,7 @@ export class SubmitalRepository {
       where: { project_id: id },
       include: {
         fabricator: true,
-        project: true,
+        project: {select:{name:true}},
         recepients: true,
         sender: true,
         submittalsResponse: {include:{childResponses:true}},

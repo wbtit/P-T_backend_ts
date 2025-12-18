@@ -15,7 +15,7 @@ export const RFISchema = z.object({
   subject: z.string(),
   description: z.string(),
   isAproovedByAdmin:z.string(),
-   files: z
+  files: z
           .union([
             z.array(z.any()),
             z.literal(null),
