@@ -1492,5 +1492,18 @@ model EmployeePerformanceScore {
   @@map("employee_performance_score")
 }
 
+model FileShareLink {
+  id           String   @id @default(uuid())
+  token        String   @unique
+  parentTable  String
+  parentId     String
+  fileId       String
+
+  passwordHash String?  // bcrypt hash
+  isActive     Boolean  @default(true)
+
+  createdAt    DateTime @default(now())
+  lastAccessed DateTime?
+}
 
 
