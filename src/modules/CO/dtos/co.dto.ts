@@ -43,7 +43,8 @@ export const CreateTableSchema = z.object({
     remarks: z.string().min(2).max(100),
     hours: z.number().min(1),
     cost: z.number().min(1),
-    CoId: z.string(),
+    CoId: z.string().optional(),
+    
 })
 
 // 👇 Accepts multiple table entries

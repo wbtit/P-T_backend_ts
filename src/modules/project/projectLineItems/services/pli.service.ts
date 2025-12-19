@@ -21,17 +21,20 @@ async updateOne(
     checkHr?: number;
     execHrWithRework?: number;
     checkHrWithRework?: number;
+    checkUnitTime?: number;
+    unitTime?: number;
   }
 ) {
   return prisma.$transaction(async tx => {
     const item = await projectLineItemRepository.findById(tx, id);
     if (!item) throw new AppError("Line item not found", 404);
-
+    console.log("The data ",data)
     const updated = await projectLineItemRepository.update(
       tx,
       id,
       data
     );
+console.log("The updated ",updated)
 
     // Important side-effect
     await recomputeProjectWbsTotals(
@@ -48,6 +51,8 @@ async bulkUpdate(
     qtyNo?: number;
     execHr?: number;
     checkHr?: number;
+    checkUnitTime?: number;
+    unitTime?: number;
   }[]
 ) {
   return prisma.$transaction(async tx => {

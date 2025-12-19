@@ -4,10 +4,10 @@ import z from 'zod';
 export const ProjectLineItemSchema = z.object({
     description: z.string().min(2).max(1000),
     unitTime: z.number().min(0),
-    CheckUnitTime: z.float32(),
+    checkUnitTime: z.float32(),
     checkHrWithRework: z.float32(),
     execHrWithRework: z.float32(),
-    QtyNo: z.number().min(0),
+    qtyNo: z.number().min(0),
     checkHr: z.float32(),
     execHr: z.float32(),
     parentTemplateKey: z.string(),
