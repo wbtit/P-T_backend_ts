@@ -24,7 +24,7 @@ import { RFIRoutes} from "./modules/RFI"
 import { SbmittalRoutes} from "./modules/submittals"
 import { analyticsScoresRouter } from "./modules/scores/route";
 import {lineItemRoutes} from "./modules/estimation/lineItems";
-
+import { communicationRouter} from "./modules/communications"
 const routes = express.Router();
 
 routes.use("/auth", AuthRoutes);
@@ -52,4 +52,5 @@ routes.use("/connectionDesignerQuota",CDQroutes)
 routes.use("/submittal",SbmittalRoutes)
 routes.use("/analytics/scores",analyticsScoresRouter)
 routes.use("/estimation/line-items",lineItemRoutes)
+routes.use("/communications",communicationRouter)
 export default routes

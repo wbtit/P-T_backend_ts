@@ -5,7 +5,7 @@ import { ClientCommunicationService } from "../services";
 
 const communicationService = new ClientCommunicationService();
 
-class ClientCommunicationController {
+export class ClientCommunicationController {
   async create(req: AuthenticateRequest, res: Response) {
     const data = await communicationService.create(
       req.body,
