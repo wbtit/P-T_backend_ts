@@ -1,4 +1,6 @@
 import prisma from "../config/database/client";
+import { sendEmail } from "../services/mailServices/mailconfig";
+import { followUpReminderTemplate } from "../services/mailServices/mailtemplates/followUpMailTemplate";
 
 export function startOfToday(): Date {
   const now = new Date();
@@ -62,17 +64,10 @@ export async function sendFollowUpReminders() {
   });
 
   for (const item of items) {
-    await mailService.send({
-      to: item.createdBy.email,
+    await sendEmail({
+      to: item.createdBy.email||"",
       subject: `Follow-up reminder: ${item.project.name}`,
-      body: `
-        Project: ${item.project.name}
-        Client: ${item.clientName}
-        Follow-up Date: ${item.followUpDate}
-
-        Notes:
-        ${item.notes}
-      `,
+      html: followUpReminderTemplate(item.project.name,item.clientName,item.followUpDate.toString(),item.notes,item.createdBy.username),
     });
 
     await prisma.clientCommunication.update({
