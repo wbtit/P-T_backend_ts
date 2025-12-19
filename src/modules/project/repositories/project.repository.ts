@@ -87,6 +87,7 @@ if (validTemplates.length !== data.wbsTemplateIds?.length) {
      const project = await prisma.project.findUnique({
        where: { id: data.id },
        include:{
+        clentCommunications:true,
         projectWbs:true,
         projectbias:true,
         rfi:{include:{recepients:{select:{firstName:true,middleName:true,lastName:true,id:true}},
