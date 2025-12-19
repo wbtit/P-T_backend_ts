@@ -31,4 +31,8 @@ export class ClientCommunicationController {
     const data = await communicationService.complete(req.params.id);
     res.json({ status: "success", data });
   }
+  async getMyFollowUps(req: AuthenticateRequest, res: Response) {
+    const data = await communicationService.getMyFollowUps(req.user!.id);
+    res.json({ status: "success", data });
+  }
 }

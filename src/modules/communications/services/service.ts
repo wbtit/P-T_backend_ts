@@ -1,4 +1,5 @@
 import prisma from "../../../config/database/client";
+import { endOfToday, startOfToday } from "../utils/dayeRange";
 
 export class ClientCommunicationService {
   async create(data: any, userId: string) {
@@ -36,4 +37,37 @@ export class ClientCommunicationService {
       data: { isCompleted: true },
     });
   }
+
+  async   getMyFollowUps(userId: string) {
+  const now = new Date();
+
+  return {
+    overdue: await prisma.clientCommunication.findMany({
+      where: {
+        createdById: userId,
+        isCompleted: false,
+        followUpDate: { lt: now },
+      },
+    }),
+    today: await prisma.clientCommunication.findMany({
+      where: {
+        createdById: userId,
+        isCompleted: false,
+        followUpDate: {
+          gte: startOfToday(),
+          lte: endOfToday(),
+        },
+      },
+    }),
+    upcoming: await prisma.clientCommunication.findMany({
+      where: {
+        createdById: userId,
+        isCompleted: false,
+        followUpDate: { gt: endOfToday() },
+      },
+    }),
+  };
+
+
+}
 }

@@ -49,4 +49,11 @@ router.patch(
   asyncHandler(communicationCtrlr.complete).bind(communicationCtrlr)
 );
 
+//GET /communications/dashboard/my-followups
+router.get(
+  "/dashboard/my-followups",
+  authMiddleware,
+  asyncHandler(communicationCtrlr.getMyFollowUps).bind(communicationCtrlr)
+)
+
 export default router;

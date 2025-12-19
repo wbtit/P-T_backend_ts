@@ -40,15 +40,31 @@ router.get("/job-studies/:id", authMiddleware, validate({params:z.object({id:z.s
 // PROJECTS ROUTES
 // ===========================================================
 const projectController = new ProjectController();
-router.post("/projects", authMiddleware,projectUploads.array("files"), validate({body: CreateProjectSchema}), asyncHandler(projectController.handleCreateProject.bind(projectController)));
-router.put("/projects/:id", authMiddleware,projectUploads.array("files"), validate({params:z.object({id:z.string()}),body: UpdateProjectSchema}), asyncHandler(projectController.handleUpdateProject.bind(projectController)));
-router.get("/projects/:id", authMiddleware, validate({params:z.object({id:z.string()})}), asyncHandler(projectController.handleGetProject.bind(projectController)));
-router.delete("/projects/:id", authMiddleware, validate({params:z.object({id:z.string()})}), asyncHandler(projectController.handleDeleteProject.bind(projectController)));
+router.post("/projects", authMiddleware,projectUploads.array("files"), validate({body: CreateProjectSchema}),
+asyncHandler(projectController.handleCreateProject.bind(projectController)));
+
+router.put("/projects/:id", authMiddleware,projectUploads.array("files"), validate({params:z.object({id:z.string()}),body: UpdateProjectSchema}), 
+asyncHandler(projectController.handleUpdateProject.bind(projectController)));
+
+router.get("/projects/:id", authMiddleware, validate({params:z.object({id:z.string()})}), 
+asyncHandler(projectController.handleGetProject.bind(projectController)));
+
+router.delete("/projects/:id", authMiddleware, validate({params:z.object({id:z.string()})}), 
+asyncHandler(projectController.handleDeleteProject.bind(projectController)));
+
 router.get("/projects", authMiddleware, asyncHandler(projectController.handleGetAllProjects.bind(projectController)));
-router.get("/projects/:projectId/files/:fileId", authMiddleware,validate({params:z.object({projectId:z.string(),fileId:z.string()})}), asyncHandler(projectController.handleGetFile.bind(projectController)));
-router.get("/viewFile/:projectId/:fileId", authMiddleware,validate({params:z.object({projectId:z.string(),fileId:z.string()})}), asyncHandler(projectController.handleViewFile.bind(projectController)));
-router.get("/projects/:projectId/update-history", authMiddleware,validate({params:z.object({projectId:z.string()})}), asyncHandler(projectController.handleGetProjectUpdateHistory.bind(projectController)));
-router.post("/projects/:projectId/wbs/expand",authMiddleware,asyncHandler(projectController.expandWbs.bind(projectController)))
+
+router.get("/projects/:projectId/files/:fileId", authMiddleware,validate({params:z.object({projectId:z.string(),fileId:z.string()})}), 
+asyncHandler(projectController.handleGetFile.bind(projectController)));
+
+router.get("/viewFile/:projectId/:fileId", authMiddleware,validate({params:z.object({projectId:z.string(),fileId:z.string()})}), 
+asyncHandler(projectController.handleViewFile.bind(projectController)));
+
+router.get("/projects/:projectId/update-history", authMiddleware,validate({params:z.object({projectId:z.string()})}), 
+
+asyncHandler(projectController.handleGetProjectUpdateHistory.bind(projectController)));
+
+router.post("/projects/:projectId/wbs/expand",authMiddleware,asyncHandler(projectController.expandWbs.bind(projectController)));
 // ===========================================================
 // PLI ROUTES
 // ===========================================================
@@ -65,6 +81,7 @@ router.patch(
     validate({body: UpdateProjectLineItemSchema}),
     asyncHandler(pliController.updateLineItem.bind(pliController))
 );
+//get line items
 router.get(
     "/projects/:projectId/stages/:stage/wbs/:projectWbsId/line-items",
     authMiddleware,
