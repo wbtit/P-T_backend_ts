@@ -46,8 +46,13 @@ app.use(
     credentials: true,
   })
 );
- app.use(express.json())
- app.use(express.urlencoded({ extended: true })); // for urlencoded
+
+// 🚧 Limit request body size (prevents DoS)
+app.use(express.json({ limit: "10kb", type: (req) => {
+  const ct = req.headers['content-type'] || '';
+  return !ct.includes('multipart');
+} }));
+app.use(express.urlencoded({ extended: true, limit: "10kb" }));
 
 // 🧱 Secure headers
 app.use(helmet());
@@ -57,10 +62,6 @@ app.use(compression());
 
 // 🍪 Cookie parsing (if needed later for JWT/session)
 app.use(cookieParser());
-
-// 🚧 Limit request body size (prevents DoS)
-app.use(express.json({ limit: "10kb" }));
-app.use(express.urlencoded({ extended: true, limit: "10kb" }));
 
 // ⚡ Rate limit to prevent brute-force
 const apiLimiter = rateLimit({

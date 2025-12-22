@@ -9,8 +9,8 @@ export class TaskService {
     this.taskRepository = new TaskRepository();
   }
 
-  async createTask(data: createTaskInput,userId:string) {
-    const task = await this.taskRepository.create(data,userId);
+  async createTask(data: createTaskInput) {
+    const task = await this.taskRepository.create(data);
     return task;
   }
 

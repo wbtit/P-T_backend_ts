@@ -11,7 +11,7 @@ export class TaskController {
         if (!id) {
             throw new AppError('User not found', 404);
         }
-        const task = await taskService.createTask(req.body,id);
+        const task = await taskService.createTask(req.body);
         res.status(201).json({
             status: 'success',
             data: task,

@@ -12,8 +12,13 @@ const validate = (schemas: SchemaConfig) =>
   (req: Request, res: Response, next: NextFunction) => {
     try {
       if (schemas.body) {
+        console.log("Content-Type:", req.headers['content-type']);
         console.log("Validating request body:", req.body);
+        if (req.body === undefined) {
+          throw new AppError("Request body is required and must be valid JSON", 400);
+        }
         const parsed = schemas.body.safeParse(req.body);
+        console.log("Validation result:", parsed)
         if (!parsed.success) throw new AppError(parsed.error.message, 400);
         req.body = parsed.data;
       }

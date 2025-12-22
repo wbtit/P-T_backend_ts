@@ -3,7 +3,7 @@ import { createTaskInput,updateTaskInput } from "../dtos";
 import { cleandata } from "../../../config/utils/cleanDataObject";
 
 export class TaskRepository {
-    async create(data: createTaskInput,userId:string) {
+    async create(data: createTaskInput) {
         const cleanData = cleandata(data)
         await prisma.$transaction(async(tx)=>{
             const task = await tx.task.create({
@@ -16,12 +16,12 @@ export class TaskRepository {
                     due_date: cleanData.due_date,
                     start_date: cleanData.start_date,
                     userFault: cleanData.userFault,
-                    Stage: cleanData.stage,
+                    Stage: cleanData.Stage,
                     project_id: cleanData.project_id,
                     user_id: cleanData.user_id,
                     departmentId: cleanData.departmentId,
                     reworkStartTime: cleanData.reworkStartTime,
-                    created_by:userId
+                    created_by:cleanData.user_id
                 }
             })
 
@@ -29,7 +29,7 @@ export class TaskRepository {
                 data:{
                     taskId:task.id,
                     allocatedHours:cleanData.duration,
-                    createdBy:userId
+                    createdBy:cleanData.user_id
                 }
             })
             return task;

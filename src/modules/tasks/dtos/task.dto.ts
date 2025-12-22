@@ -10,13 +10,13 @@ export const createTaskDto = z.object({
     priority: z.number().min(1).max(5),
     due_date: z.preprocess((val) => val ? new Date(val as string) : undefined, z.date()),
     start_date: z.preprocess((val) => val ? new Date(val as string) : undefined, z.date()),
+    reworkStartTime:z.preprocess((val)=>val?new Date(val as string):undefined,z.date()).optional(),
     duration: z.string(),
     userFault:z.string().optional(),
-    stage: z.enum(Stage),
+    Stage: z.enum(Stage),
     project_id: z.string(),
     user_id: z.string(),
     departmentId: z.string(),
-    reworkStartTime: z.date().nullable().optional(),
 });
 export const updateTaskDto = createTaskDto.partial()
 
