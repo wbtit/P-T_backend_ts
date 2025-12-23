@@ -68,6 +68,8 @@ export class TaskController {
         results= await taskService.getTasksForDepartmentManager(req.user.id);
     }else if (role === 'PROJECT_MANAGER'){
         results = await taskService.getTasksByProjectManagerId(req.user.id);
+    }else if(role === 'STAFF'){
+        results = await taskService.getTaskByUserId(req.user.id);
     }else{
         return res.status(403).json({
             status: 'fail',

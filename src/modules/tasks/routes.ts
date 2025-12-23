@@ -21,6 +21,10 @@ taskRouter.get("/user/non-completed-tasks",
     authMiddleware,
     taskController.handleGetNonCompletedTasksByUserId.bind(taskController));
 
+taskRouter.get("/user/tasks",
+    authMiddleware,
+    taskController.handleGetTaskByUserId.bind(taskController));
+
 taskRouter.get("/:id",
     authMiddleware,
 validate({params:z.object({id:z.string()})}),
