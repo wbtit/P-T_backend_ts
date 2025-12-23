@@ -19,27 +19,46 @@ router.post('/start/:id',
 );
 router.patch('/pause/:id',
     authMiddleware,
-    validate({params:z.object({id:z.string()}),body:updateWhSchema}),
+    validate({
+    params: z.object({ id: z.string() }),
+    body: z.object({
+      whId: z.string()
+    })
+  }),
     asyncHandler(whController.handlePauseTask.bind(whController))
 );
 router.post('/resume/:id',
     authMiddleware,
-    validate({params:z.object({id:z.string()})}),
+     validate({
+    params: z.object({ id: z.string() })
+  }),
     asyncHandler(whController.handleResumeTask.bind(whController))
 );
 router.post('/end/:id',
     authMiddleware,
-    validate({params:z.object({id:z.string()}),body:updateWhSchema}),
+    validate({
+    params: z.object({ id: z.string() }),
+    body: z.object({
+      whId: z.string()
+    })
+  }),
     asyncHandler(whController.handleEndTask.bind(whController))
 );
 router.post("/reworkStart/:id",
     authMiddleware,
-    validate({params:z.object({id:z.string()})}),
+    validate({
+    params: z.object({ id: z.string() }),
+    body: z.object({
+      whId: z.string()
+    })
+  }),
     asyncHandler(whController.handleReworkStartTask.bind(whController))
 );
 router.post("/reworkEnd/:id",
     authMiddleware,
-    validate({params:z.object({id:z.string()}),body:updateWhSchema}),
+    validate({
+    params: z.object({ id: z.string() })
+  }),
     asyncHandler(whController.handleReworkEndTask.bind(whController))
 );
 router.get('/',

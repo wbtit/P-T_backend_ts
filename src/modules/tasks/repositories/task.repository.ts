@@ -44,6 +44,11 @@ export class TaskRepository {
                 user:true,
                 department:true,
                 workingHourTask:true,
+                allocationLog:true,
+                alert:true,
+                flags:true,
+                taskcomment:true,
+                
             }
         });
         return task;
