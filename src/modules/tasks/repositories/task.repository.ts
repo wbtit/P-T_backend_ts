@@ -122,9 +122,11 @@ export class TaskRepository {
     async findAll() {
         const tasks = await prisma.task.findMany({
             include:{
-                project:true,
-                user:true,
-                department:true,
+            project:{select:{name:true,manager:{
+                select:{firstName:true,lastName:true}}}
+            },
+                user:{select:{firstName:true,middleName:true,lastName:true}},
+                department:{select:{name:true}},
                 workingHourTask:true,
             }
         });
