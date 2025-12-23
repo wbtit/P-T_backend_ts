@@ -3,7 +3,6 @@ import { COSTATUS, Prisma } from "@prisma/client";
 
 export const CoResponseSchema = z.object({
   Status: z.enum(COSTATUS).default("NOT_REPLIED"),
-  CoId: z.string().optional(),
   description: z.string().min(2).max(500),
   userId: z.string(),
   parentResponseId: z.string().optional(),       

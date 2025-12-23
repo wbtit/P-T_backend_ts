@@ -82,7 +82,7 @@ export class CORepository {
         Project:true,
         Recipients:true,
         senders:true,
-        coResponse:true,
+        coResponses:true,
         CoRefersTo:true,
       }
     })

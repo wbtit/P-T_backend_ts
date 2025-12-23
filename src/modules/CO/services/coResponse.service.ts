@@ -10,15 +10,13 @@ const coResponseRepo = new CoResponseRepository();
 
 export class CoResponseService {
   async createCoResponse(data: CreateCoResponseDto, CoId: string, userId: string) {
-    if (!data.parentResponseId) {
-      throw new AppError("ParentResponseId is required for top-level responses", 400);
-    }
+   
 
-    return await coResponseRepo.createCoResponse({
-      ...data,
+    return await coResponseRepo.createCoResponse(
+      data,
       CoId,
       userId,
-    });
+    );
   }
 
   async getResponseById(id: string) {

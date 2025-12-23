@@ -1201,7 +1201,7 @@ model ChangeOrder {
   isAproovedByAdmin   Boolean?   @default(false)
 
   //Relations
-  coResponse  COResponse?        @relation("coResponse")
+  coResponses COResponse[]        @relation("coResponse")
   Project     Project            @relation("ChangeOrderProject", fields: [project], references: [id], onDelete: Cascade)
   Recipients  User              @relation("ChangeOrderRecipients", fields: [recipients], references: [id], onDelete: Cascade)
   senders     User              @relation("ChangeOrderSender", fields: [sender], references: [id], onDelete: Cascade)
@@ -1242,12 +1242,12 @@ model COResponse {
   id               String       @id @default(uuid()) @db.Uuid
   Status           COSTATUS     @default(NOT_REPLIED)
   description      String       @default("")
-  CoId             String?      @unique @db.Uuid
+  CoId             String?      @db.Uuid
   userId           String       @db.Uuid
   parentResponseId String?      @db.Uuid
   files       Json               @default("[]")
   //Relations
-  COresponse       ChangeOrder?  @relation("coResponse", fields: [CoId], references: [id])
+  coResponse       ChangeOrder?  @relation("coResponse", fields: [CoId], references: [id])
   parentResponse   COResponse?  @relation("ParentChildResponse", fields: [parentResponseId], references: [id])
   childResponses   COResponse[] @relation("ParentChildResponse")
   user             User        @relation("COrespondedby", fields: [userId], references: [id])
@@ -1539,6 +1539,3 @@ model ClientCommunication {
   @@index([isCompleted])
   @@index([projectId])
 }
-
-
-
