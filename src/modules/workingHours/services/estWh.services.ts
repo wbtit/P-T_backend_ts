@@ -167,7 +167,7 @@ export class EstWHService {
 
         await prisma.estimationTask.update({
             where: { id: findData.estimationTaskId },
-            data: { status: "COMPLETED" }
+            data: { status: "IN_REVIEW" }
         });
 
         return wh;

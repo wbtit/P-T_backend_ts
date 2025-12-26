@@ -87,6 +87,7 @@ export class EstManageController{
     }
     async handleUpdateStatus(req:Request,res:Response){
         const {id,status}=req.params
+        
         const estimation = await estService.updateStatus(id,status as EstimationStatus)
         res.status(200).json({
             message:"Estimation fetched",

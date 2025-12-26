@@ -55,8 +55,10 @@ export class FabricatorController {
   }
 
   async handleGetFabricatorByCreatedById(req: AuthenticateRequest, res: Response) {
-    const { id } = req.params;
-    const fabricators = await this.fabService.getFabricatorByCreatedById(id);
+    if (!req.user) {
+      throw new AppError("User not authenticated", 401);
+}
+    const fabricators = await this.fabService.getFabricatorByCreatedById(req.user?.id);
 
     if (!fabricators) throw new AppError("Fabricators not found", 404);
 

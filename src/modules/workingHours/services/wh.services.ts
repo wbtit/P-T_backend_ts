@@ -70,7 +70,7 @@ export class WHService {
 
         await prisma.task.update({
             where: { id: findData.task_id },
-            data: { status: "COMPLETED" }
+            data: { status: "IN_REVIEW" }
         });
         return wh;
      

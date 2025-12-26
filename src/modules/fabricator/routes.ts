@@ -47,7 +47,7 @@ router.get(
 
 
 router.get(
-    "/createdBy/:id",
+    "/createdBy",
     authMiddleware,
     validate({params:z.object({id:z.string()})}),
     asyncHandler(fabCtrl.handleGetFabricatorByCreatedById.bind(fabCtrl))
