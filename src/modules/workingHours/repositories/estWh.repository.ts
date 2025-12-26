@@ -63,12 +63,14 @@ export class EstimationWHRepository {
         return wh;
     }
     async findManyByTaskIdAndUserId(data:FindManyDTO){
+        console.log("The estimation summary data: ",data);
         const wh = await prisma.workingHours.findMany({
             where: {
                 user_id: data.user_id,
                 estimationTaskId: data.estimationTaskId,
             }
         });
+        
         return wh;
     }
 }

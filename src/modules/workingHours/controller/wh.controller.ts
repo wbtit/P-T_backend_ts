@@ -2,6 +2,7 @@ import { es } from "zod/v4/locales/index.cjs";
 import { AuthenticateRequest } from "../../../middleware/authMiddleware";
 import { EstWHService } from "../services";
 import { Request,Response } from "express";
+import prisma from "../../../config/database/client";
 
 const whService = new EstWHService();
 export class EstWHController {
@@ -174,16 +175,30 @@ export class EstWHController {
     // ------------------------
     async handleGetTaskSummary(req: AuthenticateRequest, res: Response) {
         if (!req.user) return res.status(404).json({ message: "User not found" });
+        
 
         const userId = req.user.id;
         const estimationTaskId = req.params.id;
-
+        const user_id = await prisma.estimationTask.findFirst({
+            where:{
+                id:estimationTaskId
+            },
+            select:{
+                assignedTo:{select:{id:true}}
+            }
+        })
+        let data;
+        if(req.user.role === "ADMIN"){
+            data = user_id?.assignedTo.id
+        }else{
+            data = userId
+        }
         if (!userId || !estimationTaskId)
             return res.status(404).json({ message: "User or task not found" });
 
         const findData = {
-            user_id: userId,
-            estimationTaskId
+            user_id: data,
+            estimationTaskId:estimationTaskId
         };
 
         const summary = await whService.getTaskSummary(findData);

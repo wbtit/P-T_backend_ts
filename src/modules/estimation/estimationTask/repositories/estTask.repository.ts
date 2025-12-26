@@ -35,7 +35,7 @@ export class EstimationTaskRepository{
             include:{
                 estimation:true,
                 assignedBy:{select:{firstName:true,middleName:true,lastName:true}},
-                assignedTo:{select:{firstName:true,middleName:true,lastName:true}},
+                assignedTo:{select:{id:true,firstName:true,middleName:true,lastName:true}},
                 reviewedBy:{select:{firstName:true,middleName:true,lastName:true}},
                 workinghours:true
             }

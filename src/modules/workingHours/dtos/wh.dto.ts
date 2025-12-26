@@ -17,7 +17,7 @@ export const updateWhSchema=z.object({
 export const FindMany=z.object({
     task_id:z.string().optional(),
     estimationTaskId:z.string().optional(),
-    user_id:z.string(),
+    user_id:z.string().optional(),
 })
 
 
