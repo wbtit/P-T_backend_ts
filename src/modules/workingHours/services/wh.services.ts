@@ -44,8 +44,8 @@ export class WHService {
             throw new Error("You have an active task. Please end it before resuming.");
         }
          const wh = await whRepository.create(
-        taskId,
         userId,
+        taskId,
     );
        
         await prisma.task.update({
@@ -91,7 +91,7 @@ export class WHService {
             where: { id: taskId},
             data: { status: "REWORK" }
         });
-        return await whRepository.create(taskId,userId);
+        return await whRepository.create(userId,taskId, "REWORK");
     }
 
 

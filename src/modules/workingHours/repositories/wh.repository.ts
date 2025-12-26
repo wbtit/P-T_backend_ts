@@ -30,13 +30,15 @@ export class WHRepository {
     });
 }
 
-    async create(userId:string,taskId:string){
-        
+    async create(userId:string,taskId:string, type: "WORK" | "REWORK" = "WORK"){
+
+        console.log(userId,taskId);
+
         const wh=await prisma.workingHours.create({
             data:{
                 user_id:userId,
                 task_id:taskId,
-                type:"WORK",
+                type: type,
                 started_at:new Date(),
             }
         });
@@ -53,17 +55,7 @@ export class WHRepository {
         });
         return wh;
     }
-    async createrework(userId:string,taskId:string){
-     
-        const wh=await prisma.workingHours.create({
-            data:{
-                user_id:userId,
-                task_id:taskId,
-                type:"REWORK",
-            }
-        });
-        return wh;
-    }
+
     async findManyByTaskIdAndUserId(data:FindManyDTO){
         const wh = await prisma.workingHours.findMany({
             where: {

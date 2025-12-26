@@ -87,6 +87,14 @@ export class COController {
     });
   }
 
+  async handleGetById(req: Request, res: Response) {
+    const { id } = req.params;
+    const co = await coService.findById(id);
+    res.status(200).json({
+      status: "success",
+      data: co,
+    });
+  }
   // ------------------- CO TABLE -------------------
 
   async handleCreateCoTable(req: AuthenticateRequest, res: Response) {

@@ -60,6 +60,12 @@ export class COService {
 
     return cos;
   }
+  async findById(id:string){
+    const co= await corepo.findById(id);
+    if(!co) throw new AppError("Change Order not found", 404);
+    return co;
+  }
+
 
   // ------------------ CO Table Operations ------------------
 

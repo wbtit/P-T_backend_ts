@@ -50,6 +50,14 @@ router.get(
   coController.handleGetByProjectId.bind(coController)
 );
 
+router.get(
+  "/ById/:id",
+    authMiddleware,
+    validate({ params: z.object({ id: z.string() }) }),
+    coController.handleGetById.bind(coController)
+  );
+
+
 // Sent COs
 router.get(
   "/sent",

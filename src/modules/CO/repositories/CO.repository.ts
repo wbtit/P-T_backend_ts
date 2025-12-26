@@ -87,7 +87,18 @@ export class CORepository {
       }
     })
     }
-
+    async findById(id:string){
+        return await prisma.changeOrder.findUnique({
+            where:{id:id}
+          ,include:{
+            coResponses:{include:{childResponses:true}},
+            Project:true,
+            Recipients:true,
+            senders:true,
+            CoRefersTo:true,
+          }
+        })
+    }
 
 
     //CO TABLE

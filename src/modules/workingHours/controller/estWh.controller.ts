@@ -40,8 +40,13 @@ export class WHController {
         }
         const { id } = req.user;
         const { id: taskId } = req.params;
-        const { whId } = req.body;
-        if (!id || !taskId || !whId) return res.status(404).json({ message: 'User, task or working hours not found' });
+       
+       
+        console.log(taskId);
+       
+        console.log(id);
+        if (!id || !taskId) return res.status(404).json({ message: 'User, task not found' });
+       
         const findData = { user_id: id, task_id: taskId };
         const createData = { user_id: id, task_id: taskId, type: req.body.type };
         const wh = await whService.resumeTask(findData, id,taskId);
