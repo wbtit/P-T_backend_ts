@@ -15,7 +15,7 @@ const router = Router();
 //  invoicing routes
 // -----------------------------------------------------------------------------
 router.post(
-  "/",
+  "/create",
   authMiddleware,
   validate({
     body: createInvoiceSchema,
@@ -23,7 +23,7 @@ router.post(
   asyncHandler(invoiceCtrlr.handleCreateInvoice.bind(invoiceCtrlr))
 );
 
-router.get("/", authMiddleware, asyncHandler(invoiceCtrlr.handleGetAllInvoices.bind(invoiceCtrlr)));
+router.get("/AllInvoices", authMiddleware, asyncHandler(invoiceCtrlr.handleGetAllInvoices.bind(invoiceCtrlr)));
 router.get(
   "/client/:clientId",
   authMiddleware,
@@ -33,17 +33,6 @@ router.get(
     }),
   }),
   asyncHandler(invoiceCtrlr.handleGetInvoicesByClientId.bind(invoiceCtrlr))
-);
-
-router.get(
-  "/:id",
-  authMiddleware,
-  validate({
-    params: z.object({
-      id: z.string(),
-    }),
-  }),
-  asyncHandler(invoiceCtrlr.handleGetInvoiceById.bind(invoiceCtrlr))
 );
 
 router.put(
@@ -79,7 +68,7 @@ router.post(
   asyncHandler(accountCtrlr.handleCreateAccountInfo.bind(accountCtrlr))
 );
 
-router.get("/account", authMiddleware, asyncHandler(accountCtrlr.handleGetAllAccountInfo.bind(accountCtrlr)));
+router.get("/accounts/all", authMiddleware, asyncHandler(accountCtrlr.handleGetAllAccountInfo.bind(accountCtrlr)));
 
 router.get(
   "/account/:id",
@@ -113,6 +102,20 @@ router.delete(
     }),
   }),
   asyncHandler(accountCtrlr.handleDeleteAccountInfo.bind(accountCtrlr))
+);
+
+// -----------------------------------------------------------------------------
+// More invoicing routes
+// -----------------------------------------------------------------------------
+router.get(
+  "/byId/:id",
+  authMiddleware,
+  validate({
+    params: z.object({
+      id: z.string(),
+    }),
+  }),
+  asyncHandler(invoiceCtrlr.handleGetInvoiceById.bind(invoiceCtrlr))
 );
 
 export default router;

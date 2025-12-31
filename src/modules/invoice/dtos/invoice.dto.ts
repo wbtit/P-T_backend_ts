@@ -1,3 +1,4 @@
+import { access } from "fs";
 import { z } from "zod";
 
 
@@ -19,6 +20,11 @@ export type updateInvoiceItemSchema = z.infer<typeof updateInvoiceItemSchema>
 export const createAccountInfoSchema = z.object({
   abaRoutingNumber: z.string().min(1),
   accountNumber: z.string().min(1),
+  accountName: z.string().min(1),
+  paymentMethod:z.string().min(1),
+  institutionNumber:z.string().min(1),
+  transitNumber:z.string().min(1),
+  bankName:z.string().min(4),
   accountType: z.string().min(1),
   beneficiaryInfo: z.string().min(1),
   beneficiaryAddress: z.string().min(1),

@@ -1440,6 +1440,11 @@ model AccountInfo {
   id                  String   @id @default(uuid()) @db.Uuid
   abaRoutingNumber    String
   accountNumber       String
+  accountName         String?   @default("")
+  paymentMethod       String?   @default("")
+  institutionNumber   String?   @default("")
+  transitNumber       String?   @default("")
+  bankName            String?   @default("")
   accountType         String
   beneficiaryInfo     String
   beneficiaryAddress  String
