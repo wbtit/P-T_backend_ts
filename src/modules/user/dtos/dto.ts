@@ -1,6 +1,9 @@
 import { z } from "zod";
 export type userRole='STAFF'|
           'CLIENT'|
+          'CLIENT_ADMIN'|
+          'CLIENT_PROJECT_COORDINATOR'|
+          'CLIENT_GENERAL_CONSTRUCTOR'|
           'VENDOR'|
           'ADMIN'|
           'SALES_MANAGER'|

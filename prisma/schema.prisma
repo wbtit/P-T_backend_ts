@@ -459,7 +459,7 @@ model TeamMember {
 
 
 
-model RFQ {
+model RFQ {pocOfConnectionDesigner
   id               String        @id @default(uuid()) @db.Uuid
   projectNumber    String        @unique
   projectName      String

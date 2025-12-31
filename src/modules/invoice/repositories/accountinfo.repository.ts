@@ -4,7 +4,7 @@ import { createAccountInfoSchemaData,updateAccountInfoSchemaData } from "../dtos
 export class AccountRepository{
     async create(data:createAccountInfoSchemaData){
         return await prisma.accountInfo.create({
-      data:{...data} ,
+      data: data as any,
     });
     }
     async update(data:updateAccountInfoSchemaData,id:string){

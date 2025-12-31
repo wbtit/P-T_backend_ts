@@ -31,9 +31,9 @@ import { setProjectWbsSelection } from "../utils/setProjectWbsSelection";
       select: { id: true },
   });
 
-if (validTemplates.length !== data.wbsTemplateIds?.length) {
-  throw new AppError("Invalid WBS template selection", 400);
-}
+// if (validTemplates.length !== data.wbsTemplateIds?.length) {
+//   throw new AppError("Invalid WBS template selection", 400);
+// }
 
     await setProjectWbsSelection(
       tx,
@@ -247,7 +247,7 @@ if (validTemplates.length !== data.wbsTemplateIds?.length) {
 
    async getProjectsForClientAdmin(clientAdminId: string) {
     return await prisma.project.findMany({
-      where:{fabricatorID:clientAdminId},
+      where:{fabricator:{pointOfContact: { some: { id: clientAdminId } }}},
       include:{
         stageHistory:true,
         fabricator:{select:{

@@ -8,7 +8,7 @@ const zBooleanString = z
 
 
 export const CreateRfqSchema = z.object({
-  projectNumber: z.string().min(2).max(100),
+  projectNumber: z.string().max(100).optional(),
   projectName: z.string().min(2).max(100),
   bidPrice: z.string().optional(),
   fabricatorId: z.string().nullable().optional(),

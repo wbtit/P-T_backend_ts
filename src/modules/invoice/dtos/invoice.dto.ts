@@ -18,18 +18,18 @@ export type updateInvoiceItemSchema = z.infer<typeof updateInvoiceItemSchema>
 
 
 export const createAccountInfoSchema = z.object({
-  abaRoutingNumber: z.string().min(1),
-  accountNumber: z.string().min(1),
-  accountName: z.string().min(1),
-  paymentMethod:z.string().min(1),
-  institutionNumber:z.string().min(1),
-  transitNumber:z.string().min(1),
-  bankName:z.string().min(4),
-  accountType: z.string().min(1),
-  beneficiaryInfo: z.string().min(1),
-  beneficiaryAddress: z.string().min(1),
-  bankInfo: z.string().min(1),
-  bankAddress: z.string().min(1),
+  abaRoutingNumber: z.string().optional(),
+  accountNumber: z.string().optional(),
+  accountName: z.string().optional(),
+  paymentMethod:z.string().optional(),
+  institutionNumber:z.string().optional(),
+  transitNumber:z.string().optional(),
+  bankName:z.string().optional(),
+  accountType: z.string().optional(),
+  beneficiaryInfo: z.string().optional(),
+  beneficiaryAddress: z.string().optional(),
+  bankInfo: z.string().optional(),
+  bankAddress: z.string().optional(),
 });
 
 export const updateAccountInfoSchema = createAccountInfoSchema.partial();
