@@ -10,14 +10,12 @@ export class AccountController {
   // ---------------------------------------------------------------------------
   async handleCreateAccountInfo(req: Request, res: Response) {
     try {
-      const { id: invoiceId } = req.params; // from route: /invoice/:id/account
+      
       const data = req.body;
 
-      if (!invoiceId) {
-        throw new AppError("Invoice ID is required", 400);
-      }
+     
 
-      const result = await accountService.createAccountInfo(data, invoiceId);
+      const result = await accountService.createAccountInfo(data);
 
       return res.status(201).json({
         message: "Account info created successfully",

@@ -25,17 +25,15 @@ export class Invoicerepository{
         invoiceItems: {
           create: data.invoiceItems || [],
         },
-        accountInfo: {
-          create: data.accountInfo || [],
-        },
+        
       },
-      include: { invoiceItems: true, accountInfo: true },
+      include: { invoiceItems: true },
     });
     }
 
     async getAll(){
         return await prisma.invoice.findMany({
-      include: { invoiceItems: true, accountInfo: true ,pointOfContact:true},
+      include: { invoiceItems: true ,pointOfContact:true},
     });
     }
     async getAllByClientId(clientId:string){
@@ -43,13 +41,13 @@ export class Invoicerepository{
       where:{
         clientId:clientId
       },
-       include: { invoiceItems: true, accountInfo: true ,pointOfContact:true},
+       include: { invoiceItems: true,pointOfContact:true},
      })
     }
     async getById(id:string){
         return await prisma.invoice.findUnique({
       where: { id },
-      include: { invoiceItems: true, accountInfo: true,pointOfContact:true },
+      include: { invoiceItems: true, pointOfContact:true },
     });
     }
 
@@ -73,16 +71,11 @@ export class Invoicerepository{
             };
         }
         
-        if (accountInfo) {
-            updateData.accountInfo = {
-                deleteMany: {},
-                create: accountInfo,
-            };
-        }
+        
         return await prisma.invoice.update({
       where: { id:id },
       data: updateData,
-      include: { invoiceItems: true, accountInfo: true },
+      include: { invoiceItems: true },
     });
     }
     async deleteById(id:string){

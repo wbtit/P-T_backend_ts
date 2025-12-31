@@ -11,12 +11,10 @@ export class AccountService {
   // ---------------------------------------------------------------------------
   // Create Account Info
   // ---------------------------------------------------------------------------
-  async createAccountInfo(data: createAccountInfoSchemaData, invoiceId: string) {
-    if (!invoiceId) {
-      throw new AppError("Invoice ID is required", 400);
-    }
+  async createAccountInfo(data: createAccountInfoSchemaData) {
+    
 
-    const accountInfo = await accountRepo.create(data, invoiceId);
+    const accountInfo = await accountRepo.create(data);
     return accountInfo;
   }
 

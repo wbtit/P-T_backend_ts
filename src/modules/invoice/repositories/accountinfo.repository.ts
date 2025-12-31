@@ -2,16 +2,9 @@ import prisma from "../../../config/database/client";
 import { createAccountInfoSchemaData,updateAccountInfoSchemaData } from "../dtos";
 
 export class AccountRepository{
-    async create(data:createAccountInfoSchemaData, invoiceId: string){
+    async create(data:createAccountInfoSchemaData){
         return await prisma.accountInfo.create({
-      data:{
-        ...data,
-        invoice: {
-          connect: {
-            id: invoiceId||"",
-          },
-        },
-      } ,
+      data:{...data} ,
     });
     }
     async update(data:updateAccountInfoSchemaData,id:string){

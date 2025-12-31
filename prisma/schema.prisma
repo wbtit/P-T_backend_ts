@@ -322,6 +322,7 @@ model Fabricator {
   files        Json?        @default("[]")
   isDeleted    Boolean     @default(false) @map("is_bin")
   currencyType String     @default("")
+  accountId    String?     @unique @db.Uuid
 
   // Relations      
   branches     Branch[]    @relation("FabricatorBranches")
@@ -332,6 +333,7 @@ model Fabricator {
   rfi         RFI[]        @relation("FabricatorRFI")
   submittals  Submittals[] @relation("FabricatorSubmittals")
   fabricatorInvoice   Invoice[]  @relation("fabricatorInvoice")
+  bankAccount         AccountInfo? @relation("bankAccount",fields: [accountId], references: [id])
   pointOfContact User[]      @relation("FabricatorPointOfContacts")
   rfq         RFQ[]        @relation("fabricatorRFQ")
   communications    ClientCommunication[]
@@ -1415,7 +1417,6 @@ model Invoice {
   project                    Project       @relation("projectInvoice", fields: [projectId], references: [id])
   fabricator                 Fabricator    @relation("fabricatorInvoice", fields: [fabricatorId], references: [id])
   pointOfContact             User[]         @relation("invoicePointOfContact")
-  accountInfo                AccountInfo[] @relation("invoice")
   user                       User?         @relation("invoiceCreatedBy",fields: [createdBy],references: [id])
   invoiceItems               InvoiceItem[]
 }
@@ -1437,7 +1438,6 @@ model InvoiceItem {
 
 model AccountInfo {
   id                  String   @id @default(uuid()) @db.Uuid
-  invoiceId           String   @db.Uuid
   abaRoutingNumber    String
   accountNumber       String
   accountType         String
@@ -1449,7 +1449,7 @@ model AccountInfo {
   updatedAt           DateTime @updatedAt
 
   // 🔗 Relation
-  invoice             Invoice  @relation("invoice", fields: [invoiceId], references: [id])
+  fabricator          Fabricator?  @relation("bankAccount")
 }
 
 model ManagerEstimationScore {

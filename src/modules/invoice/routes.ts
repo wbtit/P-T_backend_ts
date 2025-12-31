@@ -71,13 +71,10 @@ router.delete(
 // Account Info routes
 // -----------------------------------------------------------------------------
 router.post(
-  "/:invoiceId/account",
+  "/account",
   authMiddleware,
   validate({
     body: createAccountInfoSchema,
-    params: z.object({
-      invoiceId: z.string(),
-    }),
   }),
   asyncHandler(accountCtrlr.handleCreateAccountInfo.bind(accountCtrlr))
 );

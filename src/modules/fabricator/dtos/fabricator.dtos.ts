@@ -3,9 +3,10 @@ import z from "zod";
 
 export const CreateFabricatorSchema=z.object({
     fabName:z.string().min(1,{message:"Fabricator name is required"}),
-    website:z.url({message:"Invalid website URL"}).nullable().optional(),
-    drive:z.url({message:"Invalid drive link"}).nullable().optional(),
+    website:z.string({message:"Invalid website URL"}).optional(),
+    drive:z.string({message:"Invalid drive link"}).optional(),
     currencyType:z.string().optional(),
+    accountId:z.string().optional(),
     files: z
                 .union([
                   z.array(z.any()),
