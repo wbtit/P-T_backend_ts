@@ -273,7 +273,9 @@ import { setProjectWbsSelection } from "../utils/setProjectWbsSelection";
 
    async getProjectsForClient(clientId: string){
     return await prisma.project.findMany({
-      where:{fabricator:{pointOfContact: { some: { id: clientId } }}},
+      where:{
+        rfq:{sender:{id:clientId}}
+      },
       include:{
         stageHistory:true,
         fabricator:{select:{
@@ -294,6 +296,7 @@ import { setProjectWbsSelection } from "../utils/setProjectWbsSelection";
           id:true
         }}
        }
-    })
-   }
+
+   })
+}
 }

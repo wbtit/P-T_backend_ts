@@ -459,9 +459,9 @@ model TeamMember {
 
 
 
-model RFQ {pocOfConnectionDesigner
+model RFQ {
   id               String        @id @default(uuid()) @db.Uuid
-  projectNumber    String        @unique
+  projectNumber    String?       @default("")
   projectName      String
   bidPrice         String?
   senderId         String?       @db.Uuid

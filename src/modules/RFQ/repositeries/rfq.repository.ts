@@ -59,7 +59,7 @@ export class RFQRepository {
     
     async getByName(id:string) {
         return await prisma.rFQ.findUnique({
-            where: { projectNumber:id },
+            where: { id:id },
             include:{
                 sender: true,
                 recipient: true,
