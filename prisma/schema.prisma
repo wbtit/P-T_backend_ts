@@ -284,6 +284,8 @@ model User {
   managerbias              ManagerBiasRecord[]      @relation("managerbias")
   employeeperformance      EmployeePerformanceScore[] @relation("employeeperformance")
   clientCommunicatedBy       ClientCommunication[]
+  submittalVersiondoneBy     SubmittalVersion[]
+
   
   @@map("user")
   @@index([email])
@@ -1135,56 +1137,101 @@ model RFIResponse {
 }
 
 model Submittals {
-  id                 String              @id @default(uuid()) @db.Uuid
-  fabricator_id      String              @db.Uuid
-  mileStoneId      String?               @db.Uuid 
-  date               DateTime            @default(now())
-  project_id         String              @db.Uuid
-  recepient_id       String              @db.Uuid
-  sender_id          String              @db.Uuid
-  status             Boolean             @default(false)
-  stage              Stage               @default(IFA)
+  id                 String   @id @default(uuid()) @db.Uuid
+
+  fabricator_id      String   @db.Uuid
+  mileStoneId        String?  @db.Uuid
+  project_id         String   @db.Uuid
+  recepient_id       String   @db.Uuid
+  sender_id          String   @db.Uuid
+
+  date               DateTime @default(now())
+  stage              Stage    @default(IFA)
+  status             Boolean  @default(false)
+
   subject            String
-  description        String
-  files              Json              @default("[]")
-  isAproovedByAdmin  Boolean?   @default(false)
-  //Relations
-  mileStoneBelongsTo MileStone?          @relation("mileStoneSubmittals", fields: [mileStoneId], references: [id], onDelete: Cascade)
-  fabricator         Fabricator          @relation("FabricatorSubmittals", fields: [fabricator_id], references: [id], onDelete: Cascade)
-  project            Project             @relation("ProjectSubmittals", fields: [project_id], references: [id], onDelete: Cascade)
-  recepients         User               @relation("SubmittalsRecepient", fields: [recepient_id], references: [id], onDelete: Cascade)
-  sender             User               @relation("SubmittalsSender", fields: [sender_id], references: [id], onDelete: Cascade)
+  isAproovedByAdmin  Boolean? @default(false)
+
+  // 🔑 Versioning
+  currentVersionId   String?  @unique @db.Uuid
+
+  // Relations
+  mileStoneBelongsTo MileStone? @relation("mileStoneSubmittals",fields: [mileStoneId],references: [id],onDelete: Cascade)
+  fabricator Fabricator @relation("FabricatorSubmittals",fields: [fabricator_id],references: [id],onDelete: Cascade)
+  project Project @relation("ProjectSubmittals",fields: [project_id],references: [id],onDelete: Cascade)
+  recepients User @relation("SubmittalsRecepient",fields: [recepient_id],references: [id],onDelete: Cascade)
+  sender User @relation("SubmittalsSender",fields: [sender_id],references: [id],onDelete: Cascade)
+  // Versioning relations
+  versions       SubmittalVersion[]
+  currentVersion SubmittalVersion? @relation("CurrentSubmittalVersion",fields: [currentVersionId],references: [id])
+
+  // Responses
   submittalsResponse SubmittalsResponse[] @relation("submittalsresponse")
 
   @@map("submittals")
-
+  @@index([project_id])
   @@index([recepient_id])
   @@index([sender_id])
-  @@index([project_id])
 }
+
+
+model SubmittalVersion {
+  id            String   @id @default(uuid()) @db.Uuid
+  submittalId   String   @db.Uuid
+
+  versionNumber Int
+  description   String
+  files         Json     @default("[]")
+
+  createdById   String   @db.Uuid
+  createdAt     DateTime @default(now())
+
+  isActive      Boolean  @default(true)
+
+  // Relations
+  submittal Submittals @relation(fields: [submittalId], references: [id],onDelete: Cascade)
+  createdBy User @relation(fields: [createdById], references: [id])
+  responses SubmittalsResponse[]
+   isCurrentFor Submittals? @relation("CurrentSubmittalVersion")
+
+  @@map("submittalversion")
+  @@unique([submittalId, versionNumber])
+  @@index([submittalId])
+}
+
 
 
 model SubmittalsResponse {
-  id               String               @id @default(uuid()) @db.Uuid
-  files            Json                 @default("[]")
-  reason           String               @default("")
-  respondedAt      String               @default("")
-  createdAt        DateTime             @default(now())
-  submittalsId     String               @db.Uuid
-  userId           String               @db.Uuid
-  description      String               @default("")
-  status           SubResStatus         @default(NOT_APPROVED)
-  wbtStatus        State                @default(SENT)
-  parentResponseId String?              @db.Uuid
-  //Relations
-  parentResponse   SubmittalsResponse?  @relation("ParentChildResponse", fields: [parentResponseId], references: [id])
-  childResponses   SubmittalsResponse[] @relation("ParentChildResponse")
-  submittals       Submittals           @relation("submittalsresponse", fields: [submittalsId], references: [id])
-  user             User                @relation("submittalsRespondedBy", fields: [userId], references: [id])
+  id                 String        @id @default(uuid()) @db.Uuid
+
+  submittalsId       String        @db.Uuid
+  submittalVersionId String?       @db.Uuid
+  userId             String        @db.Uuid
+
+  description        String        @default("")
+  reason             String        @default("")
+  files              Json          @default("[]")
+
+  status             SubResStatus  @default(NOT_APPROVED)
+  wbtStatus          State         @default(SENT)
+
+  respondedAt        String        @default("")
+  createdAt          DateTime      @default(now())
+
+  parentResponseId   String?       @db.Uuid
+
+  // Relations
+  parentResponse SubmittalsResponse? @relation("ParentChildResponse", fields: [parentResponseId],references: [id])
+  childResponses SubmittalsResponse[] @relation("ParentChildResponse")
+  submittals Submittals @relation("submittalsresponse",fields: [submittalsId],references: [id],onDelete: Cascade)
+  submittalVersion SubmittalVersion? @relation( fields: [submittalVersionId],references: [id] )
+  user User @relation( "submittalsRespondedBy", fields: [userId], references: [id])
 
   @@map("submittalsresponse")
   @@index([submittalsId])
+  @@index([submittalVersionId])
 }
+
 
 model ChangeOrder {
   id          String             @id @default(uuid()) @db.Uuid
