@@ -1,5 +1,6 @@
-import { SubmitalRepository, SubmittalResponse } from "../repositories";
-import { createSubResDto } from "../dtos";
+import { SubmittalResponseRepository } from "../repositories";
+import { SubmitalRepository } from "../repositories";
+import { CreateSubmittalsResponseDto } from "../dtos";
 import { AppError } from "../../../config/utils/AppError";
 import { FileObject } from "../../../shared/fileType";
 import path from "path";
@@ -8,97 +9,119 @@ import { streamFile } from "../../../utils/fileUtil";
 import { State } from "@prisma/client";
 import fs from "fs";
 
-const submittalResponseRepo = new SubmittalResponse();
+const responseRepo = new SubmittalResponseRepository();
 const submittalRepo = new SubmitalRepository();
 
 export class SubmittalResponseService {
-  async createResponse(data: createSubResDto, userId: string) {
-    await submittalRepo.update(data.submittalsId, {
-      status: false,           // assuming status is boolean
-    });
-    if(data.parentResponseId!=undefined){
-      await submittalResponseRepo.update(data.parentResponseId,"SENT")
+
+  // ----------------------------------
+  // CREATE RESPONSE (VERSION-AWARE)
+  // ----------------------------------
+  async createResponse(
+    data: CreateSubmittalsResponseDto,
+    userId: string
+  ) {
+    // 🔒 Validate submittal exists
+    const submittal = await submittalRepo.findById(data.submittalsId);
+    if (!submittal) {
+      throw new AppError("Submittal not found", 404);
     }
 
-    return await submittalResponseRepo.create(data, userId);
+    // 🔒 Enforce version reference
+    if (!data.submittalVersionId) {
+      throw new AppError(
+        "submittalVersionId is required to create a response",
+        400
+      );
+    }
+
+    // 🔒 Optional strict check:
+    // Only allow responding to the latest version
+    if (submittal.currentVersionId !== data.submittalVersionId) {
+      throw new AppError(
+        "Responses are allowed only on the latest submittal version",
+        400
+      );
+    }
+
+    // 🔁 Update workflow status of parent response (threading)
+    if (data.parentResponseId) {
+      await responseRepo.updateWorkflowStatus(
+        data.parentResponseId,
+        State.SENT
+      );
+    }
+
+    return responseRepo.create(data, userId);
   }
 
-  async updateStatus(parentResponseId: string, status: State) {
-    if (!parentResponseId) throw new AppError("parentResponseId is required", 400);
-    return await submittalResponseRepo.update(parentResponseId, status);
+  // ----------------------------------
+  // UPDATE WORKFLOW STATUS
+  // ----------------------------------
+  async updateStatus(
+    parentResponseId: string,
+    status: State
+  ) {
+    if (!parentResponseId) {
+      throw new AppError("parentResponseId is required", 400);
+    }
+
+    return responseRepo.updateWorkflowStatus(
+      parentResponseId,
+      status
+    );
   }
 
+  // ----------------------------------
+  // GET RESPONSE BY ID
+  // ----------------------------------
   async getResponseById(id: string) {
-    const existing = await submittalResponseRepo.getById(id);
-    if (!existing) throw new AppError("Submittal Response not found", 404);
+    const existing = await responseRepo.getById(id);
+    if (!existing) {
+      throw new AppError("Submittal Response not found", 404);
+    }
 
-    // ✅ filter out child responses if you want only root-level responses
-    const filtered = {
+    return {
       ...existing,
       childResponses: Array.isArray(existing.childResponses)
-        ? existing.childResponses.filter((resp) => resp.parentResponseId === null)
+        ? existing.childResponses.filter(
+            resp => resp.parentResponseId === null
+          )
         : [],
     };
-
-    return filtered;
   }
 
-  async getFile(responseId: string, fileId: string) {
-    const response = await submittalResponseRepo.getById(responseId);
-    if (!response) throw new AppError("Response not found", 404);
+  // ----------------------------------
+  // VIEW RESPONSE FILE
+  // ----------------------------------
+  async viewFile(
+    responseId: string,
+    fileId: string,
+    res: Response
+  ) {
+    const response = await responseRepo.getById(responseId);
+    if (!response) {
+      throw new AppError("Response not found", 404);
+    }
 
     const files = response.files as unknown as FileObject[];
-    const fileObject = files.find((file: FileObject) => file.id === fileId);
-    if (!fileObject) throw new AppError("File not found", 404);
+    const cleanFileId = fileId.replace(/\.[^/.]+$/, "");
 
-    return fileObject;
-  }
-
-  async viewFile(id: string, fileId: string, res: Response) {
-  console.log("📥 [submittalResponse:viewFile] Called with:", { id, fileId });
-
-  const response = await submittalResponseRepo.getById(id);
-  if (!response) {
-    console.error("❌ [submittalResponse:viewFile] Response not found:", id);
-    throw new AppError("Response not found", 404);
-  }
-
-  const files = response.files as unknown as FileObject[];
-
-  console.log("📂 [submittalResponse:viewFile] Available files:", files.map(f => ({
-    id: f.id,
-    path: f.path,
-    filename: f.filename,
-    originalName: f.originalName,
-  })));
-
-  // Remove extension if present (e.g. fileId.pdf → fileId)
-  const cleanFileId = fileId.replace(/\.[^/.]+$/, "");
-
-  const fileObject = files.find(
-    (file: FileObject) => file.id === cleanFileId
-  );
-
-  if (!fileObject) {
-    console.warn("⚠️ [submittalResponse:viewFile] File not found in response.files", {
-      fileId,
-      availableFileIds: files.map(f => f.id),
-    });
-    throw new AppError("File not found", 404);
-  }
-
-  const __dirname = path.resolve();
-  const filePath = path.join(__dirname, fileObject.path); // ✅ use path, not filename
-
-  if (!fs.existsSync(filePath)) {
-    console.error(
-      "🚨 [submittalResponse:viewFile] File does not exist on disk:",
-      filePath
+    const fileObject = files.find(
+      (file: FileObject) => file.id === cleanFileId
     );
-    throw new AppError("File not found on server", 404);
+
+    if (!fileObject) {
+      throw new AppError("File not found", 404);
+    }
+
+    const __dirname = path.resolve();
+    const filePath = path.join(__dirname, fileObject.path);
+
+    if (!fs.existsSync(filePath)) {
+      throw new AppError("File not found on server", 404);
+    }
+
+    return streamFile(res, filePath, fileObject.originalName);
   }
-
-  return streamFile(res, filePath, fileObject.originalName);
-}
-
 }
