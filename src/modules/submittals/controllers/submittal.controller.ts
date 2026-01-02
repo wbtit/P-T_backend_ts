@@ -9,8 +9,14 @@ import { submittalhtmlContent } from "../../../services/mailServices/mailtemplat
 const submittalService = new SubmittalService();
 
 export class SubmittalController {
-  // CREATE SUBMITTAL
-  async handleCreateSubmittal(req: AuthenticateRequest, res: Response) {
+
+  // --------------------------------------------------
+  // CREATE SUBMITTAL + INITIAL VERSION (v1)
+  // --------------------------------------------------
+  async handleCreateSubmittal(
+    req: AuthenticateRequest,
+    res: Response
+  ) {
     const user = req.user;
     if (!user) throw new AppError("User not found", 404);
 
@@ -21,60 +27,89 @@ export class SubmittalController {
       "submittals"
     );
 
-    let isAproovedByAdmin = false;
-    if (role === "ADMIN" || role === "DEPT_MANAGER") {
-      isAproovedByAdmin = true;
+    const isAproovedByAdmin =
+      role === "ADMIN" || role === "DEPT_MANAGER";
+
+    const { description, ...submittalData } = req.body;
+
+    if (!description) {
+      throw new AppError("Description is required", 400);
     }
 
-    const newsubmitals = await submittalService.createSubmittal(
-      { ...req.body, files: uploadedFiles },
+    const submittal = await submittalService.createSubmittal(
+      submittalData,
       userId,
-      isAproovedByAdmin
+      isAproovedByAdmin,
+      {
+        description,
+        files: uploadedFiles,
+      }
     );
-    const email = newsubmitals.recepients.email; // This might be null
-    
-    if (!email) {
-      throw new Error("No recipient email provided");
+
+    // 🔔 Email uses CURRENT VERSION
+    const email = submittal.recepients?.email;
+    if (email) {
+      sendEmail({
+        to: email,
+        subject: submittal.subject,
+        html: submittalhtmlContent(submittal),
+      });
     }
-    sendEmail({
-      to: email,
-      subject: newsubmitals.subject,
-      text: newsubmitals.description,
-      html: submittalhtmlContent(newsubmitals),
-    });
 
     res.status(201).json({
-      message: "Submittal created",
       status: "success",
-      data: newsubmitals,
+      message: "Submittal created",
+      data: submittal,
     });
   }
 
-  // UPDATE SUBMITTAL
-  async handleUpdateSubmittal(req: AuthenticateRequest, res: Response) {
-    if (!req.user) throw new AppError("User not found", 404);
+  // --------------------------------------------------
+  // CREATE NEW VERSION (CONTENT UPDATE)
+  // --------------------------------------------------
+  async handleCreateNewVersion(
+    req: AuthenticateRequest,
+    res: Response
+  ) {
+    const user = req.user;
+    if (!user) throw new AppError("User not found", 404);
 
     const { id: submittalId } = req.params;
+    const { description } = req.body;
+
+    if (!description) {
+      throw new AppError("Description is required", 400);
+    }
 
     const uploadedFiles = mapUploadedFiles(
       (req.files as Express.Multer.File[]) || [],
       "submittals"
     );
 
-    const updatedSubmittal = await submittalService.updateSubmittal(
+    const version = await submittalService.createNewVersion(
       submittalId,
-      { ...req.body, files: uploadedFiles }
+      {
+        description,
+        files: uploadedFiles,
+      },
+      user.id
     );
 
-    res.status(200).json({
+    res.status(201).json({
       status: "success",
-      data: updatedSubmittal,
+      message: "New submittal version created",
+      data: version,
     });
   }
 
-  // GET SUBMITTAL BY ID
-  async handleGetSubmittalById(req: Request, res: Response) {
+  // --------------------------------------------------
+  // GET SUBMITTAL BY ID (WITH VERSIONS)
+  // --------------------------------------------------
+  async handleGetSubmittalById(
+    req: Request,
+    res: Response
+  ) {
     const { id } = req.params;
+
     const submittal = await submittalService.getSubmittalById(id);
 
     res.status(200).json({
@@ -83,35 +118,49 @@ export class SubmittalController {
     });
   }
 
-  // GET SENT SUBMITTALS
-  async handleSent(req: AuthenticateRequest, res: Response) {
+  // --------------------------------------------------
+  // LIST SENT SUBMITTALS
+  // --------------------------------------------------
+  async handleSent(
+    req: AuthenticateRequest,
+    res: Response
+  ) {
     if (!req.user) throw new AppError("User not found", 404);
 
-    const { id: userId } = req.user;
-    const sentSubmittals = await submittalService.sent(userId);
+    const sent = await submittalService.sent(req.user.id);
 
     res.status(200).json({
       status: "success",
-      data: sentSubmittals,
+      data: sent,
     });
   }
 
-  // GET RECEIVED SUBMITTALS
-  async handleReceived(req: AuthenticateRequest, res: Response) {
+  // --------------------------------------------------
+  // LIST RECEIVED SUBMITTALS
+  // --------------------------------------------------
+  async handleReceived(
+    req: AuthenticateRequest,
+    res: Response
+  ) {
     if (!req.user) throw new AppError("User not found", 404);
 
-    const { id: userId } = req.user;
-    const receivedSubmittals = await submittalService.received(userId);
+    const received = await submittalService.received(req.user.id);
 
     res.status(200).json({
       status: "success",
-      data: receivedSubmittals,
+      data: received,
     });
   }
 
-  // GET SUBMITTALS BY PROJECT
-  async handleFindByProject(req: Request, res: Response) {
+  // --------------------------------------------------
+  // FIND BY PROJECT
+  // --------------------------------------------------
+  async handleFindByProject(
+    req: Request,
+    res: Response
+  ) {
     const { projectId } = req.params;
+
     const submittals = await submittalService.findByProject(projectId);
 
     res.status(200).json({
@@ -120,20 +169,25 @@ export class SubmittalController {
     });
   }
 
-  // GET SPECIFIC FILE METADATA
-  async handleGetFile(req: Request, res: Response) {
-    const { submittalId, fileId } = req.params;
-    const file = await submittalService.getFile(submittalId, fileId);
+  // --------------------------------------------------
+  // STREAM FILE (VERSION-AWARE)
+  // --------------------------------------------------
+  async handleViewFile(
+    req: AuthenticateRequest,
+    res: Response
+  ) {
+    const { submittalId, versionId, fileId } = req.params;
 
-    res.status(200).json({
-      status: "success",
-      data: file,
-    });
-  }
+    const isClient =
+      req.user?.role === "CLIENT" ||
+      req.user?.role === "CLIENT_ADMIN";
 
-  // STREAM FILE
-  async handleViewFile(req: Request, res: Response) {
-    const { submittalId, fileId } = req.params;
-    await submittalService.viewFile(submittalId, fileId, res);
+    await submittalService.viewFile(
+      submittalId,
+      versionId,
+      fileId,
+      res,
+      isClient
+    );
   }
 }
