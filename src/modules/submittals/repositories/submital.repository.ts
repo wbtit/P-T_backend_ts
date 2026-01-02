@@ -1,20 +1,27 @@
 import prisma from "../../../config/database/client";
-import { createSubDto, updateSubDto } from "../dtos";
+import { CreateSubmittalsDto, UpdateSubmittalsDto } from "../dtos";
 
 export class SubmitalRepository {
-  async create(data: createSubDto, userId: string, approval: boolean) {
-    return await prisma.submittals.create({
+
+  // -----------------------------
+  // CREATE SUBMITTAL (IDENTITY)
+  // -----------------------------
+  async create(
+    data: CreateSubmittalsDto,
+    userId: string,
+    approval: boolean
+  ) {
+    return prisma.submittals.create({
       data: {
-        description: data.description,
         subject: data.subject,
         fabricator_id: data.fabricator_id,
-        files: data.files ?? [], // ✅ safer default
         project_id: data.project_id,
         recepient_id: data.recepient_id,
         mileStoneId: data.mileStoneId,
         sender_id: userId,
+        stage: data.stage,
         isAproovedByAdmin: approval,
-        status: true, // ✅ matches your model (boolean)
+        status: true,
       },
       include: {
         recepients: true,
@@ -22,83 +29,105 @@ export class SubmitalRepository {
     });
   }
 
+  // -----------------------------
+  // FIND BY ID (WITH VERSIONS)
+  // -----------------------------
   async findById(id: string) {
-    return await prisma.submittals.findFirst({
+    return prisma.submittals.findUnique({
       where: { id },
       include: {
         fabricator: true,
-        project: {select:{name:true}},
+        project: { select: { name: true } },
         recepients: true,
         sender: true,
-        submittalsResponse: {include:{childResponses:true}},
+
+        // 🔑 Versioning
+        versions: {
+          orderBy: { versionNumber: "desc" },
+        },
+        currentVersion: true,
+
+        // Responses
+        submittalsResponse: {
+          include: {
+            childResponses: true,
+            submittalVersion: true,
+          },
+        },
+
         mileStoneBelongsTo: true,
-        
       },
     });
   }
 
-  async update(id: string, data: updateSubDto) {
-    const existing = await this.findById(id);
-    if (!existing) throw new Error("Submittal not found");
-
-    return await prisma.submittals.update({
+  // -----------------------------
+  // UPDATE METADATA ONLY
+  // (NO CONTENT, NO FILES)
+  // -----------------------------
+  async updateMetadata(
+    id: string,
+    data: UpdateSubmittalsDto
+  ) {
+    return prisma.submittals.update({
       where: { id },
       data: {
-        fabricator_id: data.fabricator_id ?? existing.fabricator_id,
-        project_id: data.project_id ?? existing.project_id,
-        recepient_id: data.recepient_id ?? existing.recepient_id,
-        sender_id: data.sender_id ?? existing.sender_id,
-        status:
-          typeof data.status === "boolean" ? data.status : existing.status,
-        stage: data.stage ?? existing.stage,
-        subject: data.subject ?? existing.subject,
-        description: data.description ?? existing.description,
-        isAproovedByAdmin:
-          typeof data.isAproovedByAdmin === "boolean"
-            ? data.isAproovedByAdmin
-            : existing.isAproovedByAdmin,
-        files: data.files, // ✅ fallback to existing
+        fabricator_id: data.fabricator_id,
+        project_id: data.project_id,
+        recepient_id: data.recepient_id,
+        stage: data.stage,
+        subject: data.subject,
+        isAproovedByAdmin: data.isAproovedByAdmin,
+        status: data.status,
       },
     });
   }
 
-  async sentSubmittals(id: string) {
-    return await prisma.submittals.findMany({
-      where: { sender_id: id },
+  // -----------------------------
+  // SENT SUBMITTALS
+  // -----------------------------
+  async sentSubmittals(senderId: string) {
+    return prisma.submittals.findMany({
+      where: { sender_id: senderId },
       include: {
+        project: { select: { name: true } },
         fabricator: true,
-        project: {select:{name:true}},
         recepients: true,
-        sender: true,
-        submittalsResponse:{include:{childResponses:true}},
+        currentVersion: true,
       },
+      orderBy: { date: "desc" },
     });
   }
 
-  async receivedSubmittals(id: string) {
-    return await prisma.submittals.findMany({
-      where: { recepient_id: id },
+  // -----------------------------
+  // RECEIVED SUBMITTALS
+  // -----------------------------
+  async receivedSubmittals(recipientId: string) {
+    return prisma.submittals.findMany({
+      where: { recepient_id: recipientId },
       include: {
+        project: { select: { name: true } },
         fabricator: true,
-        project: {select:{name:true}},
-        recepients: true,
         sender: true,
-        submittalsResponse: {include:{childResponses:true}},
+        currentVersion: true,
       },
+      orderBy: { date: "desc" },
     });
   }
-  
 
-  async findByProject(id: string) {
-    return await prisma.submittals.findMany({
-      where: { project_id: id },
+  // -----------------------------
+  // BY PROJECT
+  // -----------------------------
+  async findByProject(projectId: string) {
+    return prisma.submittals.findMany({
+      where: { project_id: projectId },
       include: {
+        project: { select: { name: true } },
         fabricator: true,
-        project: {select:{name:true}},
-        recepients: true,
         sender: true,
-        submittalsResponse: {include:{childResponses:true}},
+        recepients: true,
+        currentVersion: true,
       },
+      orderBy: { date: "desc" },
     });
   }
 }

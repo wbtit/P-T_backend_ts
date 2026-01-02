@@ -1,57 +1,89 @@
 import { z } from "zod";
+import { Stage, SubResStatus, State, Prisma } from "@prisma/client";
 
-// ---------- ENUMS ----------
-import { Stage,SubResStatus,State, Prisma } from "@prisma/client";
-
+// ---------- HELPERS ----------
 const zBooleanString = z
   .union([z.boolean(), z.string()])
   .transform(val => val === true || val === "true");
 
-// ---------- SUBMITTALS DTO ----------
+// ---------- SUBMITTALS (PARENT / IDENTITY) ----------
 export const createSubmittalsDto = z.object({
-  fabricator_id: z.string(),
-  mileStoneId: z.string().optional(),
-  project_id: z.string(),
-  recepient_id: z.string(),
-  sender_id: z.string(),
-  status: zBooleanString.optional(),
+  fabricator_id: z.string().uuid(),
+  mileStoneId: z.string().uuid().optional(),
+  project_id: z.string().uuid(),
+  recepient_id: z.string().uuid(),
+  sender_id: z.string().uuid(),
+
   stage: z.enum(Stage).optional(),
   subject: z.string().min(1, "Subject is required"),
-  description: z.string().min(1, "Description is required"),
-  files: z
-            .union([
-              z.array(z.any()),
-              z.literal(null),
-            ])
-            .transform((val) => (val === null ? Prisma.JsonNull : val))
-            .optional(),
-  isAproovedByAdmin:zBooleanString.optional(),
+
+  status: zBooleanString.optional(),
+  isAproovedByAdmin: zBooleanString.optional(),
 });
 
-export const updateSubmittalsDto = createSubmittalsDto.partial();
+export const updateSubmittalsDto =
+  createSubmittalsDto.partial();
 
-export type createSubDto=z.infer<typeof createSubmittalsDto>
-export type updateSubDto=z.infer<typeof updateSubmittalsDto>
+export type CreateSubmittalsDto =
+  z.infer<typeof createSubmittalsDto>;
+export type UpdateSubmittalsDto =
+  z.infer<typeof updateSubmittalsDto>;
 
 
-// ---------- SUBMITTALS RESPONSE DTO ----------
-export const createSubmittalsResponseDto = z.object({
+// ---------- SUBMITTAL VERSION (CONTENT / FILES) ----------
+export const createSubmittalVersionDto = z.object({
+  submittalId: z.string().uuid(),
+
+  description: z.string().min(1, "Description is required"),
+
   files: z
-            .union([
-              z.array(z.any()),
-              z.literal(null),
-            ])
-            .transform((val) => (val === null ? Prisma.JsonNull : val))
-            .optional(),
-  reason: z.string().optional(),
-  submittalsId: z.string(),
+    .union([
+      z.array(z.any()),
+      z.literal(null),
+    ])
+    .transform(val =>
+      val === null ? Prisma.JsonNull : val
+    )
+    .optional(),
+});
+
+export const updateSubmittalVersionDto =
+  createSubmittalVersionDto.partial();
+
+export type CreateSubmittalVersionDto =
+  z.infer<typeof createSubmittalVersionDto>;
+export type UpdateSubmittalVersionDto =
+  z.infer<typeof updateSubmittalVersionDto>;
+
+
+// ---------- SUBMITTALS RESPONSE ----------
+export const createSubmittalsResponseDto = z.object({
+  submittalsId: z.string().uuid(),
+  submittalVersionId: z.string().uuid().optional(),
+
   description: z.string().optional(),
+  reason: z.string().optional(),
+
+  files: z
+    .union([
+      z.array(z.any()),
+      z.literal(null),
+    ])
+    .transform(val =>
+      val === null ? Prisma.JsonNull : val
+    )
+    .optional(),
+
   status: z.enum(SubResStatus).optional(),
   wbtStatus: z.enum(State).optional(),
-  parentResponseId: z.string().optional(),
+
+  parentResponseId: z.string().uuid().optional(),
 });
 
-export const updateSubmittalsResponseDto = createSubmittalsResponseDto.partial();
+export const updateSubmittalsResponseDto =
+  createSubmittalsResponseDto.partial();
 
-export type createSubResDto=z.infer<typeof createSubmittalsResponseDto>
-export type updateSubResDto=z.infer<typeof updateSubmittalsResponseDto>
+export type CreateSubmittalsResponseDto =
+  z.infer<typeof createSubmittalsResponseDto>;
+export type UpdateSubmittalsResponseDto =
+  z.infer<typeof updateSubmittalsResponseDto>;

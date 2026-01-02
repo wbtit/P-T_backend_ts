@@ -1,45 +1,71 @@
 import { State } from "@prisma/client";
 import prisma from "../../../config/database/client";
-import { createSubResDto } from "../dtos";
+import { CreateSubmittalsResponseDto } from "../dtos";
 
-export class SubmittalResponse{
-    async update(parentResponseId:string,status:State){
-         if(parentResponseId!=undefined){
-            return await prisma.submittalsResponse.update({
-              where:{id:parentResponseId},
-              data:{
-                wbtStatus:status
-              }
-            })
-    }
-}
+export class SubmittalResponseRepository {
 
-    async create(data:createSubResDto,userId:string){
-        return await prisma.submittalsResponse.create({
-    data:{
-     reason:data.reason || "",
-     description:data.description,
-     userId:userId,
-     files:data.files,
-     submittalsId:data.submittalsId ,
-     parentResponseId:data.parentResponseId||null
-    }
-  })
-    }
+  // ----------------------------------
+  // UPDATE WORKFLOW STATUS (THREAD)
+  // ----------------------------------
+  async updateWorkflowStatus(
+    parentResponseId: string,
+    status: State
+  ) {
+    if (!parentResponseId) return null;
 
-    async getById(id:string){
-        return await prisma.submittalsResponse.findUnique({
-      where:{id:id},
-      include:{
-        childResponses:true,
-        user:{
-          select:{
-            firstName:true,
-            middleName:true,
-            lastName:true
-          }
-        }
-      }
-    })
-    }
+    return prisma.submittalsResponse.update({
+      where: { id: parentResponseId },
+      data: {
+        wbtStatus: status,
+      },
+    });
+  }
+
+  // ----------------------------------
+  // CREATE RESPONSE (VERSION-AWARE)
+  // ----------------------------------
+  async create(
+    data: CreateSubmittalsResponseDto,
+    userId: string
+  ) {
+    return prisma.submittalsResponse.create({
+      data: {
+        reason: data.reason || "",
+        description: data.description || "",
+        files: data.files,
+
+        submittalsId: data.submittalsId,
+        submittalVersionId: data.submittalVersionId ?? null,
+
+        userId,
+        parentResponseId: data.parentResponseId ?? null,
+      },
+    });
+  }
+
+  // ----------------------------------
+  // GET RESPONSE BY ID
+  // ----------------------------------
+  async getById(id: string) {
+    return prisma.submittalsResponse.findUnique({
+      where: { id },
+      include: {
+        childResponses: true,
+        submittalVersion: {
+          select: {
+            id: true,
+            versionNumber: true,
+            isActive: true,
+          },
+        },
+        user: {
+          select: {
+            firstName: true,
+            middleName: true,
+            lastName: true,
+          },
+        },
+      },
+    });
+  }
 }
