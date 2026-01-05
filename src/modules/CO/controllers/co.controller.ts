@@ -148,4 +148,11 @@ export class COController {
     const { coId, fileId } = req.params;
     await coService.viewFile(coId, fileId, res);
   }
+  async handlePendingCOs(req: AuthenticateRequest, res: Response) {
+   const cos = await coService.pendingCOs();
+    res.status(200).json({
+      status: "success",
+      data: cos,
+    });
+  }
 }

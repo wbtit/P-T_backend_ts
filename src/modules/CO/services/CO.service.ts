@@ -120,4 +120,9 @@ export class COService {
     const filePath = path.join(__dirname, fileObject.path);
     return streamFile(res, filePath, fileObject.originalName);
   }
+
+
+  async pendingCOs(){
+    return await corepo.pendingCOs();
+  }
 }

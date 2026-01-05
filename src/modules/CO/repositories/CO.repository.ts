@@ -164,4 +164,20 @@ async getCoTableByCoId(CoId:string,userId:string){
     return coRow;
 
 }
+
+async pendingCOs(){
+    return await prisma.changeOrder.findMany({
+       where: {
+          NOT:{
+            coResponses: {
+            some: {
+              childResponses: {
+                some: { Status: "ACCEPT" },
+              },
+            },
+          }, 
+          }
+        },
+    })
+}
 }

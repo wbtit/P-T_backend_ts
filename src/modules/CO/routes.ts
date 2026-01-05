@@ -72,6 +72,11 @@ router.get(
   coController.handleReceivedCos.bind(coController)
 );
 
+router.get(
+  "/pendingCOs",
+  authMiddleware,
+  coController.handlePendingCOs.bind(coController)
+);
 // ===========================================================
 // CO TABLE ROUTES
 // ===========================================================
