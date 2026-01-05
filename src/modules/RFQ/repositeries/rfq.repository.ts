@@ -115,4 +115,20 @@ export class RFQRepository {
             }
         })
     }
+
+    async getPendingRFQs(){
+        return await prisma.rFQ.findMany({
+            where: {
+          responses: { none: {} },
+        },
+        include:{
+            sender: true,
+            recipient: true,
+            salesPerson: true,
+            responses:true,
+            fabricator:true,
+            project: {select:{name:true}},
+        }
+        })
+    }
 }

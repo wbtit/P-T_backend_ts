@@ -93,4 +93,8 @@ export class RFQService {
               }
         return streamFile(res, filePath, fileObject.originalName);
     }
+
+    async getPendingRFQs(){
+        return await rfqrepo.getPendingRFQs();
+    }
 }

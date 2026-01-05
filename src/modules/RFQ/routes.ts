@@ -66,6 +66,11 @@ router.delete(
     validate({params:z.object({id:z.string()})}),
     rfqController.handleCloseRfq.bind(rfqController)
 );
+router.get(
+    "/pendingRFQs",
+    authMiddleware,
+    rfqController.handlePendingRFQs.bind(rfqController)
+)
 // ===========================================================
 // RFQ RESPONSE ROUTES
 // ===========================================================

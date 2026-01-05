@@ -110,4 +110,13 @@ export class RFQController {
         const { rfqId, fileId } = req.params;
         await rfqService.viewFile(rfqId, fileId, res);
     }
+
+    async handlePendingRFQs(req:AuthenticateRequest,res:Response){
+        
+        const pendingRFQs = await rfqService.getPendingRFQs();
+        res.status(200).json({
+            status: 'success',
+            data: pendingRFQs,
+        });
+    }
 }
