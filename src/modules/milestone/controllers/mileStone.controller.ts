@@ -83,4 +83,14 @@ export class MileStoneController {
       success: true,
     });
   }
+
+  async handleGetPendingSubmittals(req:Request,res:Response){
+    const result= await mileStoneService.getPendingSubmittals();
+
+    return res.status(200).json({
+      message: "Pending submittals fetched successfully",
+      success: true,
+      data: result,
+    });
+  }
 }

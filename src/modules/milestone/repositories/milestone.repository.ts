@@ -50,4 +50,12 @@ export class MileStoneRepository{
             }
         })
     }
+
+    async getPendingSubmittals(){
+        return await prisma.mileStone.findMany({
+            where:{
+                mileStoneSubmittals:{none:{}}
+            }
+        })
+    }
 }

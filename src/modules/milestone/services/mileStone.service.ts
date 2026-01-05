@@ -22,4 +22,7 @@ export class MileStoneService{
     async delete(id:string){
         return await mileStoneRepo.delete(id)
     }
+    async getPendingSubmittals(){
+        return await mileStoneRepo.getPendingSubmittals()
+    }
 }

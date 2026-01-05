@@ -37,4 +37,5 @@ router.delete("/:id",
     validate({params:z.object({id:z.string()})}),
     mileStoneCtrlr.handleDelete.bind(mileStoneCtrlr)
 )
+router.get("/pendingSubmittals", authMiddleware, mileStoneCtrlr.handleGetPendingSubmittals.bind(mileStoneCtrlr))
 export default router

@@ -847,7 +847,7 @@ model MileStone{
   project            Project             @relation("ProjectMileStone", fields: [project_id], references: [id], onDelete: Cascade)
   // mileStoneSubmittals Submittals[]       @relation("mileStoneSubmittals")
   Tasks             Task[]              @relation("mileStoneTasks")
-   mileStoneSubmittals Submittals[]       @relation("mileStoneSubmittals") 
+  mileStoneSubmittals Submittals[]       @relation("mileStoneSubmittals") 
 }
 
 model Task {
