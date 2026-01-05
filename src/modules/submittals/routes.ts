@@ -47,14 +47,6 @@ router.post(
   submittalController.handleCreateNewVersion.bind(submittalController)
 );
 
-// GET SUBMITTAL BY ID (WITH VERSIONS)
-router.get(
-  "/:id",
-  authMiddleware,
-  validate({ params: z.object({ id: z.string() }) }),
-  submittalController.handleGetSubmittalById.bind(submittalController)
-);
-
 // LIST SENT SUBMITTALS
 router.get(
   "/sent",
@@ -89,6 +81,14 @@ router.get(
     }),
   }),
   submittalController.handleViewFile.bind(submittalController)
+);
+
+// GET SUBMITTAL BY ID (WITH VERSIONS)
+router.get(
+  "/:id",
+  authMiddleware,
+  validate({ params: z.object({ id: z.string() }) }),
+  submittalController.handleGetSubmittalById.bind(submittalController)
 );
 
 // ===========================================================

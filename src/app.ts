@@ -25,6 +25,7 @@ import { SbmittalRoutes} from "./modules/submittals"
 import { analyticsScoresRouter } from "./modules/scores/route";
 import {lineItemRoutes} from "./modules/estimation/lineItems";
 import { communicationRouter} from "./modules/communications"
+import { dashBoradDataRouter } from "./modules/dashboradData";
 const routes = express.Router();
 
 routes.use("/auth", AuthRoutes);
@@ -53,4 +54,5 @@ routes.use("/submittal",SbmittalRoutes)
 routes.use("/analytics/scores",analyticsScoresRouter)
 routes.use("/estimation/line-items",lineItemRoutes)
 routes.use("/communications",communicationRouter)
+routes.use("/dashBoardData",dashBoradDataRouter)
 export default routes

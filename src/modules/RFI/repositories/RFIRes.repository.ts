@@ -22,7 +22,8 @@ export class RFIResponseRepository{
         userId:userId,
         files:data.files,
         rfiId:data.rfiId,
-        parentResponseId:data.parentResponseId||null
+        parentResponseId:data.parentResponseId||null,
+        wbtStatus:data.wbtStatus
       },
       
     })

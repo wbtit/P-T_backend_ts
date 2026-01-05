@@ -44,6 +44,7 @@ export class SubmittalVersionRepository {
         where: { id: submittalId },
         data: {
           currentVersionId: version.id,
+          submittalVersion: 1,
         },
       });
 
@@ -106,6 +107,7 @@ export class SubmittalVersionRepository {
         where: { id: submittalId },
         data: {
           currentVersionId: newVersion.id,
+          submittalVersion: nextVersionNumber,
         },
       });
 

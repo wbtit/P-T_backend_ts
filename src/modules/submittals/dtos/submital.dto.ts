@@ -15,7 +15,8 @@ export const createSubmittalsDto = z.object({
   sender_id: z.string().uuid(),
 
   stage: z.enum(Stage).optional(),
-  subject: z.string().min(1, "Subject is required"),
+  subject: z.string(),
+  description: z.string(),
 
   status: zBooleanString.optional(),
   isAproovedByAdmin: zBooleanString.optional(),
@@ -34,7 +35,7 @@ export type UpdateSubmittalsDto =
 export const createSubmittalVersionDto = z.object({
   submittalId: z.string().uuid(),
 
-  description: z.string().min(1, "Description is required"),
+  description: z.string(),
 
   files: z
     .union([

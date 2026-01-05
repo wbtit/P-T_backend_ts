@@ -1138,20 +1138,17 @@ model RFIResponse {
 
 model Submittals {
   id                 String   @id @default(uuid()) @db.Uuid
-
   fabricator_id      String   @db.Uuid
   mileStoneId        String?  @db.Uuid
   project_id         String   @db.Uuid
   recepient_id       String   @db.Uuid
   sender_id          String   @db.Uuid
-
   date               DateTime @default(now())
   stage              Stage    @default(IFA)
   status             Boolean  @default(false)
-
   subject            String
   isAproovedByAdmin  Boolean? @default(false)
-
+  submittalVersion   Int      @default(1)
   // 🔑 Versioning
   currentVersionId   String?  @unique @db.Uuid
 
@@ -1179,7 +1176,7 @@ model SubmittalVersion {
   id            String   @id @default(uuid()) @db.Uuid
   submittalId   String   @db.Uuid
 
-  versionNumber Int
+  versionNumber Int      
   description   String
   files         Json     @default("[]")
 
@@ -1192,7 +1189,7 @@ model SubmittalVersion {
   submittal Submittals @relation(fields: [submittalId], references: [id],onDelete: Cascade)
   createdBy User @relation(fields: [createdById], references: [id])
   responses SubmittalsResponse[]
-   isCurrentFor Submittals? @relation("CurrentSubmittalVersion")
+  isCurrentFor Submittals? @relation("CurrentSubmittalVersion")
 
   @@map("submittalversion")
   @@unique([submittalId, versionNumber])
