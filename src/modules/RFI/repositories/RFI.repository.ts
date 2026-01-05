@@ -1,8 +1,7 @@
 import prisma from "../../../config/database/client";
-import { CreateRfiResDto,
+import { 
     UpdateRFIDto,
-    CreateRFIDto,
-    UpdateRfiResDto
+    CreateRFIDto
 } from "../dtos";
 
 export class RFIRepository{
@@ -133,5 +132,31 @@ export class RFIRepository{
         status: false,
       },
     });
+    }
+    async findPendingRFIs(role: string){
+      return await prisma.rFI.findMany({
+        where: {
+    NOT: {
+      rfiresponse: {
+        some: {
+          childResponses: {
+            some: {
+              [role === "CLIENT" || role === "CLIENT_ADMIN"
+                         ? "responseState"
+                         : "wbtStatus"]: "COMPLETE",
+            },
+          },
+        },
+      },
+    },
+  },
+        include: {
+          fabricator: true,
+          project: { select: { name: true } },
+          recepients: { select: { firstName: true, middleName: true, lastName: true, email: true, id: true } },
+          sender: { select: { firstName: true, middleName: true, lastName: true, email: true, id: true } },
+          rfiresponse: true,
+        },
+      });
     }
 }

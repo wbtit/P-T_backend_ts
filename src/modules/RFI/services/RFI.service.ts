@@ -100,4 +100,8 @@ export class RFIService {
       }
     return streamFile(res, filePath, fileObject.originalName);
   }
+
+  async getPendingRFIs(role: string) {
+    return await rfiRepo.findPendingRFIs(role);
+  }
 }

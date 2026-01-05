@@ -83,6 +83,11 @@ router.delete(
   validate({ params: z.object({ id: z.string() }) }),
   rfiController.handleCloseRfi.bind(rfiController)
 );
+router.get(
+  "/pendingRFIs",
+  authMiddleware,
+  rfiController.handlePendingRFIs.bind(rfiController)
+)
 
 // ===========================================================
 // RFI RESPONSE ROUTES

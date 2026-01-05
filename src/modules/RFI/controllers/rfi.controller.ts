@@ -142,4 +142,14 @@ export class RFIController {
     const { rfiId, fileId } = req.params;
     await rfiService.viewFile(rfiId, fileId, res);
   }
+
+  async handlePendingRFIs(req: AuthenticateRequest, res: Response) {
+    const role = req.user?.role || "";
+    const pendingRFIs = await rfiService.getPendingRFIs(role);
+
+    res.status(200).json({
+      status: "success",
+      data: pendingRFIs,
+    });
+  }
 }
