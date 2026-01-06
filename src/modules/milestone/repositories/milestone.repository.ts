@@ -26,12 +26,12 @@ export class MileStoneRepository{
         })
     }
     async getById(id:string){
-        return await prisma.mileStone.findFirst({
+        return await prisma.mileStone.findUnique({
             where:{id},
             include:{
                 project:true,
                 Tasks:true,
-                fabricator:true 
+                fabricator:true
             }
         })
     }
