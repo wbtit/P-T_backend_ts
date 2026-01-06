@@ -4,7 +4,7 @@ import { z } from "zod";
 
 
 export const createInvoiceItemSchema = z.object({
-  description: z.string().min(1, "Description is required"),
+  description: z.string(),
   sacCode: z.string().optional(),
   unit: z.number().int().optional(),
   rateUSD: z.number().optional(),
@@ -54,7 +54,7 @@ export const createInvoiceSchema = z.object({
   placeOfSupply: z.string().optional(),
   jobName: z.string().min(1),
   signature: z.any().optional(),
-  currencyType: z.string().default("USD"),
+  currencyType: z.string(),
   totalInvoiceValue: z.number().default(0),
   totalInvoiceValueInWords: z.string().optional(),
   paymentStatus: z.boolean().optional(),

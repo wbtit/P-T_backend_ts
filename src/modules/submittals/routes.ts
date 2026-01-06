@@ -91,6 +91,8 @@ router.get(
   submittalController.handleGetSubmittalById.bind(submittalController)
 );
 
+router.get("/pendingSubmittalResponse", authMiddleware, submittalController.handleGetPendingSubmittals.bind(submittalController))
+
 // ===========================================================
 // SUBMITTAL RESPONSES (VERSION-AWARE)
 // ===========================================================

@@ -85,6 +85,10 @@ export class SubmittalService {
     };
   }
 
+  async getPendingSubmittals() {
+    return submittalRepo.getPendingSubmittals();
+  }
+
   // ----------------------------------
   // LISTS
   // ----------------------------------

@@ -130,4 +130,13 @@ export class SubmitalRepository {
       orderBy: { date: "desc" },
     });
   }
+
+  async getPendingSubmittals(){
+    return prisma.submittals.findMany({
+      where: {
+          status: false,
+          currentVersion: { isNot: null },
+        },
+    })
+  }
 }

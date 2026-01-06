@@ -64,6 +64,20 @@ export class SubmittalController {
   }
 
   // --------------------------------------------------
+  // GET PENDING SUBMITTALS FOR RESPONSE
+  // --------------------------------------------------
+  async handleGetPendingSubmittals(
+    req: AuthenticateRequest,
+    res: Response
+  ) {
+       const pendingSubmittals = await submittalService.getPendingSubmittals();
+
+    res.status(200).json({
+      status: "success",
+      data: pendingSubmittals,
+    });
+  }
+  // --------------------------------------------------
   // CREATE NEW VERSION (CONTENT UPDATE)
   // --------------------------------------------------
   async handleCreateNewVersion(
