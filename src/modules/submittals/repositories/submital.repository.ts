@@ -136,7 +136,10 @@ export class SubmitalRepository {
       where: {
           status: false,
           currentVersion: { isNot: null },
-        },
+        },include:{
+          project:{select:{name:true}},
+          fabricator:{select:{fabName:true}},
+        }
     })
   }
 }

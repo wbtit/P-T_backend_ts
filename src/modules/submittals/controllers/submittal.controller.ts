@@ -71,6 +71,7 @@ export class SubmittalController {
     res: Response
   ) {
        const pendingSubmittals = await submittalService.getPendingSubmittals();
+       
 
     res.status(200).json({
       status: "success",

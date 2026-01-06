@@ -55,6 +55,10 @@ export class MileStoneRepository{
         return await prisma.mileStone.findMany({
             where:{
                 mileStoneSubmittals:{none:{}}
+            },
+            include:{
+                project:{select:{name:true}},
+                fabricator:{select:{fabName:true}}
             }
         })
     }
