@@ -22,6 +22,11 @@ router.post(
   validate({ body: RFISchema }),
   rfiController.handleCreateRfi.bind(rfiController)
 );
+router.get(
+  "/pendingRFIs",
+  authMiddleware,
+  rfiController.handlePendingRFIs.bind(rfiController)
+)
 
 router.put(
   "/:id",
@@ -83,11 +88,7 @@ router.delete(
   validate({ params: z.object({ id: z.string() }) }),
   rfiController.handleCloseRfi.bind(rfiController)
 );
-router.get(
-  "/pendingRFIs",
-  authMiddleware,
-  rfiController.handlePendingRFIs.bind(rfiController)
-)
+
 
 // ===========================================================
 // RFI RESPONSE ROUTES
