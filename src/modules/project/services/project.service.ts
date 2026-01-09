@@ -18,6 +18,8 @@ import { updateProjectStage } from "../utils/updateProjectStage";
 import { handleStageChange } from "../utils/handleStageChange";
 import { handleEndDateChange } from "../utils/handleEndDateChange";
 import { recomputeProjectBundleTotals } from "../WBS/utils/recomputeBundleTotals";
+import { ensureCheckingWbsForBundle } from "../WBS/utils/ensureCheckingWbs";
+
 
  const projectRepository = new ProjectRepository();
 
@@ -96,7 +98,7 @@ async expandProjectWbs(
   bundleKeys: string[],
   userId: string
 ) {
-  if (!bundleKeys || !Array.isArray(bundleKeys)) {
+  if (!Array.isArray(bundleKeys) || bundleKeys.length === 0) {
     throw new AppError("bundleKeys must be a non-empty array", 400);
   }
 
@@ -132,7 +134,28 @@ async expandProjectWbs(
       return { added: 0, message: "No new bundles to add" };
     }
 
-    // 4️⃣ Persist selections
+    // 4️⃣ Fetch bundles + EXECUTION templates only
+    const bundles = await tx.wbsBundleTemplate.findMany({
+      where: {
+        bundleKey: { in: newBundleKeys },
+        isActive: true,
+      },
+      include: {
+        wbsTemplates: {
+          where: {
+            isActive: true,
+            discipline: "EXECUTION", // ✅ ONLY EXECUTION
+          },
+          include: { lineItems: true },
+        },
+      },
+    });
+
+    if (bundles.length !== newBundleKeys.length) {
+      throw new AppError("Invalid or inactive bundle detected", 400);
+    }
+
+    // 5️⃣ Persist selections
     await tx.projectBundleSelection.createMany({
       data: newBundleKeys.map(bundleKey => ({
         projectId,
@@ -141,51 +164,31 @@ async expandProjectWbs(
       })),
     });
 
-    // 5️⃣ Expand each bundle
-    for (const bundleKey of newBundleKeys) {
-      const projectBundle = await tx.projectBundle.create({
-        data: {
-          projectId,
-          bundleKey,
-          stage: currentStage,
-        },
-      });
-
-      const bundle = await tx.wbsBundleTemplate.findUnique({
-        where: { bundleKey },
-        include: {
-          wbsTemplates: {
-            where: { isActive: true },
-            include: { lineItems: true },
-          },
-        },
-      });
-
-      if (!bundle) continue;
-
-      // 6️⃣ Safety check: EXEC ↔ CHECK pairing
-      const executionWbs = bundle.wbsTemplates.filter(
-        w => w.discipline === "EXECUTION"
-      );
-      const checkingWbs = bundle.wbsTemplates.filter(
-        w => w.discipline === "CHECKING"
-      );
-
-      if (executionWbs.length !== checkingWbs.length) {
+    // 6️⃣ Expand each bundle
+    for (const bundle of bundles) {
+      if (bundle.wbsTemplates.length === 0) {
         throw new AppError(
-          `Bundle ${bundleKey} has mismatched EXEC/CHECK WBS`,
+          `Bundle ${bundle.bundleKey} has no EXECUTION WBS`,
           500
         );
       }
 
-      // 7️⃣ Create ProjectWbs + LineItems
+      const projectBundle = await tx.projectBundle.create({
+        data: {
+          projectId,
+          bundleKey: bundle.bundleKey,
+          stage: currentStage,
+        },
+      });
+
+      // 7️⃣ Create EXECUTION ProjectWbs + LineItems
       for (const tpl of bundle.wbsTemplates) {
         const wbs = await tx.projectWbs.create({
           data: {
             projectId,
             projectBundleId: projectBundle.id,
             wbsTemplateKey: tpl.templateKey,
-            discipline: tpl.discipline,
+            discipline: "EXECUTION",
             stage: currentStage,
           },
         });
@@ -201,7 +204,15 @@ async expandProjectWbs(
         });
       }
 
-      // 8️⃣ Recompute bundle totals once
+      // 8️⃣ AUTO-GENERATE CHECKING WBS (SYSTEM RESPONSIBILITY)
+      await ensureCheckingWbsForBundle(
+        tx,
+        projectId,
+        projectBundle.id,
+        currentStage
+      );
+
+      // 9️⃣ Recompute bundle totals ONCE
       await recomputeProjectBundleTotals(tx, projectBundle.id);
     }
 
@@ -211,6 +222,7 @@ async expandProjectWbs(
     };
   });
 }
+
 
 
   
