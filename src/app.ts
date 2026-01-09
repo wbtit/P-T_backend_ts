@@ -26,6 +26,8 @@ import { analyticsScoresRouter } from "./modules/scores/route";
 import {lineItemRoutes} from "./modules/estimation/lineItems";
 import { communicationRouter} from "./modules/communications"
 import { dashBoradDataRouter } from "./modules/dashboradData";
+import { WbsTemplatesRouter } from "./modules/project/WBS/WbsTemplates";
+
 const routes = express.Router();
 
 routes.use("/auth", AuthRoutes);
@@ -55,4 +57,5 @@ routes.use("/analytics/scores",analyticsScoresRouter)
 routes.use("/estimation/line-items",lineItemRoutes)
 routes.use("/communications",communicationRouter)
 routes.use("/dashBoardData",dashBoradDataRouter)
+routes.use("/wbsTemplates",WbsTemplatesRouter)
 export default routes
