@@ -673,6 +673,8 @@ model WbsTemplate {
   bundleKey     String
   discipline    WbsDiscipline  // EXECUTION | CHECKING
 
+  version       Int      @default(1)
+
   isActive      Boolean  @default(true)
   isDeleted     Boolean  @default(false)
 
