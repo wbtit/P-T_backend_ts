@@ -15,8 +15,8 @@ import {
  import { projectUploads,notesUploads } from "../../utils/multerUploader.util";
 
 
- import { PLIController } from "./projectLineItems";
- import { ProjectLineItemSchema,
+ import { PLIController, ProjectLineItemBulkSchema } from "./projectLineItems";
+ import { 
     UpdateProjectLineItemSchema } from "./projectLineItems";
 
 import { WbsController } from "./WBS";
@@ -66,27 +66,58 @@ asyncHandler(projectController.handleGetProjectUpdateHistory.bind(projectControl
 
 router.post("/projects/:projectId/wbs/expand",authMiddleware,asyncHandler(projectController.expandWbs.bind(projectController)));
 // ===========================================================
-// PLI ROUTES
+// PROJECT LINE ITEM (PLI) ROUTES
 // ===========================================================
+
 const pliController = new PLIController();
-router.patch(
-    "/projects/:projectId/line-items/bulk",
-    authMiddleware,
-    validate({body: ProjectLineItemSchema}),
-    asyncHandler(pliController.bulkUpdateLineItems.bind(pliController))
-);
-router.patch(
-    "/projects/:projectId/line-items/:lineItemId",
-    authMiddleware,
-    validate({body: UpdateProjectLineItemSchema}),
-    asyncHandler(pliController.updateLineItem.bind(pliController))
-);
-//get line items
+
+/**
+ * ---------------------------------------
+ * GET LINE ITEMS FOR A PROJECT WBS
+ * ---------------------------------------
+ * Scope:
+ * ProjectWbs → LineItems
+ */
 router.get(
-    "/projects/:projectId/stages/:stage/wbs/:projectWbsId/line-items",
-    authMiddleware,
-    asyncHandler(pliController.getLineItems.bind(pliController))
+  "/project-wbs/:projectWbsId/line-items",
+  authMiddleware,
+  asyncHandler(
+    pliController.getLineItems.bind(pliController)
+  )
 );
+
+/**
+ * ---------------------------------------
+ * UPDATE SINGLE LINE ITEM
+ * ---------------------------------------
+ */
+router.patch(
+  "/line-items/:lineItemId",
+  authMiddleware,
+  validate({ body: UpdateProjectLineItemSchema }),
+  asyncHandler(
+    pliController.updateLineItem.bind(pliController)
+  )
+);
+
+/**
+ * ---------------------------------------
+ * BULK UPDATE LINE ITEMS
+ * ---------------------------------------
+ * Body:
+ * {
+ *   items: [{ id, qtyNo, execHr, checkHr, ... }]
+ * }
+ */
+router.patch(
+  "/line-items/bulk",
+  authMiddleware,
+  validate({ body: ProjectLineItemBulkSchema }),
+  asyncHandler(
+    pliController.bulkUpdateLineItems.bind(pliController)
+  )
+);
+
 // ===========================================================
 // WBS / BUNDLE ROUTES
 // ===========================================================

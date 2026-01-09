@@ -1,24 +1,51 @@
-import { Stage } from '@prisma/client';
-import z from 'zod';
+import z from "zod";
 
-export const ProjectLineItemSchema = z.object({
-    description: z.string().min(2).max(1000),
-    unitTime: z.number().min(0),
-    checkUnitTime: z.float32(),
-    checkHrWithRework: z.float32(),
-    execHrWithRework: z.float32(),
-    qtyNo: z.number().min(0),
-    checkHr: z.float32(),
-    execHr: z.float32(),
-    parentTemplateKey: z.string(),
-    stage: z.enum(Stage),
+/**
+ * ---------------------------------------
+ * UPDATE PROJECT LINE ITEM
+ * ---------------------------------------
+ * Only mutable, project-specific fields
+ */
+export const UpdateProjectLineItemSchema = z.object({
+  qtyNo: z.number().min(0).optional(),
+
+  execHr: z.number().min(0).optional(),
+  checkHr: z.number().min(0).optional(),
+
+  execHrWithRework: z.number().min(0).optional(),
+  checkHrWithRework: z.number().min(0).optional(),
+
+  // Optional overrides (rare but allowed)
+  unitTime: z.number().min(0).optional(),
+  checkUnitTime: z.number().min(0).optional(),
 });
 
-export const UpdateProjectLineItemSchema = ProjectLineItemSchema.partial();
+/**
+ * ---------------------------------------
+ * BULK UPDATE LINE ITEMS
+ * ---------------------------------------
+ */
+export const ProjectLineItemBulkSchema = z.object({
+  items: z.array(
+    z.object({
+      id: z.string(),
 
-export type PliInput = z.infer<typeof ProjectLineItemSchema>;
-export type UpdatePliInput = z.infer<typeof UpdateProjectLineItemSchema>;
-export type GetPliByStageInput = {projectID:string,
-    workBreakDownID:string,
-    stage:Stage
-}
+      qtyNo: z.number().min(0).optional(),
+      execHr: z.number().min(0).optional(),
+      checkHr: z.number().min(0).optional(),
+
+      execHrWithRework: z.number().min(0).optional(),
+      checkHrWithRework: z.number().min(0).optional(),
+
+      unitTime: z.number().min(0).optional(),
+      checkUnitTime: z.number().min(0).optional(),
+    })
+  ),
+});
+
+export type UpdatePliInput = z.infer<
+  typeof UpdateProjectLineItemSchema
+>;
+export type BulkUpdatePliInput = z.infer<
+  typeof ProjectLineItemBulkSchema
+>;
