@@ -63,7 +63,8 @@ export class ProjectController {
     }
     async expandWbs(req: AuthenticateRequest, res: Response) {
   const { projectId } = req.params;
-  const { wbsTemplateIds } = req.body;
+  const { bundleKeys } = req.body;
+
 
   if (!req.user?.id) {
     return res.status(401).json({
@@ -74,7 +75,7 @@ export class ProjectController {
 
   const result = await projectService.expandProjectWbs(
     projectId,
-    wbsTemplateIds,
+    bundleKeys,
     req.user.id
   );
 

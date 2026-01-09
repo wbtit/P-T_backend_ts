@@ -1,5 +1,5 @@
 import { Prisma, Stage } from "@prisma/client";
-import { createProjectWbsForStage } from "./createProjectWbsForStorage";
+import { cloneBundlesForStage } from "./cloneBundlesForStage";
 
 export async function handleStageChange(
   tx: Prisma.TransactionClient,
@@ -7,7 +7,10 @@ export async function handleStageChange(
   oldStage: Stage,
   newStage: Stage
 ) {
-  // close old stage
+  // 🛑 Safety: no-op guard
+  if (oldStage === newStage) return;
+
+  // 1️⃣ Close old stage
   await tx.projectStageHistory.updateMany({
     where: {
       projectID: projectId,
@@ -18,7 +21,7 @@ export async function handleStageChange(
     },
   });
 
-  // open new stage
+  // 2️⃣ Open new stage
   await tx.projectStageHistory.create({
     data: {
       projectID: projectId,
@@ -27,10 +30,11 @@ export async function handleStageChange(
     },
   });
 
-  // snapshot WBS for new stage
-  await createProjectWbsForStage(
+  // 3️⃣ Clone bundles from old → new stage
+  await cloneBundlesForStage(
     tx,
     projectId,
+    oldStage,
     newStage
   );
 }

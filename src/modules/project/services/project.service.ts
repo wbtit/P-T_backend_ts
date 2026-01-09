@@ -17,6 +17,7 @@ import { UserJwt } from "../../../shared/types";
 import { updateProjectStage } from "../utils/updateProjectStage";
 import { handleStageChange } from "../utils/handleStageChange";
 import { handleEndDateChange } from "../utils/handleEndDateChange";
+import { recomputeProjectBundleTotals } from "../WBS/utils/recomputeBundleTotals";
 
  const projectRepository = new ProjectRepository();
 
@@ -31,8 +32,11 @@ import { handleEndDateChange } from "../utils/handleEndDateChange";
      const project = await projectRepository.create(data,userId);
      return project;
    }
-   async update(data: UpdateprojectInput, id: string) {
-  return prisma.$transaction(async tx => {
+
+
+
+  async update(data: UpdateprojectInput, id: string) {
+  return prisma.$transaction(async (tx) => {
     // 1️⃣ Load current state
     const existing = await tx.project.findUnique({
       where: { id },
@@ -44,10 +48,12 @@ import { handleEndDateChange } from "../utils/handleEndDateChange";
 
     // 2️⃣ Detect changes
     const stageChanged =
-      data.stage && existing.stage !== data.stage;
+      data.stage !== undefined &&
+      existing.stage !== data.stage;
 
     const endDateChanged =
-      "endDate" in data && existing.endDate !== data.endDate;
+      "endDate" in data &&
+      existing.endDate !== data.endDate;
 
     const approvalDateChanged =
       "approvalDate" in data &&
@@ -73,7 +79,7 @@ import { handleEndDateChange } from "../utils/handleEndDateChange";
       data.mailReminder = false;
     }
 
-    // 6️⃣ Persist project update (generic)
+    // 6️⃣ Persist project update (generic, final)
     const project = await projectRepository.updateWithTx(
       tx,
       id,
@@ -84,13 +90,14 @@ import { handleEndDateChange } from "../utils/handleEndDateChange";
   });
 }
 
+
 async expandProjectWbs(
   projectId: string,
   bundleKeys: string[],
   userId: string
 ) {
-  return prisma.$transaction(async tx => {
-    // 1️⃣ Load project (need current stage)
+  return prisma.$transaction(async (tx) => {
+    // 1️⃣ Load project stage
     const project = await tx.project.findUnique({
       where: { id: projectId },
       select: { stage: true },
@@ -102,26 +109,26 @@ async expandProjectWbs(
 
     const currentStage = project.stage;
 
-    // 2️⃣ Fetch existing selections
+    // 2️⃣ Existing selections
     const existingSelections = await tx.projectBundleSelection.findMany({
       where: { projectId },
       select: { bundleKey: true },
     });
 
     const selectedSet = new Set(
-      existingSelections.map((s: any) => s.bundleKey)
+      existingSelections.map(s => s.bundleKey)
     );
 
-    // 3️⃣ Filter only NEW bundles
+    // 3️⃣ Only NEW bundles
     const newBundleKeys = bundleKeys.filter(
       key => !selectedSet.has(key)
     );
 
     if (newBundleKeys.length === 0) {
-      return { added: 0, message: "No new WBS to add" };
+      return { added: 0, message: "No new bundles to add" };
     }
 
-    // 4️⃣ Persist new selections
+    // 4️⃣ Persist selections
     await tx.projectBundleSelection.createMany({
       data: newBundleKeys.map(bundleKey => ({
         projectId,
@@ -130,9 +137,8 @@ async expandProjectWbs(
       })),
     });
 
-    // 5️⃣ Create ProjectBundle + ProjectWbs + LineItems (CURRENT STAGE ONLY)
+    // 5️⃣ Expand each bundle
     for (const bundleKey of newBundleKeys) {
-      // Create ProjectBundle
       const projectBundle = await tx.projectBundle.create({
         data: {
           projectId,
@@ -141,28 +147,35 @@ async expandProjectWbs(
         },
       });
 
-      // Get templates in this bundle
       const bundle = await tx.wbsBundleTemplate.findUnique({
         where: { bundleKey },
         include: {
           wbsTemplates: {
-            include: { lineItems: true }
-          }
+            where: { isActive: true },
+            include: { lineItems: true },
+          },
         },
       });
 
       if (!bundle) continue;
 
+      // 6️⃣ Safety check: EXEC ↔ CHECK pairing
+      const executionWbs = bundle.wbsTemplates.filter(
+        w => w.discipline === "EXECUTION"
+      );
+      const checkingWbs = bundle.wbsTemplates.filter(
+        w => w.discipline === "CHECKING"
+      );
+
+      if (executionWbs.length !== checkingWbs.length) {
+        throw new AppError(
+          `Bundle ${bundleKey} has mismatched EXEC/CHECK WBS`,
+          500
+        );
+      }
+
+      // 7️⃣ Create ProjectWbs + LineItems
       for (const tpl of bundle.wbsTemplates) {
-        const exists = await tx.projectWbs.findFirst({
-          where: {
-            projectBundleId: projectBundle.id,
-            wbsTemplateKey: tpl.templateKey,
-          },
-        });
-
-        if (exists) continue;
-
         const wbs = await tx.projectWbs.create({
           data: {
             projectId,
@@ -174,7 +187,7 @@ async expandProjectWbs(
         });
 
         await tx.projectLineItem.createMany({
-          data: tpl.lineItems.map((li: any) => ({
+          data: tpl.lineItems.map(li => ({
             projectWbsId: wbs.id,
             lineItemTemplateId: li.id,
             description: li.description,
@@ -183,6 +196,9 @@ async expandProjectWbs(
           })),
         });
       }
+
+      // 8️⃣ Recompute bundle totals once
+      await recomputeProjectBundleTotals(tx, projectBundle.id);
     }
 
     return {
