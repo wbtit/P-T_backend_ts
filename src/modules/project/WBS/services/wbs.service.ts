@@ -1,183 +1,112 @@
-import { WbsRepository } from "../repositories";
-import { WBSInput,UpdateWBSInput, UpdateWBSSchema } from "../dtos";
-import { Stage,Activity } from "@prisma/client";
-import { PLIRepository } from "../../projectLineItems";
-import { ProjectRepository } from "../../repositories";
-import { AppError } from "../../../../config/utils/AppError";
+import { Stage, Activity, WbsDiscipline } from "@prisma/client";
 import prisma from "../../../../config/database/client";
+import { AppError } from "../../../../config/utils/AppError";
+import { ProjectRepository } from "../../repositories";
+import { WbsRepository } from "../repositories";
 
-
-const wbsRepository = new WbsRepository();
-const pliRepository = new PLIRepository();
 const projectRepository = new ProjectRepository();
+const wbsRepository = new WbsRepository();
 
 export class WbsService {
+  /**
+   * =========================================
+   * TEMPLATE / LIBRARY (READ ONLY)
+   * =========================================
+   */
 
-    async  list() {
-  return prisma.wbsTemplate.findMany({
-    where: {
-      isActive: true,
-      isDeleted: false,
-    },
-    include: {
-      lineItems: {
-        where: {
-          isActive: true,
-          isDeleted: false,
+  async listBundleTemplates() {
+    return prisma.wbsBundleTemplate.findMany({
+      where: { isActive: true },
+      orderBy: { name: "asc" },
+      include: {
+        wbsTemplates: {
+          where: { isActive: true, isDeleted: false },
+          orderBy: { name: "asc" },
+          include: {
+            lineItems: {
+              where: { isActive: true, isDeleted: false },
+              orderBy: { description: "asc" },
+            },
+          },
         },
       },
-    },
-    orderBy: { name: "asc" },
-  });
-}
-
-
-  async create(data: {
-  name: string;
-  type: Activity;
-  templateKey: string;
-  lineItems: {
-    description: string;
-    unitTime: number;
-    checkUnitTime: number;
-  }[];
-}) {
-  return prisma.$transaction(async tx => {
-    // prevent duplicate templateKey+version
-    const existing = await tx.wbsTemplate.findFirst({
-      where: {
-        templateKey: data.templateKey,
-        version: 1,
-      },
     });
+  }
 
-    if (existing) {
-      throw new AppError("Template already exists", 409);
+  /**
+   * =========================================
+   * PROJECT DASHBOARD — OVERALL
+   * =========================================
+   */
+
+  async getProjectDashboardStats(
+    projectId: string,
+    stage: Stage
+  ) {
+    const project = await projectRepository.get({ id: projectId });
+    if (!project) {
+      throw new AppError("Project not found", 404);
     }
 
-    const template = await tx.wbsTemplate.create({
-      data: {
-        name: data.name,
-        type: data.type,
-        templateKey: data.templateKey,
-        version: 1,
-      },
-    });
-
-    await tx.wbsLineItemTemplate.createMany({
-      data: data.lineItems.map((li, index) => ({
-        wbsTemplateId: template.id,
-        description: li.description,
-        unitTime: li.unitTime,
-        checkUnitTime: li.checkUnitTime,
-        templateKey: `${data.templateKey}-${index + 1}`,
-      })),
-    });
-
-    return template;
-  });
-}
-
-    
-async getProjectDashboardStats(
-  projectId: string,
-  stage: Stage
-) {
-  return wbsRepository.getProjectDashboardStats(
-    projectId,
-    stage
-  );
-}
-
-async getActivityDashboardStats(
-  projectId: string,
-  stage: Stage
-) {
-  return wbsRepository.getActivityDashboardStats(
-    projectId,
-    stage
-  );
-}
-
-  async getWbsStats(projectId: string,stage: Stage,type: Activity) {
-  const project = await projectRepository.get({ id: projectId });
-  if (!project) throw new Error("Project not found");
-
-  const estimatedMins = (project.estimatedHours || 0) * 60;
-
-  // 1️⃣ Fetch WBS + LineItems
-  const wbsList = await wbsRepository.getProjectWbs(
-    projectId,
-    stage,
-    type
-  );
-
-  // 2️⃣ Project-level totals
-  const projectTotals =
-    await wbsRepository.getTotalProjectWbsHours(
+    return wbsRepository.getProjectDashboardStats(
       projectId,
       stage
     );
+  }
 
-  const totalSubTaskHours =
-    (projectTotals._sum.totalExecHr || 0) +
-    (projectTotals._sum.totalCheckHr || 0);
+  /**
+   * =========================================
+   * CATEGORY DASHBOARD (MODELING / DETAILING / ERECTION)
+   * =========================================
+   */
 
-  const reworkPercentage = estimatedMins
-    ? ((estimatedMins - totalSubTaskHours) / estimatedMins) * 100
-    : 0;
+  async getCategoryDashboardStats(
+    projectId: string,
+    stage: Stage,
+    category: Activity
+  ) {
+    return wbsRepository.getCategoryDashboardStats(
+      projectId,
+      stage,
+      category
+    );
+  }
 
-  const divisor = wbsList.length || 1;
-  const reworkPercentPerWbs = reworkPercentage / divisor;
+  /**
+   * =========================================
+   * DISCIPLINE DASHBOARD (EXECUTION / CHECKING)
+   * =========================================
+   */
 
-  // 3️⃣ Per-WBS computation
-  const results = await Promise.all(
-    wbsList.map(async (wbs) => {
-      const items = wbs.lineItems;
+  async getDisciplineDashboardStats(
+    projectId: string,
+    stage: Stage,
+    discipline: WbsDiscipline
+  ) {
+    return wbsRepository.getDisciplineDashboardStats(
+      projectId,
+      stage,
+      discipline
+    );
+  }
 
-      const execHr = items.reduce(
-        (sum, i) => sum + (i.execHr || 0),
-        0
-      );
-      const checkHr = items.reduce(
-        (sum, i) => sum + (i.checkHr || 0),
-        0
-      );
-      const qtyNo = items.reduce(
-        (sum, i) => sum + (i.qtyNo || 0),
-        0
-      );
+  /**
+   * =========================================
+   * BUNDLE-LEVEL BREAKDOWN (OPTIONAL / ADVANCED)
+   * =========================================
+   */
 
-      const totalExecHrWithRework =
-        execHr * reworkPercentPerWbs;
-      const totalCheckHrWithRework =
-        checkHr * reworkPercentPerWbs;
+  async getBundleBreakdownStats(
+    projectId: string,
+    stage: Stage,
+    bundleKey: string
+  ) {
+    return wbsRepository.getBundleBreakdownStats(
+      projectId,
+      stage,
+      bundleKey
+    );
+  }
 
-      await wbsRepository.updateProjectWbs(wbs.id, {
-        totalQtyNo: qtyNo,
-        totalExecHr: execHr,
-        totalCheckHr: checkHr,
-        totalExecHrWithRework,
-        totalCheckHrWithRework,
-      });
-
-      return {
-        id: wbs.id,
-        name: wbs.name,
-        totalQtyNo: qtyNo,
-        totalExecHr: execHr,
-        totalCheckHr: checkHr,
-        totalExecHrWithRework,
-        totalCheckHrWithRework,
-        reworkPercentage,
-        reworkPercentPerWbs,
-        lineItems: items,
-      };
-    })
-  );
-
-  return results;
-}
-   
-
+  
 }

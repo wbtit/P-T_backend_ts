@@ -1,21 +1,50 @@
-import { Activity, Stage } from "@prisma/client";
-import z from "zod";
+import { Stage, WbsDiscipline } from "@prisma/client";
+import { z } from "zod";
 
-export const WBSSchema = z.object({
-    projectId: z.string(),
-    name: z.string().min(2).max(100),
-    description: z.string().max(500).optional(),
-    stage:z.enum(Stage),
-    type:z.enum(Activity)
+/**
+ * ================================
+ * PROJECT BUNDLE SELECTION
+ * ================================
+ * User selects bundles for a project
+ */
+export const ProjectBundleSelectionSchema = z.object({
+  projectId: z.string().uuid(),
+  bundleKeys: z.array(z.string()).min(1, "At least one bundle must be selected"),
 });
 
-export const UpdateWBSSchema = z.object({
-    totalQtyNo: z.number().min(0),
-    totalExecHr: z.number().min(0),
-    totalCheckHr: z.number().min(0),
-    totalExecHrWithRework: z.number().min(0),
-    totalCheckHrWithRework: z.number().min(0)
-})
+export type ProjectBundleSelectionInput =
+  z.infer<typeof ProjectBundleSelectionSchema>;
 
-export type WBSInput = z.infer<typeof WBSSchema>;
-export type UpdateWBSInput = z.infer<typeof UpdateWBSSchema>;
+/**
+ * ================================
+ * PROJECT WBS AGGREGATE UPDATE
+ * ================================
+ * Used internally when recalculating stats
+ * or explicitly updating aggregates
+ */
+export const UpdateProjectWbsSchema = z.object({
+  totalQtyNo: z.number().min(0),
+  totalExecHr: z.number().min(0),
+  totalCheckHr: z.number().min(0),
+  totalExecHrWithRework: z.number().min(0),
+  totalCheckHrWithRework: z.number().min(0),
+});
+
+export type UpdateProjectWbsInput =
+  z.infer<typeof UpdateProjectWbsSchema>;
+
+/**
+ * ================================
+ * QUERY / FILTER DTO (OPTIONAL)
+ * ================================
+ * For dashboard / analytics queries
+ */
+export const ProjectWbsQuerySchema = z.object({
+  projectId: z.string().uuid(),
+  stage: z.enum(Stage),
+  discipline: z.enum(WbsDiscipline).optional(), // EXECUTION | CHECKING
+  bundleKey: z.string().optional(),
+});
+
+export type ProjectWbsQueryInput =
+  z.infer<typeof ProjectWbsQuerySchema>;

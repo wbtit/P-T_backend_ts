@@ -1,170 +1,182 @@
-import { Activity, Stage } from "@prisma/client";
+import { Stage, Activity, WbsDiscipline } from "@prisma/client";
 import prisma from "../../../../config/database/client";
-import { WBSInput,UpdateWBSInput } from "../dtos";
 
+export class WbsRepository {
+  /**
+   * =========================================
+   * PROJECT DASHBOARD — OVERALL
+   * =========================================
+   */
+  async getProjectDashboardStats(
+    projectId: string,
+    stage: Stage
+  ) {
+    const project = await prisma.project.findUnique({
+      where: { id: projectId },
+      select: { estimatedHours: true },
+    });
 
+    if (!project) {
+      throw new Error("Project not found");
+    }
 
-export class WbsRepository{
-    
-    async getProjectWbs(
-  projectId: string,
-  stage: Stage,
-  type: Activity
-) {
-  return prisma.projectWbs.findMany({
-    where: {
-      projectId,
-      stage,
-      type,
-    },
-    include: {
-      lineItems: true,
-    },
-  });
-}
+    const agg = await prisma.projectWbs.aggregate({
+      where: { projectId, stage },
+      _sum: {
+        totalQtyNo: true,
+        totalExecHr: true,
+        totalCheckHr: true,
+        totalExecHrWithRework: true,
+        totalCheckHrWithRework: true,
+      },
+      _count: { id: true },
+    });
 
-async getProjectDashboardStats(
-  projectId: string,
-  stage: Stage
-) {
-  const project = await prisma.project.findUnique({
-    where: { id: projectId },
-    select: {
-      estimatedHours: true,
-    },
-  });
+    const plannedMinutes = (project.estimatedHours || 0) * 60;
 
-  if (!project) {
-    throw new Error("Project not found");
+    const exec = agg._sum.totalExecHr || 0;
+    const check = agg._sum.totalCheckHr || 0;
+    const execRw = agg._sum.totalExecHrWithRework || 0;
+    const checkRw = agg._sum.totalCheckHrWithRework || 0;
+
+    const actualMinutes = exec + check;
+    const actualWithRework = execRw + checkRw;
+
+    return {
+      plannedMinutes,
+      actualMinutes,
+      actualWithRework,
+      consumedPercent: plannedMinutes
+        ? (actualMinutes / plannedMinutes) * 100
+        : 0,
+      reworkPercent: plannedMinutes
+        ? ((actualWithRework - actualMinutes) / plannedMinutes) * 100
+        : 0,
+
+      totalExecHr: exec,
+      totalCheckHr: check,
+      totalQtyNo: agg._sum.totalQtyNo || 0,
+      wbsCount: agg._count.id,
+    };
   }
 
-  const agg = await prisma.projectWbs.aggregate({
-    where: {
-      projectId,
-      stage,
-    },
-    _sum: {
-      totalQtyNo: true,
-      totalExecHr: true,
-      totalCheckHr: true,
-      totalExecHrWithRework: true,
-      totalCheckHrWithRework: true,
-    },
-    _count: {
-      id: true,
-    },
-  });
+  /**
+   * =========================================
+   * CATEGORY DASHBOARD (MODELING / DETAILING / ERECTION)
+   * =========================================
+   */
+  async getCategoryDashboardStats(
+    projectId: string,
+    stage: Stage,
+    category: Activity
+  ) {
+    const rows = await prisma.projectWbs.findMany({
+      where: { projectId, stage },
+      include: {
+        projectBundle: {
+          include: {
+            bundle: true,
+          },
+        },
+      },
+    });
 
-  const plannedMinutes = (project.estimatedHours || 0) * 60;
+    const filtered = rows.filter(
+      r => r.projectBundle.bundle.category === category
+    );
 
-  const exec = agg._sum.totalExecHr || 0;
-  const check = agg._sum.totalCheckHr || 0;
-  const execRw = agg._sum.totalExecHrWithRework || 0;
-  const checkRw = agg._sum.totalCheckHrWithRework || 0;
+    return this.aggregateRows(filtered);
+  }
 
-  const actualMinutes = exec + check;
-  const actualWithRework = execRw + checkRw;
+  /**
+   * =========================================
+   * DISCIPLINE DASHBOARD (EXECUTION / CHECKING)
+   * =========================================
+   */
+  async getDisciplineDashboardStats(
+    projectId: string,
+    stage: Stage,
+    discipline: WbsDiscipline
+  ) {
+    const rows = await prisma.projectWbs.findMany({
+      where: {
+        projectId,
+        stage,
+        discipline,
+      },
+    });
 
-  const consumedPercent = plannedMinutes
-    ? (actualMinutes / plannedMinutes) * 100
-    : 0;
+    return this.aggregateRows(rows);
+  }
 
-  const reworkPercent = plannedMinutes
-    ? ((actualWithRework - actualMinutes) / plannedMinutes) * 100
-    : 0;
+  /**
+   * =========================================
+   * BUNDLE-LEVEL BREAKDOWN
+   * =========================================
+   */
+  async getBundleBreakdownStats(
+    projectId: string,
+    stage: Stage,
+    bundleKey: string
+  ) {
+    const rows = await prisma.projectWbs.findMany({
+      where: { projectId, stage },
+      include: {
+        projectBundle: true,
+      },
+    });
 
-  return {
-    plannedMinutes,
-    actualMinutes,
-    actualWithRework,
-    consumedPercent,
-    reworkPercent,
+    const filtered = rows.filter(
+      r => r.projectBundle.bundleKey === bundleKey
+    );
 
-    totalExecHr: exec,
-    totalCheckHr: check,
-    totalQtyNo: agg._sum.totalQtyNo || 0,
+    return this.aggregateRows(filtered);
+  }
 
-    wbsCount: agg._count.id,
-  };
-}
+  /**
+   * =========================================
+   * INTERNAL AGGREGATOR (SHARED)
+   * =========================================
+   */
+  private aggregateRows(rows: any[]) {
+    const totals = {
+      totalQtyNo: 0,
+      totalExecHr: 0,
+      totalCheckHr: 0,
+      totalExecHrWithRework: 0,
+      totalCheckHrWithRework: 0,
+      wbsCount: rows.length,
+    };
 
-async getActivityDashboardStats(
-  projectId: string,
-  stage: Stage
-) {
-  const grouped = await prisma.projectWbs.groupBy({
-    by: ["type"],
-    where: {
-      projectId,
-      stage,
-    },
-    _sum: {
-      totalQtyNo: true,
-      totalExecHr: true,
-      totalCheckHr: true,
-      totalExecHrWithRework: true,
-      totalCheckHrWithRework: true,
-    },
-    _count: {
-      id: true,
-    },
-  });
+    for (const r of rows) {
+      totals.totalQtyNo += r.totalQtyNo || 0;
+      totals.totalExecHr += r.totalExecHr || 0;
+      totals.totalCheckHr += r.totalCheckHr || 0;
+      totals.totalExecHrWithRework += r.totalExecHrWithRework || 0;
+      totals.totalCheckHrWithRework += r.totalCheckHrWithRework || 0;
+    }
 
-  return grouped.map(g => ({
-    activityType: g.type,
-    totalExecHr: g._sum.totalExecHr || 0,
-    totalCheckHr: g._sum.totalCheckHr || 0,
-    totalQtyNo: g._sum.totalQtyNo || 0,
-    totalExecHrWithRework: g._sum.totalExecHrWithRework || 0,
-    totalCheckHrWithRework: g._sum.totalCheckHrWithRework || 0,
-    wbsCount: g._count.id,
-  }));
-}
+    return totals;
+  }
 
-
-async getTotalProjectWbsHours(
-  projectId: string,
-  stage: Stage
-) {
-  return prisma.projectWbs.aggregate({
-    where: { projectId, stage },
-    _sum: {
-      totalExecHr: true,
-      totalCheckHr: true,
-      totalExecHrWithRework: true,
-      totalCheckHrWithRework: true,
-    },
-  });
-}
-
-
-async getProjectWbsTotalByType(
-  projectId: string,
-  stage: Stage,
-  type: Activity
-) {
-  return prisma.projectWbs.aggregate({
-    where: { projectId, stage, type },
-    _sum: {
-      totalQtyNo: true,
-      totalExecHr: true,
-      totalCheckHr: true,
-      totalExecHrWithRework: true,
-      totalCheckHrWithRework: true,
-    },
-  });
-}
-
-
-async updateProjectWbs(
-  id: string,
-  data: UpdateWBSInput
-) {
-  return prisma.projectWbs.update({
-    where: { id },
-    data,
-  });
-}
-
-
+  /**
+   * =========================================
+   * UPDATE PROJECT WBS AGGREGATES
+   * =========================================
+   */
+  async updateProjectWbs(
+    id: string,
+    data: {
+      totalQtyNo: number;
+      totalExecHr: number;
+      totalCheckHr: number;
+      totalExecHrWithRework: number;
+      totalCheckHrWithRework: number;
+    }
+  ) {
+    return prisma.projectWbs.update({
+      where: { id },
+      data,
+    });
+  }
 }

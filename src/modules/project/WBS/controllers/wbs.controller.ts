@@ -1,38 +1,90 @@
-import { Request,Response } from "express";
+import { Request, Response } from "express";
 import { WbsService } from "../services";
-import { Stage,Activity } from "@prisma/client";
+import { Activity, Stage, WbsDiscipline } from "@prisma/client";
 
 const wbsService = new WbsService();
 
-export class WBSController{
+export class WbsController {
+  /**
+   * ======================================
+   * TEMPLATE / LIBRARY (READ ONLY)
+   * ======================================
+   */
 
-async getWbsTemplates(req: Request, res: Response) {
-  const templates = await wbsService.list();
-  res.json({ status: "success", data: templates });
-}
+  // GET all bundle templates with WBS + line items
+  async getBundleTemplates(req: Request, res: Response) {
+    const templates = await wbsService.listBundleTemplates();
+    res.status(200).json({
+      status: "success",
+      data: templates,
+    });
+  }
 
-async createWbsTemplate(req: Request, res: Response) {
-  const template = await wbsService.create(req.body);
-  res.status(201).json({ status: "success", data: template });
-}
+  /**
+   * ======================================
+   * PROJECT DASHBOARDS
+   * ======================================
+   */
 
-async getProjectDashboardStats(req: Request, res: Response) {   
+  // Overall project dashboard (all bundles)
+  async getProjectDashboardStats(req: Request, res: Response) {
     const { projectId, stage } = req.params;
-    const result = await wbsService.getProjectDashboardStats(projectId, stage as Stage);
-    return res.status(200).json(result);
-}
 
-async getActivityDashboardStats(req: Request, res: Response) {
-    const { projectId, stage } = req.params;
-    const result = await wbsService.getActivityDashboardStats(projectId, stage as Stage);
-    return res.status(200).json(result);
-}
+    const result = await wbsService.getProjectDashboardStats(
+      projectId,
+      stage as Stage
+    );
 
+    res.status(200).json({
+      status: "success",
+      data: result,
+    });
+  }
 
-async getWbsStats(req: Request, res: Response) {
-        const { projectId, stage, type } = req.params;
-        const result = await wbsService.getWbsStats(projectId, stage as Stage, type as Activity);
-        return res.status(200).json(result);
-}
+  // Category dashboard (MODELING / DETAILING / ERECTION)
+  async getCategoryDashboardStats(req: Request, res: Response) {
+    const { projectId, stage, category } = req.params;
 
+    const result = await wbsService.getCategoryDashboardStats(
+      projectId,
+      stage as Stage,
+      category as Activity
+    );
+
+    res.status(200).json({
+      status: "success",
+      data: result,
+    });
+  }
+
+  // Discipline dashboard (EXECUTION / CHECKING)
+  async getDisciplineDashboardStats(req: Request, res: Response) {
+    const { projectId, stage, discipline } = req.params;
+
+    const result = await wbsService.getDisciplineDashboardStats(
+      projectId,
+      stage as Stage,
+      discipline as WbsDiscipline
+    );
+
+    res.status(200).json({
+      status: "success",
+      data: result,
+    });
+  }
+//get bundle level breakdown
+  async getBundleBreakdownStats(req: Request, res: Response) {
+    const { projectId, stage, bundleKey } = req.params;
+
+    const result = await wbsService.getBundleBreakdownStats(
+      projectId,
+      stage as Stage,
+      bundleKey
+    );
+
+    return res.status(200).json({
+      status: "success",
+      data: result,
+    });
+  }
 }

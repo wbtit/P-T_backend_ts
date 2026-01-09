@@ -19,7 +19,7 @@ import {
  import { ProjectLineItemSchema,
     UpdateProjectLineItemSchema } from "./projectLineItems";
 
-import { WBSController } from "./WBS";
+import { WbsController } from "./WBS";
 
 import { NoteSchema,NoteUpdateSchema } from "./notes";
 import { NotesController } from "./notes";
@@ -88,40 +88,67 @@ router.get(
     asyncHandler(pliController.getLineItems.bind(pliController))
 );
 // ===========================================================
-// WBS` ROUTES
+// WBS / BUNDLE ROUTES
 // ===========================================================
-const wbsController = new WBSController();
+const wbsController = new WbsController();
 
-// WBS under a project
+/**
+ * ======================================
+ * TEMPLATE / LIBRARY (READ ONLY)
+ * ======================================
+ */
+
+// List bundle templates with WBS + line items
 router.get(
-  "/wbs-templates",
+  "/wbs/bundles",
   authMiddleware,
-  asyncHandler(wbsController.getWbsTemplates.bind(wbsController))
+  asyncHandler(
+    wbsController.getBundleTemplates.bind(wbsController)
+  )
 );
 
-router.post(
-  "/wbs-templates",
-  authMiddleware,
-  asyncHandler(wbsController.createWbsTemplate.bind(wbsController))
-);
+/**
+ * ======================================
+ * PROJECT DASHBOARDS
+ * ======================================
+ */
 
+// Overall project dashboard
 router.get(
-  "/projects/:projectId/wbs/:wbsId/stats",
+  "/projects/:projectId/dashboard/:stage",
   authMiddleware,
-  asyncHandler(wbsController.getWbsStats.bind(wbsController))
+  asyncHandler(
+    wbsController.getProjectDashboardStats.bind(wbsController)
+  )
 );
 
+// Category dashboard (MODELING / DETAILING / ERECTION)
 router.get(
-  "/projects/:projectId/dashboard/stats/:stage",
+  "/projects/:projectId/dashboard/:stage/category/:category",
   authMiddleware,
-  asyncHandler(wbsController.getProjectDashboardStats.bind(wbsController))
+  asyncHandler(
+    wbsController.getCategoryDashboardStats.bind(wbsController)
+  )
 );
 
+// Discipline dashboard (EXECUTION / CHECKING)
 router.get(
-  "/projects/:projectId/dashboard/activity-stats/:stage",
+  "/projects/:projectId/dashboard/:stage/discipline/:discipline",
   authMiddleware,
-  asyncHandler(wbsController.getActivityDashboardStats.bind(wbsController))
+  asyncHandler(
+    wbsController.getDisciplineDashboardStats.bind(wbsController)
+  )
 );
+
+// Optional: bundle-level breakdown
+router.get(
+  "/projects/:projectId/dashboard/:stage/bundle/:bundleKey",
+  authMiddleware,
+  asyncHandler(
+    wbsController.getBundleBreakdownStats.bind(wbsController)
+  )
+);
+
 // ===========================================================
 // NOTES ROUTES
 // ===========================================================
