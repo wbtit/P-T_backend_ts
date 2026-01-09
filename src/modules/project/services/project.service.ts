@@ -205,12 +205,12 @@ async expandProjectWbs(
       }
 
       // 8️⃣ AUTO-GENERATE CHECKING WBS (SYSTEM RESPONSIBILITY)
-      await ensureCheckingWbsForBundle(
-        tx,
-        projectId,
-        projectBundle.id,
-        currentStage
-      );
+      // await ensureCheckingWbsForBundle(
+      //   tx,
+      //   projectId,
+      //   projectBundle.id,
+      //   currentStage
+      // );
 
       // 9️⃣ Recompute bundle totals ONCE
       await recomputeProjectBundleTotals(tx, projectBundle.id);

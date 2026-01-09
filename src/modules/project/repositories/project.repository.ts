@@ -88,7 +88,16 @@ import { setProjectWbsSelection } from "../utils/setProjectWbsSelection";
        where: { id: data.id },
        include:{
         clentCommunications:true,
-        projectWbs:true,
+        projectBundles:{
+          include:{
+            bundle:{
+              include:{
+                wbsTemplates:true
+              }
+            }
+          }
+        },
+        
         projectbias:true,
         rfi:{include:{recepients:{select:{firstName:true,middleName:true,lastName:true,id:true}},
                       sender:{select:{firstName:true,middleName:true,lastName:true,id:true}}}},
