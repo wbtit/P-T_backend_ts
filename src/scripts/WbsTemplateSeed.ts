@@ -1,4 +1,4 @@
-import { Activity } from "@prisma/client";
+import { WbsDiscipline } from "@prisma/client";
 import newWBSActivity from "../config/data/newWbsActivityData";
 import prisma from "../config/database/client";
 
@@ -12,17 +12,15 @@ async function seedWbsTemplates() {
     try {
       await prisma.wbsTemplate.upsert({
         where: {
-          templateKey_version: {
-            templateKey: wbs.templateKey,
-            version: 1,
-          },
+          templateKey: wbs.templateKey,
         },
         update: {},
         create: {
+          id: crypto.randomUUID(),
           name: wbs.name,
-          type: wbs.type as Activity,
+          discipline: wbs.discipline as WbsDiscipline,
+          bundleKey: wbs.bundleKey,
           templateKey: wbs.templateKey,
-          version: 1,
         },
       });
 
@@ -33,7 +31,7 @@ async function seedWbsTemplates() {
       console.error("❌ Failed to seed WBS template", {
         templateKey: wbs.templateKey,
         name: wbs.name,
-        type: wbs.type,
+        discipline: wbs.discipline,
         error,
       });
     }
