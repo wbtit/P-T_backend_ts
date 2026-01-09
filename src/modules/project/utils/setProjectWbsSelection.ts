@@ -4,21 +4,22 @@ import { Prisma } from "@prisma/client";
 export async function setProjectWbsSelection(
   tx: Prisma.TransactionClient,
   projectId: string,
-  wbsTemplateIds: string[],
-  userId?: string
+  bundleKeys: string[],
+  userId: string
 ) {
-  if (!wbsTemplateIds.length) return;
+  if (!bundleKeys.length) return;
 
-  await tx.projectWbsSelection.updateMany({
-    where: { projectId, isActive: true },
-    data: { isActive: false },
+  // Delete existing selections for this project
+  await tx.projectBundleSelection.deleteMany({
+    where: { projectId },
   });
 
-  await tx.projectWbsSelection.createMany({
-    data: wbsTemplateIds.map(id => ({
+  // Create new selections
+  await tx.projectBundleSelection.createMany({
+    data: bundleKeys.map(bundleKey => ({
       projectId,
-      wbsTemplateId: id,
-      selectedById: userId,
+      bundleKey,
+      selectedBy: userId,
     })),
   });
 }

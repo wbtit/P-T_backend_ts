@@ -65,10 +65,17 @@ export class ProjectController {
   const { projectId } = req.params;
   const { wbsTemplateIds } = req.body;
 
+  if (!req.user?.id) {
+    return res.status(401).json({
+      status: 'error',
+      message: 'Unauthorized'
+    });
+  }
+
   const result = await projectService.expandProjectWbs(
     projectId,
     wbsTemplateIds,
-    req.user?.id
+    req.user.id
   );
 
   res.status(200).json({

@@ -86,8 +86,8 @@ import { handleEndDateChange } from "../utils/handleEndDateChange";
 
 async expandProjectWbs(
   projectId: string,
-  wbsTemplateIds: string[],
-  userId?: string
+  bundleKeys: string[],
+  userId: string
 ) {
   return prisma.$transaction(async tx => {
     // 1️⃣ Load project (need current stage)
@@ -103,82 +103,90 @@ async expandProjectWbs(
     const currentStage = project.stage;
 
     // 2️⃣ Fetch existing selections
-    const existingSelections = await tx.projectWbsSelection.findMany({
-      where: {
-        projectId,
-        isActive: true,
-      },
-      select: { wbsTemplateId: true },
+    const existingSelections = await tx.projectBundleSelection.findMany({
+      where: { projectId },
+      select: { bundleKey: true },
     });
 
     const selectedSet = new Set(
-      existingSelections.map(s => s.wbsTemplateId)
+      existingSelections.map((s: any) => s.bundleKey)
     );
 
-    // 3️⃣ Filter only NEW templates
-    const newTemplateIds = wbsTemplateIds.filter(
-      id => !selectedSet.has(id)
+    // 3️⃣ Filter only NEW bundles
+    const newBundleKeys = bundleKeys.filter(
+      key => !selectedSet.has(key)
     );
 
-    if (newTemplateIds.length === 0) {
+    if (newBundleKeys.length === 0) {
       return { added: 0, message: "No new WBS to add" };
     }
 
     // 4️⃣ Persist new selections
-    await tx.projectWbsSelection.createMany({
-      data: newTemplateIds.map(id => ({
+    await tx.projectBundleSelection.createMany({
+      data: newBundleKeys.map(bundleKey => ({
         projectId,
-        wbsTemplateId: id,
-        selectedById: userId,
+        bundleKey,
+        selectedBy: userId,
       })),
     });
 
-    // 5️⃣ Fetch templates + line items
-    const templates = await tx.wbsTemplate.findMany({
-      where: {
-        id: { in: newTemplateIds },
-        isActive: true,
-        isDeleted: false,
-      },
-      include: { lineItems: true },
-    });
-
-    // 6️⃣ Create ProjectWbs + LineItems (CURRENT STAGE ONLY)
-    for (const tpl of templates) {
-      const exists = await tx.projectWbs.findFirst({
-        where: {
-          projectId,
-          stage: currentStage,
-          wbsTemplateId: tpl.id,
-        },
-      });
-
-      if (exists) continue; // safety net
-
-      const wbs = await tx.projectWbs.create({
+    // 5️⃣ Create ProjectBundle + ProjectWbs + LineItems (CURRENT STAGE ONLY)
+    for (const bundleKey of newBundleKeys) {
+      // Create ProjectBundle
+      const projectBundle = await tx.projectBundle.create({
         data: {
           projectId,
+          bundleKey,
           stage: currentStage,
-          wbsTemplateId: tpl.id,
-          templateVersion: tpl.version,
-          name: tpl.name,
-          type: tpl.type,
         },
       });
 
-      await tx.projectLineItem.createMany({
-        data: tpl.lineItems.map(li => ({
-          projectWbsId: wbs.id,
-          lineItemTemplateId: li.id,
-          description: li.description,
-          unitTime: li.unitTime,
-          checkUnitTime: li.checkUnitTime,
-        })),
+      // Get templates in this bundle
+      const bundle = await tx.wbsBundleTemplate.findUnique({
+        where: { bundleKey },
+        include: {
+          wbsTemplates: {
+            include: { lineItems: true }
+          }
+        },
       });
+
+      if (!bundle) continue;
+
+      for (const tpl of bundle.wbsTemplates) {
+        const exists = await tx.projectWbs.findFirst({
+          where: {
+            projectBundleId: projectBundle.id,
+            wbsTemplateKey: tpl.templateKey,
+          },
+        });
+
+        if (exists) continue;
+
+        const wbs = await tx.projectWbs.create({
+          data: {
+            projectId,
+            projectBundleId: projectBundle.id,
+            wbsTemplateKey: tpl.templateKey,
+            discipline: tpl.discipline,
+            stage: currentStage,
+          },
+        });
+
+        await tx.projectLineItem.createMany({
+          data: tpl.lineItems.map((li: any) => ({
+            projectWbsId: wbs.id,
+            lineItemTemplateId: li.id,
+            description: li.description,
+            unitTime: li.unitTime,
+            checkUnitTime: li.checkUnitTime,
+          })),
+        });
+      }
     }
 
     return {
-      added: newTemplateIds.length,
+      added: newBundleKeys.length,
       stage: currentStage,
     };
   });

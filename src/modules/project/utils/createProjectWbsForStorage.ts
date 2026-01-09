@@ -6,43 +6,72 @@ export async function createProjectWbsForStage(
   projectId: string,
   stage: Stage
 ) {
-  const selections = await tx.projectWbsSelection.findMany({
-    where: { projectId, isActive: true },
+  const selections = await tx.projectBundleSelection.findMany({
+    where: { projectId },
     include: {
-      wbsTemplate: { include: { lineItems: true } },
+      bundle: {
+        include: {
+          wbsTemplates: {
+            include: { lineItems: true }
+          }
+        }
+      }
     },
   });
 
   for (const sel of selections) {
-    const exists = await tx.projectWbs.findFirst({
+    // Create ProjectBundle if it doesn't exist for this stage
+    const existingBundle = await tx.projectBundle.findFirst({
       where: {
         projectId,
+        bundleKey: sel.bundleKey,
         stage,
-        wbsTemplateId: sel.wbsTemplateId,
       },
     });
 
-    if (exists) continue;
+    let projectBundleId: string;
+    if (existingBundle) {
+      projectBundleId = existingBundle.id;
+    } else {
+      const newBundle = await tx.projectBundle.create({
+        data: {
+          projectId,
+          bundleKey: sel.bundleKey,
+          stage,
+        },
+      });
+      projectBundleId = newBundle.id;
+    }
 
-    const wbs = await tx.projectWbs.create({
-      data: {
-        projectId,
-        stage,
-        wbsTemplateId: sel.wbsTemplateId,
-        templateVersion: sel.wbsTemplate.version,
-        name: sel.wbsTemplate.name,
-        type: sel.wbsTemplate.type,
-      },
-    });
+    for (const wbsTemplate of sel.bundle.wbsTemplates) {
+      const exists = await tx.projectWbs.findFirst({
+        where: {
+          projectBundleId,
+          wbsTemplateKey: wbsTemplate.templateKey,
+        },
+      });
 
-    await tx.projectLineItem.createMany({
-      data: sel.wbsTemplate.lineItems.map(li => ({
-        projectWbsId: wbs.id,
-        lineItemTemplateId: li.id,
-        description: li.description,
-        unitTime: li.unitTime,
-        checkUnitTime: li.checkUnitTime,
-      })),
-    });
+      if (exists) continue;
+
+      const wbs = await tx.projectWbs.create({
+        data: {
+          projectId,
+          projectBundleId,
+          wbsTemplateKey: wbsTemplate.templateKey,
+          discipline: wbsTemplate.discipline,
+          stage,
+        },
+      });
+
+      await tx.projectLineItem.createMany({
+        data: wbsTemplate.lineItems.map((li: any) => ({
+          projectWbsId: wbs.id,
+          lineItemTemplateId: li.id,
+          description: li.description,
+          unitTime: li.unitTime,
+          checkUnitTime: li.checkUnitTime,
+        })),
+      });
+    }
   }
 }
