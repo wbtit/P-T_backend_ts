@@ -96,6 +96,10 @@ async expandProjectWbs(
   bundleKeys: string[],
   userId: string
 ) {
+  if (!bundleKeys || !Array.isArray(bundleKeys)) {
+    throw new AppError("bundleKeys must be a non-empty array", 400);
+  }
+
   return prisma.$transaction(async (tx) => {
     // 1️⃣ Load project stage
     const project = await tx.project.findUnique({

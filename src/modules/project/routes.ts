@@ -64,7 +64,7 @@ router.get("/projects/:projectId/update-history", authMiddleware,validate({param
 
 asyncHandler(projectController.handleGetProjectUpdateHistory.bind(projectController)));
 
-router.post("/projects/:projectId/wbs/expand",authMiddleware,asyncHandler(projectController.expandWbs.bind(projectController)));
+router.post("/projects/:projectId/wbs/expand", authMiddleware, validate({ body: z.object({ bundleKeys: z.array(z.string()) }) }), asyncHandler(projectController.expandWbs.bind(projectController)));
 // ===========================================================
 // PROJECT LINE ITEM (PLI) ROUTES
 // ===========================================================

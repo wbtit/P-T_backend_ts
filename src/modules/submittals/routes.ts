@@ -24,7 +24,7 @@ const submittalResponseController = new SubmittalResponseController();
 // SUBMITTALS (IDENTITY + VERSIONING)
 // ===========================================================
 
-router.get("/pendingSubmittalResponse", authMiddleware, submittalController.handleGetPendingSubmittals.bind(submittalController))
+router.get("/pendingSubmittal", authMiddleware, submittalController.handleGetPendingSubmittals.bind(submittalController))
 
 // CREATE SUBMITTAL + INITIAL VERSION (v1)
 router.post(

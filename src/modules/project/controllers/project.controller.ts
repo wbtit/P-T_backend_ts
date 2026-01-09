@@ -61,7 +61,9 @@ export class ProjectController {
           data: null
         });
     }
-    async expandWbs(req: AuthenticateRequest, res: Response) {
+
+
+async expandWbs(req: AuthenticateRequest, res: Response) {
   const { projectId } = req.params;
   const { bundleKeys } = req.body;
 

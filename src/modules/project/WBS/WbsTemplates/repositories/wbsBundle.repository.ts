@@ -19,12 +19,7 @@ export class WbsBundleTemplateRepository {
 
   create(
     tx: Prisma.TransactionClient,
-    data: {
-      bundleKey: string;
-      name: string;
-      category: any;
-      stage: any;
-    }
+    data: Prisma.WbsBundleTemplateUncheckedCreateInput
   ) {
     return tx.wbsBundleTemplate.create({ data });
   }
