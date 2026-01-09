@@ -7,16 +7,22 @@ import z from "zod";
 import { asyncHandler } from "../../../../config/utils/asyncHandler";
 import { WbsLineItemTemplateController } from "./controller/wbsLineItemTemplate.controller";
 import { CreateWbsTemplateDto, UpdateWbsTemplateDto } from "./dtos/wbsTemplate.dto";
+import { WbsBundleTemplateController } from "./controller/wbsBundleTemplate.controller";
+import { WbsTemplateController } from "./controller/wbsTemplate.controller";
+import { CreateWbsBundleTemplateDto, UpdateWbsBundleTemplateDto } from "./dtos/wbsBundle.dto";
 
 const router = Router();
-const controller = new WbsLineItemTemplateController();
+const lineItemcontroller = new WbsLineItemTemplateController();
+const bundleController = new WbsBundleTemplateController();
+const wbscontroller = new WbsTemplateController();
+
 
 router.post(
   "/admin/templates/line-items",
   authMiddleware,
   roleMiddleware("ADMIN"),
   validate({ body: CreateWbsLineItemTemplateDto }),
-  asyncHandler(controller.create.bind(controller))
+  asyncHandler(lineItemcontroller.create.bind(lineItemcontroller))
 );
 
 router.put(
@@ -27,14 +33,18 @@ router.put(
     params: z.object({ id: z.string().uuid() }),
     body: UpdateWbsLineItemTemplateDto,
   }),
-  asyncHandler(controller.update.bind(controller))
+  asyncHandler(lineItemcontroller.update.bind(lineItemcontroller))
 );
+
+
+
+
 router.post(
   "/admin/templates/wbs",
   authMiddleware,
   roleMiddleware("ADMIN"),
   validate({ body: CreateWbsTemplateDto }),
-  asyncHandler(controller.create.bind(controller))
+  asyncHandler(wbscontroller.create.bind(wbscontroller))
 );
 
 router.put(
@@ -45,7 +55,36 @@ router.put(
     params: z.object({ id: z.string() }),
     body: UpdateWbsTemplateDto,
   }),
-  asyncHandler(controller.update.bind(controller))
+  asyncHandler(wbscontroller.update.bind(wbscontroller))
 );
+
+
+
+router.get(
+  "/admin/templates/bundles",
+  authMiddleware,
+  roleMiddleware("ADMIN"),
+  asyncHandler(bundleController.list.bind(bundleController))
+);
+
+router.post(
+  "/admin/templates/bundles",
+  authMiddleware,
+  roleMiddleware("ADMIN"),
+  validate({ body: CreateWbsBundleTemplateDto }),
+  asyncHandler(bundleController.create.bind(bundleController))
+);
+
+router.put(
+  "/admin/templates/bundles/:bundleKey",
+  authMiddleware,
+  roleMiddleware("ADMIN"),
+  validate({
+    params: z.object({ bundleKey: z.string() }),
+    body: UpdateWbsBundleTemplateDto,
+  }),
+  asyncHandler(bundleController.update.bind(bundleController))
+);
+
 
 export default router;
