@@ -206,6 +206,10 @@ enum MeetingRole {
   ATTENDEE   
   OBSERVER   
 }
+enum WbsDiscipline {
+  EXECUTION
+  CHECKING
+}
 // ===========================================================
 // MODELS
 // ===========================================================
@@ -285,8 +289,8 @@ model User {
   employeeperformance      EmployeePerformanceScore[] @relation("employeeperformance")
   clientCommunicatedBy       ClientCommunication[]
   submittalVersiondoneBy     SubmittalVersion[]
+  projectBundleSelections    ProjectBundleSelection[]
 
-  
   @@map("user")
   @@index([email])
   @@index([phone])
@@ -589,8 +593,6 @@ model Project{
   team                   Team?                 @relation("projectTeam", fields: [teamID], references: [id])
   tasks                  Task[]                @relation("TaskBelongsToProject")
   projectJobStudy        JobStudy?             @relation("projectJobStudy") 
-  projectWorkBreakdown   WorkBreakdown[]        @relation("ProjectWorkBreakdown")
-  lineItems              ProjectLineItems[]    @relation("LineItems")
   notes                  Notes[]               @relation("projectNotes")
   rfq                    RFQ?                  @relation("ProjectRFQ", fields: [rfqId], references: [id])
   mileStones             MileStone[]           @relation("ProjectMileStone")
@@ -603,8 +605,9 @@ model Project{
   projectbias              ManagerBiasRecord[]      @relation("projectbias")
 
     // NEW WBS ARCHITECTURE RELATIONS
-  wbsSelections   ProjectWbsSelection[]
   projectWbs      ProjectWbs[]
+  projectBundleSelections ProjectBundleSelection[]
+  projectBundles ProjectBundle[]
   clentCommunications     ClientCommunication[]
 
             
@@ -647,13 +650,28 @@ model JobStudy {
   @@index([projectId])
   @@map("jobStudy")
 }
+//TEMPLATES
+model WbsBundleTemplate {
+  id        String   @id @db.Uuid
+  bundleKey String   @unique
+  name      String
+  category  Activity   // MODELING | DETAILING | ERECTION
+  stage     Stage
+  isActive  Boolean  @default(true)
 
+  wbsTemplates WbsTemplate[]
+  projectBundleSelections ProjectBundleSelection[]
+  projectBundles ProjectBundle[]
+
+  @@map("wbs_bundle_template")
+}
 model WbsTemplate {
-  id            String   @id @default(uuid()) @db.Uuid
+  id            String   @id @db.Uuid
   name          String
-  type          Activity
-  templateKey   String   // logical key like "gridPlacement"
-  version       Int      @default(1)
+  templateKey   String   @unique
+
+  bundleKey     String
+  discipline    WbsDiscipline  // EXECUTION | CHECKING
 
   isActive      Boolean  @default(true)
   isDeleted     Boolean  @default(false)
@@ -661,14 +679,12 @@ model WbsTemplate {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  // RELATIONS
-  lineItems        WbsLineItemTemplate[]
-  projectSelections ProjectWbsSelection[]
-  projectWbs       ProjectWbs[]
+  bundle        WbsBundleTemplate @relation(fields: [bundleKey],references: [bundleKey],onDelete: Restrict)
 
-  @@unique([templateKey, version])
-  @@index([templateKey])
-  @@index([isActive])
+  lineItems     WbsLineItemTemplate[]
+  projectWbs    ProjectWbs[]
+
+  @@index([bundleKey])
 }
 
 model WbsLineItemTemplate {
@@ -693,53 +709,62 @@ model WbsLineItemTemplate {
   @@unique([wbsTemplateId, templateKey])
 }
 
+//PROJECT
+model ProjectBundleSelection {
+  id          String   @id @default(uuid()) @db.Uuid
+  projectId   String   @db.Uuid
+  bundleKey   String
+  selectedBy  String   @db.Uuid
+  selectedAt DateTime @default(now())
 
-model ProjectWbsSelection {
-  id              String   @id @default(uuid()) @db.Uuid
-  projectId       String   @db.Uuid
-  wbsTemplateId   String   @db.Uuid
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  bundle  WbsBundleTemplate @relation(fields: [bundleKey],references: [bundleKey],onDelete: Restrict)
+  selectedByUser User @relation(fields: [selectedBy], references: [id], onDelete: Cascade)
 
-  selectedAt      DateTime @default(now())
-  selectedById    String?  @db.Uuid
 
-  isActive        Boolean  @default(true)
+  @@unique([projectId, bundleKey])
+}
 
-  project         Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  wbsTemplate     WbsTemplate  @relation(fields: [wbsTemplateId], references: [id])
 
-  @@unique([projectId, wbsTemplateId])
-  @@index([projectId])
+
+model ProjectBundle {
+  id        String   @id @default(uuid()) @db.Uuid
+  projectId String   @db.Uuid
+  bundleKey String
+  stage     Stage
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  bundle  WbsBundleTemplate @relation(fields: [bundleKey],references: [bundleKey],onDelete: Restrict)
+
+  wbs ProjectWbs[]
+
+  @@unique([projectId, bundleKey, stage])
 }
 
 model ProjectWbs {
   id              String   @id @default(uuid()) @db.Uuid
   projectId       String   @db.Uuid
+  projectBundleId String   @db.Uuid
+  wbsTemplateKey  String
+  discipline      WbsDiscipline
   stage           Stage
 
-  wbsTemplateId   String   @db.Uuid
-  templateVersion Int
-
-  name            String
-  type            Activity
-
-  // Aggregates (project-specific)
+  // Aggregates
   totalQtyNo             Int    @default(0)
   totalCheckHr           Float  @default(0)
   totalExecHr            Float  @default(0)
   totalCheckHrWithRework Float  @default(0)
   totalExecHrWithRework  Float  @default(0)
 
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectBundle ProjectBundle @relation(fields: [projectBundleId], references: [id], onDelete: Cascade)
+  wbsTemplate WbsTemplate @relation(fields: [wbsTemplateKey], references: [templateKey])
 
-  project         Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  wbsTemplate     WbsTemplate  @relation(fields: [wbsTemplateId], references: [id])
+  lineItems ProjectLineItem[]
 
-  lineItems       ProjectLineItem[]
-
-  @@unique([projectId, stage, wbsTemplateId])
-  @@index([projectId, stage])
+  @@unique([projectBundleId, wbsTemplateKey])
 }
+
 
 model ProjectLineItem {
   id              String   @id @default(uuid()) @db.Uuid
@@ -764,59 +789,6 @@ model ProjectLineItem {
   template        WbsLineItemTemplate   @relation(fields: [lineItemTemplateId], references: [id])
 
   @@unique([projectWbsId, lineItemTemplateId])
-}
-
-
-
-model WorkBreakdown {
-  id                     String             @id @default(uuid()) @db.Uuid
-  type                   Activity       
-  name                   String       
-  createdAt              DateTime           @default(now())
-  projectId              String             @db.Uuid
-  templateKey            String             @default("")
-  updatedAt              DateTime           @updatedAt
-  stage                  Stage              @default(IFA)
-  totalCheckHr           Int                @default(0)
-  totalExecHr            Int                @default(0)
-  totalQtyNo             Int                @default(0)
-  totalCheckHrWithRework Float              @default(0.0)
-  totalExecHrWithRework  Float              @default(0.0)
-
-  // Relations
-  LineItems               ProjectLineItems[] @relation("subTasks")
-  project                Project            @relation("ProjectWorkBreakdown",fields: [projectId], references: [id],onDelete: Cascade)
-  @@index([projectId])
-  @@index([stage])
-  @@index([type])
-  @@map("wbsactivity")
-}
-
-model ProjectLineItems {
-  id                String        @id @default(uuid()) @db.Uuid
-  description       String  
-  unitTime          Float         @default(0.0)
-  CheckUnitTime     Float         @default(0.0)
-  QtyNo             Int           @default(0)
-  checkHr           Float         @default(0.0)
-  checkHrWithRework Float         @default(0.0)
-  execHrWithRework  Float         @default(0.0)
-  execHr            Float         @default(0.0)
-  projectID         String        @db.Uuid
-  workBreakDownID   String        @db.Uuid
-  createdAt         DateTime      @default(now())
-  parentTemplateKey String        @default("")
-  stage             Stage         @default(IFA)
-  updatedAt         DateTime      @updatedAt
-
-  // Relations
-  project           Project       @relation("LineItems", fields: [projectID], references: [id], onDelete: Cascade)
-  WBSACTIVITY       WorkBreakdown @relation("subTasks", fields: [workBreakDownID], references: [id], onDelete: Cascade)
-
-
-  @@index([projectID])
-  @@index([workBreakDownID])
-  @@map("subTasks")
 }
 
 model ProjectStageHistory {
