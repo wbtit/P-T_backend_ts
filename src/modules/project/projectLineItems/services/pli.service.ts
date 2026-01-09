@@ -2,88 +2,55 @@ import { PLIRepository } from "../repositories";
 import { AppError } from "../../../../config/utils/AppError";
 import prisma from "../../../../config/database/client";
 import { recomputeProjectWbsTotals } from "../utils/recomputeWbsTotal";
+import { recomputeProjectBundleTotals } from "../../WBS/utils/recomputeBundleTotals";
+
 
 const projectLineItemRepository = new PLIRepository();
 
 export class PLIService {
-  /**
-   * ======================================
-   * GET LINE ITEMS BY PROJECT WBS
-   * ======================================
-   */
-  async getByWbs(projectId: string, projectWbsId: string) {
-    const wbs = await prisma.projectWbs.findFirst({
-      where: {
-        id: projectWbsId,
-        projectId,
-      },
-      select: { id: true },
-    });
-
-    if (!wbs) {
-      throw new AppError("WBS not found for this project", 404);
-    }
-
+  async getByWbs(projectWbsId: string) {
     return projectLineItemRepository.findByWbs(projectWbsId);
   }
 
-  /**
-   * ======================================
-   * UPDATE SINGLE LINE ITEM
-   * ======================================
-   */
   async updateOne(
-    projectId: string,
-    lineItemId: string,
+    id: string,
     data: {
       qtyNo?: number;
       execHr?: number;
       checkHr?: number;
       execHrWithRework?: number;
       checkHrWithRework?: number;
-      unitTime?: number;
       checkUnitTime?: number;
+      unitTime?: number;
     }
   ) {
-    return prisma.$transaction(async tx => {
-      const item = await projectLineItemRepository.findById(tx, lineItemId);
-      if (!item) {
-        throw new AppError("Line item not found", 404);
-      }
+    return prisma.$transaction(async (tx) => {
+      // 1️⃣ Fetch line item
+      const item = await projectLineItemRepository.findById(tx, id);
+      if (!item) throw new AppError("Line item not found", 404);
 
-      // 🔒 Project ownership validation
-      const wbs = await tx.projectWbs.findFirst({
-        where: {
-          id: item.projectWbsId,
-          projectId,
-        },
-        select: { id: true },
+      // 2️⃣ Update line item
+      const updated = await projectLineItemRepository.update(tx, id, data);
+
+      // 3️⃣ Recompute WBS totals
+      await recomputeProjectWbsTotals(tx, item.projectWbsId);
+
+      // 4️⃣ Fetch ProjectWbs to get projectBundleId
+      const wbs = await tx.projectWbs.findUnique({
+        where: { id: item.projectWbsId },
+        select: { projectBundleId: true },
       });
 
-      if (!wbs) {
-        throw new AppError("Unauthorized line item access", 403);
+      if (wbs?.projectBundleId) {
+        // 5️⃣ Recompute Bundle totals
+        await recomputeProjectBundleTotals(tx, wbs.projectBundleId);
       }
-
-      const updated = await projectLineItemRepository.update(
-        tx,
-        lineItemId,
-        data
-      );
-
-      // 🔁 Recompute WBS aggregates
-      await recomputeProjectWbsTotals(tx, item.projectWbsId);
 
       return updated;
     });
   }
 
-  /**
-   * ======================================
-   * BULK UPDATE LINE ITEMS
-   * ======================================
-   */
   async bulkUpdate(
-    projectId: string,
     items: {
       id: string;
       qtyNo?: number;
@@ -93,39 +60,37 @@ export class PLIService {
       checkUnitTime?: number;
     }[]
   ) {
-    return prisma.$transaction(async tx => {
+    return prisma.$transaction(async (tx) => {
       const affectedWbsIds = new Set<string>();
+      const affectedBundleIds = new Set<string>();
 
+      // 1️⃣ Update all line items
       for (const item of items) {
-        const existing = await projectLineItemRepository.findById(
-          tx,
-          item.id
-        );
+        const existing = await projectLineItemRepository.findById(tx, item.id);
         if (!existing) continue;
-
-        // 🔒 Project ownership validation
-        const wbs = await tx.projectWbs.findFirst({
-          where: {
-            id: existing.projectWbsId,
-            projectId,
-          },
-          select: { id: true },
-        });
-
-        if (!wbs) continue;
 
         affectedWbsIds.add(existing.projectWbsId);
 
-        await projectLineItemRepository.update(
-          tx,
-          item.id,
-          item
-        );
+        await projectLineItemRepository.update(tx, item.id, item);
       }
 
-      // 🔁 Recompute affected WBS totals
+      // 2️⃣ Recompute all affected WBS
       for (const wbsId of affectedWbsIds) {
         await recomputeProjectWbsTotals(tx, wbsId);
+
+        const wbs = await tx.projectWbs.findUnique({
+          where: { id: wbsId },
+          select: { projectBundleId: true },
+        });
+
+        if (wbs?.projectBundleId) {
+          affectedBundleIds.add(wbs.projectBundleId);
+        }
+      }
+
+      // 3️⃣ Recompute affected Bundles (ONLY ONCE EACH)
+      for (const bundleId of affectedBundleIds) {
+        await recomputeProjectBundleTotals(tx, bundleId);
       }
     });
   }

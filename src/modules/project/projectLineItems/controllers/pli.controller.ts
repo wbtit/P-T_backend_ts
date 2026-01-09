@@ -6,12 +6,9 @@ const projectLineItemService = new PLIService();
 
 export class PLIController {
   async getLineItems(req: Request, res: Response) {
-    const { projectId, projectWbsId } = req.params;
+    const { projectWbsId } = req.params;
 
-    const items = await projectLineItemService.getByWbs(
-      projectId,
-      projectWbsId
-    );
+    const items = await projectLineItemService.getByWbs(projectWbsId);
 
     res.status(200).json({
       status: "success",
@@ -20,10 +17,9 @@ export class PLIController {
   }
 
   async updateLineItem(req: Request, res: Response) {
-    const { projectId, lineItemId } = req.params;
+    const { lineItemId } = req.params;
 
     const item = await projectLineItemService.updateOne(
-      projectId,
       lineItemId,
       req.body
     );
@@ -35,14 +31,13 @@ export class PLIController {
   }
 
   async bulkUpdateLineItems(req: Request, res: Response) {
-    const { projectId } = req.params;
     const { items } = req.body;
 
     if (!Array.isArray(items)) {
       throw new AppError("Items must be an array", 400);
     }
 
-    await projectLineItemService.bulkUpdate(projectId, items);
+    await projectLineItemService.bulkUpdate(items);
 
     res.status(200).json({
       status: "success",

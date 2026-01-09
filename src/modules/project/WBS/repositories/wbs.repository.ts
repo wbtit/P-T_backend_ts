@@ -115,23 +115,36 @@ export class WbsRepository {
    * =========================================
    */
   async getBundleBreakdownStats(
-    projectId: string,
-    stage: Stage,
-    bundleKey: string
-  ) {
-    const rows = await prisma.projectWbs.findMany({
-      where: { projectId, stage },
-      include: {
-        projectBundle: true,
+  projectId: string,
+  stage: Stage,
+  bundleKey: string
+) {
+  return prisma.projectBundle.findUnique({
+    where: {
+      projectId_bundleKey_stage: {
+        projectId,
+        bundleKey,
+        stage,
       },
-    });
+    },
+    select: {
+      bundleKey: true,
+      stage: true,
+      totalQtyNo: true,
+      totalExecHr: true,
+      totalCheckHr: true,
+      totalExecHrWithRework: true,
+      totalCheckHrWithRework: true,
+      bundle: {
+        select: {
+          name: true,
+          category: true,
+        },
+      },
+    },
+  });
+}
 
-    const filtered = rows.filter(
-      r => r.projectBundle.bundleKey === bundleKey
-    );
-
-    return this.aggregateRows(filtered);
-  }
 
   /**
    * =========================================
