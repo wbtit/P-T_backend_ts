@@ -1,12 +1,13 @@
-import { Prisma } from "@prisma/client";
+import { Prisma,FabricatirStage } from "@prisma/client";
 import z from "zod";
 
 export const CreateFabricatorSchema=z.object({
     fabName:z.string().min(1,{message:"Fabricator name is required"}),
     website:z.string({message:"Invalid website URL"}).optional(),
     drive:z.string({message:"Invalid drive link"}).optional(),
-    currencyType:z.string().optional(),
+    currencyType:z.string(),
     accountId:z.string().optional(),
+    fabStage:z.enum(FabricatirStage),
     files: z
                 .union([
                   z.array(z.any()),

@@ -89,6 +89,8 @@ import {
         drive: data.drive ?? null,
         files: data.files ?? [],
         accountId: data.accountId ?? null,
+        currencyType: data.currencyType,
+        fabStage: data.fabStage,
       },
       include:{
         branches:true,

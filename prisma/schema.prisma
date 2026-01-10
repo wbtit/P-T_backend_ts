@@ -210,6 +210,10 @@ enum WbsDiscipline {
   EXECUTION
   CHECKING
 }
+enum FabricatirStage{
+  RFQ
+  PRODUCTION
+}
 // ===========================================================
 // MODELS
 // ===========================================================
@@ -329,6 +333,8 @@ model Fabricator {
   isDeleted    Boolean     @default(false) @map("is_bin")
   currencyType String     @default("")
   accountId    String?     @unique @db.Uuid
+  fabStage     FabricatirStage      @default(RFQ)
+
 
   // Relations      
   branches     Branch[]    @relation("FabricatorBranches")
