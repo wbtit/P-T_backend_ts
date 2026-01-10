@@ -161,6 +161,12 @@ export const connectionDesignerCertificatesmap={}
 export const connectionDesignerCertificatesUploads = createMulterUploader("public/connectiondesignerscertificates", connectionDesignerCertificatesmap);
 
 
+export const vendorMap = {};
+export const vendorUploads = createMulterUploader("public/vendors", vendorMap);
+
+export const vendorCertificatesMap = {};
+export const vendorCertificatesUploads = createMulterUploader("public/vendorcertificates", vendorCertificatesMap);
+
 export const notesDataMap={}
 export const notesUploads = createMulterUploader("public/notes", notesDataMap);
 
