@@ -214,6 +214,16 @@ enum FabricatirStage{
   RFQ
   PRODUCTION
 }
+
+enum ProjectComplexity{
+  TRIVIAL
+  SIMPLE
+  MODERATE
+  COMPLEX
+  VERY_COMPLEX
+  ENTERPRISE
+
+}
 // ===========================================================
 // MODELS
 // ===========================================================
@@ -973,6 +983,7 @@ model Estimation {
   estimationNumber String               @unique
   fabricatorName   String?
   projectName      String
+  projectComplexity ProjectComplexity?
   description      String?
   estimateDate     DateTime
   status           EstimationStatus     @default(DRAFT)
