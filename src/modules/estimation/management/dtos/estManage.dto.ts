@@ -1,11 +1,11 @@
 import { z } from "zod";
-import { EstimationStatus, Prisma,projectComplexity } from "@prisma/client";
+import { EstimationStatus, Prisma,ProjectComplexity } from "@prisma/client";
 
 export const EstimationSchema = z.object({
     estimationNumber: z.string().min(1, "Estimation number is required"),
     fabricatorName: z.string().optional(),
     projectName: z.string().min(1, "Project name is required"),
-    projectComplexity:z.enum(projectComplexity),
+    projectComplexity:z.enum(ProjectComplexity),
     description: z.string().optional(),
     estimateDate: z.coerce.date(), // coerce string/number to Date
     status: z.enum(EstimationStatus),

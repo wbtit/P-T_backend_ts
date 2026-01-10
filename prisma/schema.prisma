@@ -248,6 +248,7 @@ model User {
   address         String?     @default("")
   role            UserRole
   connectionDesignerId String?   @db.Uuid
+  vendorId        String?   @db.Uuid
   departmentId    String?     @db.Uuid
   isActive        Boolean     @default(true) @map("is_active")
   isFirstLogin    Boolean     @default(true) @map("is_firstLogin")
@@ -255,6 +256,7 @@ model User {
   createdAt       DateTime    @default(now())
 
   // Relations
+  vendorPOC          Vendor?             @relation("userOfvendor",fields: [vendorId],references: [id])
   connectionDesigner ConnectionDesigner? @relation("userOfConnectionDesigner", fields: [connectionDesignerId], references: [id])
   department            Department?          @relation("UserOfTheDepartment",fields: [departmentId], references: [id])
   managedDepartment     Department[]         @relation("ManagerOfDepartment")
@@ -420,6 +422,63 @@ model ConnectionDesignerQuota{
 
 }
 
+
+model Vendor{
+  id           String       @id @default(uuid()) @db.Uuid
+  name         String       @default("")
+  state        Json         @default("[]")
+  contactInfo  String?       @default("")
+  websiteLink  String?      @default("")
+  email        String?      @default("")
+  location     String?      @default("")
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  isDeleted    Boolean      @default(false) @map("is_bin") 
+  files        Json?        @default("[]")
+  certificates Json?        @default("[]")
+  insurenceLiability    String      @default("")
+
+
+  // Relations
+  pointOfContacts  User[]       @relation("userOfvendor") 
+  
+
+  RFQs         RFQ[] @relation("RFQ_vendor")
+  vendorQuotations VendorQuota[] @relation("vendorQuotas")
+  project     Project[]     @relation("awardedVendorProjects")
+
+  @@map("vendor")
+ }
+
+
+model VendorQuota{
+  id                  String      @id @default(uuid()) @db.Uuid
+  vendorId            String      @db.Uuid
+  rfqId               String?      @db.Uuid
+  bidprice            String? 
+  estimatedHours      String
+  weeks               String
+  approvalStatus      Boolean      @default(false)
+  approvalDate        DateTime?
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
+  isDeleted           Boolean     @default(false)
+  deletedAt           DateTime?
+
+
+
+  // Relations
+  vendor  Vendor  @relation("vendorQuotas",fields: [vendorId], references: [id])
+  rfq                 RFQ?                 @relation("referRFQsByVendor",fields: [rfqId], references: [id])
+  awardedProjects    Project?            @relation("vendorAwardedQuota")
+
+  @@index([vendorId])
+  @@map("vendorQuota")
+
+}
+
+
+
 model Branch {
   id             String      @id @default(uuid()) @db.Uuid
   fabricatorId   String      @db.Uuid
@@ -515,8 +574,10 @@ model RFQ {
   deletedAt        DateTime?
 
   //Relations
+  vendorRFQ        Vendor[]   @relation("RFQ_vendor")
   connectionDesignerRFQ ConnectionDesigner[] @relation("RFQ_ConnectionDesigner")
   CDQuotas         ConnectionDesignerQuota[] @relation("referRFQs")
+  vendorQuotas     VendorQuota[] @relation("referRFQsByVendor")
   fabricator       Fabricator?  @relation("fabricatorRFQ",fields: [fabricatorId], references: [id])
   recipient        User         @relation("ReceiverRFQ", fields: [recipientId], references: [id])
   salesPerson      User?        @relation("SalesPersonRFQ", fields: [salesPersonId], references: [id])
@@ -574,7 +635,9 @@ model Project{
   teamID                 String?                @db.Uuid
   managerID              String                 @db.Uuid
   connectionDesignerID   String?                @db.Uuid
+  vendorId               String?                @db.Uuid
   CDQuataionID           String?                @unique @db.Uuid
+  vendorquotatioID       String?                @unique @db.Uuid
   rfqId                  String?                @unique @db.Uuid
   status                 Status                 @default(ACTIVE)
   stage                  Stage                  @default(RFI)
@@ -602,8 +665,10 @@ model Project{
   detailingMisc          Boolean                @default(false)   
   
   //Relations
+  vendorAwardedQuota     VendorQuota?   @relation("vendorAwardedQuota",fields: [vendorquotatioID],references: [id])
   awardedQuota ConnectionDesignerQuota? @relation("awardedQuota", fields: [CDQuataionID], references: [id])
   connectionDesigner      ConnectionDesigner?  @relation("awardedConnectionDesignerProjects", fields: [connectionDesignerID], references: [id])
+  vendor                 Vendor?              @relation("awardedVendorProjects", fields: [vendorId], references: [id])
   pocOfConnectionDesigner User[]               @relation("pocOfConnectionDesignerProjects")
   department             Department            @relation("projectDepartment", fields: [departmentID], references: [id])
   stageHistory           ProjectStageHistory[]
