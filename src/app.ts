@@ -27,6 +27,8 @@ import {lineItemRoutes} from "./modules/estimation/lineItems";
 import { communicationRouter} from "./modules/communications"
 import { dashBoradDataRouter } from "./modules/dashboradData";
 import { WbsTemplatesRouter } from "./modules/project/WBS/WbsTemplates";
+import { verndorRoute } from "./modules/vendors";
+import { vendorQuotaRoute } from "./modules/vendors";
 
 const routes = express.Router();
 
@@ -58,4 +60,10 @@ routes.use("/estimation/line-items",lineItemRoutes)
 routes.use("/communications",communicationRouter)
 routes.use("/dashBoardData",dashBoradDataRouter)
 routes.use("/wbsTemplates",WbsTemplatesRouter)
+routes.use("/vendors",verndorRoute)
+routes.use("/vendorQuota",vendorQuotaRoute)
+
+
+
+
 export default routes
