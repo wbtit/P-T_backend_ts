@@ -7,6 +7,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'youDefaultSecret';
 
 export interface AuthenticateRequest extends Request {
   user?: UserJwt;
+  certificates?: Express.Multer.File[];
 }
 
 const authMiddleware = (

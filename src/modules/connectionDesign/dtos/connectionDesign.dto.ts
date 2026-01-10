@@ -1,5 +1,4 @@
 import { Prisma } from "@prisma/client";
-import { create } from "domain";
 import z from "zod";
 
 
@@ -19,6 +18,14 @@ export const ConnectionDesignerSchema = z.object({
         ])
         .transform((val) => (val === null ? Prisma.JsonNull : val))
         .optional(),
+  certificates: z
+        .union([
+          z.array(z.any()),
+          z.literal(null),
+        ])
+        .transform((val) => (val === null ? Prisma.JsonNull : val))
+        .optional(),
+  insurenceLiability:z.string().optional(),      
   createdById: z.string().optional(),
 });
 export const updateConnectionDesignerSchema = ConnectionDesignerSchema.partial();

@@ -26,6 +26,7 @@ export class ConnectionDesignerService {
     const connectionDesigner = await cdRepo.create({
       ...data,
       files: data.files ?? [],
+      certificates:data.certificates ?? [],
     });
 
     return connectionDesigner;

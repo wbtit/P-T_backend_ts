@@ -22,10 +22,15 @@ export class ConnectionDesignerController {
       (req.files as Express.Multer.File[]) || [],
       "connectionDesigners"
     );
+    const certificates = mapUploadedFiles(
+      req.certificates as Express.Multer.File[],
+      "certificates"
+    )
 
     const payload = {
       ...body,
       files: uploadedFiles,
+      certificates:certificates
     };
 
     const designer = await this.cdService.createConnectionDesigner(payload);
@@ -80,10 +85,15 @@ export class ConnectionDesignerController {
       (req.files as Express.Multer.File[]) || [],
       "connectionDesigners"
     );
+    const certificates = mapUploadedFiles(
+      req.certificates as Express.Multer.File[],
+      "certificates"
+    )
 
     const payload = {
       ...body,
       files: uploadedFiles,
+      certificates:certificates
     };
 
     const updated = await this.cdService.updateConnectionDesigner(id, payload);

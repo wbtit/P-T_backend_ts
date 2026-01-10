@@ -362,6 +362,9 @@ model Fabricator {
   updatedAt    DateTime     @updatedAt
   isDeleted    Boolean      @default(false) @map("is_bin") 
   files        Json?        @default("[]")
+  certificates Json?        @default("[]")
+  insurenceLiability    String      @default("")
+
 
   // Relations
   CDEngineers  User[]       @relation("userOfConnectionDesigner") 

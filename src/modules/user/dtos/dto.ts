@@ -38,8 +38,7 @@ export const createUserSchema = z.object({
   role: z.string(),
   departmentId: z.string().nullable().optional(),
   fabricatorId:z.string().optional(),
-  connectionDesignerId:z.string().optional(),
-  connectionDesignerPOCId:z.string().optional()
+  connectionDesignerId:z.string().optional()
 });
 
 export const UpdateUserSchema=createUserSchema.partial()
