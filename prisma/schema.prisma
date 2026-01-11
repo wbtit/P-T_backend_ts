@@ -832,6 +832,7 @@ model ProjectBundle {
 
 
   wbs ProjectWbs[]
+  tasks Task[]
 }
 
 
@@ -935,6 +936,7 @@ model Task {
   start_date         DateTime
   Stage              Stage           @default(IFA)
   departmentId       String          @db.Uuid
+  project_bundle_id  String?         @db.Uuid
   updatedAt          DateTime        @updatedAt
 
   //Relations
@@ -948,6 +950,7 @@ model Task {
   allocationLog      TaskAllocation? @relation("allocationLog")
   alert              TaskAlert[] @relation("taskAllocationAlerts")
   flags              TaskFlag[]   @relation("taskAllocationFlags")
+  projectBundle      ProjectBundle?  @relation(fields: [project_bundle_id], references: [id])
 
   @@index([name])
   @@index([status])

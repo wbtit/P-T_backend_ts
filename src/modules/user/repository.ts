@@ -51,11 +51,7 @@ export const createUser = async (user: createUserInput) => {
       ...(user.connectionDesignerId
         ? { connectionDesigner: { connect: { id: user.connectionDesignerId } } }
         : {}),
-      ...(user.connectionDesignerPOCId
-        ? {
-            connectionDesignerPOC: { connect: { id: user.connectionDesignerPOCId } },
-          }
-        : {})
+
     },
   });
 };

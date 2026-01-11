@@ -17,6 +17,7 @@ export const createTaskDto = z.object({
     project_id: z.string(),
     user_id: z.string(),
     departmentId: z.string(),
+    project_bundle_id: z.string().optional(),
 });
 export const updateTaskDto = createTaskDto.partial()
 
