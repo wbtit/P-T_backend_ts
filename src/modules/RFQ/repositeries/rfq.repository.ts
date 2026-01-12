@@ -131,4 +131,19 @@ export class RFQRepository {
         }
         })
     }
+getbyProjectNameAndLocation(projectName:string,location:string){
+    return prisma.rFQ.findFirst({
+        where:{
+            projectName,
+            location
+        },include:{
+            sender: true,
+            recipient: true,
+            salesPerson: true,
+            responses:true,
+            fabricator:true,
+            project: {select:{name:true}},
+        }
+    });
+    }
 }

@@ -20,11 +20,12 @@ export class RFQController {
       (req.files as Express.Multer.File[]) || [],
       "rfq"
     );  console.log("req.body of rfq: ", req.body);
-        const newrfq = await rfqService.createRfq({
+        const result = await rfqService.createRfq({
           ...req.body,
           files: uploadedFiles,
         }, id);
-        console.log("newrfq created: ", newrfq);
+        console.log("rfq created: ", result);
+        const newrfq = result.newRfq;
         const email = newrfq.recipient.email; // This might be null
         if (!email) {
           throw new Error("No recipient email provided");
@@ -37,7 +38,7 @@ export class RFQController {
             });
                 res.status(201).json({
                     status: 'success',
-                    data: newrfq,
+                    data: result,
                 });
     }
     async handleUpdateRfq(req:AuthenticateRequest,res:Response){

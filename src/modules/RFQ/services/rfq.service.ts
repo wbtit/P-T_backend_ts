@@ -4,7 +4,6 @@ import { CreateRfqInput,
     UpdateRfqInput
  } from "../dtos";
 import { AppError } from "../../../config/utils/AppError";
-import { Request } from "express";
 import { FileObject } from "../../../shared/fileType";
 
 import path from "path";
@@ -17,17 +16,18 @@ const rfqrepo= new RFQRepository();
 
 export class RFQService {
     async createRfq(data: CreateRfqInput, createdById: string) {
-    
+
 
     // Use senderId from data if provided, otherwise fallback to createdById
     const senderId = data.senderId ?? createdById;
+    const duplicateRfq = await rfqrepo.getbyProjectNameAndLocation(data.projectName, data.location || "");
 
     const rfq = await rfqrepo.create({
         ...data,
         senderId
     });
 
-    return rfq;
+    return { newRfq: rfq, duplicateRfq };
 }
 
     async updateRfq(id:string,data:UpdateRfqInput){

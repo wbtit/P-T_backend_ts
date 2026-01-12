@@ -547,6 +547,7 @@ model RFQ {
   id               String        @id @default(uuid()) @db.Uuid
   projectNumber    String?       @default("")
   projectName      String
+  location         String?       @default("")
   bidPrice         String?
   senderId         String?       @db.Uuid
   recipientId      String        @db.Uuid
