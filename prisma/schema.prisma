@@ -1052,7 +1052,7 @@ model Estimation {
   estimationNumber String               @unique
   fabricatorName   String?
   projectName      String
-  projectComplexity ProjectComplexity?
+  projectComplexity ProjectComplexity?  @default(MODERATE)
   description      String?
   estimateDate     DateTime
   status           EstimationStatus     @default(DRAFT)
