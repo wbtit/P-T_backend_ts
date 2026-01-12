@@ -211,7 +211,15 @@ export class WbsRepository {
             category: true,
           },
         },
-        wbs:true
+        wbs:{
+          include:{
+            wbsTemplate:{
+              select:{
+                name:true
+              }
+            }
+          }
+        }
       },
     });
   }

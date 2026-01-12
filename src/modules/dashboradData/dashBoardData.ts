@@ -51,71 +51,71 @@ export const DashBoradData = async (
       }
     }
 
-    const [
-      projectStats,
-      totalProjects,
-      activeEmployeeCount,
-      pendingRFI,
-      pendingChangeOrders,
-      pendingRFQ,
-      pendingSubmittals,
-    ] = await Promise.all([
-      prisma.project.groupBy({
-        by: ["status"],
-        _count: { _all: true },
-        where: projectFilter,
-      }),
+    const projectStats = await prisma.project.groupBy({
+      by: ["status"],
+      _count: { _all: true },
+      where: projectFilter,
+    });
 
-      prisma.project.count({ where: projectFilter }),
+    const totalProjects = await prisma.project.count({ where: projectFilter });
 
-      prisma.user.count({ where: { isActive: true } }),
+    const activeEmployeeCount = await prisma.user.count({ where: { isActive: true } });
 
-      prisma.rFI.count({
-    
-        where: {
-    NOT: {
-      rfiresponse: {
-        some: {
-          childResponses: {
-            some: {
-              [role === "CLIENT" || role === "CLIENT_ADMIN"
-                         ? "responseState"
-                         : "wbtStatus"]: "COMPLETE",
-            },
+    const pendingRFI = await prisma.rFI.count({
+
+      where: {
+  NOT: {
+    rfiresponse: {
+      some: {
+        childResponses: {
+          some: {
+            [role === "CLIENT" || role === "CLIENT_ADMIN"
+                       ? "responseState"
+                       : "wbtStatus"]: "COMPLETE",
           },
         },
       },
     },
   },
-      }),
+},
+    });
 
-      prisma.changeOrder.count({
-        where: {
-          NOT:{
-            coResponses: {
-            some: {
-              childResponses: {
-                some: { Status: "ACCEPT" },
-              },
+    const pendingChangeOrders = await prisma.changeOrder.count({
+      where: {
+        NOT:{
+          coResponses: {
+          some: {
+            childResponses: {
+              some: { Status: "ACCEPT" },
             },
-          }, 
+          },
+        },
+        }
+      },
+    });
+
+    const newRFQ = await prisma.rFQ.count({
+      where: {
+        responses: { none: {} },
+      },
+    });
+    const pendingRFQ = await prisma.rFQ.count({
+     where:{
+      NOT:{
+        responses:{
+          some:{
+            childResponses:{none:{}}
           }
-        },
-      }),
-
-      prisma.rFQ.count({
-        where: {
-          responses: { none: {} },
-        },
-      }),
-
-      prisma.submittals.count({
-        where: {
-          status: false,
-          currentVersion: { isNot: null },
-        },
-      }),
-    ]);
+        }
+      }
+     }
+    });
+    const pendingSubmittals = await prisma.submittals.count({
+      where: {
+        status: false,
+        currentVersion: { isNot: null },
+      },
+    });
 
     const response = {
       totalProjects,
@@ -125,6 +125,7 @@ export const DashBoradData = async (
       totalOnHoldProject: 0,
       pendingRFI,
       pendingChangeOrders,
+      newRFQ,
       pendingRFQ,
       pendingSubmittals,
     };
