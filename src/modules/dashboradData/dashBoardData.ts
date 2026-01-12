@@ -62,22 +62,27 @@ export const DashBoradData = async (
     const activeEmployeeCount = await prisma.user.count({ where: { isActive: true } });
 
     const pendingRFI = await prisma.rFI.count({
-
-      where: {
-  NOT: {
-    rfiresponse: {
-      some: {
-        childResponses: {
-          some: {
-            [role === "CLIENT" || role === "CLIENT_ADMIN"
-                       ? "responseState"
-                       : "wbtStatus"]: "COMPLETE",
+              where: {
+          NOT: {
+            rfiresponse: {
+              some: {
+                childResponses: {
+                  some: {
+                    [role === "CLIENT" || role === "CLIENT_ADMIN"
+                               ? "responseState"
+                               : "wbtStatus"]: "COMPLETE",
+                  },
+                },
+              },
+            },
           },
         },
+    });
+
+    const newRFI = await prisma.rFI.count({
+      where: {
+        rfiresponse: { none: {} },
       },
-    },
-  },
-},
     });
 
     const pendingChangeOrders = await prisma.changeOrder.count({
@@ -91,6 +96,11 @@ export const DashBoradData = async (
           },
         },
         }
+      },
+    });
+    const newChangeOrders = await prisma.changeOrder.count({
+      where: {
+        coResponses: { none: {} },
       },
     });
 
@@ -116,7 +126,6 @@ export const DashBoradData = async (
         currentVersion: { isNot: null },
       },
     });
-
     const response = {
       totalProjects,
       activeEmployeeCount,
@@ -124,7 +133,9 @@ export const DashBoradData = async (
       totalCompleteProject: 0,
       totalOnHoldProject: 0,
       pendingRFI,
+      newRFI,
       pendingChangeOrders,
+      newChangeOrders,
       newRFQ,
       pendingRFQ,
       pendingSubmittals,

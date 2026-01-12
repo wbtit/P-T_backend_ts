@@ -40,12 +40,13 @@ export async function recomputeProjectBundleTotals(
     if (wbs.discipline === "EXECUTION") {
       execHr += wbs.totalExecHr || 0;
       execHrRw += wbs.totalExecHrWithRework || 0;
-    }
-
-    if (wbs.discipline === "CHECKING") {
-      checkHr += wbs.totalCheckHr || 0;
+       checkHr += wbs.totalCheckHr || 0;
       checkHrRw += wbs.totalCheckHrWithRework || 0;
     }
+
+    // if (wbs.discipline === "CHECKING") {
+     
+    // }
   }
 
   // 3️⃣ Update ProjectBundle
