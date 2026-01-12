@@ -5,6 +5,15 @@ import { cleandata } from "../../../config/utils/cleanDataObject";
 export class TaskRepository {
     async create(data: createTaskInput) {
         const cleanData = cleandata(data)
+        // Validate project_bundle_id if provided
+        if (cleanData.project_bundle_id) {
+            const bundleExists = await prisma.projectBundle.findUnique({
+                where: { id: cleanData.project_bundle_id }
+            });
+            if (!bundleExists) {
+                throw new Error("Invalid project_bundle_id: ProjectBundle not found");
+            }
+        }
         await prisma.$transaction(async (tx) => {
             const task = await tx.task.create({
                 data: {

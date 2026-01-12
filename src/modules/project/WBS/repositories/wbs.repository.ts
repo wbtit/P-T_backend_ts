@@ -195,9 +195,10 @@ export class WbsRepository {
   async getProjectBundleBYProjectId(
     projectId: string
   ) {
-    return prisma.projectBundle.findMany({
+    const project = await prisma.projectBundle.findMany({
       where: { projectId },
       select: {
+        id:true,
         bundleKey: true,
         stage: true,
         totalQtyNo: true,
@@ -219,8 +220,13 @@ export class WbsRepository {
               }
             }
           }
+        },
+        tasks:{
+          select:{allocationLog:true}
         }
       },
     });
   }
+  
+  
 }
