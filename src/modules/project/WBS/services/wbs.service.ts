@@ -108,5 +108,11 @@ export class WbsService {
     );
   }
 
-  
+  async getProjectBundleBYProjectId(
+    projectId: string
+  ) {
+    return wbsRepository.getProjectBundleBYProjectId(
+      projectId
+    );
+  }
 }

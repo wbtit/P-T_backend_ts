@@ -87,4 +87,21 @@ export class WbsController {
       data: result,
     });
   }
+
+
+  //getProjectBundleBYProjectId
+  async getProjectBundleBYProjectId(req: Request, res: Response) {
+    const { projectId } = req.params;
+
+    const result = await wbsService.getProjectBundleBYProjectId(
+      projectId
+    );
+
+    return res.status(200).json({
+      status: "success",
+      data: result,
+    });
+  }
 }
+
+

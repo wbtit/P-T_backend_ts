@@ -192,4 +192,27 @@ export class WbsRepository {
       data,
     });
   }
+  async getProjectBundleBYProjectId(
+    projectId: string
+  ) {
+    return prisma.projectBundle.findMany({
+      where: { projectId },
+      select: {
+        bundleKey: true,
+        stage: true,
+        totalQtyNo: true,
+        totalExecHr: true,
+        totalCheckHr: true,
+        totalExecHrWithRework: true,
+        totalCheckHrWithRework: true,
+        bundle: {
+          select: {
+            name: true,
+            category: true,
+          },
+        },
+        wbs:true
+      },
+    });
+  }
 }

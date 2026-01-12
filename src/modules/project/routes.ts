@@ -179,6 +179,14 @@ router.get(
     wbsController.getBundleBreakdownStats.bind(wbsController)
   )
 );
+//getProjectBundleBYProjectId
+router.get(
+  "/projects/:projectId/bundles",
+  authMiddleware,
+  asyncHandler(
+    wbsController.getProjectBundleBYProjectId.bind(wbsController)
+  )
+)
 
 // ===========================================================
 // NOTES ROUTES
