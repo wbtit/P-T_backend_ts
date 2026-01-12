@@ -19,11 +19,11 @@ export class ConnectionDesignerController {
     if (!userId) throw new AppError("createdById is required", 400);
 
     const uploadedFiles = mapUploadedFiles(
-      (req.files as Express.Multer.File[]) || [],
+      (req.files as { [fieldname: string]: Express.Multer.File[] })?.files || [],
       "connectionDesigners"
     );
     const certificates = mapUploadedFiles(
-      req.certificates as Express.Multer.File[],
+      (req.files as { [fieldname: string]: Express.Multer.File[] })?.certificates || [],
       "certificates"
     )
 
@@ -82,11 +82,11 @@ export class ConnectionDesignerController {
     if (!userId) throw new AppError("createdById is required", 400);
 
     const uploadedFiles = mapUploadedFiles(
-      (req.files as Express.Multer.File[]) || [],
+      (req.files as { [fieldname: string]: Express.Multer.File[] })?.files || [],
       "connectionDesigners"
     );
     const certificates = mapUploadedFiles(
-      req.certificates as Express.Multer.File[],
+      (req.files as { [fieldname: string]: Express.Multer.File[] })?.certificates || [],
       "certificates"
     )
 

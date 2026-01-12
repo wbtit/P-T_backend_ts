@@ -154,11 +154,39 @@ export const designUploads = createMulterUploader("public/designdrawings", desig
 export const designDrawingResponseDataMap = {};
 export const designResponseUploads = createMulterUploader("public/designdrawingresponse", designDrawingResponseDataMap);
 
-export const connectionDesignerDataMap={}
+export const connectionDesignerDataMap: Record<string, FileMeta> = {}
 export const connectionDesignerUploads = createMulterUploader("public/connectiondesigners", connectionDesignerDataMap);
 
-export const connectionDesignerCertificatesmap={}
+export const connectionDesignerCertificatesmap: Record<string, FileMeta> = {}
 export const connectionDesignerCertificatesUploads = createMulterUploader("public/connectiondesignerscertificates", connectionDesignerCertificatesmap);
+
+// Combined uploader for connectionDesign with multiple fields
+export const connectionDesignerCombinedUploads = multer({
+  storage: multer.diskStorage({
+    destination: (_req, _file, cb) => {
+      const dir = _file.fieldname === 'files' ? "public/connectiondesigners" : "public/connectiondesignerscertificates";
+      if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+      cb(null, dir);
+    },
+    filename: (_req, file, cb) => {
+      const id = uuidv4();
+      const ext = path.extname(file.originalname);
+      const newName = `${id}${ext}`;
+      const map = file.fieldname === 'files' ? connectionDesignerDataMap : connectionDesignerCertificatesmap;
+      map[newName] = {
+        originalName: file.originalname,
+        uuid: id,
+        mimetype: file.mimetype,
+      };
+      cb(null, newName);
+    },
+  }),
+  limits: { fileSize: 3000 * 1024 * 1024 }, // 3GB
+  fileFilter: (req, file, cb) => validateFile(req, file, cb),
+}).fields([
+  { name: 'files', maxCount: 50 },
+  { name: 'certificates', maxCount: 50 }
+]);
 
 
 export const vendorMap = {};

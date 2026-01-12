@@ -5,7 +5,7 @@ import { asyncHandler } from "../../config/utils/asyncHandler";
 import authMiddleware from "../../middleware/authMiddleware";
 
 import z from "zod";
-import { connectionDesignerCertificatesUploads, connectionDesignerUploads } from "../../utils/multerUploader.util";
+import { connectionDesignerCertificatesUploads, connectionDesignerUploads, connectionDesignerCombinedUploads } from "../../utils/multerUploader.util";
 
 import {
   ConnectionDesignerSchema,
@@ -23,8 +23,7 @@ const cdCtrl = new ConnectionDesignerController();
 router.post(
   "/",
   authMiddleware,
-  connectionDesignerUploads.array("files"),
-  connectionDesignerCertificatesUploads.array("certificates"),
+  connectionDesignerCombinedUploads,
   validate({ body: ConnectionDesignerSchema }),
   asyncHandler(cdCtrl.handleCreateConnectionDesigner.bind(cdCtrl))
 );
@@ -37,8 +36,7 @@ router.post(
 router.put(
   "/update/:id",
   authMiddleware,
-  connectionDesignerUploads.array("files"),
-  connectionDesignerCertificatesUploads.array("certificates"),
+  connectionDesignerCombinedUploads,
   validate({
     params: z.object({ id: z.string() }),
     body: updateConnectionDesignerSchema,

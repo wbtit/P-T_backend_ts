@@ -6,7 +6,7 @@ import z from "zod";
 
 export const ConnectionDesignerSchema = z.object({
   name: z.string().default(""),
-  state: z.array(z.string()).optional(),
+  state: z.string().optional(),
   contactInfo: z.string().nullable().optional(),
   websiteLink: z.string().nullable().optional(),
   email: z.string().optional(),
