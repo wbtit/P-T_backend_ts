@@ -50,7 +50,11 @@ export class EstManagementRepository{
                         }
                     }
                  },
-                 fabricators:true
+                 fabricators:{
+                    include:{
+                        branches:true
+                    }
+                 }
             }
         })
         const groups = estimation?.lineItemGroups
