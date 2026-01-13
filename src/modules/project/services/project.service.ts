@@ -60,6 +60,9 @@ import { ensureCheckingWbsForBundle } from "../WBS/utils/ensureCheckingWbs";
     const approvalDateChanged =
       "approvalDate" in data &&
       existing.approvalDate !== data.approvalDate;
+    const fabricationDateChanged =
+      "fabricationDate" in data &&
+      existing.fabricationDate !== data.fabricationDate;
 
     // 3️⃣ Stage change side-effects
     if (stageChanged) {
@@ -79,6 +82,25 @@ import { ensureCheckingWbsForBundle } from "../WBS/utils/ensureCheckingWbs";
     // 5️⃣ Approval-date side-effects
     if (approvalDateChanged) {
       data.mailReminder = false;
+
+      await tx.projectStageHistory.create({
+        data: {
+          projectID: id,
+          stage: existing.stage,
+          approvalDate: existing.approvalDate,
+          approvalDteChangeReason: data.approvalDateChangeReason || null,
+        },
+      });
+    }
+    if(fabricationDateChanged){
+      await tx.projectStageHistory.create({
+        data: {
+          projectID: id,
+          stage: existing.stage,
+          fabricationDate: existing.fabricationDate,
+          fabricationDateChangeReason: data.fabricationDateChangeReason || null,
+        },
+      });
     }
 
     // 6️⃣ Persist project update (generic, final)

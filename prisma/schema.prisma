@@ -894,8 +894,14 @@ model ProjectStageHistory {
   id         String   @id @default(uuid()) @db.Uuid
   projectID  String   @db.Uuid
   stage      Stage
+  approvalDate DateTime?
+  approvalDteChangeReason String?
+  fabricationDate DateTime?
+  fabricationDateChangeReason String?
   startDate  DateTime @default(now())
   endDate    DateTime?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   project    Project  @relation(fields: [projectID], references: [id], onDelete: Cascade)
 

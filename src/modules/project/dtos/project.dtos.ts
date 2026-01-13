@@ -67,6 +67,8 @@ export const CreateProjectSchema = z.object({
   fabricationDate: zDateString,
 
   endDateChangeLog: z.array(z.string()).optional(),
+  approvalDateChangeReason: z.string().optional(),
+  fabricationDateChangeReason: z.string().optional(),
 
   // NUMBER fields (FE sends string)
   estimatedHours: zNumberString,
@@ -86,6 +88,7 @@ export const UpdateProjectSchema = CreateProjectSchema.partial();
 
 // TYPES
 export type CreateProjectInput = z.infer<typeof CreateProjectSchema>;
-export type UpdateprojectInput = { id: string } & Partial<CreateProjectInput>;
+
+export type UpdateprojectInput = { id: string } & Partial<CreateProjectInput >;
 export type GetProjectInput = { id: string };
 export type DeleteProjectInput = { id: string };
