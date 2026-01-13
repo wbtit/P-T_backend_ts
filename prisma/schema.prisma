@@ -901,7 +901,7 @@ model ProjectStageHistory {
   startDate  DateTime @default(now())
   endDate    DateTime?
   createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  updatedAt  DateTime? @updatedAt
 
   project    Project  @relation(fields: [projectID], references: [id], onDelete: Cascade)
 
@@ -933,6 +933,7 @@ model Task {
   description        String
   status             TaskStatus     @default(ASSIGNED)
   priority           Int
+  wbsType               String?        @default("")
   created_on         DateTime        @default(now())
   reworkStartTime    DateTime?
   seventyFiveAlertSent Boolean @default(false)

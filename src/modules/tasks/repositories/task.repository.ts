@@ -31,7 +31,8 @@ export class TaskRepository {
                     departmentId: cleanData.departmentId,
                     reworkStartTime: cleanData.reworkStartTime,
                     created_by: cleanData.user_id,
-                    project_bundle_id: cleanData.project_bundle_id
+                    project_bundle_id: cleanData.project_bundle_id,
+                    wbsType: cleanData.wbsType
                 }
             })
 
