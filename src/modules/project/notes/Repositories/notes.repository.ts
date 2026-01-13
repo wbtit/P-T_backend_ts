@@ -4,7 +4,17 @@ import { CreateNoteInput,UpdateNoteInput } from "../dtos";
 export class NotesRepository{
     async create(data:CreateNoteInput ) {
         return await prisma.notes.create({
-            data: data
+            data: data,
+            include:{
+                project:{
+                    select:{
+                        tasks:true,
+                        managerID:true,
+                        name:true,
+                        department:{select:{managerIds:{select:{id:true}}}}
+                    }
+                }
+            }
         });
     }
 

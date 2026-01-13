@@ -5,12 +5,48 @@ import { streamFile } from "../../../../utils/fileUtil";
 import path from "path";
 import { Response } from "express";
 import { AppError } from "../../../../config/utils/AppError";
+import { sendNotification } from "../../../../utils/sendNotification";
 
 
 const notesRepository = new NotesRepository();
 export class NotesService {
     async create(data: CreateNoteInput) {
-        return await notesRepository.create(data);
+        const newNotes = notesRepository.create(data);
+        // Notify project manager about the new note
+        const project = (await newNotes).project;
+        if (project && project.managerID) {
+            const payload = {
+                title: "New Note Created",
+                message: `A new note has been added to the project: ${project.name}`,
+                projectName: project.name,
+            };
+            await sendNotification(project.managerID, payload);
+        }
+        // Notify department managers about the new note
+        if (project && project.department && project.department.managerIds) {
+            const payload = {
+                title: "New Note Created",
+                message: `A new note has been added to the project: ${project.name}`,
+                projectName: project.name,
+            };
+            for (const managerId of project.department.managerIds.map(m => m.id)) {
+                await sendNotification(managerId, payload);
+            }
+        }
+        //Notify the task assignees about the new note
+        if (project && project.tasks) {
+            const payload = {
+                title: "New Note Created",
+                message: `A new note has been added to the project: ${project.name}`,
+                projectName: project.name,
+            };
+            for (const task of project.tasks) {
+                if (task.user_id) {
+                    await sendNotification(task.user_id, payload);
+                }
+            }
+        }
+        return newNotes;
     }
 
     async update(id: string, data: UpdateNoteInput) {
