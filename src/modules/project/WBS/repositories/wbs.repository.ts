@@ -195,7 +195,7 @@ export class WbsRepository {
   async getProjectBundleBYProjectId(
     projectId: string
   ) {
-    const project = await prisma.projectBundle.findMany({
+    const bundles = await prisma.projectBundle.findMany({
       where: { projectId },
       select: {
         id:true,
@@ -222,11 +222,30 @@ export class WbsRepository {
           }
         },
         tasks:{
-          select:{allocationLog:true}
+          select:{
+            allocationLog: {
+              select: { allocatedHours: true }
+            }
+          }
         }
       },
     });
-  }
-  
+
+    // Calculate remaining hours for each bundle
+    const bundlesWithRemaining = bundles.map(bundle => {
+      const totalHours = (bundle.totalExecHr || 0) + (bundle.totalCheckHr || 0);
+      const allocatedHours = bundle.tasks.reduce((sum, task) => {
+        const alloc = task.allocationLog?.allocatedHours;
+        return sum + (parseFloat(alloc || '0') || 0);
+      }, 0);
+      const remainingHours = totalHours - allocatedHours;
+      return {
+        ...bundle,
+        remainingHours: Math.max(0, remainingHours) // Prevent negative
+      };
+    });
+
+    return bundlesWithRemaining
+};
   
 }

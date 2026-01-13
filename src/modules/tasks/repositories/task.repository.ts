@@ -54,11 +54,11 @@ export class TaskRepository {
                 user: true,
                 department: true,
                 workingHourTask: true,
-                allocationLog: true,
                 alert: true,
                 flags: true,
                 taskcomment: true,
-                projectBundle: true
+                projectBundle: true,
+                allocationLog:{ select:{ allocatedHours:true } }
             }
         });
         return task;
@@ -76,6 +76,7 @@ export class TaskRepository {
                 user: true,
                 department: true,
                 workingHourTask: true,
+                allocationLog:{ select:{ allocatedHours:true } }
             }
         });
         return tasks;
@@ -94,6 +95,7 @@ export class TaskRepository {
                 user: true,
                 department: true,
                 workingHourTask: true,
+                allocationLog:{ select:{ allocatedHours:true } }
             }
         });
         return tasks;
@@ -111,6 +113,7 @@ export class TaskRepository {
                 user: true,
                 department: true,
                 workingHourTask: true,
+                allocationLog:{ select:{ allocatedHours:true } }
             }
         });
         return tasks;
@@ -124,6 +127,7 @@ export class TaskRepository {
                 user: true,
                 department: true,
                 workingHourTask: true,
+                allocationLog:{ select:{ allocatedHours:true } }
             }
         });
         return tasks;
@@ -142,23 +146,43 @@ export class TaskRepository {
                 user: { select: { firstName: true, middleName: true, lastName: true } },
                 department: { select: { name: true } },
                 workingHourTask: true,
+                allocationLog:{ select:{ allocatedHours:true } }
             }
         });
         return tasks;
     }
 
     async update(id: string, data: updateTaskInput) {
-        const task = await prisma.task.update({
-            where: { id },
-            data,
-            include: {
-                project: true,
-                user: true,
-                department: true,
-                workingHourTask: true,
+        await prisma.$transaction(async (tx) => {
+            const task = await tx.task.update({
+                where: { id },
+                data: {
+                    name: data.name,
+                    description: data.description,
+                    mileStone_id: data.mileStone_id,
+                    status: data.status,
+                    priority: data.priority,
+                    due_date: data.due_date,
+                    start_date: data.start_date,
+                    userFault: data.userFault,
+                    Stage: data.Stage,
+                    project_id: data.project_id,
+                    user_id: data.user_id,
+                    departmentId: data.departmentId,
+                    reworkStartTime: data.reworkStartTime,
+                    project_bundle_id: data.project_bundle_id
+                }
+            });
+
+            if (data.duration !== undefined) {
+                await tx.taskAllocation.updateMany({
+                    where: { taskId: id },
+                    data: { allocatedHours: data.duration }
+                });
             }
+
+            return task;
         });
-        return task;
     }
 
     async delete(id: string) {

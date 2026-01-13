@@ -22,7 +22,5 @@ export const createTaskDto = z.object({
 export const updateTaskDto = createTaskDto.partial()
 
  export type createTaskInput = z.infer<typeof createTaskDto>;
-export type updateTaskInput = Partial<Omit<Prisma.TaskUpdateInput, "project_id">> & {
-  project_id?: never;
+export type updateTaskInput = z.infer<typeof updateTaskDto>;
   
-};
