@@ -938,6 +938,11 @@ model Task {
   reworkStartTime    DateTime?
   seventyFiveAlertSent Boolean @default(false)
   overrunAlertSent Boolean @default(false)
+  autoCloseWarningSent Boolean @default(false)
+  autoCloseWarningSentAt DateTime?
+  autoCloseActionTaken Boolean @default(false)
+  autoCloseActionAt DateTime?
+  autoCloseActionType String?
   userFault          String          @default("")
   due_date           DateTime
   project_id         String          @db.Uuid

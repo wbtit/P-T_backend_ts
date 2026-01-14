@@ -1,7 +1,7 @@
 import nodeCron from "node-cron";
 import prisma from "../config/database/client";
 import { checkAndSendReminders } from "./checkandsendMail"; 
-import { autoCloseStaleTasks } from "./autoCloseTask";
+import { autoCloseStaleTasks, forceCloseStaleTasks } from "./autoCloseTask";
 import { check75Alert } from "./check75Alert";
 import { checkOverrunAlert } from "./checkOverrunAlert";
 import { runMonthlyMEAS } from "./runMonthlyMEAS";  
@@ -226,6 +226,50 @@ async function safeEPS(){
     }
 }
 
+//force close stale tasks after grace period
+async function safeForceCloseTasks() {
+  const jobName = "forceCloseTasks";
+  const lockKey = 444555666; // unique lock key
+
+  const lockAcquired = await acquireLock(lockKey);
+  if (!lockAcquired) {
+    console.log(`🚫 ${jobName}: Another instance running. Skipping.`);
+    return;
+  }
+
+  const start = Date.now();
+  const log = await prisma.cronLog.create({ data: { jobName } });
+
+  try {
+    console.log(`${jobName}: Started at ${new Date().toISOString()}`);
+
+    await forceCloseStaleTasks();
+
+    await prisma.cronLog.update({
+      where: { id: log.id },
+      data: {
+        completedAt: new Date(),
+        status: "SUCCESS",
+        durationMs: Date.now() - start,
+      },
+    });
+
+    console.log(` ${jobName}: Completed successfully.`);
+  } catch (err: any) {
+    await prisma.cronLog.update({
+      where: { id: log.id },
+      data: {
+        completedAt: new Date(),
+        status: "FAILED",
+        errorMessage: err.message,
+        durationMs: Date.now() - start,
+      },
+    });
+  } finally {
+    await releaseLock(lockKey);
+  }
+}
+
 //communication
 async function sendFollowUp() {
   const lockKey = 111222333; // unique key
@@ -239,7 +283,7 @@ async function sendFollowUp() {
   } finally {
     await releaseLock(lockKey);
   }
-  
+
 }
 
 // ───────────────────────────────
@@ -267,6 +311,12 @@ if (process.env.ENABLE_CRON === "true") {
   nodeCron.schedule(
   "*/10 * * * *",
   () => void safeCheckOverrunAlert(),
+  { timezone: "Asia/Kolkata" }
+);
+  //force close stale tasks after grace period
+  nodeCron.schedule(
+  "*/15 * * * *",
+  () => void safeForceCloseTasks(),
   { timezone: "Asia/Kolkata" }
 );
 //monthly MEAS job
