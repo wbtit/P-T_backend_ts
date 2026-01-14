@@ -1383,6 +1383,8 @@ model COResponse {
   userId           String       @db.Uuid
   parentResponseId String?      @db.Uuid
   files       Json               @default("[]")
+  createdAt        DateTime     @default(now())
+  InvoiceAlerted  Boolean      @default(false)
   //Relations
   coResponse       ChangeOrder?  @relation("coResponse", fields: [CoId], references: [id])
   parentResponse   COResponse?  @relation("ParentChildResponse", fields: [parentResponseId], references: [id])

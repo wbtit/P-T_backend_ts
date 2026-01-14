@@ -18,6 +18,16 @@ export class CoResponseRepository {
         user: { connect: { id: userId } },
         coResponse: CoId ? { connect: { id: CoId } } : undefined,
       },
+      include:{
+        user:{
+          select:{
+            firstName:true,
+            lastName:true,
+            email:true
+          }
+        },
+        childResponses:true
+      }
     });
 }
 async getResponseById(id: string) {
