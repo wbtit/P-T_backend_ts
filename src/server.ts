@@ -42,16 +42,14 @@ initSocket(io)
 
 app.use(
   cors({
-    origin: "*",
+    origin: true,
     credentials: true,
   })
 );
 
 // 🚧 Limit request body size (prevents DoS)
-app.use(express.json({ limit: "10kb", type: (req) => {
-  const ct = req.headers['content-type'] || '';
-  return !ct.includes('multipart');
-} }));
+app.use(express.json());
+
 app.use(express.urlencoded({ extended: true, limit: "10kb" }));
 
 // 🧱 Secure headers
