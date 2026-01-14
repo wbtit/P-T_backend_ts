@@ -15,7 +15,6 @@ pids
 *.seed
 *.pid.lock
 
-src/config/data/*
 public/
 docker-cmds.txt
 build
