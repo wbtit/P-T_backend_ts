@@ -308,4 +308,32 @@ import { setProjectWbsSelection } from "../utils/setProjectWbsSelection";
 
    })
 }
+
+async getForStaff(staffId: string) {
+  return await prisma.project.findMany({
+    where:{
+      tasks:{some:{user_id:staffId}}
+    },
+    include:{
+        stageHistory:true,
+        fabricator:{select:{
+          files:true,
+          fabName:true,
+          id:true
+        }},
+        manager:{select:{
+          firstName:true,
+          middleName:true,
+          lastName:true,
+          username:true,
+          id:true
+        }},
+        team:true,
+        department:{select:{
+          name:true,
+          id:true
+        }}
+       }
+  })
+}
 }
