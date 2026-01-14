@@ -1,5 +1,5 @@
 import z from "zod";
-import { Status} from "@prisma/client";
+import { Stage, Status} from "@prisma/client";
 
 
 const zDateString = z
@@ -17,6 +17,7 @@ export const createMileStoneSchema=z.object({
     project_id:z.string(),
     approvalDate:zDateString,
     status:z.enum(Status),
+    stage:z.enum(Stage),
     subject:z.string(),
     description:z.string()  
 })

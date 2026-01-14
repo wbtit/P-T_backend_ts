@@ -7,6 +7,7 @@ import { checkOverrunAlert } from "./checkOverrunAlert";
 import { runMonthlyMEAS } from "./runMonthlyMEAS";  
 import {runMonthlyEPS } from "./runMonthlyEPS";
 import { sendFollowUpReminders } from "./sendFollowUpReminders";
+import { runPMOComplition } from "./pmoComplition";
 // ───────────────────────────────
 // Advisory Lock Helper Functions 
 // ───────────────────────────────
@@ -269,6 +270,20 @@ async function safeForceCloseTasks() {
     await releaseLock(lockKey);
   }
 }
+// PMO completion alerts
+async function safePMOComplition() {
+  const lockKey = 111222333; // unique key
+  const gotLock = await acquireLock(lockKey);
+  if (!gotLock) return console.log("PMO completion already running elsewhere.");
+
+  try {
+    await runPMOComplition();
+  } catch (err) {
+    console.error("PMO completion job failed", err);
+  } finally {
+    await releaseLock(lockKey);
+  }
+}
 
 //communication
 async function sendFollowUp() {
@@ -335,7 +350,14 @@ if (process.env.ENABLE_CRON === "true") {
 //sendFollowUpMails
   nodeCron.schedule("0 9 * * *", async () => {
   await sendFollowUpReminders();
-})
+});
+
+//PMO completion alerts
+  nodeCron.schedule(
+    "0 */6 * * *",
+    () => void safePMOComplition(),
+    { timezone: "Asia/Kolkata" }
+  );
   console.log(" Scheduler started for reminders with DB lock protection.");
 } else {
   console.log("⏸ Cron jobs are disabled for this environment.");

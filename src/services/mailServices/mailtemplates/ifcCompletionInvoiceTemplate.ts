@@ -1,13 +1,21 @@
-// Templates/ifaCompletionInvoiceTemplate.js
+// Templates/ifcCompletionInvoiceTemplate.js
 
-export function ifaCompletionInvoiceTemplate(project: any, fabricator:any) {
+export function ifcCompletionInvoiceTemplate(project:any, fabricator:any) {
+
+  const formattedDate = project.endDate
+    ? new Date(project.endDate).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      })
+    : "N/A";
 
   return `<!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Whiteboard Engineering - IFA Completion</title>
+  <title>Whiteboard Engineering - IFC Completion</title>
 
   <style type="text/css">
     body {
@@ -47,7 +55,7 @@ export function ifaCompletionInvoiceTemplate(project: any, fabricator:any) {
   <tr>
     <td align="center" style="padding: 30px 10px">
       <table class="main-content-wrapper" width="100%">
-        
+
         <!-- Header -->
         <tr>
           <td style="padding: 20px 30px;">
@@ -67,17 +75,22 @@ export function ifaCompletionInvoiceTemplate(project: any, fabricator:any) {
         <!-- Body -->
         <tr>
           <td style="padding: 30px 40px; color: #333333;">
-            
-            <h3 style="margin-top: 0;">IFA Stage Completed — Invoice Action Required</h3>
+
+            <h3 style="margin-top: 0;">
+              IFC Stage Completed — Final Invoice Action Required
+            </h3>
 
             <p>
-              This is to inform you that the <strong>IFA stage</strong> for the following
-              project has been <strong>successfully completed</strong>.
+              This is to formally notify you that the
+              <strong>IFC (Issued For Construction) stage</strong>
+              for the following project has been
+              <strong>successfully completed</strong>.
             </p>
 
             <p>
-              Please proceed with the <strong>invoice generation</strong> as per the
-              agreed commercial terms.
+              Please proceed with the
+              <strong>final invoice generation</strong>
+              in accordance with the agreed scope and commercial terms.
             </p>
 
             <table cellpadding="6" cellspacing="0" style="margin: 20px 0; font-size: 14px;">
@@ -89,12 +102,12 @@ export function ifaCompletionInvoiceTemplate(project: any, fabricator:any) {
                 <td><strong>Fabricator:</strong></td>
                 <td>${fabricator?.fabName || "N/A"}</td>
               </tr>
-             
+              
             </table>
 
             <p>
-              You can review the project details and supporting documents in
-              <strong>Project Station</strong>.
+              All project deliverables for IFC have been completed and verified
+              in <strong>Project Station</strong>.
             </p>
 
             <!-- Button -->
@@ -118,8 +131,9 @@ export function ifaCompletionInvoiceTemplate(project: any, fabricator:any) {
             </p>
 
             <p style="font-size: 13px; color: #666666;">
-              This is an automated notification generated after IFA stage completion.
-              No further action is required in the system once the invoice is raised.
+              This is an automated notification triggered after IFC completion.
+              No further technical actions are required in the system once the
+              final invoice is raised.
             </p>
 
             <!-- Signature -->
