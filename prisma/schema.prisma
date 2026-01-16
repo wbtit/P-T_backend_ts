@@ -1648,7 +1648,7 @@ model FileShareLink {
   parentId     String
   fileId       String
 
-  passwordHash String?  // bcrypt hash
+  expiresAt    DateTime?
   isActive     Boolean  @default(true)
 
   createdAt    DateTime @default(now())
