@@ -62,7 +62,7 @@ export class RfqResponseService {
     throw new AppError("File not found", 404);
   }
         const __dirname=path.resolve();
-                const filePath = path.join(__dirname, fileObject.path); // ✅ use path, not filename
+        const filePath = path.join(__dirname, "public", fileObject.filename);
                 console.log("📁 [viewFile] Resolved file path:", filePath);
         
                 if (!fs.existsSync(filePath)) {

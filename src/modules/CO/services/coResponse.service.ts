@@ -84,7 +84,7 @@ export class CoResponseService {
     const fileObject = await this.getFile(coResponseId, fileId);
 
     const __dirname = path.resolve();
-    const filePath = path.join(__dirname, fileObject.filename);
+    const filePath = path.join(__dirname,"public", fileObject.filename);
 
     return streamFile(res, filePath, fileObject.originalName);
   }

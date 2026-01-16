@@ -92,7 +92,7 @@ export class RFIService {
   }
 
     const __dirname = path.resolve();
-    const filePath = path.join(__dirname, fileObject.path); // ✅ use path, not filename;
+    const filePath = path.join(__dirname, "public", fileObject.filename);
 
     if (!fs.existsSync(filePath)) {
         console.error("🚨 [viewFile] File does not exist on disk:", filePath);

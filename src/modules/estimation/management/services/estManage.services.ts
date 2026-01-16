@@ -49,7 +49,7 @@ export class EstimationManageService{
          throw new AppError("File not found", 404);
        }
         const __dirname=path.resolve();
-        const filePath = path.join(__dirname, file.filename);
+        const filePath = path.join(__dirname,"public", file.filename);
         return streamFile(res, filePath, file.originalName);
        
      }

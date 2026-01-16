@@ -116,7 +116,7 @@ export class SubmittalResponseService {
     }
 
     const __dirname = path.resolve();
-    const filePath = path.join(__dirname, fileObject.path);
+    const filePath = path.join(__dirname, "public", fileObject.filename);
 
     if (!fs.existsSync(filePath)) {
       throw new AppError("File not found on server", 404);

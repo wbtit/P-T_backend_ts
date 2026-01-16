@@ -108,7 +108,7 @@ export class DesignDrawingsService {
     if (!fileObject) throw new AppError("File not found", 404);
 
     const __dirname = path.resolve();
-    const filePath = path.join(__dirname, fileObject.path);
+    const filePath = path.join(__dirname,"public", fileObject.filename);
 
     return streamFile(res, filePath, fileObject.originalName);
   }

@@ -90,7 +90,7 @@ async viewFile(fabricatorId: string, fileId: string, res: Response) {
   }
 
   const __dirname = path.resolve();
-  const filePath = path.join(__dirname, fileObject.path); // ✅ use path, not filename
+  const filePath = path.join(__dirname, "public", fileObject.filename);
   console.log("📁 [viewFile] Resolved file path:", filePath);
 
   if (!fs.existsSync(filePath)) {
