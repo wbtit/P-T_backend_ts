@@ -339,6 +339,7 @@ model Fabricator {
   fabName      String      @unique @default("")
   website      String?     @default("")
   drive        String?     @default("")
+  SAC          String      @default("")
   fabricatPercentage Float      @default(0.0)
   approvalPercentage  Float      @default(0.0)
   paymenTDueDate    Int         @default(0)

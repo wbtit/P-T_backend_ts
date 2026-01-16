@@ -8,6 +8,7 @@ export const CreateFabricatorSchema=z.object({
     fabricatPercentage:z.number().optional(),
     approvalPercentage:z.number().optional(),
     paymenTDueDate:z.number().optional(),
+    SAC:z.string().optional(),
     currencyType:z.string().optional(),
     accountId:z.string().optional(),
     fabStage:z.enum(FabricatirStage),
