@@ -334,21 +334,21 @@ model Department {
 }
 
 model Fabricator {
-  id           String      @id @default(uuid()) @db.Uuid
-  createdById  String      @db.Uuid
-  fabName      String      @unique @default("")
-  website      String?     @default("")
-  drive        String?     @default("")
-  SAC          String      @default("")
-  fabricatPercentage Float      @default(0.0)
-  approvalPercentage  Float      @default(0.0)
-  paymenTDueDate    Int         @default(0)
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
-  files        Json?        @default("[]")
-  isDeleted    Boolean     @default(false) @map("is_bin")
-  currencyType String     @default("")
-  accountId    String?     @unique @db.Uuid
+  id           String               @id @default(uuid()) @db.Uuid
+  createdById  String               @db.Uuid
+  fabName      String               @unique @default("")
+  website      String?              @default("")
+  drive        String?              @default("")
+  SAC          String               @default("")
+  fabricatPercentage Float          @default(0.0)
+  approvalPercentage  Float         @default(0.0)
+  paymenTDueDate    Int             @default(0)
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+  files        Json?                @default("[]")
+  isDeleted    Boolean              @default(false) @map("is_bin")
+  currencyType String               @default("")
+  accountId    String?              @unique @db.Uuid
   fabStage     FabricatirStage      @default(RFQ)
 
 

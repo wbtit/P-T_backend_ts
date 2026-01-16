@@ -16,7 +16,13 @@ export class FabricatorController {
       (req.files as Express.Multer.File[]) || [],
       "fabricators"
     );
+    const fabricatPercentage = body.fabricatPercentage ? parseFloat(body.fabricatPercentage) : 0.0;
+    const approvalPercentage = body.approvalPercentage ? parseFloat(body.approvalPercentage) : 0.0;
+    const paymenTDueDate = body.paymenTDueDate ? parseInt(body.paymenTDueDate, 10) : 0;
 
+    body.fabricatPercentage = fabricatPercentage;
+    body.approvalPercentage = approvalPercentage;
+    body.paymenTDueDate = paymenTDueDate;
     const payload = {
       ...body,
       files: uploadedFiles,
