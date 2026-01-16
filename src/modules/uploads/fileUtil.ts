@@ -7,6 +7,6 @@ export function mapUploadedFiles(files: Express.Multer.File[], entity: string) {
     filename: file.filename,
     originalName: file.originalname,
     id: file.filename.split(".")[0], // Extract UUID
-    path: path.join(`/public/${entity}/${file.filename}`), // Entity-specific relative path
+    path: path.join(`${entity}/${file.filename}`), // Entity-specific relative path
   }));
 }

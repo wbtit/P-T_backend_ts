@@ -67,12 +67,13 @@ const createShareLink = async (req: Request, res: Response) => {
         fileId,
       },
     });
-    const shareUrl = `${process.env.APP_BASE_URL}/api/share/${token}`;
-
+    const shareUrl = `${process.env.APP_BASE_URL}/v1/share/${token}`;
+    console.log("Share URL:", shareUrl);
     return res.status(201).json({
       message: "Share link created successfully",
       shareUrl,
     });
+    
   } catch (err) {
     console.error("Create Share Link Error:", err);
     return res.status(500).json({
@@ -108,7 +109,14 @@ const downloadShare = async (req: Request, res: Response) => {
 
     const root =
       process.env.PUBLIC_DIR || path.join(__dirname, "..", "..", "public");
-    const filePath = path.join(root, file.path);
+
+    // Handle both old format (/public/...) and new format (rfq/...)
+    let relativePath = file.path;
+    if (file.path.startsWith('/public/')) {
+      relativePath = file.path.substring('/public/'.length);
+    }
+
+    const filePath = path.join(root, relativePath);
 
     if (!fs.existsSync(filePath))
       return res.status(404).json({ message: "File missing on server" });
