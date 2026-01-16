@@ -29,6 +29,7 @@ import { dashBoradDataRouter } from "./modules/dashboradData";
 import { WbsTemplatesRouter } from "./modules/project/WBS/WbsTemplates";
 import { verndorRoute } from "./modules/vendors";
 import { vendorQuotaRoute } from "./modules/vendors";
+import { shareLinkRouter } from "./route";
 
 const routes = express.Router();
 
@@ -62,6 +63,7 @@ routes.use("/dashBoardData",dashBoradDataRouter)
 routes.use("/wbsTemplates",WbsTemplatesRouter)
 routes.use("/vendors",verndorRoute)
 routes.use("/vendorQuota",vendorQuotaRoute)
+routes.use("/share",shareLinkRouter)
 
 
 

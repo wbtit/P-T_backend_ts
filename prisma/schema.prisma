@@ -1631,7 +1631,7 @@ model ManagerBiasRecord {
 model EmployeePerformanceScore {
   id           String   @id @default(uuid())
   employeeId   String   @db.Uuid
-  period       String   // "YYYY-MM"
+  period       String   
   score        Float
   calculatedAt DateTime @default(now())
 
