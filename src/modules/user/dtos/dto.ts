@@ -26,6 +26,7 @@ export const createUserSchema = z.object({
   middleName:z.string().nullable().optional(),
   lastName:z.string().nullable().optional(),
   phone:z.string(),
+  extension:z.string().nullable().optional(),
   landline:z.string().nullable().optional(),
   altLandline:z.string().nullable().optional(),
   altPhone:z.string().nullable().optional(),

@@ -237,6 +237,7 @@ model User {
   middleName      String?     @db.VarChar(50) @map("m_name")
   lastName        String?     @db.VarChar(50) @map("l_name")
   phone           String      @db.VarChar(20)
+  extension      String?     @default("") @db.VarChar(10)
   landline        String?     @default("") @db.VarChar(20)
   altLandline     String?     @default("") @db.VarChar(20)
   altPhone        String?     @default("") @db.VarChar(20)
@@ -1078,6 +1079,8 @@ model Estimation {
   estimateDate     DateTime
   status           EstimationStatus     @default(DRAFT)
   assignedById     String?
+  inclusions      String?
+  exclusions      String?
   finalHours       Float?
   finalWeeks       Float?
   finalPrice       Float?
