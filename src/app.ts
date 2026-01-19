@@ -30,6 +30,7 @@ import { WbsTemplatesRouter } from "./modules/project/WBS/WbsTemplates";
 import { verndorRoute } from "./modules/vendors";
 import { vendorQuotaRoute } from "./modules/vendors";
 import { shareLinkRouter } from "./route";
+import { designDrawingsRoutes } from "./modules/designDrawings";
 
 const routes = express.Router();
 
@@ -64,6 +65,7 @@ routes.use("/wbsTemplates",WbsTemplatesRouter)
 routes.use("/vendors",verndorRoute)
 routes.use("/vendorQuota",vendorQuotaRoute)
 routes.use("/share",shareLinkRouter)
+routes.use("/design-drawings", designDrawingsRoutes);
 
 
 

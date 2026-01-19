@@ -9,7 +9,7 @@ import { createInvoiceSchema, updateInvoiceSchema, createAccountInfoSchema, upda
 
 const invoiceCtrlr = new InvoiceController();
 const accountCtrlr = new AccountController();
-const router = Router();
+const           router = Router();
 
 // -----------------------------------------------------------------------------
 //  invoicing routes
