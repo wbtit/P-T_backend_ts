@@ -92,11 +92,11 @@ for (const client of [pubClient, subClient, redis]) {
   io.on(
     "connection",
     async (socket: Socket<ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData>) => {
-      console.log("🆕 New socket connection established:", socket.id);
+      console.log(`🆕 New socket connection established: ${socket.id} (Instance: ${process.env.PORT || 3000})`);
 
       try {
         const userId = socket.data.userId!;
-        console.log(`👤 Handling connection for userId: ${userId}`);
+        console.log(`👤 Handling connection for userId: ${userId} (Instance: ${process.env.PORT || 3000})`);
 
         const userKey = `socket:${userId}`;
         const reverseKey = `socketid:${socket.id}`;
