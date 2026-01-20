@@ -67,7 +67,4 @@ routes.use("/vendorQuota",vendorQuotaRoute)
 routes.use("/share",shareLinkRouter)
 routes.use("/design-drawings", designDrawingsRoutes);
 
-
-
-
 export default routes
