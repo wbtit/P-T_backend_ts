@@ -9,8 +9,16 @@ export const EstimationSchema = z.object({
     description: z.string().optional(),
     estimateDate: z.coerce.date(), // coerce string/number to Date
     status: z.enum(EstimationStatus),
-    inclusions: z.string().optional(),
-    exclusions: z.string().optional(),
+    inclusions: z.union([z.string(), z.array(z.string())]).optional().transform(val => {
+      if (typeof val === 'string') return val;
+      if (Array.isArray(val)) return JSON.stringify(val);
+      return val;
+    }),
+    exclusions: z.union([z.string(), z.array(z.string())]).optional().transform(val => {
+      if (typeof val === 'string') return val;
+      if (Array.isArray(val)) return JSON.stringify(val);
+      return val;
+    }),
     assignedById: z.string().optional(),
     finalHours: z.number().optional(),
     finalWeeks: z.number().optional(),
