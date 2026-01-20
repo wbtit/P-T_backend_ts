@@ -11,6 +11,7 @@ interface ServerToClientEvents {
   customNotification: (payload: any) => void;
   receivePrivateMessage: (payload: any) => void;
   receiveGroupMessage: (payload: any) => void;
+  error: (payload: any) => void;
 }
 
 interface ClientToServerEvents {
@@ -196,6 +197,16 @@ for (const client of [pubClient, subClient, redis]) {
           );
 
           try {
+            // ✅ Validate group exists
+            const groupExists = await prisma.group.findUnique({
+              where: { id: groupId },
+            });
+
+            if (!groupExists) {
+              console.error(`❌ Group ${groupId} does not exist`);
+              return socket.emit("error", { message: "Group not found" });
+            }
+
             const compressedContent = await Compression(content);
             console.log("📦 Group message compressed");
 
