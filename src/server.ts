@@ -64,7 +64,7 @@ app.use(cookieParser());
 // ⚡ Rate limit to prevent brute-force
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 min window
-  max: 200, // limit each IP to 200 requests per window
+  max: 1000, // limit each IP to 200 requests per window
   standardHeaders: true,
   legacyHeaders: false,
   message: {
