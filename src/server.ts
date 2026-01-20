@@ -63,8 +63,8 @@ app.use(cookieParser());
 
 // ⚡ Rate limit to prevent brute-force
 const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 min window
-  max: 1000, // limit each IP to 200 requests per window
+  windowMs: 10 * 60 * 1000, // 15 min window
+  max: 12000, // limit each IP to 200 requests per window
   standardHeaders: true,
   legacyHeaders: false,
   message: {
@@ -76,9 +76,9 @@ app.use("/v1", apiLimiter);
 
 // 🐢 Slow down after many requests (to deter bots)
 const speedLimiter = slowDown({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  delayAfter: 100, // start slowing down after 100 requests
-  delayMs: () => 500, // 500ms delay per request after the limit
+  windowMs: 10 * 60 * 1000, // 15 minutes
+  delayAfter: 6000, // start slowing down after 100 requests
+  delayMs: () => 100, // 500ms delay per request after the limit
 });
 app.use("/v1", speedLimiter);
 
