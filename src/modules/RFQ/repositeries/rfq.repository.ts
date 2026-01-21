@@ -22,7 +22,7 @@ export class RFQRepository {
 }
 
     async update(id: string, data: UpdateRfqInput) {
-        const { ConnectionDesignerIds, ...rest } = data;
+        const { ConnectionDesignerIds,connectionEngineerIds, ...rest } = data;
         return await prisma.rFQ.update({
             where: { id },
             data: {
@@ -33,19 +33,26 @@ export class RFQRepository {
             connect: ConnectionDesignerIds.map(id => ({ id }))
           }
         : undefined,
-                files: data.files === null ? Prisma.JsonNull : data.files, // 👈 convert null
+        connectionEngineers: connectionEngineerIds
+        ? {
+             set: [],
+            connect: connectionEngineerIds.map(id => ({ id }))
+          }
+        : undefined,
             },include:{
                 sender: true,
                 recipient: true,
                 salesPerson: true,
-                responses:true
+                responses:true,
+                connectionDesignerRFQ:true,
+                connectionEngineers:true,
             }
         });
     }
 
     async getById(data:GetRfqInput) {
         return await prisma.rFQ.findUnique({
-            where: { id:data.id },
+            where: { id: data.id },
             include:{
                 sender: true,
                 recipient: true,
@@ -53,8 +60,18 @@ export class RFQRepository {
                 responses:true,
                 fabricator:true,
                 project: {select:{name:true}},
+                connectionEngineers:{select:{firstName:true,lastName:true,id:true}},
+                connectionDesignerRFQ:{
+                    include:{
+                        CDEngineers: true,
+                        CDQuotations:true,
+                    }
+                }
             }
         });
+        
+
+        
     }
     
     async getByName(id:string) {
@@ -66,6 +83,8 @@ export class RFQRepository {
                 salesPerson: true,
                 responses:true,
                 project: {select:{name:true}},
+                connectionDesignerRFQ:true,
+                connectionEngineers:true,
             }
         });
 

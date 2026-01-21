@@ -307,6 +307,7 @@ model User {
   clientCommunicatedBy       ClientCommunication[]
   submittalVersiondoneBy     SubmittalVersion[]
   projectBundleSelections    ProjectBundleSelection[]
+  connectionEngineersRFQs    RFQ[]            @relation("RFQ_connectionEngineers")
 
   @@map("user")
   @@index([email])
@@ -564,7 +565,7 @@ model RFQ {
   wbtStatus        RFQStatus     @default(RECEIVED)
   estimationDate   DateTime?
   tools            String?
-  
+
   connectionDesign Boolean       @default(false)
   customerDesign   Boolean       @default(false)
   miscDesign       Boolean       @default(false)
@@ -581,6 +582,7 @@ model RFQ {
 
   //Relations
   vendorRFQ        Vendor[]   @relation("RFQ_vendor")
+  connectionEngineers   User[]  @relation("RFQ_connectionEngineers")
   connectionDesignerRFQ ConnectionDesigner[] @relation("RFQ_ConnectionDesigner")
   CDQuotas         ConnectionDesignerQuota[] @relation("referRFQs")
   vendorQuotas     VendorQuota[] @relation("referRFQsByVendor")
