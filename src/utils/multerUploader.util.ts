@@ -189,14 +189,39 @@ export const connectionDesignerCombinedUploads = multer({
 ]);
 
 
-export const vendorMap = {};
+export const vendorMap: Record<string, FileMeta> = {};
 export const vendorUploads = createMulterUploader("public/vendors", vendorMap);
 
-export const vendorCertificatesMap = {};
+export const vendorCertificatesMap: Record<string, FileMeta> = {};
 export const vendorCertificatesUploads = createMulterUploader("public/vendorcertificates", vendorCertificatesMap);
+
+// Combined uploader for vendor with multiple fields
+export const vendorCombinedUploads = multer({
+  storage: multer.diskStorage({
+    destination: (_req, _file, cb) => {
+      const dir = _file.fieldname === 'files' ? "public/vendors" : "public/vendorcertificates";
+      if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+      cb(null, dir);
+    },
+    filename: (_req, file, cb) => {
+      const id = uuidv4();
+      const ext = path.extname(file.originalname);
+      const newName = `${id}${ext}`;
+      const map = file.fieldname === 'files' ? vendorMap : vendorCertificatesMap;
+      map[newName] = {
+        originalName: file.originalname,
+        uuid: id,
+        mimetype: file.mimetype,
+      };
+      cb(null, newName);
+    },
+  }),
+  limits: { fileSize: 3000 * 1024 * 1024 }, // 3GB
+  fileFilter: (req, file, cb) => validateFile(req, file, cb),
+}).fields([
+  { name: 'files', maxCount: 50 },
+  { name: 'certificates', maxCount: 50 }
+]);
 
 export const notesDataMap={}
 export const notesUploads = createMulterUploader("public/notes", notesDataMap);
-
-
-

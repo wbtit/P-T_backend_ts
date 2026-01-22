@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { AuthenticateRequest } from "../../../middleware/authMiddleware";
 import { AppError } from "../../../config/utils/AppError";
+import { mapUploadedFiles } from "../../uploads/fileUtil";
 
 import { VendorService } from "../services";
 
@@ -16,9 +17,19 @@ export class VendorController {
     const userId = req.user?.id;
     if (!userId) throw new AppError("createdById is required", 400);
 
+    const uploadedFiles = mapUploadedFiles(
+      (req.files as { [fieldname: string]: Express.Multer.File[] })?.files || [],
+      "vendors"
+    );
+    const certificates = mapUploadedFiles(
+      (req.files as { [fieldname: string]: Express.Multer.File[] })?.certificates || [],
+      "vendorcertificates"
+    );
+
     const vendor = await this.vendorService.createVendor({
       ...body,
-      createdById: userId,
+      files: uploadedFiles,
+      certificates: certificates,
     });
 
     return res.status(201).json({
@@ -66,8 +77,19 @@ export class VendorController {
     const userId = req.user?.id;
     if (!userId) throw new AppError("updatedById is required", 400);
 
+    const uploadedFiles = mapUploadedFiles(
+      (req.files as { [fieldname: string]: Express.Multer.File[] })?.files || [],
+      "vendors"
+    );
+    const certificates = mapUploadedFiles(
+      (req.files as { [fieldname: string]: Express.Multer.File[] })?.certificates || [],
+      "vendorcertificates"
+    );
+
     const updatedVendor = await this.vendorService.updateVendor(id, {
       ...body,
+      files: uploadedFiles,
+      certificates: certificates,
       updatedById: userId,
     });
 

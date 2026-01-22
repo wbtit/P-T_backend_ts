@@ -7,8 +7,7 @@ import { asyncHandler } from "../../config/utils/asyncHandler";
 import authMiddleware from "../../middleware/authMiddleware";
 
 import {
-  vendorUploads,
-  vendorCertificatesUploads,
+  vendorCombinedUploads,
 } from "../../utils/multerUploader.util";
 
 import {
@@ -27,8 +26,24 @@ const vendorCtrl = new VendorController();
 router.post(
   "/",
   authMiddleware,
-  vendorUploads.array("files"),
-  vendorCertificatesUploads.array("certificates"),
+  (req, res, next) => {
+    // Only process multipart if content-type is multipart/form-data
+    if (req.headers['content-type']?.includes('multipart/form-data')) {
+      vendorCombinedUploads(req, res, (err: any) => {
+        if (err) {
+          console.error("Vendor upload error:", err);
+          return res.status(400).json({
+            message: "File upload failed",
+            success: false,
+            error: err.message
+          });
+        }
+        next();
+      });
+    } else {
+      next();
+    }
+  },
   validate({ body: VendorSchema }),
   asyncHandler(vendorCtrl.handleCreateVendor.bind(vendorCtrl))
 );
@@ -41,8 +56,24 @@ router.post(
 router.put(
   "/update/:id",
   authMiddleware,
-  vendorUploads.array("files"),
-  vendorCertificatesUploads.array("certificates"),
+  (req, res, next) => {
+    // Only process multipart if content-type is multipart/form-data
+    if (req.headers['content-type']?.includes('multipart/form-data')) {
+      vendorCombinedUploads(req, res, (err: any) => {
+        if (err) {
+          console.error("Vendor upload error:", err);
+          return res.status(400).json({
+            message: "File upload failed",
+            success: false,
+            error: err.message
+          });
+        }
+        next();
+      });
+    } else {
+      next();
+    }
+  },
   validate({
     params: z.object({ id: z.string() }),
     body: updateVendorSchema,

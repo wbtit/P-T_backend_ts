@@ -387,7 +387,7 @@ model Fabricator {
   isDeleted    Boolean      @default(false) @map("is_bin") 
   files        Json?        @default("[]")
   certificates Json?        @default("[]")
-  insurenceLiability    String      @default("")
+  insurenceLiability    String?     @default("")
 
 
   // Relations
@@ -442,7 +442,7 @@ model Vendor{
   isDeleted    Boolean      @default(false) @map("is_bin") 
   files        Json?        @default("[]")
   certificates Json?        @default("[]")
-  insurenceLiability    String      @default("")
+  insurenceLiability    String?      @default("")
 
 
   // Relations

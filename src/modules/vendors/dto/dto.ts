@@ -26,7 +26,7 @@ export const VendorSchema = z.object({
         .transform((val) => (val === null ? Prisma.JsonNull : val))
         .optional(),
   insurenceLiability:z.string().optional(),      
-  createdById: z.string().optional(),
+  
 });
 export const updateVendorSchema = VendorSchema.partial();
 

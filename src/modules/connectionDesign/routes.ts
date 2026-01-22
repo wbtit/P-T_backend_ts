@@ -23,7 +23,24 @@ const cdCtrl = new ConnectionDesignerController();
 router.post(
   "/",
   authMiddleware,
-  connectionDesignerCombinedUploads,
+  (req, res, next) => {
+    // Only process multipart if content-type is multipart/form-data
+    if (req.headers['content-type']?.includes('multipart/form-data')) {
+      connectionDesignerCombinedUploads(req, res, (err) => {
+        if (err) {
+          console.error("Connection designer upload error:", err);
+          return res.status(400).json({
+            message: "File upload failed",
+            success: false,
+            error: err.message
+          });
+        }
+        next();
+      });
+    } else {
+      next();
+    }
+  },
   validate({ body: ConnectionDesignerSchema }),
   asyncHandler(cdCtrl.handleCreateConnectionDesigner.bind(cdCtrl))
 );
@@ -36,7 +53,24 @@ router.post(
 router.put(
   "/update/:id",
   authMiddleware,
-  connectionDesignerCombinedUploads,
+  (req, res, next) => {
+    // Only process multipart if content-type is multipart/form-data
+    if (req.headers['content-type']?.includes('multipart/form-data')) {
+      connectionDesignerCombinedUploads(req, res, (err) => {
+        if (err) {
+          console.error("Connection designer upload error:", err);
+          return res.status(400).json({
+            message: "File upload failed",
+            success: false,
+            error: err.message
+          });
+        }
+        next();
+      });
+    } else {
+      next();
+    }
+  },
   validate({
     params: z.object({ id: z.string() }),
     body: updateConnectionDesignerSchema,
