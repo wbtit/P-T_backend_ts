@@ -30,7 +30,7 @@ const BLOCKED_EXTENSIONS = [
 ];
 
 const SAFE_MIME_TYPES = [
-  "image/jpeg", "image/png", "image/webp", "image/tiff","application/zip",
+  "image/jpeg", "image/png", "image/webp", "image/tiff","application/zip", "application/x-zip-compressed",
   "application/pdf", "application/msword",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   "application/vnd.ms-excel",

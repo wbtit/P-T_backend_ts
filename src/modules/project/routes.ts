@@ -198,5 +198,7 @@ router.put("/projects/:projectId/notes/:id", authMiddleware, validate({ body: No
 router.get("/projects/:projectId/notes/:id", authMiddleware, asyncHandler(notesController.findById.bind(notesController)));
 router.delete("/projects/:projectId/notes/:id", authMiddleware, asyncHandler(notesController.delete.bind(notesController)));
 router.get("/projects/:projectId/notes", authMiddleware, asyncHandler(notesController.findAll.bind(notesController)));
+router.get("/projects/notes/:notesId/viewFile/:fileId",authMiddleware,asyncHandler(notesController.viewFile.bind(notesController)))
+
 
 export default router;
