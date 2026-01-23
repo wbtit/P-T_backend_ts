@@ -1,7 +1,7 @@
 const lineItems = [
   {
     scopeOfWork: "Column",
-      
+    type:"MainSteel",
     remarks: "",
     quantity: null,
     hoursPerQty: 1.5,
@@ -10,7 +10,7 @@ const lineItems = [
   },
   {
     scopeOfWork: "Beams",
-      
+    type:"MainSteel",
     remarks: "",
     quantity: null,
     hoursPerQty: 1.25,
@@ -19,7 +19,7 @@ const lineItems = [
   },
   {
     scopeOfWork: "Curved Beam/Rolled Beam",
-      
+    type:"MainSteel", 
     remarks: "",
     quantity: null,
     hoursPerQty: 2.5,
@@ -28,7 +28,7 @@ const lineItems = [
   },
   {
     scopeOfWork: "Truss",
-      
+    type:"MainSteel",   
     remarks: "",
     quantity: null,
     hoursPerQty: 6,
@@ -37,7 +37,7 @@ const lineItems = [
   },
   {
     scopeOfWork: "Horizontal Brace",
-      
+    type:"MainSteel",   
     remarks: "",
     quantity: null,
     hoursPerQty: 1.5,
@@ -46,7 +46,7 @@ const lineItems = [
   },
   {
     scopeOfWork: "Vertical. Brace",
-      
+    type:"MainSteel",   
     remarks: "",
     quantity: null,
     hoursPerQty: 1.5,
@@ -55,7 +55,7 @@ const lineItems = [
   },
   {
     scopeOfWork: "Kicker/Knee Brace",
-      
+     type:"MainSteel",  
     remarks: "",
     quantity: null,
     hoursPerQty: 1,
@@ -64,7 +64,7 @@ const lineItems = [
   },
   {
     scopeOfWork: "Girt & Purlin",
-      
+    type:"MainSteel",   
     remarks: "",
     quantity: null,
     hoursPerQty: 1.5,
@@ -73,7 +73,7 @@ const lineItems = [
   },
   {
     scopeOfWork: "Lintel/Brick Veneer Supports",
-      
+    type:"MainSteel",   
     remarks: "",
     quantity: null,
     hoursPerQty: 1.5,
@@ -82,7 +82,7 @@ const lineItems = [
   },
   {
     scopeOfWork: "Posts/Pipe",
-      
+    type:"MainSteel",   
     remarks: "",
     quantity: null,
     hoursPerQty: 1,
@@ -91,7 +91,7 @@ const lineItems = [
   },
   {
     scopeOfWork: "Hangers",
-      
+    type:"MainSteel",  
     remarks: "",
     quantity: null,
     hoursPerQty: 1,
@@ -100,7 +100,7 @@ const lineItems = [
   },
   {
     scopeOfWork: "Deck edge Angle / Bent plate",
-      
+    type:"MainSteel",  
     remarks: "",
     quantity: null,
     hoursPerQty: 1.25,
@@ -109,7 +109,7 @@ const lineItems = [
   },
   {
     scopeOfWork: "Misc. Attachments",
-      
+    type:"MainSteel",  
     remarks: "",
     quantity: null,
     hoursPerQty: 1.25,
@@ -118,7 +118,7 @@ const lineItems = [
   },
   {
     scopeOfWork: "Outriggers",
-      
+    type:"MainSteel",  
     remarks: "",
     quantity: null,
     hoursPerQty: 1,
@@ -127,7 +127,7 @@ const lineItems = [
   },
   {
     scopeOfWork: "Sag rod",
-      
+    type:"MainSteel",   
     remarks: "",
     quantity: null,
     hoursPerQty: 1,
@@ -136,7 +136,7 @@ const lineItems = [
   },
   {
     scopeOfWork: "Turn Buckle",
-      
+    type:"MainSteel",  
     remarks: "",
     quantity: null,
     hoursPerQty: 1.5,
@@ -145,7 +145,7 @@ const lineItems = [
   },
   {
     scopeOfWork: "Dock Levellers",
-      
+    type:"MainSteel",  
     remarks: "",
     quantity: null,
     hoursPerQty: 4,
@@ -154,7 +154,7 @@ const lineItems = [
   },
   {
     scopeOfWork: "RTU Frame/Roof Hatch Frame",
-      
+    type:"MainSteel",   
     remarks: "",
     quantity: null,
     hoursPerQty: 1,
@@ -163,7 +163,7 @@ const lineItems = [
   },
   {
     scopeOfWork: "Roof Drain Frame",
-      
+    type:"MainSteel",  
     remarks: "",
     quantity: null,
     hoursPerQty: 1,
@@ -172,7 +172,7 @@ const lineItems = [
   },
   {
     scopeOfWork: "Embed Plate/Bearing Plates",
-      
+    type:"MainSteel",   
     remarks: "",
     quantity: null,
     hoursPerQty: 2,
@@ -181,7 +181,7 @@ const lineItems = [
   },
   {
     scopeOfWork: "Embeds Angle",
-      
+    type:"MainSteel",   
     remarks: "",
     quantity: null,
     hoursPerQty: 1,
@@ -190,7 +190,7 @@ const lineItems = [
   },
   {
     scopeOfWork: "Stair",
-      
+    type:"MiscSteel",   
     remarks: "",
     quantity: null,
     hoursPerQty: 8,
@@ -199,7 +199,7 @@ const lineItems = [
   },
   {
     scopeOfWork: "Dock Stair",
-      
+    type:"MiscSteel",     
     remarks: "",
     quantity: null,
     hoursPerQty: 3,
@@ -208,7 +208,7 @@ const lineItems = [
   },
   {
     scopeOfWork: "Guardrail",
-      
+    type:"MiscSteel",     
     remarks: "",
     quantity: null,
     hoursPerQty: 2,
@@ -217,7 +217,7 @@ const lineItems = [
   },
   {
     scopeOfWork: "Handrail/Wallrails",
-      
+    type:"MiscSteel",    
     remarks: "",
     quantity: null,
     hoursPerQty: 1.5,
@@ -226,7 +226,7 @@ const lineItems = [
   },
   {
     scopeOfWork: "Landing Frame",
-      
+    type:"MiscSteel",     
     remarks: "",
     quantity: null,
     hoursPerQty: 1.5,
@@ -235,7 +235,7 @@ const lineItems = [
   },
   {
     scopeOfWork: "Roof Ladder",
-      
+    type:"MiscSteel",     
     remarks: "",
     quantity: null,
     hoursPerQty: 3,
@@ -244,7 +244,7 @@ const lineItems = [
   },
   {
     scopeOfWork: "Ship Ladder/Cage Ladder",
-      
+    type:"MiscSteel",    
     remarks: "",
     quantity: null,
     hoursPerQty: 4,
@@ -253,7 +253,7 @@ const lineItems = [
   },
   {
     scopeOfWork: "Pit Ladder",
-      
+    type:"MiscSteel",    
     remarks: "",
     quantity: null,
     hoursPerQty: 1.5,
@@ -262,7 +262,7 @@ const lineItems = [
   },
   {
     scopeOfWork: "Bollard",
-      
+    type:"MiscSteel",    
     remarks: "",
     quantity: null,
     hoursPerQty: 1,
@@ -271,7 +271,7 @@ const lineItems = [
   },
   {
     scopeOfWork: "Gates",
-      
+    type:"MiscSteel",    
     remarks: "",
     quantity: null,
     hoursPerQty: 6,
@@ -280,7 +280,7 @@ const lineItems = [
   },
   {
     scopeOfWork: "Grating",
-      
+    type:"MiscSteel",     
     remarks: "",
     quantity: null,
     hoursPerQty: 1,
@@ -289,7 +289,7 @@ const lineItems = [
   },
   {
     scopeOfWork: "Bike Rack",
-      
+    type:"MiscSteel",     
     remarks: "",
     quantity: null,
     hoursPerQty: 1,
@@ -298,7 +298,7 @@ const lineItems = [
   },
   {
     scopeOfWork: "Joist",
-      
+    type:"Others",    
     remarks: "",
     quantity: null,
     hoursPerQty: 0.5,
@@ -307,7 +307,7 @@ const lineItems = [
   },
   {
     scopeOfWork: "Wall",
-      
+    type:"Others",     
     remarks: "",
     quantity: null,
     hoursPerQty: 1,
@@ -316,7 +316,7 @@ const lineItems = [
   },
   {
     scopeOfWork: "Other trades",
-      
+    type:"Others",      
     remarks: "",
     quantity: null,
     hoursPerQty: 0.75,
