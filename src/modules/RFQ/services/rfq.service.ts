@@ -43,6 +43,9 @@ export class RFQService {
 
         return existing;
     }
+    async getAllRFQ(){
+        return await rfqrepo.getAllRFQ();
+    }
     async sents(senderId:string){
         return await rfqrepo.sentTouser(senderId);
     }

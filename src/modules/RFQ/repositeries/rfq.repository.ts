@@ -50,6 +50,19 @@ export class RFQRepository {
         });
     }
 
+    async getAllRFQ(){
+        return await prisma.rFQ.findMany({
+            include:{
+                sender: true,
+                recipient: true,
+                salesPerson: true,
+                responses:true,
+                fabricator:true,
+                project: {select:{name:true}},
+            }
+        })
+    }
+
     async getById(data:GetRfqInput) {
         return await prisma.rFQ.findUnique({
             where: { id: data.id },

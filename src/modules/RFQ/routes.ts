@@ -36,6 +36,11 @@ router.get(
     validate({params:z.object({id:z.string()})}),
     rfqController.handleGetRfqById.bind(rfqController)
 );
+router.get(
+    "/all",
+    authMiddleware,
+    rfqController.handleGetAllRFQ.bind(rfqController)
+);
 
 router.get(
     "/sents",

@@ -70,6 +70,13 @@ export class RFQController {
             data: rfq,
         });
     }
+    async handleGetAllRFQ(req:Request,res:Response){
+        const rfq = await rfqService.getAllRFQ();
+        res.status(200).json({
+            status: 'success',
+            data: rfq,
+        });
+    }
     async handleSents(req:AuthenticateRequest,res:Response){
         if (!req.user) {
             throw new AppError('User not found', 404);
