@@ -19,7 +19,7 @@ export const CreateRfqSchema = z.object({
   connectionEngineerIds: z.array(z.string()).optional(),
   salesPersonId: z.string().optional(),
   subject: z.string().min(2).max(100),
-  description: z.string().min(2).max(500),
+  description: z.string().min(2),
   status: z.enum(RFQStatus).default("SENT"),  
   tools: z.string().optional(),
   wbtStatus: z.enum(RFQStatus).default("RECEIVED"),
