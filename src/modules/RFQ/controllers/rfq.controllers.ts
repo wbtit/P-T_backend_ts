@@ -108,6 +108,14 @@ export class RFQController {
             data: rfq,
         });
     }
+    async handleDeleteRFQ(req:AuthenticateRequest,res:Response){
+        const {id}=req.params
+        const rfq = await rfqService.deleteRFQ(id);
+        res.status(200).json({
+            status: 'success',
+            data: rfq,
+        });
+    }
     async handleGetFile(req:Request,res:Response){
         const { rfqId, fileId } = req.params;
         const file = await rfqService.getFile(rfqId, fileId);

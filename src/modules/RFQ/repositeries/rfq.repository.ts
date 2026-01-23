@@ -178,4 +178,12 @@ getbyProjectNameAndLocation(projectName:string,location:string){
         }
     });
     }
+async deleteRFQ(id:string){
+    return await prisma.rFQ.delete({
+        where:{
+            id
+        }
+    })
 }
+}
+

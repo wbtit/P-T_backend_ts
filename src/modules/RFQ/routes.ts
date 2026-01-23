@@ -71,6 +71,12 @@ router.delete(
     validate({params:z.object({id:z.string()})}),
     rfqController.handleCloseRfq.bind(rfqController)
 );
+router.delete(
+    "/delete/:id",
+    authMiddleware,
+    validate({params:z.object({id:z.string()})}),
+    rfqController.handleDeleteRFQ.bind(rfqController)
+);
 router.get(
     "/pendingRFQs",
     authMiddleware,
