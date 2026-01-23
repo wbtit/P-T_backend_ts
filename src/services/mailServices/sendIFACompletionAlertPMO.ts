@@ -1,11 +1,14 @@
 import prisma from "../../config/database/client";
 import { ifaCompletionInvoiceTemplate } from "./mailtemplates/ifaCompletionInvoiceTemplate";
 import { transporter } from "./transporter";
+import { getCCEmails } from "./mailconfig";
 
 export default async function sendIFACompletionAlertPMO(project:any, fabricator:any) {
+    const ccEmails = await getCCEmails();
     const mailOptions={
         from:process.env.EMAIL,
         to:process.env.PMO_EMAIL,
+        cc: ccEmails,
         subject:`Raise Invoice for the IFA Completion of Project: ${project.name}`,
         html:ifaCompletionInvoiceTemplate(project,fabricator)
     }

@@ -8,6 +8,7 @@ import { Response } from "express";
 import prisma from "../../../config/database/client";
 import changeOrderInvoiceRequestTemplate from "../../../services/mailServices/mailtemplates/changeOrderApprovedInvoice";
 import { transporter } from "../../../services/mailServices/transporter";
+import { getCCEmails } from "../../../services/mailServices/mailconfig";
 
 const coResponseRepo = new CoResponseRepository();
 
@@ -29,9 +30,11 @@ export class CoResponseService {
       userId,
     );
     if(response.Status ==="ACCEPT"){
+      const ccEmails = await getCCEmails();
       const mailOptions={
               from:process.env.EMAIL,
               to:process.env.PMO_EMAIL,
+              cc: ccEmails,
               subject:`Raise Invoice for the ChangeOrder : ${changeOrder.description}`,
               html:changeOrderInvoiceRequestTemplate(
                 changeOrder.Project.name,

@@ -3,7 +3,7 @@ import { AuthenticateRequest } from "../../../middleware/authMiddleware";
 import { AppError } from "../../../config/utils/AppError";
 import { RFIService } from "../services";
 import { mapUploadedFiles } from "../../uploads/fileUtil";
-import { sendEmail } from "../../../services/mailServices/mailconfig";
+import { sendEmail, getCCEmails } from "../../../services/mailServices/mailconfig";
 import { rfihtmlContent } from "../../../services/mailServices/mailtemplates/rfiMailtemplate";
 
 const rfiService = new RFIService();
@@ -41,12 +41,14 @@ export class RFIController {
     if (!email) {
       throw new Error("No recipient email provided");
     }
+    const ccEmails = await getCCEmails();
         await sendEmail({
           html: rfihtmlContent(newrfi),
           to: email,
+          cc: ccEmails,
           subject: newrfi.subject,
           text: newrfi.description,
-        }); 
+        });
 
     res.status(201).json({
       message:"RFI created",

@@ -3,7 +3,7 @@ import { AuthenticateRequest } from "../../../middleware/authMiddleware";
 import { AppError } from "../../../config/utils/AppError";
 import { RFQService } from "../services/rfq.service";
 import { mapUploadedFiles } from "../../uploads/fileUtil";
-import { sendEmail } from "../../../services/mailServices/mailconfig";
+import { sendEmail, getCCEmails } from "../../../services/mailServices/mailconfig";
 import { rfqhtmlContent } from "../../../services/mailServices/mailtemplates/rfqMailtemplate";
 
 const rfqService = new RFQService();
@@ -30,9 +30,11 @@ export class RFQController {
         if (!email) {
           throw new Error("No recipient email provided");
         }
+        const ccEmails = await getCCEmails();
                 await sendEmail({
               html: rfqhtmlContent(newrfq),
               to: email,
+              cc: ccEmails,
               subject: newrfq.subject,
               text: newrfq.description,
             });

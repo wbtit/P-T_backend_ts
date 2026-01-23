@@ -1,13 +1,16 @@
 import { transporter } from "./transporter";
 import { submissionReminderTemplate } from "./mailtemplates/submissionMailReminderTemplate";
+import { getCCEmails } from "./mailconfig";
 import prisma from "../../config/database/client";
 import dotenv from "dotenv";
 dotenv.config();
 
 export default async function sendSubmissionReminder(project:any){
+    const ccEmails = await getCCEmails();
     const mailOptions={
         from:process.env.EMAIL,
         to:project.manager.email,
+        cc: ccEmails,
         subject:`Project Submission Reminder: ${project.name}`,
         html:submissionReminderTemplate(project.name,project.endDate,project.manager.firstName)
     }
@@ -29,4 +32,3 @@ export default async function sendSubmissionReminder(project:any){
         return false
     }
 }
-

@@ -1,13 +1,16 @@
 import {transporter}  from "./transporter";
 import prisma from "../../config/database/client";
 import { approvalReminderTemplate } from "./mailtemplates/approvalMailReminderTemplate";
+import { getCCEmails } from "./mailconfig";
 import dotenv from "dotenv";
 dotenv.config();
 
 export default async function sendApprovalReminder(project:any){
+    const ccEmails = await getCCEmails();
     const mailOptions={
         from:process.env.EMAIL,
         to:project.manager.email,
+        cc: ccEmails,
         subject:`Project Approval Reminder: ${project.name}`,
         html:approvalReminderTemplate(project.name,project.approvalDate,project.manager.firstName)
     }
@@ -31,4 +34,3 @@ export default async function sendApprovalReminder(project:any){
         return false
     }
 }
-

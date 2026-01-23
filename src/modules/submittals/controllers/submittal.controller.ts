@@ -3,7 +3,7 @@ import { AuthenticateRequest } from "../../../middleware/authMiddleware";
 import { AppError } from "../../../config/utils/AppError";
 import { SubmittalService } from "../services";
 import { mapUploadedFiles } from "../../uploads/fileUtil";
-import { sendEmail } from "../../../services/mailServices/mailconfig";
+import { sendEmail, getCCEmails } from "../../../services/mailServices/mailconfig";
 import { submittalhtmlContent } from "../../../services/mailServices/mailtemplates/submittalMailtemplate";
 
 const submittalService = new SubmittalService();
@@ -49,8 +49,10 @@ export class SubmittalController {
     // 🔔 Email uses CURRENT VERSION
     const email = submittal.recepients?.email;
     if (email) {
+      const ccEmails = await getCCEmails();
       sendEmail({
         to: email,
+        cc: ccEmails,
         subject: submittal.subject,
         html: submittalhtmlContent(submittal),
       });
