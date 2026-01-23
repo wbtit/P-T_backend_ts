@@ -4,7 +4,7 @@ export const rfqhtmlContent=(newrfq:any)=>{
           <head>
               <meta charset="UTF-8" />
               <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-              <title>Project Station - RFI Notification</title>
+              <title>Project Station - RFQ Notification</title>
               <style>
                 body {
                   font-family: 'Courier New', Courier, monospace;
@@ -110,7 +110,7 @@ export const rfqhtmlContent=(newrfq:any)=>{
               <div class="email-container">
                   <div class="d-flex justify-content-between align-items-center">
                   <div class="title">
-                      <span>You’ve Received a New RFI</span><br/>
+                      <span>You’ve Received a New RFQ</span><br/>
                       <span><strong>Project:</strong> ${newrfq.projectName}</span>
                   </div>
                   <div> 
@@ -122,13 +122,13 @@ export const rfqhtmlContent=(newrfq:any)=>{
               </div>
                   <div class="email-body">
                       <h2>Welcome to Project Station, <b>${newrfq.recipient.username}</b>!</h2>
-                      <p>You have received a new RFI notification. Here are the details:</p>
+                      <p>You have received a new RFQ notification. Here are the details:</p>
           
                       <p><strong>Project Name:</strong> ${newrfq.projectName}</p>
                       <p><strong>Sender:</strong> ${newrfq.sender.username}</p>
                       <p><strong>Date:</strong> ${newrfq.date}</p>
                       <p><strong>Subject:</strong> ${newrfq.subject}</p>
-                      <p>You can check your RFI by clicking the link <a href="projectstation.whiteboardtec.com">here</a>.</p>
+                      <p>You can check your RFQ by clicking the link <a href="projectstation.whiteboardtec.com">here</a>.</p>
           
                       <div class="card">
                           <div class="card-body">
