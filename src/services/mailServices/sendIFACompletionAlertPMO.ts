@@ -4,6 +4,11 @@ import { transporter } from "./transporter";
 import { getCCEmails } from "./mailconfig";
 
 export default async function sendIFACompletionAlertPMO(project:any, fabricator:any) {
+    if (process.env.NODE_ENV !== 'production') {
+        console.log('Email sending disabled in development environment');
+        return true;
+    }
+
     const ccEmails = await getCCEmails();
     const mailOptions={
         from:process.env.EMAIL,

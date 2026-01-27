@@ -28,6 +28,11 @@ const getCCEmails = async (): Promise<string[]> => {
 };
 
 const sendEmail = async ({ to, cc, subject, text, html }: SendEmailInput) => {
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('Email sending disabled in development environment');
+    return { messageId: 'development-mode' };
+  }
+
   try {
     const info = await transporter.sendMail({
       from: "wbt.itdev@gmail.com",

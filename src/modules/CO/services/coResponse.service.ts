@@ -30,32 +30,36 @@ export class CoResponseService {
       userId,
     );
     if(response.Status ==="ACCEPT"){
-      const ccEmails = await getCCEmails();
-      const mailOptions={
-              from:process.env.EMAIL,
-              to:process.env.PMO_EMAIL,
-              cc: ccEmails,
-              subject:`Raise Invoice for the ChangeOrder : ${changeOrder.description}`,
-              html:changeOrderInvoiceRequestTemplate(
-                changeOrder.Project.name,
-                changeOrder.changeOrderNumber,
-                response.user.firstName,
-                response.createdAt,
-                changeOrder.remarks,
-                response.user.firstName,
-              )
-          }
-         try {
-           await transporter.sendMail(mailOptions)
-          await prisma.cOResponse.update({
-            where:{id:response.id},
-            data:{
-              InvoiceAlerted:true
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('Email sending disabled in development environment');
+      } else {
+        const ccEmails = await getCCEmails();
+        const mailOptions={
+                from:process.env.EMAIL,
+                to:process.env.PMO_EMAIL,
+                cc: ccEmails,
+                subject:`Raise Invoice for the ChangeOrder : ${changeOrder.description}`,
+                html:changeOrderInvoiceRequestTemplate(
+                  changeOrder.Project.name,
+                  changeOrder.changeOrderNumber,
+                  response.user.firstName,
+                  response.createdAt,
+                  changeOrder.remarks,
+                  response.user.firstName,
+                )
             }
-          });
-         } catch (error: any) {
-          console.log(error.message);
-         }
+           try {
+             await transporter.sendMail(mailOptions)
+            await prisma.cOResponse.update({
+              where:{id:response.id},
+              data:{
+                InvoiceAlerted:true
+              }
+            });
+           } catch (error: any) {
+            console.log(error.message);
+           }
+      }
     }
     return response;
   }

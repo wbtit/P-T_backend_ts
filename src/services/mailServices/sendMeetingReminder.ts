@@ -3,6 +3,11 @@ import dotenv from "dotenv";
 dotenv.config();
 
 export async function sendMeetingReminder(meeting:any) {
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('Email sending disabled in development environment');
+    return true;
+  }
+
   const participantEmails = meeting.participants.map((p:any) => p.email);
 
   const mailOptions = {

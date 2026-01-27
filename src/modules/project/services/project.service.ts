@@ -269,7 +269,7 @@ async expandProjectWbs(
     }
      let projects;
      if(user.role==="ADMIN"|| user.role==="SYSTEM_ADMIN"|| user.role==="PROJECT_MANAGER_OFFICER"
-      || user.role==="DEPUTY_MANAGER"|| user.role==="OPERATION_EXECUTIVE"){
+      || user.role==="DEPUTY_MANAGER"|| user.role==="OPERATION_EXECUTIVE" || user.role ==="ESTIMATION_HEAD"){
         //all projects
         projects = await projectRepository.getAll();
      }
