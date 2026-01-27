@@ -43,7 +43,7 @@ export const createUser = async (user: createUserInput) => {
       address: user.address,
       role: user.role as userRole,
       ...(user.departmentId
-        ? { Department: { connect: { id: user.departmentId } } }
+        ? { department: { connect: { id: user.departmentId } } }
         : {}),
       ...(user.fabricatorId
         ? { FabricatorPointOfContacts: { connect: { id: user.fabricatorId } } }
