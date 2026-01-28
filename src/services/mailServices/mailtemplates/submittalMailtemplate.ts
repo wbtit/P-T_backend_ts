@@ -1,156 +1,138 @@
-export const submittalhtmlContent =(submitals:any)=>{
-    return `<!DOCTYPE html>
+export const submittalhtmlContent = (submitals: any) => {
+  return `<!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Project Station - Submittal Notification</title>
-    <style>
-      body {
-        font-family: 'Courier New', Courier, monospace;
-        background-color: #f2fdf3; /* Light greenish background */
-        color: #333;
-        margin: 0;
-        padding: 0;
-      }
-
-      .email-container {
-        background-color: #ffffff;
-        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
-        border-radius: 10px;
-        padding: 35px;
-        margin-top: 50px;
-        max-width: 650px;
-        margin-left: auto;
-        margin-right: auto;
-      }
-
-      .email-header {
-        background-color: #6adb45;
-        color: white;
-        padding: 25px;
-        border-radius: 8px;
-        text-align: center;
-      }
-
-      .email-header .title {
-        font-size: 26px;
-        font-weight: bold;
-        margin: 0;
-      }
-
-      .email-body {
-        margin-top: 25px;
-        text-align: left;
-        line-height: 1.6;
-      }
-
-      .card {
-        background-color: #f9f9f9;
-        border-radius: 8px;
-        padding: 25px;
-        margin-top: 30px;
-        border: none;
-      }
-
-      .footer {
-        text-align: center;
-        margin-top: 40px;
-        font-size: 14px;
-        color: #555;
-      }
-
-      .footer img {
-        max-width: 150px;
-        margin-top: 15px;
-      }
-
-      a {
-        color: #6adb45;
-        text-decoration: none;
-        font-weight: bold;
-      }
-
-      .green-text {
-        color: #6adb45;
-      }
-
-      h2 {
-        font-size: 20px;n
-        color: #333;
-        margin-top: 20px;
-      }
-
-      p {
-        font-size: 16px;
-        color: #555;
-      }
-
-      /* Ensure logo is centered in footer */
-      .footer {
-        text-align: center;
-        margin-top: 40px;
-      }
-
-      .footer img {
-        max-width: 150px;
-        display: block;
-        margin-left: auto;
-        margin-right: auto;
-      }
-
-      /* Ensure the email container is centered */
-      .email-container {
-        text-align: center;
-      }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Project Station - Submittal Notification</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 0;
+    }
+    .email-wrapper {
+      width: 100%;
+      background-color: #f4f4f4;
+      padding: 20px 0;
+    }
+    .email-container {
+      max-width: 600px;
+      margin: 0 auto;
+      background-color: #ffffff;
+      border: 1px solid #e0e0e0;
+    }
+    .header-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .logo-container {
+      padding: 20px;
+      width: 40%;
+    }
+    .project-name-container {
+      background-color: #8cc63f;
+      padding: 20px;
+      color: #ffffff;
+      text-align: left;
+      width: 60%;
+      font-weight: bold;
+      font-size: 18px;
+    }
+    .content-body {
+      padding: 40px 30px;
+      color: #333333;
+      line-height: 1.6;
+    }
+    .subject-line {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 20px;
+    }
+    .btn-container {
+      text-align: center;
+      margin: 30px 0;
+    }
+    .btn {
+      background-color: #8cc63f;
+      color: #ffffff;
+      padding: 15px 30px;
+      text-decoration: none;
+      border-radius: 5px;
+      font-weight: bold;
+      display: inline-block;
+    }
+    .signature-table {
+      width: 100%;
+      margin-top: 30px;
+    }
+    .signature-logo {
+      width: 120px;
+      padding-right: 20px;
+    }
+    .signature-details {
+      border-left: 1px solid #e0e0e0;
+      padding-left: 20px;
+      color: #777777;
+      font-size: 14px;
+    }
+    .footer {
+      padding: 20px;
+      text-align: center;
+      font-size: 12px;
+      color: #999999;
+    }
+  </style>
 </head>
-
 <body>
+  <div class="email-wrapper">
     <div class="email-container">
-        <div class="d-flex justify-content-between align-items-center">
-        <div class="title">
-            <span>You’ve Received a New Submittal</span><br/>
-            <span><strong>Project:</strong> ${submitals.project?.name}</span>
+      <table class="header-table">
+        <tr>
+          <td class="logo-container">
+            <img src="https://res.cloudinary.com/dp7yxzrgw/image/upload/v1753685727/logos/whiteboardtec-logo_oztrhh.png" alt="Whiteboard Logo" width="150" />
+          </td>
+          <td class="project-name-container">
+            ${submitals.project?.name?.toUpperCase() || "PROJECT NAME"}
+          </td>
+        </tr>
+      </table>
+
+      <div class="content-body">
+        <p style="color: #888888; margin-bottom: 20px;">Date: ${new Date().toString()}</p>
+        
+        <div class="subject-line">Subject: ${submitals.subject || "Submittal Notification"}</div>
+        
+        <p>Dear ${submitals.recepients?.username || "Recipient"},</p>
+        
+        <p>${submitals.subject || "Submittal TR#"}</p>
+
+        <div class="btn-container">
+          <a href="https://projectstation.whiteboardtec.com" class="btn">Login With Your Credentials</a>
         </div>
-        <div> 
-            <img 
-                src="https://firebasestorage.googleapis.com/v0/b/whiteboard-website.appspot.com/o/assets%2Fimage%2Flogo%2Fwhiteboardtec-logo.png?alt=media&token=f73c5257-9b47-4139-84d9-08a1b058d7e9"
-                alt="Company Logo" 
-                style="max-width: 100px;" />
-        </div>
+
+        <p>Thanks & Regards,</p>
+        
+        <table class="signature-table">
+          <tr>
+            <td class="signature-logo">
+              <img src="https://res.cloudinary.com/dp7yxzrgw/image/upload/v1753685727/logos/whiteboardtec-logo_oztrhh.png" alt="Logo" width="100" />
+            </td>
+            <td class="signature-details">
+              <strong style="color: #333333; font-size: 16px;">${submitals.sender?.username || "Project Station"}</strong><br />
+              ${submitals.sender?.designation || "N/A"}<br />
+              Whiteboard Engineering | <a href="https://whiteboardtec.com" style="color: #8cc63f; text-decoration: none;">whiteboardtec.com</a>
+            </td>
+          </tr>
+        </table>
+      </div>
+
+      <div class="footer">
+        © ${new Date().getFullYear()} Whiteboard Engineering. All Rights Reserved.
+      </div>
     </div>
-        <div class="email-body">
-            <h2>Welcome to Project Station, <b>${submitals.recepients?.username}</b>!</h2>
-            <p>You have received a new Submittal notification. Here are the details:</p>
-
-            <p><strong>Project Name:</strong> ${submitals.project?.name}</p>
-            <p><strong>Sender:</strong> ${submitals.sender?.username}</p>
-            <p><strong>Date:</strong> ${submitals.date}</p>
-            <p><strong>Subject:</strong> ${submitals.subject}</p>
-            <p>You can check your Submittal by clicking the link <a href="projectstation.whiteboardtec.com">here</a>.</p>
-
-            <div class="card">
-                <div class="card-body">
-                    ${submitals.description}
-                </div>
-            </div>
-
-            <p>Thanks & Regards,</p>
-            <p><b>${submitals.sender?.username}</b></p>
-            <p>Bangalore</p>
-        </div>
-
-        <div class="footer">
-            <img
-                src="https://firebasestorage.googleapis.com/v0/b/whiteboard-website.appspot.com/o/assets%2Fimage%2Flogo%2Fwhiteboardtec-logo.png?alt=media&token=f73c5257-9b47-4139-84d9-08a1b058d7e9"
-                alt="Company Logo"
-            />
-            <p><b>Whiteboard Technologies Pvt. Ltd.</b></p>
-            <p>Bangalore</p>
-        </div>
-    </div>
+  </div>
 </body>
-</html>
-`;
+</html>`;
 }

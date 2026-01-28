@@ -21,158 +21,137 @@ export function followUpReminderTemplate(
   <title>Project Station - Follow-Up Reminder</title>
   <style>
     body {
-      font-family: 'Courier New', Courier, monospace;
-      background-color: #f2fdf3;
-      color: #333;
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
       margin: 0;
       padding: 0;
     }
-
+    .email-wrapper {
+      width: 100%;
+      background-color: #f4f4f4;
+      padding: 20px 0;
+    }
     .email-container {
+      max-width: 600px;
+      margin: 0 auto;
       background-color: #ffffff;
-      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
-      border-radius: 10px;
-      padding: 35px;
-      margin-top: 50px;
-      max-width: 650px;
-      margin-left: auto;
-      margin-right: auto;
+      border: 1px solid #e0e0e0;
     }
-
-    .header-flex {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background-color: #6adb45;
-      color: white;
-      padding: 25px;
-      border-radius: 8px;
+    .header-table {
+      width: 100%;
+      border-collapse: collapse;
     }
-
-    .header-title {
-      font-size: 24px;
+    .logo-container {
+      padding: 20px;
+      width: 40%;
+    }
+    .project-name-container {
+      background-color: #8cc63f;
+      padding: 20px;
+      color: #ffffff;
+      text-align: left;
+      width: 60%;
       font-weight: bold;
+      font-size: 18px;
     }
-
-    .header-logo {
-      max-width: 100px;
-      height: auto;
-    }
-
-    .email-body {
-      margin-top: 25px;
+    .content-body {
+      padding: 40px 30px;
+      color: #333333;
       line-height: 1.6;
     }
-
-    .card {
-      background-color: #f9f9f9;
-      border-radius: 8px;
-      padding: 20px;
-      margin-top: 25px;
-    }
-
-    .green-text {
-      color: #6adb45;
+    .subject-line {
+      font-size: 18px;
       font-weight: bold;
+      margin-bottom: 20px;
     }
-
-    p {
-      font-size: 16px;
-      color: #555;
-    }
-
-    .cta {
+    .btn-container {
       text-align: center;
-      margin-top: 25px;
+      margin: 30px 0;
     }
-
-    .cta a {
-      background-color: #6adb45;
-      color: white;
-      padding: 12px 25px;
-      border-radius: 5px;
+    .btn {
+      background-color: #8cc63f;
+      color: #ffffff;
+      padding: 15px 30px;
       text-decoration: none;
-      font-size: 16px;
+      border-radius: 5px;
       font-weight: bold;
+      display: inline-block;
     }
-
-    .footer {
-      text-align: center;
-      margin-top: 40px;
+    .signature-table {
+      width: 100%;
+      margin-top: 30px;
+    }
+    .signature-logo {
+      width: 120px;
+      padding-right: 20px;
+    }
+    .signature-details {
+      border-left: 1px solid #e0e0e0;
+      padding-left: 20px;
+      color: #777777;
       font-size: 14px;
-      color: #555;
     }
-
-    .footer img {
-      max-width: 150px;
-      margin-top: 15px;
+    .footer {
+      padding: 20px;
+      text-align: center;
+      font-size: 12px;
+      color: #999999;
     }
   </style>
 </head>
-
 <body>
-  <div class="email-container">
-    <div class="header-flex">
-      <div class="header-title">
-        Client Follow-Up Reminder<br/>
-        <span style="font-size: 16px;">
-          Project: <strong>${projectName}</strong>
-        </span>
-      </div>
-      <img
-        src="https://firebasestorage.googleapis.com/v0/b/whiteboard-website.appspot.com/o/assets%2Fimage%2Flogo%2Fwhiteboardtec-logo.png?alt=media&token=f73c5257-9b47-4139-84d9-08a1b058d7e9"
-        alt="Company Logo"
-        class="header-logo"
-      />
-    </div>
+  <div class="email-wrapper">
+    <div class="email-container">
+      <table class="header-table">
+        <tr>
+          <td class="logo-container">
+            <img src="https://res.cloudinary.com/dp7yxzrgw/image/upload/v1753685727/logos/whiteboardtec-logo_oztrhh.png" alt="Whiteboard Logo" width="150" />
+          </td>
+          <td class="project-name-container">
+            ${projectName?.toUpperCase() || "PROJECT NAME"}
+          </td>
+        </tr>
+      </table>
 
-    <div class="email-body">
-      <p>Hello <b>${recipientUsername || 'Team Member'}</b>,</p>
+      <div class="content-body">
+        <p style="color: #888888; margin-bottom: 20px;">Date: ${new Date().toString()}</p>
+        
+        <div class="subject-line">Subject: Client Follow-Up Reminder - ${projectName}</div>
+        
+        <p>Dear ${recipientUsername || "Team Member"},</p>
+        
+        <p>This is a friendly reminder to follow up on a client communication scheduled in <b>Project Station</b>.</p>
 
-      <p>
-        This is a friendly reminder to follow up on a client communication scheduled in
-        <b>Project Station</b>.
-      </p>
-
-      <div class="card">
-        <p><strong>Project Name:</strong> ${projectName}</p>
         <p><strong>Client:</strong> ${clientName}</p>
-        <p>
-          <strong>Follow-Up Date:</strong>
-          <span class="green-text">${formattedDate}</span>
-        </p>
+        <p><strong>Follow-Up Date:</strong> ${formattedDate}</p>
+        <p><strong>Notes from last communication:</strong> ${notes || "—"}</p>
 
-        <p><strong>Notes from last communication:</strong></p>
-        <p style="white-space: pre-line;">${notes}</p>
+        <div class="btn-container">
+          <a href="https://projectstation.whiteboardtec.com" class="btn">Login With Your Credentials</a>
+        </div>
+
+        <p>Thanks & Regards,</p>
+        
+        <table class="signature-table">
+          <tr>
+            <td class="signature-logo">
+              <img src="https://res.cloudinary.com/dp7yxzrgw/image/upload/v1753685727/logos/whiteboardtec-logo_oztrhh.png" alt="Logo" width="100" />
+            </td>
+            <td class="signature-details">
+              <strong style="color: #333333; font-size: 16px;">Project Station</strong><br />
+              Team Member<br />
+              Whiteboard Engineering | <a href="https://whiteboardtec.com" style="color: #8cc63f; text-decoration: none;">whiteboardtec.com</a>
+            </td>
+          </tr>
+        </table>
       </div>
 
-      <p>
-        Please ensure the follow-up communication is completed on the scheduled date.
-        Once done, kindly mark it as <b>completed</b> in Project Station to avoid further reminders.
-      </p>
-
-      <div class="cta">
-        <a href="https://projectstation.whiteboardtec.com">
-          Go to Project Station
-        </a>
+      <div class="footer">
+        © ${new Date().getFullYear()} Whiteboard Engineering. All Rights Reserved.
       </div>
-
-      <p style="margin-top: 30px;">
-        Thanks & Regards,<br/>
-        <b>The Project Station Team</b><br/>
-        Bangalore
-      </p>
-    </div>
-
-    <div class="footer">
-      <img
-        src="https://firebasestorage.googleapis.com/v0/b/whiteboard-website.appspot.com/o/assets%2Fimage%2Flogo%2Fwhiteboardtec-logo.png?alt=media&token=f73c5257-9b47-4139-84d9-08a1b058d7e9"
-        alt="Company Logo"
-      />
-      <p><b>Whiteboard Technologies Pvt. Ltd.</b></p>
-      <p>Bangalore</p>
     </div>
   </div>
 </body>
 </html>`;
 }
+
