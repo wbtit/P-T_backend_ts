@@ -90,7 +90,7 @@ export class DesignDrawingsController {
 
     const uploadedFiles = mapUploadedFiles(
       (req.files as Express.Multer.File[]) || [],
-      "designresponses"
+      "designdrawingresponse"
     );
 
     const response = await designService.createResponse(

@@ -115,9 +115,9 @@ export class DesignDrawingsService {
       });
       throw new AppError("File not found", 404);
     }
-  
+
     const __dirname = path.resolve();
-    const filePath = path.join(__dirname, "public", fileObject.filename);
+    const filePath = path.join(__dirname, "public", fileObject.path);
     if (!fs.existsSync(filePath)) {
         console.error("🚨 [viewFile] File does not exist on disk:", filePath);
         throw new AppError("File not found on server", 404);
@@ -133,7 +133,7 @@ export class DesignDrawingsService {
    // ✅ Fix here: remove .jpg extension from lookup, only compare the UUID part
      const cleanFileId = fileId.replace(/\.[^/.]+$/, "");
      const fileObject = files.find((file: FileObject) => file.id === cleanFileId);
-   
+
      if (!fileObject) {
        console.warn("⚠️ [viewFile] File not found in fabricator.files", {
          fileId,
@@ -141,9 +141,9 @@ export class DesignDrawingsService {
        });
        throw new AppError("File not found", 404);
      }
-   
+
      const __dirname = path.resolve();
-     const filePath = path.join(__dirname, "public", fileObject.filename);
+     const filePath = path.join(__dirname, "public", fileObject.path);
 
 
        if (!fs.existsSync(filePath)) {
