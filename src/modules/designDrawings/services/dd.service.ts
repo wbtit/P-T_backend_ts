@@ -1,5 +1,6 @@
 import { DesignDrawingsRepository } from "../repositories";
 import { AppError } from "../../../config/utils/AppError";
+import fs from 'fs'
 import {
   CreateDesignDrawingsInput,
   UpdateDesignDrawingsInput,
@@ -104,11 +105,23 @@ export class DesignDrawingsService {
     if (!design) throw new AppError("Design Drawing not found", 404);
 
     const files = design.files as unknown as FileObject[];
-    const fileObject = files.find((file) => file.id === fileId);
-    if (!fileObject) throw new AppError("File not found", 404);
 
+   const cleanFileId = fileId.replace(/\.[^/.]+$/, "");
+   const fileObject = files.find((file: FileObject) => file.id === cleanFileId);
+   if (!fileObject) {
+      console.warn("⚠️ [viewFile] File not found in fabricator.files", {
+        fileId,
+        availableFileIds: files.map(f => f.id),
+      });
+      throw new AppError("File not found", 404);
+    }
+  
     const __dirname = path.resolve();
-    const filePath = path.join(__dirname,"public", fileObject.filename);
+    const filePath = path.join(__dirname, "public", fileObject.filename);
+    if (!fs.existsSync(filePath)) {
+        console.error("🚨 [viewFile] File does not exist on disk:", filePath);
+        throw new AppError("File not found on server", 404);
+      }
 
     return streamFile(res, filePath, fileObject.originalName);
   }
@@ -117,11 +130,26 @@ export class DesignDrawingsService {
     if (!response) throw new AppError("Response not found", 404);
 
     const files = response.files as unknown as FileObject[];
-    const fileObject = files.find((file) => file.id === fileId);
-    if (!fileObject) throw new AppError("File not found", 404);
+   // ✅ Fix here: remove .jpg extension from lookup, only compare the UUID part
+     const cleanFileId = fileId.replace(/\.[^/.]+$/, "");
+     const fileObject = files.find((file: FileObject) => file.id === cleanFileId);
+   
+     if (!fileObject) {
+       console.warn("⚠️ [viewFile] File not found in fabricator.files", {
+         fileId,
+         availableFileIds: files.map(f => f.id),
+       });
+       throw new AppError("File not found", 404);
+     }
+   
+     const __dirname = path.resolve();
+     const filePath = path.join(__dirname, "public", fileObject.filename);
 
-    const __dirname = path.resolve();
-    const filePath = path.join(__dirname, fileObject.path);
+
+       if (!fs.existsSync(filePath)) {
+         console.error("🚨 [viewFile] File does not exist on disk:", filePath);
+         throw new AppError("File not found on server", 404);
+       }
 
     return streamFile(res, filePath, fileObject.originalName);
   }
