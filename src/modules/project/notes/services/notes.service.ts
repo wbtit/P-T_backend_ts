@@ -6,6 +6,8 @@ import path from "path";
 import { Response } from "express";
 import { AppError } from "../../../../config/utils/AppError";
 import { sendNotification } from "../../../../utils/sendNotification";
+import fs from 'fs'
+
 
 
 const notesRepository = new NotesRepository();
@@ -84,13 +86,24 @@ export class NotesService {
          throw new AppError("Notes not found", 404);
        }
        const files = notes.files as unknown as FileObject[];
-       const file = files.find((file:FileObject) => file.id === fileId);
-       if (!file) {
-         throw new AppError("File not found", 404);
-       }
-        const __dirname=path.resolve();
-        const filePath = path.join(__dirname, file.filename);
-        return streamFile(res, filePath, file.originalName);
+       const cleanFileId = fileId.replace(/\.[^/.]+$/, "");
+             const fileObject = files.find((file: FileObject) => file.id === cleanFileId);
+             if (!fileObject) {
+                console.warn("⚠️ [viewFile] File not found in fabricator.files", {
+                  fileId,
+                  availableFileIds: files.map(f => f.id),
+                });
+                throw new AppError("File not found", 404);
+              }
+          
+              const __dirname = path.resolve();
+              const filePath = path.join(__dirname, "public", fileObject.path);
+              if (!fs.existsSync(filePath)) {
+                  console.error("🚨 [viewFile] File does not exist on disk:", filePath);
+                  throw new AppError("File not found on server", 404);
+                }
+          
+              return streamFile(res, filePath, fileObject.originalName);
        
      }
 }

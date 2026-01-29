@@ -724,7 +724,7 @@ model Notes{
   files                  Json           @default("[]")
   createdAt              DateTime       @default(now())
   updatedAt              DateTime       @updatedAt
-  projectId              String         @unique @db.Uuid
+  projectId              String         @db.Uuid
 
   // Relations
   project                Project        @relation("projectNotes",fields:[projectId],references:[id])

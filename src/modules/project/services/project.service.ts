@@ -19,6 +19,7 @@ import { handleStageChange } from "../utils/handleStageChange";
 import { handleEndDateChange } from "../utils/handleEndDateChange";
 import { recomputeProjectBundleTotals } from "../WBS/utils/recomputeBundleTotals";
 import { ensureCheckingWbsForBundle } from "../WBS/utils/ensureCheckingWbs";
+import fs from 'fs'
 
 
  const projectRepository = new ProjectRepository();
@@ -320,14 +321,24 @@ async expandProjectWbs(
      throw new AppError("Project not found", 404);
    }
    const files = project.files as unknown as FileObject[];
-   const file = files.find((file:FileObject) => file.id === fileId);
-   if (!file) {
-     throw new AppError("File not found", 404);
-   }
-    const __dirname=path.resolve();
-    const filePath = path.join(__dirname, "public", file.path);
-    return streamFile(res, filePath, file.originalName);
-
+   const cleanFileId = fileId.replace(/\.[^/.]+$/, "");
+      const fileObject = files.find((file: FileObject) => file.id === cleanFileId);
+      if (!fileObject) {
+         console.warn("⚠️ [viewFile] File not found in fabricator.files", {
+           fileId,
+           availableFileIds: files.map(f => f.id),
+         });
+         throw new AppError("File not found", 404);
+       }
+   
+       const __dirname = path.resolve();
+       const filePath = path.join(__dirname, "public", fileObject.path);
+       if (!fs.existsSync(filePath)) {
+           console.error("🚨 [viewFile] File does not exist on disk:", filePath);
+           throw new AppError("File not found on server", 404);
+         }
+   
+       return streamFile(res, filePath, fileObject.originalName);
  }
  async getProjectUpdateHistoryByProjectId(projectId: string) {
    const updateHistory = await projectRepository.getProjectUpdateHistoryByProjectId(projectId);

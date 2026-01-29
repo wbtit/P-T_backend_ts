@@ -14,7 +14,7 @@ router.post("/",
     validate({body:createCommentSchema}),
     asyncHandler(commentCtrlr.handleCreateComment).bind(CommentController)
 )
-router.patch("/acknowldege/:id",
+router.patch("/acknowledge/:id",
     authMiddleware,
     validate({params:z.object({id:z.string()})}),
     asyncHandler(commentCtrlr.handleAcknowledge).bind(CommentController)

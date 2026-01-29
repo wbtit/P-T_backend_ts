@@ -57,7 +57,12 @@ export class TaskRepository {
                 workingHourTask: true,
                 alert: true,
                 flags: true,
-                taskcomment: true,
+                taskcomment:{
+                    include:{
+                        user:{select:{firstName:true,lastName:true,middleName:true}
+                    },
+                }
+                },
                 projectBundle: true,
                 allocationLog:{ select:{ allocatedHours:true } }
             }
