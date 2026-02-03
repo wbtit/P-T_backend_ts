@@ -128,7 +128,7 @@ export default function changeOrderInvoiceRequestTemplate(
         <p><strong>Remarks / Description:</strong> ${remarks || "—"}</p>
 
         <div class="btn-container">
-          <a href="https://projectstation.whiteboardtec.com" class="btn">Login With Your Credentials</a>
+          <a href="https://ps.whiteboardtec.com" class="btn">Login With Your Credentials</a>
         </div>
 
         <p>Thanks & Regards,</p>

@@ -116,7 +116,7 @@ export function ifcCompletionInvoiceTemplate(project: any, fabricator: any) {
         <p>Please proceed with the <b>final invoice generation</b> in accordance with the agreed scope and commercial terms.</p>
 
         <div class="btn-container">
-          <a href="https://projectstation.whiteboardtec.com" class="btn">Login With Your Credentials</a>
+          <a href="https://ps.whiteboardtec.com" class="btn">Login With Your Credentials</a>
         </div>
 
         <p>Thanks & Regards,</p>

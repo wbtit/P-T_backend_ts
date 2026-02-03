@@ -91,25 +91,25 @@ export const rfqhtmlContent = (newrfq: any) => {
       <table class="header-table">
         <tr>
           <td class="logo-container">
-            <img src="https://whiteboardtec.com/wp-content/uploads/2021/05/logo_whiteboard.png" alt="Whiteboard Logo" width="150" />
+            <img src="https://res.cloudinary.com/dp7yxzrgw/image/upload/v1753685727/logos/whiteboardtec-logo_oztrhh.png" alt="Whiteboard Logo" width="150" />
           </td>
           <td class="project-name-container">
-            ${newrfq.projectName?.toUpperCase() || "PROJECT NAME"}
+            ${newrfq.project?.name?.toUpperCase() || "PROJECT NAME"}
           </td>
         </tr>
       </table>
 
       <div class="content-body">
-        <p style="color: #888888; margin-bottom: 20px;">Date: ${newrfq.date || new Date().toString()}</p>
+        <p style="color: #888888; margin-bottom: 20px;">Date: ${new Date().toString()}</p>
         
         <div class="subject-line">Subject: ${newrfq.subject || "RFQ Notification"}</div>
         
-        <p>Dear ${newrfq.recipient?.username || "Recipient"},</p>
+        <p>Dear ${newrfq.recepients?.username || "Recipient"},</p>
         
         <p>${newrfq.subject || "RFQ Reference"}</p>
 
         <div class="btn-container">
-          <a href="https://res.cloudinary.com/dp7yxzrgw/image/upload/v1753685727/logos/whiteboardtec-logo_oztrhh.png" class="btn">Login With Your Credentials</a>
+          <a href="https://ps.whiteboardtec.com" class="btn">Login With Your Credentials</a>
         </div>
 
         <p>Thanks & Regards,</p>

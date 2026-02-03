@@ -123,7 +123,7 @@ export function submissionReminderTemplate(projectName: string, submissionDate: 
         <p>Please ensure all necessary materials and documentation are finalized and submitted by this date.</p>
 
         <div class="btn-container">
-          <a href="https://projectstation.whiteboardtec.com" class="btn">Login With Your Credentials</a>
+          <a href="https://ps.whiteboardtec.com" class="btn">Login With Your Credentials</a>
         </div>
 
         <p>Thanks & Regards,</p>
