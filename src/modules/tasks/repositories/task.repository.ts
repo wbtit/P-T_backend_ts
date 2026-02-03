@@ -180,12 +180,17 @@ export class TaskRepository {
                 }
             });
 
+            // Only update allocation hours if duration is explicitly provided
             if (data.duration !== undefined) {
-                await tx.taskAllocation.updateMany({
-                    where: { taskId: id },
-                    data: { allocatedHours: data.duration }
+                await tx.taskAllocation.create({
+                    data: {
+                        taskId: task.id,
+                        allocatedHours: data.duration,
+                        createdBy: data.user_id??""
+                    }
                 });
             }
+            // Otherwise, keep existing allocation hours unchanged
 
             return task;
         });
