@@ -1,5 +1,6 @@
 import prisma from "../config/database/client";
 import { secondsBetween } from "../modules/workingHours/utils/calculateSecs";
+import { parseHHMMToHours } from "../utils/timeFormat";
 import { calculateManagerEstimationScore } from "./managerEstimationService";
 import { getMEASTrendline } from "./measTrendService";
 import { calculateManagerBias } from "./biasDetector";
@@ -42,7 +43,7 @@ export async function getManagerDashboardData(managerId: string, projectId: stri
     const nowFallback = new Date();
 
     for (const task of tasks) {
-        const allocated = Number(task.allocationLog?.allocatedHours ?? 0);
+        const allocated = parseHHMMToHours(task.allocationLog?.allocatedHours);
         if (!allocated) continue;
 
         let totalSeconds = 0;

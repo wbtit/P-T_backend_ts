@@ -1,5 +1,6 @@
 import { Stage, Activity, WbsDiscipline } from "@prisma/client";
 import prisma from "../../../../config/database/client";
+import { parseHHMMToHours } from "../../../../utils/timeFormat";
 
 export class WbsRepository {
   /**
@@ -236,7 +237,7 @@ export class WbsRepository {
       const totalHours = (bundle.totalExecHr || 0) + (bundle.totalCheckHr || 0);
       const allocatedHours = bundle.tasks.reduce((sum, task) => {
         const alloc = task.allocationLog?.allocatedHours;
-        return sum + (parseFloat(alloc || '0') || 0);
+        return sum + parseHHMMToHours(alloc);
       }, 0);
       const remainingHours = totalHours - allocatedHours;
       return {

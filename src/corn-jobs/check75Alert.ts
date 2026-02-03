@@ -1,6 +1,7 @@
 import prisma from "../config/database/client";
 import { secondsBetween } from "../modules/workingHours/utils/calculateSecs";
 import { sendNotification } from "../utils/sendNotification";
+import { parseHHMMToHours } from "../utils/timeFormat";
 
 export async function check75Alert() {
     const now = new Date();
@@ -19,7 +20,7 @@ export async function check75Alert() {
     });
 
     for (const task of tasks) {
-        const allocatedHours = Number(task.allocationLog?.allocatedHours ?? 0);
+        const allocatedHours = parseHHMMToHours(task.allocationLog?.allocatedHours);
         if (!allocatedHours) continue;
 
         const allocatedSeconds = allocatedHours * 3600;

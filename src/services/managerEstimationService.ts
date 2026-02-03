@@ -1,5 +1,6 @@
 import prisma from "../config/database/client";
 import { secondsBetween } from "../modules/workingHours/utils/calculateSecs";
+import { parseHHMMToHours } from "../utils/timeFormat";
 
 
 
@@ -35,7 +36,7 @@ export async function calculateManagerEstimationScore(managerId:string,projectId
     const scores:number[] = [];
 
     for(const task of tasks){
-        const allocated = Number(task.allocationLog?.allocatedHours ?? 0);
+        const allocated = parseHHMMToHours(task.allocationLog?.allocatedHours);
         if(allocated === 0) continue;
 
         let totalSeconds = 0;

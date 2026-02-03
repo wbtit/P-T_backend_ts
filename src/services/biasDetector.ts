@@ -1,5 +1,6 @@
 import prisma from "../config/database/client";
 import { secondsBetween } from "../modules/workingHours/utils/calculateSecs";
+import { parseHHMMToHours } from "../utils/timeFormat";
 
 export async function calculateManagerBias(managerId: string, projectId?: string) {
     const now = new Date();
@@ -28,7 +29,7 @@ export async function calculateManagerBias(managerId: string, projectId?: string
     let biasValues: number[] = [];
 
     for (const task of tasks) {
-        const allocated = Number(task.allocationLog?.allocatedHours ?? 0);
+        const allocated = parseHHMMToHours(task.allocationLog?.allocatedHours);
         if (!allocated) continue;
 
         let totalSeconds = 0;

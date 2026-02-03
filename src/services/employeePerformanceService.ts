@@ -1,5 +1,6 @@
 import prisma from "../config/database/client";
 import { secondsBetween } from "../modules/workingHours/utils/calculateSecs";
+import { parseHHMMToHours } from "../utils/timeFormat";
 
 /**
  * We compute EPS from six pillars:
@@ -105,7 +106,7 @@ export async function calculateEPSForEmployee(employeeId: string, year: number, 
   let evaluatedTasks = 0;
 
   for (const task of tasks) {
-    const allocated = Number(task.allocationLog?.allocatedHours ?? 0);
+    const allocated = parseHHMMToHours(task.allocationLog?.allocatedHours);
     // ignore tasks without allocated hours for overrun/underutilization stats
     const actual = computeActualHoursForTask(task);
     if (allocated > 0) {
