@@ -12,7 +12,6 @@ import {
 } from 'express'
 import routes from "./app"
 import healthRouter from './system/health'
-import { globalErrorHandler } from './config/utils/globalErrorhandler';
 
 
 import helmet from "helmet";
@@ -114,7 +113,7 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
 
 
 
- const PORT=process.env.PORT || 3000
+ const PORT=parseInt(process.env.PORT || '3000', 10)
  server.listen(PORT,()=>{
     console.log(`server running http://localhost:${PORT}`)
  })

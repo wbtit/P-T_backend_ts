@@ -8,7 +8,8 @@ import { ClientCommunicationController } from "./controllers";
 
 
 const communicationCtrlr = new ClientCommunicationController();
-const router = Router();
+const 
+router = Router();
 
 /**
  * Create communication
