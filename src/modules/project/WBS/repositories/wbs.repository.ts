@@ -224,6 +224,7 @@ export class WbsRepository {
         },
         tasks:{
           select:{
+            wbsType:true,
             allocationLog: {
               select: { allocatedHours: true }
             }
