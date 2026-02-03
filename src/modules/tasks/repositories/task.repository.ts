@@ -197,4 +197,17 @@ export class TaskRepository {
         });
         return task;
     }
+
+    async findByProjectId(projectId: string){
+        return await prisma.task.findMany({
+            where:{project_id:projectId},
+            include:{
+                project: true,
+                user: true,
+                department: true,
+                workingHourTask: true,
+                allocationLog:{ select:{ allocatedHours:true } }
+            }
+        })
+    }
 }   

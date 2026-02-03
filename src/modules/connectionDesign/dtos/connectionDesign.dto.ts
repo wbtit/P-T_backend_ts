@@ -1,12 +1,12 @@
 import { Prisma } from "@prisma/client";
-import z from "zod";
+import z, { string } from "zod";
 
 
 
 
 export const ConnectionDesignerSchema = z.object({
   name: z.string().default(""),
-  state: z.string().optional(),
+  state: z.array(z.string()),
   contactInfo: z.string().nullable().optional(),
   websiteLink: z.string().nullable().optional(),
   email: z.string().optional(),

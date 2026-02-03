@@ -40,4 +40,9 @@ taskRouter.delete("/:id",
     validate({params:z.object({id:z.string()})}),
     taskController.deleteTask.bind(taskController));
 
+taskRouter.get("/project/:projectId",
+    authMiddleware,
+    validate({params:z.object({projectId:z.string()})}),
+    taskController.handleGetTasksByProjectId.bind(taskController));
+
 export default taskRouter;

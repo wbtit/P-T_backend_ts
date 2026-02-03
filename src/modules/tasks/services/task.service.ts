@@ -61,4 +61,10 @@ export class TaskService {
     const tasks = await this.taskRepository.getAlltasksByUserId(user_id);
     return tasks;
   }
+
+  async getTasksByProjectId(projectId: string) {
+    const tasks = await this.taskRepository.findByProjectId(projectId);
+    return tasks;
+  }
+
 }

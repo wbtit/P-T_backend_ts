@@ -93,4 +93,14 @@ export class TaskController {
            data: tasks,
        });
    }
+
+   async handleGetTasksByProjectId(req:Request, res: Response) {
+    const { projectId } = req.params;
+    const tasks = await taskService.getTasksByProjectId(projectId);
+    res.status(200).json({
+        status: 'success',
+        data: tasks,
+    });
+}
+
 }
