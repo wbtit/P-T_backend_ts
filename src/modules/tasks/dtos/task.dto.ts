@@ -1,5 +1,5 @@
 import z from "zod";
-import { Stage, TaskStatus } from "@prisma/client";
+import { LineItemCompletionPercentageRange, Stage, TaskStatus } from "@prisma/client";
 import { Prisma } from "@prisma/client";
 
 export const createTaskDto = z.object({
@@ -7,6 +7,7 @@ export const createTaskDto = z.object({
     description: z.string().min(1, "Task description is required"),
     mileStone_id:z.string().optional(),
     wbsType:z.string().optional(),
+    LineItemCompletion:z.enum(LineItemCompletionPercentageRange),
     status: z.enum(TaskStatus),
     priority: z.number().min(1).max(5),
     due_date: z.preprocess((val) => val ? new Date(val as string) : undefined, z.date()),

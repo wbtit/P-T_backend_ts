@@ -66,6 +66,8 @@ enum TaskStatus {
   IN_REVIEW
   REWORK
   COMPLETED
+  TECHNICAL_ISSUE
+  USER_FAULT
   ON_HOLD
 }
 
@@ -224,6 +226,20 @@ enum ProjectComplexity{
   ENTERPRISE
 
 }
+
+enum LineItemCompletionPercentageRange {
+  RANGE_0_10
+  RANGE_11_20
+  RANGE_21_30
+  RANGE_31_40
+  RANGE_41_50
+  RANGE_51_60
+  RANGE_61_70
+  RANGE_71_80
+  RANGE_81_90
+  RANGE_91_100
+}
+
 // ===========================================================
 // MODELS
 // ===========================================================
@@ -945,6 +961,7 @@ model Task {
   wbsType               String?        @default("")
   created_on         DateTime        @default(now())
   reworkStartTime    DateTime?
+  LineItemCompletion LineItemCompletionPercentageRange @default(RANGE_0_10)
   seventyFiveAlertSent Boolean @default(false)
   overrunAlertSent Boolean @default(false)
   autoCloseWarningSent Boolean @default(false)

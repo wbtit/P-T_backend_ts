@@ -68,36 +68,37 @@ export class RFIService {
 
     const rfi = await rfiRepo.findById(id);
     if (!rfi) {
-    console.error("❌ [viewFile] Fabricator not found:", id);
-    throw new AppError("Fabricator not found", 404);
-  }
+      console.error("❌ [viewFile] RFI not found:", id);
+      throw new AppError("RFI not found", 404);
+    }
 
     const files = rfi.files as unknown as FileObject[];
 
     console.log("📂 [viewFile] Available files:", files.map(f => ({
-    id: f.id,
-    path: f.path,
-    filename: f.filename,
-    originalName: f.originalName,
-  })));
+      id: f.id,
+      path: f.path,
+      filename: f.filename,
+      originalName: f.originalName,
+    })));
 
     const cleanFileId = fileId.replace(/\.[^/.]+$/, "");
     const fileObject = files.find((file: FileObject) => file.id === cleanFileId);
     if (!fileObject) {
-    console.warn("⚠️ [viewFile] File not found in fabricator.files", {
-      fileId,
-      availableFileIds: files.map(f => f.id),
-    });
-    throw new AppError("File not found", 404);
-  }
+      console.warn("⚠️ [viewFile] File not found in rfi.files", {
+        fileId,
+        availableFileIds: files.map(f => f.id),
+      });
+      throw new AppError("File not found", 404);
+    }
 
     const __dirname = path.resolve();
-    const filePath = path.join(__dirname, "public", fileObject.filename);
+    // Files are stored in public/rfi/ subdirectory
+    const filePath = path.join(__dirname, "public", fileObject.path);
 
     if (!fs.existsSync(filePath)) {
-        console.error("🚨 [viewFile] File does not exist on disk:", filePath);
-        throw new AppError("File not found on server", 404);
-      }
+      console.error("🚨 [viewFile] File does not exist on disk:", filePath);
+      throw new AppError("File not found on server", 404);
+    }
     return streamFile(res, filePath, fileObject.originalName);
   }
 

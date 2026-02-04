@@ -28,6 +28,18 @@ router.get(
   rfiController.handlePendingRFIs.bind(rfiController)
 )
 
+router.get(
+  "/viewFile/:rfiId/:fileId",
+  authMiddleware,
+  validate({
+    params: z.object({
+      rfiId: z.string(),
+      fileId: z.string(),
+    }),
+  }),
+  rfiController.handleViewFile.bind(rfiController)
+);
+
 router.put(
   "/:id",
   authMiddleware,
@@ -68,18 +80,6 @@ router.get(
     }),
   }),
   rfiController.handleGetFile.bind(rfiController)
-);
-
-router.get(
-  "/viewFile/:rfiId/:fileId",
-  authMiddleware,
-  validate({
-    params: z.object({
-      rfiId: z.string(),
-      fileId: z.string(),
-    }),
-  }),
-  rfiController.handleViewFile.bind(rfiController)
 );
 
 router.delete(

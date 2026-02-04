@@ -73,7 +73,7 @@ router.get(
 
 // STREAM FILE (VERSION-AWARE)
 router.get(
-  "/:submittalId/versions/:versionId/files/:fileId",
+  "/:submittalId/versions/:versionId/:fileId",
   authMiddleware,
   validate({
     params: z.object({
