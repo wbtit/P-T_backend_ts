@@ -22,7 +22,7 @@ const MODEL_MAP: Record<string, string> = {
   fabricator:"fabricator",
   designDrawings:"designDrawings",
   designDrawingsResponses:"designDrawingsResponses",
-  submittals:"submittals",
+  submittalVersion:"submittalVersion",
   submittalsResponse:"submittalsResponse",
   rFI:"rFI",
   rFIResponse:"rFIResponse",

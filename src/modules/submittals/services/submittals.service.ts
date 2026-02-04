@@ -131,7 +131,7 @@ export class SubmittalService {
         403
       );
     }
-
+    console.log("version files:", version.files);
     const files = version.files as unknown as FileObject[];
 
     const cleanFileId = fileId.replace(/\.[^/.]+$/, "");
@@ -144,7 +144,8 @@ export class SubmittalService {
     }
 
     const __dirname = path.resolve();
-    const filePath = path.join(__dirname, fileObject.path);
+    const filePath = path.join(__dirname, "public", fileObject.path);
+    console.log("📁 [viewFile] Resolved file path:", filePath);
 
     if (!fs.existsSync(filePath)) {
       throw new AppError("File not found on server", 404);

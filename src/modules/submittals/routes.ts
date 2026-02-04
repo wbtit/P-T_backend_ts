@@ -137,7 +137,7 @@ router.get(
 
 // STREAM RESPONSE FILE
 router.get(
-  "/responses/:responseId/files/:fileId",
+  "/response/:responseId/files/:fileId",
   authMiddleware,
   validate({
     params: z.object({
