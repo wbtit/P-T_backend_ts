@@ -185,5 +185,25 @@ async deleteRFQ(id:string){
         }
     })
 }
+
+async getRFQOfConnectionEngineer(userId:string){
+    return await prisma.rFQ.findMany({
+        where:{
+            connectionEngineers:{some:{
+                id:userId
+            }
+        },
+        },
+          include:{
+           sender: true,
+            recipient: true,
+            salesPerson: true,
+            responses:true,
+            fabricator:true,
+            project: {select:{name:true}},
+        }
+    })
+}
+
 }
 

@@ -58,6 +58,9 @@ export class RFQService {
     async deleteRFQ(id:string){
         return await rfqrepo.deleteRFQ(id);
     }
+    async getRFQOfConnectionEngineer(userId:string){
+        return await rfqrepo.getRFQOfConnectionEngineer(userId);
+    }
    async getFile(rfqId: string, fileId: string) {
         const rfq = await rfqrepo.getById({ id: rfqId });
         if (!rfq) throw new AppError("RFQ not found", 404);

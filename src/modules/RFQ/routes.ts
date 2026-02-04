@@ -43,6 +43,12 @@ router.get(
 );
 
 router.get(
+    "/connectionEngineers",
+    authMiddleware,
+    rfqController.getRFQOfConnectionEngineer.bind(rfqController)
+);
+
+router.get(
     "/sents",
     authMiddleware,
     rfqController.handleSents.bind(rfqController)

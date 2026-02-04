@@ -70,6 +70,20 @@ export class RFQController {
             data: rfq,
         });
     }
+
+    async getRFQOfConnectionEngineer(req:AuthenticateRequest,res:Response){
+        if (!req.user) {
+            throw new AppError('User not found', 404);
+        }
+        const { id } = req.user;
+
+        const rfqs = await rfqService.getRFQOfConnectionEngineer(id);
+        res.status(200).json({
+            status: 'success',
+            data: rfqs,
+        });
+    }
+
     async handleGetAllRFQ(req:Request,res:Response){
         const rfq = await rfqService.getAllRFQ();
         res.status(200).json({
