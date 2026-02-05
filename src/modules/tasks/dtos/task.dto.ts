@@ -7,7 +7,7 @@ export const createTaskDto = z.object({
     description: z.string().min(1, "Task description is required"),
     mileStone_id:z.string().optional(),
     wbsType:z.string().optional(),
-    LineItemCompletion:z.enum(LineItemCompletionPercentageRange),
+    LineItemCompletion:z.enum(LineItemCompletionPercentageRange).optional(),
     status: z.enum(TaskStatus),
     priority: z.number().min(1).max(5),
     due_date: z.preprocess((val) => val ? new Date(val as string) : undefined, z.date()),
