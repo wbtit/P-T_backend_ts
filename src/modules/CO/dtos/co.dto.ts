@@ -9,9 +9,9 @@ export const CreateCoSchema = z.object({
   project: z.string(),
   sender: z.string(),
   recipients: z.string(),
-    remarks: z.string().min(2).max(100),
-    changeOrderNumber: z.string().min(2).max(100),
-    description: z.string().min(2).max(500),
+    remarks: z.string(),
+    changeOrderNumber: z.string(),
+    description: z.string(),
     sentOn: z
       .preprocess(
         (val) => (typeof val === "string" ? new Date(val) : val),
@@ -36,13 +36,13 @@ export type CreateCoInput = z.infer<typeof CreateCoSchema>;
 export type UpdateCoInput = z.infer<typeof UpdateCoSchema>;
 
 export const CreateTableSchema = z.object({
-    description: z.string().min(2).max(500),
-    referenceDoc: z.string().min(2).max(100),
-    elements: z.string().min(2).max(100),
-    QtyNo: z.number().min(1),
-    remarks: z.string().min(2).max(100),
-    hours: z.number().min(1),
-    cost: z.number().min(1),
+    description: z.string(),
+    referenceDoc: z.string(),
+    elements: z.string(),
+    QtyNo: z.number(),
+    remarks: z.string(),
+    hours: z.number(),
+    cost: z.number(),
     CoId: z.string().optional(),
     
 })
