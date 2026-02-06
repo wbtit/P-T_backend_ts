@@ -52,6 +52,40 @@ router.get(
 
 /**
  * ---------------------------------------------------------------------
+ *  GET FILE (Meta)
+ * ---------------------------------------------------------------------
+ */
+router.get(
+  "/:quotaId/files/:fileId",
+  authMiddleware,
+  validate({
+    params: z.object({
+      quotaId: z.string(),
+      fileId: z.string(),
+    }),
+  }),
+  asyncHandler(quotaCtrl.handleGetFile.bind(quotaCtrl))
+);
+
+/**
+ * ---------------------------------------------------------------------
+ *  VIEW / STREAM FILE
+ * ---------------------------------------------------------------------
+ */
+router.get(
+  "/viewFile/:quotaId/:fileId",
+  authMiddleware,
+  validate({
+    params: z.object({
+      quotaId: z.string(),
+      fileId: z.string(),
+    }),
+  }),
+  asyncHandler(quotaCtrl.handleViewFile.bind(quotaCtrl))
+);
+
+/**
+ * ---------------------------------------------------------------------
  *  GET QUOTAS BY DESIGNER ID
  * ---------------------------------------------------------------------
  */

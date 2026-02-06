@@ -1,4 +1,9 @@
 import { AppError } from "../../../config/utils/AppError";
+import { FileObject } from "../../../shared/fileType";
+import { Response } from "express";
+import path from "path";
+import fs from "fs";
+import { streamFile } from "../../../utils/fileUtil";
 
 import {
   CreateConnectionDesignerQuotaInput,
@@ -120,5 +125,44 @@ export class ConnectionDesignerQuotaService {
 
     await quotaRepo.delete(input);
     return { message: "Connection Designer Quota deleted successfully" };
+  }
+
+  // -----------------------------------------------------------------------
+  // Get File Metadata
+  // -----------------------------------------------------------------------
+  async getFile(quotaId: string, fileId: string) {
+    const quota = await quotaRepo.findById({ id: quotaId });
+    if (!quota) throw new AppError("Connection Designer Quota not found", 404);
+
+    const files = quota.files as unknown as FileObject[];
+    const fileObject = files?.find((file) => file.id === fileId);
+
+    if (!fileObject) throw new AppError("File not found", 404);
+    return fileObject;
+  }
+
+  // -----------------------------------------------------------------------
+  // View File (Stream)
+  // -----------------------------------------------------------------------
+  async viewFile(quotaId: string, fileId: string, res: Response) {
+    const quota = await quotaRepo.findById({ id: quotaId });
+    if (!quota) throw new AppError("Connection Designer Quota not found", 404);
+
+    const files = quota.files as unknown as FileObject[];
+    const cleanFileId = fileId.replace(/\.[^/.]+$/, "");
+    const fileObject = files?.find((file) => file.id === cleanFileId);
+
+    if (!fileObject) {
+      throw new AppError("File not found", 404);
+    }
+
+    const __dirname = path.resolve();
+    const filePath = path.join(__dirname, "public", fileObject.path);
+
+    if (!fs.existsSync(filePath)) {
+      throw new AppError("File not found on server", 404);
+    }
+
+    return streamFile(res, filePath, fileObject.originalName);
   }
 }
