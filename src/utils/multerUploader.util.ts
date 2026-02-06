@@ -157,6 +157,9 @@ export const designResponseUploads = createMulterUploader("public/designdrawingr
 export const connectionDesignerDataMap: Record<string, FileMeta> = {}
 export const connectionDesignerUploads = createMulterUploader("public/connectiondesigners", connectionDesignerDataMap);
 
+export const connectionDesignerFilesMap: Record<string, FileMeta> = {}
+export const connectionDesignerFilesUploads = createMulterUploader("public/connectiondesignerQuotation", connectionDesignerFilesMap);
+
 export const connectionDesignerCertificatesmap: Record<string, FileMeta> = {}
 export const connectionDesignerCertificatesUploads = createMulterUploader("public/connectiondesignerscertificates", connectionDesignerCertificatesmap);
 

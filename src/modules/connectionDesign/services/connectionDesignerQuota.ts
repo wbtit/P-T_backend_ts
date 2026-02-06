@@ -16,6 +16,10 @@ export class ConnectionDesignerQuotaService {
   // Create Quota
   // -----------------------------------------------------------------------
   async createQuota(data: CreateConnectionDesignerQuotaInput) {
+    if (!data.estimatedHours) {
+      throw new AppError("estimatedHours is required", 400);
+    }
+
     // Prevent duplicate quota for same Connection Designer & RFQ
     if (data.connectionDesignerId && data.rfqId) {
       const existing = await quotaRepo.findByDesignerId(data.connectionDesignerId);
