@@ -69,9 +69,9 @@ export const wbsBundleTemplates = [
     isActive: true,
   },
   {
-    
-    bundleKey: "ERECTION_OF_MISC_STEEL",
-    name: "OTHERS",
+    id: "d5e3f8a2-9c41-4a73-b6d1-2e7a9f4c5b88",
+    bundleKey: "OTHERS",
+    name: "Others",
     category: "OTHERS",
     stage: "IFA",
     isActive: true,
