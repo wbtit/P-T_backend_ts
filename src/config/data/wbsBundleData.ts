@@ -70,7 +70,7 @@ export const wbsBundleTemplates = [
   },
   {
     
-    bundleKey: "ERECTION_OF_MISC_STEEL",
+    bundleKey: "OTHERS",
     name: "OTHERS",
     category: "OTHERS",
     stage: "IFA",
