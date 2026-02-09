@@ -31,6 +31,7 @@ const MODEL_MAP: Record<string, string> = {
   changeOrders:"changeOrders",
   cOResponse:"cOResponse",
   estimation:"estimation",
+  connectionDesignerQuota: "connectionDesignerQuota",
 };
 
 const createShareLink = async (req: Request, res: Response) => {

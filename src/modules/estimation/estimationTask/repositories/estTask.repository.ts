@@ -33,7 +33,15 @@ export class EstimationTaskRepository{
         return await prisma.estimationTask.findFirst({
             where:{id},
             include:{
-                estimation:true,
+                estimation:{
+                    include:{
+                        rfq:{
+                            select:{
+                                files:true
+                            }
+                        }
+                    }
+                },
                 assignedBy:{select:{firstName:true,middleName:true,lastName:true}},
                 assignedTo:{select:{id:true,firstName:true,middleName:true,lastName:true}},
                 reviewedBy:{select:{firstName:true,middleName:true,lastName:true}},

@@ -436,10 +436,47 @@ const newWBSActivity = [
  {
    id: "6cc65db7-5dae-4f43-8cde-17c84e97e1d2",
    discipline: "EXECUTION",
-   name: "Submittals",
+   name: "Submittal Preparation",
    bundleKey:"OTHERS",
-   templateKey: "submittals"
+   templateKey: "submittalsPreparation"
  },
+
+{
+    id: "d1c9e5b8-9c3a-4e5a-8f2b-1a2b3c4d5e6f",
+    discipline:"EXECUTION",
+    name:"Job Study",
+    bundleKey:"OTHERS",
+    templateKey:"jobStudy"
+},
+{
+    id: "e2f3a4b5-c6d7-8e9f-0a1b-2c3d4e5f6a7b",
+    discipline:"EXECUTION",
+    name:"Meetings",
+    bundleKey:"OTHERS",
+    templateKey:"meetings"
+},
+{
+    id: "f1a2b3c4-d5e6-7f8g-9h0i-1j2k3l4m5n6o",
+    discipline:"EXECUTION",
+    name:"RFI Preparation",
+    bundleKey:"OTHERS",
+    templateKey:"rfiPreparation"
+},
+{
+    id: "a1b2c3d4-e5f6-7g8h-9i0j-1k2l3m4n5o6p",
+    discipline:"EXECUTION",
+    name:"Training and Practice",
+    bundleKey:"OTHERS",
+    templateKey:"trainingAndPractice"
+},
+{
+    id: "b1c2d3e4-f5g6-7h8i-9j0k-1l2m3n4o5p6q",
+    discipline:"EXECUTION",
+    name:"New WBS Item",
+    bundleKey:"OTHERS",
+    templateKey:"newWbsItem"
+},
+
 
 //CHECKING PAIR//
 
@@ -881,9 +918,45 @@ const newWBSActivity = [
  {
    id: "6cc65db7-5dae-4f43-8cde-17c84e97e1d2",
    discipline: "CHECKING",
-   name: "Submittals",
+   name: "Submittals Preparation",
    bundleKey:"OTHERS",
-   templateKey: "submittals"
+   templateKey: "submittalsPreparation"
  },
+
+ {
+    id: "d1c9e5b8-9c3a-4e5a-8f2b-1a2b3c4d5e6f",
+    discipline:"CHECKING",
+    name:"Job Study",
+    bundleKey:"OTHERS",
+    templateKey:"jobStudy"
+},
+{
+    id: "e2f3a4b5-c6d7-8e9f-0a1b-2c3d4e5f6a7b",
+    discipline:"CHECKING",
+    name:"Meetings",
+    bundleKey:"OTHERS",
+    templateKey:"meetings"
+},
+{
+    id: "f1a2b3c4-d5e6-7f8g-9h0i-1j2k3l4m5n6o",
+    discipline:"CHECKING",
+    name:"RFI Preparation",
+    bundleKey:"OTHERS",
+    templateKey:"rfiPreparation"
+},
+{
+    id: "a1b2c3d4-e5f6-7g8h-9i0j-1k2l3m4n5o6p",
+    discipline:"CHECKING",
+    name:"Training and Practice",
+    bundleKey:"OTHERS",
+    templateKey:"trainingAndPractice"
+},
+{
+    id: "b1c2d3e4-f5g6-7h8i-9j0k-1l2m3n4o5p6q",
+    discipline:"CHECKING",
+    name:"New WBS Item",
+    bundleKey:"OTHERS",
+    templateKey:"newWbsItem"
+},
 ];
 export default newWBSActivity;

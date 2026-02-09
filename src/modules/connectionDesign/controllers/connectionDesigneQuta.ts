@@ -3,6 +3,7 @@ import { AuthenticateRequest } from "../../../middleware/authMiddleware";
 import { AppError } from "../../../config/utils/AppError";
 
 import { ConnectionDesignerQuotaService } from "../services";
+import { mapUploadedFiles } from "../../uploads/fileUtil";
 
 export class ConnectionDesignerQuotaController {
   quotaService = new ConnectionDesignerQuotaService();
@@ -16,9 +17,15 @@ export class ConnectionDesignerQuotaController {
     const userId = req.user?.id;
     if (!userId) throw new AppError("createdById is required", 400);
 
+    const uploadedFiles = mapUploadedFiles(
+      (req.files as Express.Multer.File[]) || [],
+      "connectiondesignerQuotation"
+    );
+
     const quota = await this.quotaService.createQuota({
       ...body,
       createdById: userId,
+      ...(uploadedFiles.length > 0 ? { files: uploadedFiles } : {}),
     });
 
     return res.status(201).json({
@@ -81,11 +88,17 @@ export class ConnectionDesignerQuotaController {
     const userId = req.user?.id;
     if (!userId) throw new AppError("updatedById is required", 400);
 
+    const uploadedFiles = mapUploadedFiles(
+      (req.files as Express.Multer.File[]) || [],
+      "connectiondesignerQuotation"
+    );
+
     const updatedQuota = await this.quotaService.updateQuota(
       { id },
       {
         ...body,
         updatedById: userId,
+        ...(uploadedFiles.length > 0 ? { files: uploadedFiles } : {}),
       }
     );
 
@@ -130,7 +143,28 @@ export class ConnectionDesignerQuotaController {
       success: true,
     });
   }
+
+  // -------------------------------------------------------------------
+  // Get File (Meta)
+  // -------------------------------------------------------------------
+  async handleGetFile(req: AuthenticateRequest, res: Response) {
+    const { quotaId, fileId } = req.params;
+
+    const file = await this.quotaService.getFile(quotaId, fileId);
+
+    return res.status(200).json({
+      message: "Connection Designer Quota file fetched successfully",
+      success: true,
+      data: file,
+    });
+  }
+
+  // -------------------------------------------------------------------
+  // View / Stream File
+  // -------------------------------------------------------------------
+  async handleViewFile(req: AuthenticateRequest, res: Response) {
+    const { quotaId, fileId } = req.params;
+    return this.quotaService.viewFile(quotaId, fileId, res);
+  }
 }
-
-
 

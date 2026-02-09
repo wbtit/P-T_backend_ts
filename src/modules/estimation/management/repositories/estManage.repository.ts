@@ -57,7 +57,10 @@ export class EstManagementRepository{
                  }
             }
         })
-        const groups = estimation?.lineItemGroups
+        if (!estimation) {
+            return null;
+        }
+        const groups = estimation?.lineItemGroups ?? []
         let totalAgreatedHours  = 0;
         for( const group of groups as any){
              const agregattedHours = await GroupRepo.getLineItemGroupById(group.id)

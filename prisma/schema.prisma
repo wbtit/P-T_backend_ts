@@ -425,6 +425,7 @@ model ConnectionDesignerQuota{
   bidprice            String? 
   estimatedHours      String
   weeks               String
+  files                Json?        @default("[]")
   approvalStatus      Boolean      @default(false)
   approvalDate        DateTime?
   createdAt           DateTime    @default(now())

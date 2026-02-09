@@ -21,7 +21,7 @@ export async function runMEASManually(req: Request, res: Response) {
       managerId,
       projectId,
     );
-
+    console.log("MEAS calculation result:", result);
     return res.status(200).json({
       success: true,
       message: "MEAS calculated successfully",
@@ -74,7 +74,7 @@ export async function runBiasDetector(req: Request, res: Response) {
 
 export async function getMEASTrendlineHandler(req: Request, res: Response) {
   try {
-    const { managerId, projectId } = req.query;
+    const { managerId, projectId } = req.body;
 
     if (!managerId || !projectId) {
       return res.status(400).json({

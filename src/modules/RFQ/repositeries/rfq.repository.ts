@@ -79,7 +79,8 @@ export class RFQRepository {
                         CDEngineers: true,
                         CDQuotations:true,
                     }
-                }
+                },
+                CDQuotas:true,
             }
         });
         

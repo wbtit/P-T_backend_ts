@@ -11,9 +11,13 @@ export class ConnectionDesignerQuotaRepository {
 
   // Create quota entry
   async create(data: CreateConnectionDesignerQuotaInput) {
+    const { createdById, updatedById, ...safeData } = data as CreateConnectionDesignerQuotaInput & {
+      createdById?: string;
+      updatedById?: string;
+    };
     return prisma.connectionDesignerQuota.create({
       data: {
-        ...data,
+        ...safeData,
       },
       include: {
         connectionDesigner: true,
@@ -62,16 +66,21 @@ export class ConnectionDesignerQuotaRepository {
 
   // Update
   async update(input: GetConnectionDesignerQuotaInput, data: UpdateConnectionDesignerQuotaInput) {
+    const { updatedById, createdById, ...safeData } = data as UpdateConnectionDesignerQuotaInput & {
+      createdById?: string;
+      updatedById?: string;
+    };
     return prisma.connectionDesignerQuota.update({
       where: { id: input.id },
       data: {
-        bidprice: data.bidprice,
-        estimatedHours: data.estimatedHours,
-        weeks: data.weeks,
-        approvalStatus: data.approvalStatus ?? false,
-        approvalDate: data.approvalDate ?? null,
-        rfqId: data.rfqId ?? null,
-        connectionDesignerId: data.connectionDesignerId ?? undefined,
+        bidprice: safeData.bidprice,
+        estimatedHours: safeData.estimatedHours,
+        weeks: safeData.weeks,
+        files: safeData.files ?? undefined,
+        approvalStatus: safeData.approvalStatus ?? false,
+        approvalDate: safeData.approvalDate ?? null,
+        rfqId: safeData.rfqId ?? null,
+        connectionDesignerId: safeData.connectionDesignerId ?? undefined,
       },
       include: {
         connectionDesigner: true,

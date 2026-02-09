@@ -13,6 +13,10 @@ export class ConnectionDesignerController {
   // Create
   // -------------------------------------------------------------------
   async handleCreateConnectionDesigner(req: AuthenticateRequest, res: Response) {
+
+    console.log("Request body:", req.body);
+    console.log("Request files:", req.files);
+    
     const { body } = req;
 
     const userId = req.user?.id;

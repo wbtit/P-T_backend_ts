@@ -1,4 +1,5 @@
 import z from "zod";
+import { Prisma } from "@prisma/client";
 
 const zBooleanString = z
   .union([z.boolean(), z.string()])
@@ -10,6 +11,10 @@ export const ConnectionDesignerQuotaSchema = z.object({
   bidprice: z.string().optional(),
   estimatedHours: z.string(),
   weeks: z.string(),
+  files: z
+    .union([z.array(z.any()), z.literal(null)])
+    .transform((val) => (val === null ? Prisma.JsonNull : val))
+    .optional(),
   approvalStatus: zBooleanString.optional(),
   approvalDate: z.preprocess(
     (v) => (typeof v === "string" ? new Date(v) : v),
