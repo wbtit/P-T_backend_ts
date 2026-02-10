@@ -20,7 +20,7 @@ const wbscontroller = new WbsTemplateController();
 router.post(
   "/admin/templates/line-items",
   authMiddleware,
-  roleMiddleware("ADMIN"),
+  // roleMiddleware("ADMIN"),
   validate({ body: CreateWbsLineItemTemplateDto }),
   asyncHandler(lineItemcontroller.create.bind(lineItemcontroller))
 );
@@ -28,7 +28,7 @@ router.post(
 router.put(
   "/admin/templates/line-items/:id",
   authMiddleware,
-  roleMiddleware("ADMIN"),
+  // roleMiddleware("ADMIN"),
   validate({
     params: z.object({ id: z.string().uuid() }),
     body: UpdateWbsLineItemTemplateDto,
@@ -42,7 +42,7 @@ router.put(
 router.post(
   "/admin/templates/wbs",
   authMiddleware,
-  roleMiddleware("ADMIN"),
+  // roleMiddleware("ADMIN"),
   validate({ body: CreateWbsTemplateDto }),
   asyncHandler(wbscontroller.create.bind(wbscontroller))
 );
@@ -50,7 +50,7 @@ router.post(
 router.put(
   "/admin/templates/wbs/:id",
   authMiddleware,
-  roleMiddleware("ADMIN"),
+  // roleMiddleware("ADMIN"),
   validate({
     params: z.object({ id: z.string() }),
     body: UpdateWbsTemplateDto,
@@ -63,14 +63,14 @@ router.put(
 router.get(
   "/admin/templates/bundles",
   authMiddleware,
-  roleMiddleware("ADMIN"),
+  // roleMiddleware("ADMIN"),
   asyncHandler(bundleController.list.bind(bundleController))
 );
 
 router.post(
   "/admin/templates/bundles",
   authMiddleware,
-  roleMiddleware("ADMIN"),
+  // roleMiddleware("ADMIN"),
   validate({ body: CreateWbsBundleTemplateDto }),
   asyncHandler(bundleController.create.bind(bundleController))
 );
@@ -78,7 +78,7 @@ router.post(
 router.put(
   "/admin/templates/bundles/:bundleKey",
   authMiddleware,
-  roleMiddleware("ADMIN"),
+  // roleMiddleware("ADMIN"),
   validate({
     params: z.object({ bundleKey: z.string() }),
     body: UpdateWbsBundleTemplateDto,

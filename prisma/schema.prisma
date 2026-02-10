@@ -337,6 +337,8 @@ model User {
   @@index([email])
   @@index([phone])
   @@index([role])
+  @@index([isActive])
+  @@index([role, isActive])
   @@index([departmentId])
 }
 
@@ -1007,6 +1009,11 @@ model Task {
   @@index([status])
   @@index([priority])
   @@index([project_id])
+  @@index([user_id])
+  @@index([departmentId])
+  @@index([created_by])
+  @@index([user_id, status])
+  @@index([project_id, status])
   @@index([Stage])
 
   @@map("task")
