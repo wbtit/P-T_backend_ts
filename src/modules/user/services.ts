@@ -1,5 +1,6 @@
 import { AppError } from "../../config/utils/AppError";
 import bcrypt from 'bcrypt-ts'
+import { z } from "zod";
 import { 
     createUserInput,
     updateUserInput,
@@ -15,14 +16,25 @@ import {
 } from "./repository";
 import { cleandata } from "../../config/utils/cleanDataObject";
 
+const envSchema = z.object({
+    DEFAULT_PASSWORD: z
+      .string()
+      .min(12, "DEFAULT_PASSWORD must be at least 12 characters")
+      .regex(/[a-z]/, "DEFAULT_PASSWORD must include a lowercase letter")
+      .regex(/[A-Z]/, "DEFAULT_PASSWORD must include an uppercase letter")
+      .regex(/\d/, "DEFAULT_PASSWORD must include a number")
+      .regex(/[^A-Za-z0-9]/, "DEFAULT_PASSWORD must include a special character"),
+});
+
+const { DEFAULT_PASSWORD } = envSchema.parse(process.env);
+
 export class UserService{
     
     async create(data:createUserInput){
-        const password=process.env.DEFAULT_PASSWORD|| "your_default_password";
         const exsiting = await findUserByUsername(data.username);
         if(exsiting) throw new AppError("User already exsits",409);
         
-        const hashedPassword = await bcrypt.hash(password,10);
+        const hashedPassword = await bcrypt.hash(DEFAULT_PASSWORD,10);
         const user=await createUser({...data,password:hashedPassword});
         return {user}
     }
