@@ -2,6 +2,7 @@ import { Router } from "express";
 import { asyncHandler } from "../../config/utils/asyncHandler";
 import authMiddleware from "../../middleware/authMiddleware";
 import { DashBoradData } from "./dashBoardData";
+import { clientAdminDashBoard } from "./clientAdminDashBoard";
 
 const router = Router();
 
@@ -18,7 +19,7 @@ router.get(
 router.get(
   "/clientAdmin",
   authMiddleware,
-  asyncHandler(DashBoradData)
+  asyncHandler(clientAdminDashBoard)
 );
 
 export default router;``
