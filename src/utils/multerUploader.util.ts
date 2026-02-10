@@ -47,35 +47,27 @@ const SAFE_MIME_TYPES = [
 // -----------------------------------------------------------------------------
 function validateFile(req: Request, file: Express.Multer.File, cb: Function) {
   try {
-    console.log(`🧩 Validating file: ${file.originalname}`);
     const ext = path.extname(file.originalname).toLowerCase();
     const mime = file.mimetype;
-    console.log(`➡️  Extension: ${ext}, MIME (reported): ${mime}`);
 
     if (!ext) {
-      console.log("❌ Missing file extension");
       return cb(new Error("Missing file extension"));
     }
 
     if (BLOCKED_EXTENSIONS.includes(ext)) {
-      console.log(`🚫 Blocked extension detected: ${ext}`);
       return cb(new Error("Blocked file type"));
     }
 
     if (!SAFE_EXTENSIONS.includes(ext)) {
-      console.log(`❌ Not in SAFE_EXTENSIONS: ${ext}`);
       return cb(new Error("File type not allowed (extension check failed)"));
     }
 
     if (!SAFE_MIME_TYPES.includes(mime)) {
-      console.log(`❌ Not in SAFE_MIME_TYPES: ${mime}`);
       return cb(new Error("File type not allowed (MIME check failed)"));
     }
 
-    console.log("✅ File passed validation");
     cb(null, true);
   } catch (err) {
-    console.error("💥 File validation error:", err);
     cb(new Error("File validation failed"));
   }
 }

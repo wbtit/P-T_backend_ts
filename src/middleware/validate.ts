@@ -12,14 +12,10 @@ const validate = (schemas: SchemaConfig) =>
   (req: Request, res: Response, next: NextFunction) => {
     try {
       if (schemas.body) {
-        console.log("Content-Type:", req.headers['content-type']);
-        console.log("Validating request body:", req.body);
-
         // For multipart requests, req.body might not be fully populated yet
         // or might be undefined if the multipart parsing failed
         if (req.body === undefined && req.headers['content-type']?.includes('multipart/form-data')) {
           // Skip body validation for multipart requests - let multer handle it
-          console.log("Skipping body validation for multipart request");
           next();
           return;
         }
@@ -29,7 +25,6 @@ const validate = (schemas: SchemaConfig) =>
         }
 
         const parsed = schemas.body.safeParse(req.body);
-        console.log("Validation result:", parsed)
         if (!parsed.success) throw new AppError(parsed.error.message, 400);
         req.body = parsed.data;
       }
@@ -48,7 +43,6 @@ const validate = (schemas: SchemaConfig) =>
 
       next();
     } catch (err) {
-      console.error("Validation error:", err);
       next(err);
     }
   };
