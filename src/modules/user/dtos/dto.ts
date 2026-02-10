@@ -1,3 +1,4 @@
+import { UserRole } from "@prisma/client";
 import { z } from "zod";
 export type userRole='STAFF'|
           'CLIENT'|
@@ -36,7 +37,7 @@ export const createUserSchema = z.object({
   state: z.string().nullable().optional(),
   country: z.string().nullable().optional(),
   address: z.string().nullable().optional(),
-  role: z.string(),
+  role: z.enum(UserRole),
   departmentId: z.string().nullable().optional(),
   fabricatorId:z.string().optional(),
   connectionDesignerId:z.string().optional()
