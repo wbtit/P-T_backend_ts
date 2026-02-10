@@ -5,12 +5,11 @@ import {
     SignupInput,
     ResetPasswordInput
 } from '../dtos'
-import { generateToken } from '../../../../config/utils/jwtutils' 
+import { generateToken, JWT_SECRET } from '../../../../config/utils/jwtutils' 
 import { AppError } from '../../../../config/utils/AppError' 
 import { UserJwt } from '../../../../shared/types' 
 import {updatePassword}  from "../repositories"
 import { createUser,findUserByUsername } from '../../repository'
-const JWT_SECRET = process.env.JWT_SECRET || 'your_dev_secret';
 
 
 export const signup=async(data:SignupInput)=>{

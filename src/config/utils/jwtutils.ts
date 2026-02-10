@@ -9,9 +9,10 @@ const envSchema=z.object({
 
 
 const env =envSchema.parse(process.env);
+export const JWT_SECRET = env.JWT_SECRET;
 
 export const generateToken=(payload:UserJwt):string => {
     const options:jwt.SignOptions={expiresIn:'10h'}
-    const token =jwt.sign(payload,env.JWT_SECRET,options);
+    const token =jwt.sign(payload,JWT_SECRET,options);
     return token;
 }
