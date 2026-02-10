@@ -25,4 +25,7 @@ export class MileStoneService{
     async getPendingSubmittals(){
         return await mileStoneRepo.getPendingSubmittals()
     }
+    async getPendingSubmittalsByFabricator(fabricatorId:string){
+        return await mileStoneRepo.getPendingSubmittalsByFabricator(fabricatorId)
+    }
 }

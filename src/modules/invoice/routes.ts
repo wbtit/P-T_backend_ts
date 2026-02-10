@@ -56,6 +56,12 @@ router.delete(
   asyncHandler(invoiceCtrlr.handleDeleteInvoice.bind(invoiceCtrlr))
 );
 
+router.get(
+  "/pending/fabricator",
+  authMiddleware,
+  asyncHandler(invoiceCtrlr.handlePendingInvoicesByFabricator.bind(invoiceCtrlr))
+);
+
 // -----------------------------------------------------------------------------
 // Account Info routes
 // -----------------------------------------------------------------------------

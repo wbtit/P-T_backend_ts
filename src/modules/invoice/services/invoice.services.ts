@@ -75,4 +75,8 @@ export class InvoiceService {
 
     return invoice;
   }
+
+  async pendingInvoicesByFabricator(fabricatorId:string){
+    return await invoiceRepo.pendingInvoicesByFabricator(fabricatorId)
+  }
 }

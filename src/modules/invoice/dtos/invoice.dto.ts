@@ -1,3 +1,4 @@
+import { InvoiceStatus } from "@prisma/client";
 import { access } from "fs";
 import { z } from "zod";
 
@@ -47,6 +48,7 @@ export const createInvoiceSchema = z.object({
   contactName: z.string().optional(),
   address: z.string().optional(),
   stateCode: z.string().optional(),
+  status:z.enum(InvoiceStatus).optional(),
   GSTIN: z.string().optional(),
   invoiceNumber: z.string().min(1),
   invoiceDate: z.string().optional(),

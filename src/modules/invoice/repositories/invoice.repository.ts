@@ -89,4 +89,18 @@ export class Invoicerepository{
       where: { id },
     });
     }
+
+    async pendingInvoicesByFabricator(fabricatorId:string){
+        const invoices = await prisma.invoice.findMany({
+            where:{
+                fabricatorId:fabricatorId,
+                status:"PENDING"
+            },
+            include:{
+                pointOfContact:true,
+                invoiceItems:true
+            }
+        })
+        return invoices;
+    }
 }

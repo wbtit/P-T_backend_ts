@@ -1,6 +1,8 @@
 import { Request, Response } from "express";
 import { MileStoneService } from "../services";
 import { AppError } from "../../../config/utils/AppError";
+import { AuthenticateRequest } from "../../../middleware/authMiddleware";
+import prisma from "../../../config/database/client";
 
 const mileStoneService = new MileStoneService();
 
@@ -89,6 +91,21 @@ export class MileStoneController {
 
     return res.status(200).json({
       message: "Pending submittals fetched successfully",
+      success: true,
+      data: result,
+    });
+  }
+  async handleGetPendingSubmittalsByFabricator(req:AuthenticateRequest,res:Response){
+    const id = req.user?.id;
+    const fabricator =  await prisma.fabricator.findFirst({
+      where:{
+        pointOfContact:{some:{id:id}}
+      }
+    })
+    const result= await mileStoneService.getPendingSubmittalsByFabricator(fabricator?.id!);
+
+    return res.status(200).json({
+      message: "Pending submittals for fabricator fetched successfully",
       success: true,
       data: result,
     });

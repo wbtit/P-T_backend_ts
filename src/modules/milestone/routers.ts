@@ -23,6 +23,8 @@ router.get("/",
     mileStoneCtrlr.handleGetAll.bind(mileStoneCtrlr)
 )
 router.get("/pendingSubmittals", authMiddleware, mileStoneCtrlr.handleGetPendingSubmittals.bind(mileStoneCtrlr))
+
+router.get("/pendingSubmittals/clientAdmin", authMiddleware, mileStoneCtrlr.handleGetPendingSubmittalsByFabricator.bind(mileStoneCtrlr))
 router.get("/:id",
     authMiddleware,
     validate({params:z.object({id:z.string()})}),

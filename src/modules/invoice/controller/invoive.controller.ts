@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { InvoiceService } from "../services";
 import { AppError } from "../../../config/utils/AppError";
 import { AuthenticateRequest } from "../../../middleware/authMiddleware";
+import prisma from "../../../config/database/client";
 
 const invoiceService = new InvoiceService();
 
@@ -26,7 +27,7 @@ export class InvoiceController {
         data: result,
       });
     } catch (error: any) {
-      console.error("❌ Create Invoice Error:", error);
+      console.error(" Create Invoice Error:", error);
       return res.status(error.statusCode || 500).json({
         message: error.message || "Internal Server Error",
         success: false,
@@ -48,7 +49,7 @@ export class InvoiceController {
         data: invoices,
       });
     } catch (error: any) {
-      console.error("❌ Get All Invoices Error:", error);
+      console.error(" Get All Invoices Error:", error);
       return res.status(500).json({
         message: error.message || "Failed to fetch invoices",
         success: false,
@@ -72,7 +73,7 @@ export class InvoiceController {
         data: invoice,
       });
     } catch (error: any) {
-      console.error("❌ Get Invoice By ID Error:", error);
+      console.error(" Get Invoice By ID Error:", error);
       return res.status(error.statusCode || 500).json({
         message: error.message || "Failed to fetch invoice",
         success: false,
@@ -96,7 +97,7 @@ export class InvoiceController {
         data: invoices,
       });
     } catch (error: any) {
-      console.error("❌ Get Invoices By Client Error:", error);
+      console.error("Get Invoices By Client Error:", error);
       return res.status(error.statusCode || 500).json({
         message: error.message || "Failed to fetch invoices by client",
         success: false,
@@ -121,7 +122,7 @@ export class InvoiceController {
         data: updatedInvoice,
       });
     } catch (error: any) {
-      console.error("❌ Update Invoice Error:", error);
+      console.error(" Update Invoice Error:", error);
       return res.status(error.statusCode || 500).json({
         message: error.message || "Failed to update invoice",
         success: false,
@@ -144,11 +145,36 @@ export class InvoiceController {
         success: true,
       });
     } catch (error: any) {
-      console.error("❌ Delete Invoice Error:", error);
+      console.error(" Delete Invoice Error:", error);
       return res.status(error.statusCode || 500).json({
         message: error.message || "Failed to delete invoice",
         success: false,
       });
     }
   }
+
+  async handlePendingInvoicesByFabricator(req:AuthenticateRequest,res:Response){
+    try {
+      const id = req.user?.id;
+      const fabricator =  await prisma.fabricator.findFirst({
+        where:{
+          pointOfContact:{some:{id:id}}
+        }
+      })
+      const result= await invoiceService.pendingInvoicesByFabricator(fabricator?.id!);
+  
+      return res.status(200).json({
+        message: "Pending invoices for fabricator fetched successfully",
+        success: true,
+        data: result,
+      });
+    }catch (error: any) {      console.error(" Get Pending Invoices By Fabricator Error:", error);
+      return res.status(error.statusCode || 500).json({
+        message: error.message || "Failed to fetch pending invoices by fabricator",
+        success: false,
+        data: null,
+      });
+    }
+  }
 }
+

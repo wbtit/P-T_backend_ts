@@ -15,5 +15,10 @@ router.get(
   authMiddleware,
   asyncHandler(DashBoradData)
 );
+router.get(
+  "/clientAdmin",
+  authMiddleware,
+  asyncHandler(DashBoradData)
+);
 
 export default router;``
