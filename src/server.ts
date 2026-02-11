@@ -12,6 +12,7 @@ import {
 } from 'express'
 import routes from "./app"
 import healthRouter from './system/health'
+import openApiRouter from "./openapi/router";
 
 
 import helmet from "helmet";
@@ -83,6 +84,7 @@ app.use("/v1", speedLimiter);
 
 
 app.use("/health",healthRouter)
+app.use("/v1/docs", openApiRouter);
 
 app.use("/v1",routes)
 
