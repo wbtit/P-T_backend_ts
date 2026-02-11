@@ -20,6 +20,7 @@ datasource db {
 enum UserRole {
   STAFF
   VENDOR
+  VENDOR_ADMIN
   ADMIN
   SALES_MANAGER
   SALES_PERSON

@@ -4,6 +4,7 @@ import authMiddleware from "../../middleware/authMiddleware";
 import { DashBoradData } from "./dashBoardData";
 import { clientAdminDashBoard } from "./clientAdminDashBoard";
 import { clientDashBoard } from "./clientDashBoard";
+import { hrDashBoard } from "./hrDashBoard";
 
 const router = Router();
 
@@ -12,20 +13,9 @@ const router = Router();
  *  GET Dashboard Data
  * ---------------------------------------------------------------------
  */
-router.get(
-  "/",
-  authMiddleware,
-  asyncHandler(DashBoradData)
-);
-router.get(
-  "/clientAdmin",
-  authMiddleware,
-  asyncHandler(clientAdminDashBoard)
-);
-router.get(
-  "/client",
-  authMiddleware,
-  asyncHandler(clientDashBoard)
-);
+router.get("/", authMiddleware, asyncHandler(DashBoradData));
+router.get("/clientAdmin", authMiddleware, asyncHandler(clientAdminDashBoard));
+router.get("/client", authMiddleware, asyncHandler(clientDashBoard));
+router.get("/hr", authMiddleware, asyncHandler(hrDashBoard));
 
-export default router;``
+export default router;
