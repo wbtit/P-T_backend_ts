@@ -110,4 +110,15 @@ export class MileStoneController {
       data: result,
     });
   }
+
+  async handleGetPendingSubmittalsByClient(req:AuthenticateRequest,res:Response){
+    const id = req.user?.id;
+    const result= await mileStoneService.getPendingSubmittalsByClient(id!);
+
+    return res.status(200).json({
+      message: "Pending submittals for client admin fetched successfully",
+      success: true,
+      data: result,
+    });
+}
 }

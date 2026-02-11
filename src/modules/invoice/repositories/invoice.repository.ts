@@ -103,4 +103,21 @@ export class Invoicerepository{
         })
         return invoices;
     }
+
+    async pendingInvoicesByClient(clientId:string){
+        const invoices = await prisma.invoice.findMany({
+            where:{
+                clientId:clientId,
+                status:"PENDING"
+            },
+            include:{
+                fabricator:{select:{
+                    accountId:true,
+                    bankAccount:true,
+                }},
+                invoiceItems:true
+            }
+        })
+        return invoices;
+}
 }

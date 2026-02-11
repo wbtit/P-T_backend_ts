@@ -62,6 +62,12 @@ router.get(
   asyncHandler(invoiceCtrlr.handlePendingInvoicesByFabricator.bind(invoiceCtrlr))
 );
 
+router.get(
+  "/pending/client",
+  authMiddleware,
+  asyncHandler(invoiceCtrlr.handlePendingInvoicesByClient.bind(invoiceCtrlr))
+)
+
 // -----------------------------------------------------------------------------
 // Account Info routes
 // -----------------------------------------------------------------------------

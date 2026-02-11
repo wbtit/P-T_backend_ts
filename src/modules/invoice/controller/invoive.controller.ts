@@ -176,5 +176,23 @@ export class InvoiceController {
       });
     }
   }
+  async handlePendingInvoicesByClient(req:AuthenticateRequest,res:Response){
+    try {
+      const id = req.user?.id;
+      const result= await invoiceService.pendingInvoicesByClient(id!);
+  
+      return res.status(200).json({
+        message: "Pending invoices for client fetched successfully",
+        success: true,
+        data: result,
+      });
+    }catch (error: any) {      console.error(" Get Pending Invoices By Client Error:", error);
+      return res.status(error.statusCode || 500).json({
+        message: error.message || "Failed to fetch pending invoices by client",
+        success: false,
+        data: null,
+      });
+    }
+  }
 }
 

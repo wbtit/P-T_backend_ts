@@ -79,4 +79,8 @@ export class InvoiceService {
   async pendingInvoicesByFabricator(fabricatorId:string){
     return await invoiceRepo.pendingInvoicesByFabricator(fabricatorId)
   }
+
+  async pendingInvoicesByClient(clientId:string){
+    return await invoiceRepo.pendingInvoicesByClient(clientId)
+  }
 }
