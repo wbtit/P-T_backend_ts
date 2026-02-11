@@ -19,26 +19,17 @@ export const clientAdminDashBoard = async (req: AuthenticateRequest, res: Respon
             by: ["status"],
             _count: { _all: true },
             where: {
-                fabricator:{pointOfContact:{
-                    some:{
-                        id: req.user?.id,
-                        role: "CLIENT_ADMIN"
-                    }
-                }
+                fabricator:{id:fabricator?.id
                 }
             }
         })
         const totalProjects = await prisma.project.count({
             where: {
-                fabricator:{pointOfContact:{
-                    some:{
-                        id: req.user?.id,
-                        role: "CLIENT_ADMIN"
-                    }
+                fabricator:{id:fabricator?.id}
                 }
-                }
-            }
+                
         })
+
         const activeEmployeeCount = await prisma.user.count({ where: { isActive: true } });
         const newRFI = await prisma.rFI.count({
                             where: {
