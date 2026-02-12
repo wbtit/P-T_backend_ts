@@ -27,7 +27,24 @@ export class EstimationManageService{
         return await estManage.getByCreatorId(id);
     }
     async update(id:string,data:UpdateEstimationDtoType){
-        return await estManage.update(id,data)
+        const existing = await estManage.getById(id)
+        if (!existing) {
+            throw new AppError("Estimation not found",404)
+        }
+
+        const existingFiles = (existing.files as unknown as FileObject[]) ?? []
+        const newFiles = (data.files as unknown as FileObject[]) ?? []
+
+        const updateData: UpdateEstimationDtoType = {
+            ...data,
+            ...(newFiles.length ? { files: [...existingFiles, ...newFiles] } : {}),
+        }
+
+        if (Object.keys(updateData).length === 0) {
+            throw new AppError("At least one field is required for update",400)
+        }
+
+        return await estManage.update(id,updateData)
     }
     async delete(id:string){
         return await estManage.delete(id)

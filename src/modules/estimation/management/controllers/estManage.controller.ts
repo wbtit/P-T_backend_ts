@@ -4,6 +4,7 @@ import { mapUploadedFiles } from "../../../uploads/fileUtil";
 import { AuthenticateRequest } from "../../../../middleware/authMiddleware";
 import { AppError } from "../../../../config/utils/AppError";
 import { EstimationStatus } from "@prisma/client";
+import { UpdateEstimationDtoType } from "../dtos";
 
 const estService= new EstimationManageService()
 
@@ -68,7 +69,14 @@ export class EstManageController{
     }
     async handleUpdate(req:Request,res:Response){
         const{id}=req.params
-        const data= req.body
+        const uploadedFiles = mapUploadedFiles(
+        req.files as Express.Multer.File[] || [],
+        "estimations"
+       )
+        const data: UpdateEstimationDtoType = {
+            ...req.body,
+            ...(uploadedFiles.length ? { files: uploadedFiles } : {}),
+        }
         const estimation= await estService.update(id,data)
         res.status(200).json({
             message:"Estimation fetched",

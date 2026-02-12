@@ -54,6 +54,7 @@ router.get(
 router.put(
   "/estimations/:id",
   authMiddleware,
+  estimationUploads.array("files"),
   validate({
     params: z.object({ id: z.string() }),
     body: UpdateEstimationDto,
