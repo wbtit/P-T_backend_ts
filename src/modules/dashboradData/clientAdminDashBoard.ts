@@ -49,11 +49,13 @@ export const clientAdminDashBoard = async (req: AuthenticateRequest, res: Respon
         })
         const pendingRFQ = await prisma.rFQ.count({
                         where: {
+                            fabricator:{id:fabricator?.id},
                           responses: { none: {} },
                         },
                     });
         const pendingSubmittals = await prisma.submittals.count({
                         where: {
+                           fabricator:{id:fabricator?.id},
                            currentVersion:{
                             responses:{none:{}},
                            }
