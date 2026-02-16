@@ -10,6 +10,7 @@ export async function runPMOComplition() {
             fabricator:true
         }
     });
+    console.log(`Processing ${projects.length} projects for PMO completion...`, projects);
     for(const project of projects){
         if(!project.fabricatorID) continue;
 

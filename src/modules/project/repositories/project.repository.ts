@@ -106,6 +106,7 @@ import { setProjectWbsSelection } from "../utils/setProjectWbsSelection";
         changeOrders:{include:{Recipients:{select:{firstName:true,middleName:true,lastName:true,id:true}},
                       senders:{select:{firstName:true,middleName:true,lastName:true,id:true}}}},
         designDrawings:{include:{user:{select:{firstName:true,middleName:true,lastName:true,id:true}}}},
+        mileStones:true,
         stageHistory:true,
         fabricator:{select:{
           files:true,
@@ -126,7 +127,25 @@ import { setProjectWbsSelection } from "../utils/setProjectWbsSelection";
         }}
        }
      });
+     if(!project || project.isDeleted){
+      return null;
+     }
+     const IFACOmpletionNUmber = project.mileStones.filter(m => m.stage === 'IFA').length === 0 ? 0 :
+     (project.submittals.filter(m => m.stage === 'IFA' ).length / project.mileStones.filter(m => m.stage === 'IFA').length) * 100;
+
+     const IFCCompletionNumber = project.mileStones.filter(m => m.stage === 'IFC').length === 0 ? 0 :
+     (project.submittals.filter(m => m.stage === 'IFC').length / project.mileStones.filter(m => m.stage === 'IFC').length) * 100;
+
+     await prisma.project.update({
+      where:{id:project.id},
+      data:{
+        IFAComepletionPercentage: IFACOmpletionNUmber,
+        IFCompletionPercentage: IFCCompletionNumber
+      }
+     });
      return project;
+     
+   
    }
 
    async getByProjectNumber(projectNumber: string) {

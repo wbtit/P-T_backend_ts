@@ -9,8 +9,8 @@ import z from "zod";
 
 const empCtrl = new EmployeeController();
 const router = Router();
-router.use(authMiddleware, roleMiddleware(
-  ["ADMIN","HUMAN_RESOURCE","CLIENT_ADMIN"]));
+
+
 
 // Create employee
 router.post(
