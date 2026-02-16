@@ -11,6 +11,17 @@ export class SubmitalRepository {
     userId: string,
     approval: boolean
   ) {
+
+    const mileStone  = await prisma.mileStone.update({
+      where:{id:data.mileStoneId},
+      data:{
+        status:"COMPLETE"
+      }
+    })
+    if(!mileStone){
+      throw new Error("MileStone not found")
+
+    }    
     return prisma.submittals.create({
       data: {
         subject: data.subject,
