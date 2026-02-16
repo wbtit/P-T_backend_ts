@@ -70,6 +70,8 @@ enum TaskStatus {
   TECHNICAL_ISSUE
   USER_FAULT
   ON_HOLD
+  ABSENT
+  WRONG_ALLOCATION
 }
 
 enum WorkSegmentType{
