@@ -10,7 +10,9 @@ import z from "zod";
 const empCtrl = new EmployeeController();
 const router = Router();
 router.use(authMiddleware, roleMiddleware(
-  ["ADMIN","HUMAN_RESOURCE","CLIENT_ADMIN","PROJECT_MANAGER","TEAM_LEAD"]));
+  ["ADMIN","HUMAN_RESOURCE","CLIENT_ADMIN","PROJECT_MANAGER","TEAM_LEAD","STAFF"
+    ,"DEPT_MANAGER","ESTIMATION_HEAD","DEPUTY_MANAGER","OPERATION_EXECUTIVE"
+  ]));
 
 // Create employee
 router.post(
