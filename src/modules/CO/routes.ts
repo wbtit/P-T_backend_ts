@@ -65,6 +65,11 @@ router.get(
   coController.handleSentCos.bind(coController)
 );
 
+router.get(
+  "/pending/clientAdmin",
+  authMiddleware,
+  coController.handlePendingCOsForClientAdmin.bind(coController)
+)
 // Received COs
 router.get(
   "/received",

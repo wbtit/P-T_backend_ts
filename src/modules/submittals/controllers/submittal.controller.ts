@@ -64,7 +64,16 @@ export class SubmittalController {
       data: submittal,
     });
   }
-
+  async handlePendingForClientAdmin(req: AuthenticateRequest, res: Response) {
+    if (!req.user) throw new AppError("User not found", 404);
+    const { id } = req.user;
+    
+    const pendingSubmittals = await submittalService.getPendingSubmittalsForClientAdmin(id);
+    res.status(200).json({
+      status: "success",
+      data: pendingSubmittals,
+    });
+  }
   // --------------------------------------------------
   // GET PENDING SUBMITTALS FOR RESPONSE
   // --------------------------------------------------

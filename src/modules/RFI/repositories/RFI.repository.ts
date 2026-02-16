@@ -28,6 +28,56 @@ export class RFIRepository{
     });
     }
 
+    async findPendingRFIsForClientAdmin(userId: string) {
+
+     const fabricator = await prisma.fabricator.findFirst({
+            where: {
+                pointOfContact: {
+                    some: {
+                        id: userId,
+                        role: "CLIENT_ADMIN"
+                    }
+                }
+            },
+            
+        })
+        if (!fabricator) {
+            throw new Error("Fabricator not found for the client admin");
+        }
+      return await prisma.rFI.findMany({
+        where:{
+          fabricator_id:fabricator.id,
+          rfiresponse:{
+            none:{}
+          }
+        },
+        include: {
+        fabricator:{select:{
+          fabName:true,
+          id:true,
+        }},
+        project: {select:{name:true}},
+        sender :  {select:{firstName:true,middleName:true,lastName:true,email:true,id:true}},
+        recepients: {
+          include: {
+            managedFabricator: {
+              select: {
+                fabName: true,
+                branches:true,
+              },
+            },
+          },
+        },
+        rfiresponse:{
+          include:{
+            childResponses:true
+          }
+        },
+        
+      },
+      })
+    }
+
 
     async findById(id:string){
         return await prisma.rFI.findUnique({

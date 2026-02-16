@@ -37,6 +37,37 @@ export class CORepository {
       }
     });
     }
+
+    async findPendingCOsForClientAdmin(userId:string){
+      const fabricator = await prisma.fabricator.findFirst({
+            where: {
+                pointOfContact: {
+                    some: {
+                        id: userId,
+                        role: "CLIENT_ADMIN"
+                    }
+                }
+            }
+        })
+        return await prisma.changeOrder.findMany({
+          where:{
+                Recipients:{FabricatorPointOfContacts:{
+                        some:{
+                            id:fabricator?.id,
+                        }
+                    }},
+                    coResponses:{none:{}}
+                },
+                include:{
+            coResponses:{include:{childResponses:true}},
+            Project:true,
+            Recipients:true,
+            senders:true,
+            CoRefersTo:true,
+          }
+        })
+    }
+
     async recivedCos(userId:string){
         return await prisma.changeOrder.findMany({
             where:{

@@ -60,6 +60,36 @@ export class SubmitalRepository {
     });
   }
 
+
+async getPendingSubmittalsForClientAdmin(userId:string){
+  const fabricator = await prisma.fabricator.findFirst({
+            where: {
+                pointOfContact: {
+                    some: {
+                        id: userId,
+                        role: "CLIENT_ADMIN"
+                    }
+                }
+            }
+        })
+
+        return prisma.submittals.findMany({
+          where: {
+                           fabricator:{id:fabricator?.id},
+                           currentVersion:{
+                            responses:{none:{}},
+                           }
+                        },
+                        include: {
+        project: { select: { name: true } },
+        fabricator: true,
+        recepients: true,
+        currentVersion: true,
+      },
+      orderBy: { date: "desc" },
+        })
+}
+
   // -----------------------------
   // UPDATE METADATA ONLY
   // (NO CONTENT, NO FILES)

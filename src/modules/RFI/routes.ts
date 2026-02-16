@@ -65,6 +65,12 @@ router.get(
 );
 
 router.get(
+  "/pending/clientAdmin",
+  authMiddleware,
+  rfiController.handlePendingForClientAdmin.bind(rfiController)
+)
+
+router.get(
   "/received",
   authMiddleware,
   rfiController.handleReceived.bind(rfiController)

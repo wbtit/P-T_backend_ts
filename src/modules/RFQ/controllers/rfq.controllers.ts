@@ -70,7 +70,17 @@ export class RFQController {
             data: rfq,
         });
     }
-
+    async handlePendingForClientAdmin(req:AuthenticateRequest,res:Response){
+        if (!req.user) {
+            throw new AppError('User not found', 404);
+        }
+        const { id } = req.user;
+        const pendingRFQs = await rfqService.getPendingForClientAdmin(id);
+        res.status(200).json({
+            status: 'success',
+            data: pendingRFQs,
+        });
+    }
     async getRFQOfConnectionEngineer(req:AuthenticateRequest,res:Response){
         if (!req.user) {
             throw new AppError('User not found', 404);

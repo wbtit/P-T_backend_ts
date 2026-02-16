@@ -33,7 +33,16 @@ export class COController {
       data: co,
     });
   }
+  async handlePendingCOsForClientAdmin(req: AuthenticateRequest, res: Response) {
+    if (!req.user) throw new AppError("User not found", 404);
+    const { id } = req.user;
 
+    const cos = await coService.pendingCOsForClientAdmin(id);
+    res.status(200).json({
+      status: "success",
+      data: cos,
+    });
+  }
   async handleUpdateCo(req: AuthenticateRequest, res: Response) {
     if (!req.user) throw new AppError("User not found", 404);
 

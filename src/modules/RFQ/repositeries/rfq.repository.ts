@@ -63,6 +63,43 @@ export class RFQRepository {
         })
     }
 
+    async findPendingRFQsForClientAdmin(userId:string){
+        const fabricator = await prisma.fabricator.findFirst({
+            where: {
+                pointOfContact: {
+                    some: {
+                        id: userId,
+                        role: "CLIENT_ADMIN"
+                    }
+                }
+            }
+        })
+        return await prisma.rFQ.findMany({
+            where: {
+                            fabricator:{id:fabricator?.id},
+                            responses:{some:{
+                                childResponses:{
+                                    none:{}}
+                            }}
+                        },
+                    include:{
+                sender: true,
+                recipient: true,
+                salesPerson: true,
+                responses:true,
+                fabricator:true,
+                project: {select:{name:true}},
+                connectionEngineers:{select:{firstName:true,lastName:true,id:true}},
+                connectionDesignerRFQ:{
+                    include:{
+                        CDEngineers: true,
+                        CDQuotations:true,
+                    }
+                },
+                CDQuotas:true,
+            }
+        })
+    }
     async getById(data:GetRfqInput) {
         return await prisma.rFQ.findUnique({
             where: { id: data.id },

@@ -21,7 +21,11 @@ router.post(
     validate({body: CreateRfqSchema}),
     rfqController.handleCreateRfq.bind(rfqController)
 );
-
+router.get(
+    "/pending/clientAdmin",
+    authMiddleware,
+    rfqController.handlePendingForClientAdmin.bind(rfqController)
+)
 router.put(
     "/update/:id",
     authMiddleware,
@@ -53,6 +57,8 @@ router.get(
     authMiddleware,
     rfqController.handleSents.bind(rfqController)
 );
+
+
 
 router.get(
     "/received",

@@ -42,6 +42,9 @@ export class COService {
     return updated;
   }
 
+  async pendingCOsForClientAdmin(userId:string){
+    return await corepo.findPendingCOsForClientAdmin(userId);
+  }
   // Get all COs sent by a user
   async sentCos(userId: string) {
     return await corepo.sentCos(userId);

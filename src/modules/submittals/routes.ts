@@ -56,6 +56,11 @@ router.get(
   submittalController.handleSent.bind(submittalController)
 );
 
+router.get(
+  "/pending/clientAdmin",
+  authMiddleware,
+  submittalController.handlePendingForClientAdmin.bind(submittalController)
+)
 // LIST RECEIVED SUBMITTALS
 router.get(
   "/received",

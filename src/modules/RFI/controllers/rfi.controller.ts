@@ -139,6 +139,19 @@ export class RFIController {
     });
   }
 
+
+  async handlePendingForClientAdmin(req: AuthenticateRequest, res: Response) {
+    if (!req.user) throw new AppError("User not found", 404);
+    const { id: userId } = req.user;
+
+    const pendingRFIs = await rfiService.getPendingForClientAdmin(userId);
+
+    res.status(200).json({
+      status: "success",
+      data: pendingRFIs,
+    });
+  }
+
   // STREAM a file
   async handleViewFile(req: Request, res: Response) {
     const { rfiId, fileId } = req.params;

@@ -52,6 +52,10 @@ export class RFQService {
     async received(recipientId:string){
         return await rfqrepo.Inbox(recipientId);
     }
+
+    async getPendingForClientAdmin(userId:string){
+        return await rfqrepo.findPendingRFQsForClientAdmin(userId);
+    }
     async closeRfq(id:string){
         return await rfqrepo.closeRfq(id);
     }
