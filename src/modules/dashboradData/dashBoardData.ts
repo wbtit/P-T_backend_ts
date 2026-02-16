@@ -107,12 +107,10 @@ export const DashBoradData = async (
     });
     const pendingRFQ = await prisma.rFQ.count({
      where:{
-      NOT:{
         responses:{
           some:{
-            childResponses:{none:{}}
+            childResponses:{every:{status:"RECEIVED"}}
           }
-        }
       }
      }
     });
