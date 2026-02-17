@@ -18,6 +18,7 @@ export const createMileStoneSchema=z.object({
     approvalDate:zDateString,
     status:z.enum(Status),
     stage:z.enum(Stage),
+    reason:z.string().optional(),
     completeionPercentage:z.number().min(0).max(100).default(0).optional(),
     subject:z.string(),
     description:z.string()  

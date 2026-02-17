@@ -969,6 +969,7 @@ model MileStone{
   status             Status             @default(ACTIVE)
   stage              Stage              @default(IFA)
   subject            String
+  reason             String?             @default("")
   description        String
   completeionPercentage Float?              @default(0.0)
   milestoneVersion   Int                 @default(1)

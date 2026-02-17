@@ -48,23 +48,12 @@ export class TaskService {
       });
 
       const payload = {
-        type: "DUPLICATE_TASK_ASSIGNMENT",
-        title: "Potential duplicate task assignment",
-        body: {
-          managerName: this.formatName(manager) || "Unknown",
-          projectName: duplicateTask.project.name,
-          userName: this.formatName(duplicateTask.user) || "Unknown",
-          taskName: data.name,
-          severity,
-          reason,
-        },
-        meta: {
-          newTaskId: task.id,
-          existingTaskId: duplicateTask.id,
-          managerId,
-          assigneeId: data.user_id,
-          projectId: data.project_id,
-        },
+        managerName: this.formatName(manager) || "Unknown",
+        projectName: duplicateTask.project.name,
+        userName: this.formatName(duplicateTask.user) || "Unknown",
+        taskName: data.name,
+        severity,
+        reason,
       };
 
       await Promise.all(
