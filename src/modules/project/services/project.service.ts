@@ -344,4 +344,12 @@ async expandProjectWbs(
    const updateHistory = await projectRepository.getProjectUpdateHistoryByProjectId(projectId);
    return updateHistory;
  }
+
+ async getAllDocuments(id:string){
+  const project = await projectRepository.get({ id });
+  if (!project) {
+    throw new AppError("Project not found", 404);
+  }
+  return projectRepository.getAllDocuments(id);
+}
 }

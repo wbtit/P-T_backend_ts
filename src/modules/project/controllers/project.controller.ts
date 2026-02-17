@@ -127,4 +127,14 @@ async expandWbs(req: AuthenticateRequest, res: Response) {
          data: updateHistory
        });
     }
+
+    async handleGetAllDocuments(req:Request,res:Response){
+      const { id } = req.params;
+      const documents = await projectService.getAllDocuments(id);
+      res.status(200).json({
+        status: 'success',
+        data: documents
+      });
+    }
+
 }

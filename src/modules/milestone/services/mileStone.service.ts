@@ -26,12 +26,24 @@ export class MileStoneService{
     async getAll(){
         return await mileStoneRepo.getAll()
     }
-    async updateCompletion(id:string, isComplete:number){
+    async updateCompletion(
+        id:string,
+        payload: number | { completeionPercentage?: number }
+    ){
         const existing = await mileStoneRepo.getById(id);
         if (!existing) {
             throw new AppError("MileStone not found", 404);
         }
-        return await mileStoneRepo.updateCompletion(id, isComplete);
+        const completionPercentage =
+            typeof payload === "number"
+                ? payload
+                : payload?.completeionPercentage;
+
+        if (typeof completionPercentage !== "number") {
+            throw new AppError("completeionPercentage is required", 400);
+        }
+
+        return await mileStoneRepo.updateCompletion(id, completionPercentage);
     }
     async getById(id:string){
         return await mileStoneRepo.getById(id)
