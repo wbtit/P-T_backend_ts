@@ -276,6 +276,7 @@ model User {
   state           String?     @default("")
   country         String?     @default("")
   address         String?     @default("")
+  profilePic      String?
   role            UserRole
   connectionDesignerId String?   @db.Uuid
   vendorId        String?   @db.Uuid

@@ -68,6 +68,16 @@ export const updateUser=async(id:string,user:updateUserInput)=>{
     });
   };
 
+export const updateUserProfilePic = async (id: string, profilePic: string) => {
+  return prisma.user.update({
+    where: { id },
+    data: { profilePic },
+    include: {
+      FabricatorPointOfContacts: true,
+    },
+  });
+};
+
 
   export const deleteUser=async(id:string)=>{
     return await prisma.user.update({

@@ -220,3 +220,6 @@ export const vendorCombinedUploads = multer({
 
 export const notesDataMap={}
 export const notesUploads = createMulterUploader("public/notes", notesDataMap);
+
+export const userProfilePicMap = {};
+export const userProfilePicUploads = createMulterUploader("public/userprofiles", userProfilePicMap);
