@@ -9,15 +9,32 @@ import {
 
  export class FabricatorRepository {
       async create(data: CreateFabricatorInput, userId: string) {
+    const {
+      pointOfContact,
+      wbtFabricatorPointOfContact,
+      ...safeData
+    } = data;
+
     return prisma.fabricator.create({
       data: {
-        ...data,
+        ...safeData,
         createdById: userId,
+        pointOfContact: pointOfContact?.length
+          ? {
+              connect: pointOfContact.map((id) => ({ id })),
+            }
+          : undefined,
+        wbtFabricatorPointOfContact: wbtFabricatorPointOfContact?.length
+          ? {
+              connect: wbtFabricatorPointOfContact.map((id) => ({ id })),
+            }
+          : undefined,
       },
     include:{
       branches:true,
       project:true,
-      pointOfContact:true
+      pointOfContact:true,
+      wbtFabricatorPointOfContact:true
     }
     });
   }
@@ -31,7 +48,8 @@ import {
        include:{
       branches:true,
       project:true,
-      pointOfContact:true
+      pointOfContact:true,
+      wbtFabricatorPointOfContact:true
     }
     });
   }
@@ -43,7 +61,8 @@ import {
       include:{
         branches:true,
         project:true,
-        pointOfContact:true
+        pointOfContact:true,
+        wbtFabricatorPointOfContact:true
       }
     });
   }
@@ -63,7 +82,8 @@ import {
       include:{
         branches:true,
         project:true,
-        pointOfContact:true
+        pointOfContact:true,
+        wbtFabricatorPointOfContact:true
       }
     });
   }
@@ -74,7 +94,8 @@ import {
       include:{
         branches:true,
         project:true,
-        pointOfContact:true
+        pointOfContact:true,
+        wbtFabricatorPointOfContact:true
       }
     });
   }
@@ -98,7 +119,8 @@ import {
       include:{
         branches:true,
         project:true,
-        pointOfContact:true
+        pointOfContact:true,
+        wbtFabricatorPointOfContact:true
       }
     });
   }

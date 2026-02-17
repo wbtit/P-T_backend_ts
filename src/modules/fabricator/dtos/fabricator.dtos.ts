@@ -1,6 +1,23 @@
 import { Prisma,FabricatirStage } from "@prisma/client";
 import z from "zod";
 
+const zStringArrayFromForm = z.preprocess((val) => {
+    if (val === undefined || val === null || val === "") return undefined;
+    if (Array.isArray(val)) return val;
+    if (typeof val === "string") {
+        const trimmed = val.trim();
+        if (!trimmed) return undefined;
+        try {
+            const parsed = JSON.parse(trimmed);
+            if (Array.isArray(parsed)) return parsed;
+        } catch {
+            return trimmed.split(",").map((item) => item.trim()).filter(Boolean);
+        }
+        return [trimmed];
+    }
+    return val;
+}, z.array(z.string()));
+
 export const CreateFabricatorSchema=z.object({
     fabName:z.string().min(1,{message:"Fabricator name is required"}),
     website:z.string({message:"Invalid website URL"}).optional(),
@@ -12,6 +29,8 @@ export const CreateFabricatorSchema=z.object({
     currencyType:z.string().optional(),
     accountId:z.string().optional(),
     fabStage:z.enum(FabricatirStage),
+    pointOfContact: zStringArrayFromForm.optional(),
+    wbtFabricatorPointOfContact: zStringArrayFromForm.optional(),
     files: z
                 .union([
                   z.array(z.any()),

@@ -327,6 +327,7 @@ model User {
   invoicePointOfContact     Invoice[]       @relation("invoicePointOfContact")
   invoiceCreatedBy          Invoice[]       @relation("invoiceCreatedBy")
   FabricatorPointOfContacts Fabricator[]    @relation("FabricatorPointOfContacts")
+  wbtFabricatorPointOfContact     Fabricator[]    @relation("wbtFabricatorPointOfContacts")
   taskCreatedByUser        Task[]          @relation("taskCreatedByUser")
   ManagerEstimationScore   ManagerEstimationScore[] @relation("ManagerEstimationScore")
   managerbias              ManagerBiasRecord[]      @relation("managerbias")
@@ -394,6 +395,7 @@ model Fabricator {
   fabricatorInvoice   Invoice[]  @relation("fabricatorInvoice")
   bankAccount         AccountInfo? @relation("bankAccount",fields: [accountId], references: [id])
   pointOfContact User[]      @relation("FabricatorPointOfContacts")
+  wbtFabricatorPointOfContact User[]      @relation("wbtFabricatorPointOfContacts")
   rfq         RFQ[]        @relation("fabricatorRFQ")
   communications    ClientCommunication[]
 
