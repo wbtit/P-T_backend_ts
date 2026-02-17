@@ -5,7 +5,7 @@ import { generateProjectScopedSerial, SERIAL_PREFIX } from "../../../utils/seria
 import { AppError } from "../../../config/utils/AppError";
 
 export class TaskRepository {
-    async create(data: createTaskInput) {
+    async create(data: createTaskInput, createdBy: string) {
         const cleanData = cleandata(data)
         // Validate project_bundle_id if provided
         if (cleanData.project_bundle_id) {
@@ -44,7 +44,7 @@ export class TaskRepository {
                     user_id: cleanData.user_id,
                     departmentId: cleanData.departmentId,
                     reworkStartTime: cleanData.reworkStartTime,
-                    created_by: cleanData.user_id,
+                    created_by: createdBy,
                     project_bundle_id: cleanData.project_bundle_id,
                     wbsType: cleanData.wbsType
                 }
@@ -54,11 +54,93 @@ export class TaskRepository {
                 data: {
                     taskId: task.id,
                     allocatedHours: cleanData.duration,
-                    createdBy: cleanData.user_id
+                    createdBy
                 }
             })
             return task;
         })
+    }
+
+    async findLatestPotentialDuplicate(data: createTaskInput) {
+        const cleanName = data.name.trim();
+        const cleanDescription = data.description.trim();
+
+        return prisma.task.findFirst({
+            where: {
+                project_id: data.project_id,
+                user_id: data.user_id,
+                Stage: data.Stage,
+                name: {
+                    equals: cleanName,
+                    mode: "insensitive",
+                },
+                description: {
+                    equals: cleanDescription,
+                    mode: "insensitive",
+                },
+                mileStone_id: data.mileStone_id ?? null,
+                project_bundle_id: data.project_bundle_id ?? null,
+            },
+            orderBy: {
+                created_on: "desc",
+            },
+            include: {
+                project: {
+                    select: {
+                        name: true,
+                    },
+                },
+                user: {
+                    select: {
+                        firstName: true,
+                        middleName: true,
+                        lastName: true,
+                    },
+                },
+            },
+        });
+    }
+
+    async findOperationExecutives() {
+        return prisma.user.findMany({
+            where: {
+                role: "OPERATION_EXECUTIVE",
+                isActive: true,
+            },
+            select: {
+                id: true,
+            },
+        });
+    }
+
+    async findUserNameById(id: string) {
+        return prisma.user.findUnique({
+            where: { id },
+            select: {
+                firstName: true,
+                middleName: true,
+                lastName: true,
+            },
+        });
+    }
+
+    async createDuplicateAssignmentFlag(params: {
+        taskId: string;
+        managerId: string;
+        assigneeId: string;
+        severity: number;
+        reason: string;
+    }) {
+        return prisma.taskFlag.create({
+            data: {
+                taskId: params.taskId,
+                managerId: params.managerId,
+                userId: params.assigneeId,
+                type: "MANAGER_OVER_ALLOCATED",
+                severity: params.severity,
+                reason: params.reason,
+            },
+        });
     }
 
     async findById(id: string) {

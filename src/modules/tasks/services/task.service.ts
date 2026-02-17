@@ -1,6 +1,7 @@
 import { AppError } from "../../../config/utils/AppError";
 import { TaskRepository } from "../repositories/task.repository";
 import { createTaskInput, updateTaskInput } from "../dtos";
+import { sendNotification } from "../../../utils/sendNotification";
 
 export class TaskService {
   private taskRepository: TaskRepository;
@@ -9,8 +10,70 @@ export class TaskService {
     this.taskRepository = new TaskRepository();
   }
 
-  async createTask(data: createTaskInput) {
-    const task = await this.taskRepository.create(data);
+  private formatName(name?: {
+    firstName?: string | null;
+    middleName?: string | null;
+    lastName?: string | null;
+  } | null) {
+    return [name?.firstName, name?.middleName, name?.lastName]
+      .filter(Boolean)
+      .join(" ")
+      .trim();
+  }
+
+  async createTask(data: createTaskInput, managerId: string) {
+    const duplicateTask = await this.taskRepository.findLatestPotentialDuplicate(
+      data
+    );
+    const task = await this.taskRepository.create(data, managerId);
+
+    if (duplicateTask) {
+      const manager = await this.taskRepository.findUserNameById(managerId);
+      const operationExecutives =
+        await this.taskRepository.findOperationExecutives();
+      const severity =
+        duplicateTask.status === "COMPLETED" ? "MEDIUM" : "HIGH";
+      const reason =
+        duplicateTask.status === "COMPLETED"
+          ? "Same task details were already assigned earlier and completed."
+          : "Same task details are already assigned and still active.";
+      const persistedReason = `${reason} existingTaskId=${duplicateTask.id} newTaskId=${task.id} projectId=${data.project_id} assigneeId=${data.user_id}`;
+
+      await this.taskRepository.createDuplicateAssignmentFlag({
+        taskId: task.id,
+        managerId,
+        assigneeId: data.user_id,
+        severity: severity === "HIGH" ? 3 : 2,
+        reason: persistedReason,
+      });
+
+      const payload = {
+        type: "DUPLICATE_TASK_ASSIGNMENT",
+        title: "Potential duplicate task assignment",
+        body: {
+          managerName: this.formatName(manager) || "Unknown",
+          projectName: duplicateTask.project.name,
+          userName: this.formatName(duplicateTask.user) || "Unknown",
+          taskName: data.name,
+          severity,
+          reason,
+        },
+        meta: {
+          newTaskId: task.id,
+          existingTaskId: duplicateTask.id,
+          managerId,
+          assigneeId: data.user_id,
+          projectId: data.project_id,
+        },
+      };
+
+      await Promise.all(
+        operationExecutives.map((opsUser) =>
+          sendNotification(opsUser.id, payload)
+        )
+      );
+    }
+
     return task;
   }
 
