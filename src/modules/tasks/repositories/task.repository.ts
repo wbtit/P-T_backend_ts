@@ -2,6 +2,7 @@ import prisma from "../../../config/database/client";
 import { createTaskInput, updateTaskInput } from "../dtos";
 import { cleandata } from "../../../config/utils/cleanDataObject";
 import { generateProjectScopedSerial, SERIAL_PREFIX } from "../../../utils/serial.util";
+import { AppError } from "../../../config/utils/AppError";
 
 export class TaskRepository {
     async create(data: createTaskInput) {
@@ -20,12 +21,15 @@ export class TaskRepository {
                 where: { id: cleanData.project_id },
                 select: { projectCode: true, projectNumber: true },
             });
+            if (!project) {
+                throw new AppError("Project not found for task serial generation", 404);
+            }
             const task = await tx.task.create({
                 data: {
                     serialNo: await generateProjectScopedSerial(tx, {
                         prefix: SERIAL_PREFIX.TASK,
                         projectScopeId: cleanData.project_id,
-                        projectToken: project?.projectCode ?? project?.projectNumber ?? cleanData.project_id,
+                        projectToken: project.projectCode ?? project.projectNumber,
                     }),
                     name: cleanData.name,
                     description: cleanData.description,

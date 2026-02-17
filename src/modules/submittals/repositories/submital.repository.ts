@@ -1,6 +1,7 @@
 import prisma from "../../../config/database/client";
 import { CreateSubmittalsDto, UpdateSubmittalsDto } from "../dtos";
 import { generateProjectScopedSerial, SERIAL_PREFIX } from "../../../utils/serial.util";
+import { AppError } from "../../../config/utils/AppError";
 
 export class SubmitalRepository {
 
@@ -26,11 +27,14 @@ export class SubmitalRepository {
         where: { id: data.project_id },
         select: { projectCode: true, projectNumber: true },
       });
+      if (!project) {
+        throw new AppError("Project not found for submittal serial generation", 404);
+      }
 
       const serialNo = await generateProjectScopedSerial(tx, {
         prefix: SERIAL_PREFIX.SUBMITTAL,
         projectScopeId: data.project_id,
-        projectToken: project?.projectCode ?? project?.projectNumber ?? data.project_id,
+        projectToken: project.projectCode ?? project.projectNumber,
       });
 
       return tx.submittals.create({

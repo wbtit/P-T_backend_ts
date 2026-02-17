@@ -5,6 +5,7 @@ import { CreateDesignDrawingsInput,
     CreateDesignDrawingsResponsesInput 
 } from "../dtos";
 import { generateProjectScopedSerial, SERIAL_PREFIX } from "../../../utils/serial.util";
+import { AppError } from "../../../config/utils/AppError";
 
 export class DesignDrawingsRepository {
     async createDesignDrawings(data: CreateDesignDrawingsInput,userId:string) {
@@ -13,11 +14,14 @@ export class DesignDrawingsRepository {
             where: { id: data.projectId },
             select: { projectCode: true, projectNumber: true },
           });
+          if (!project) {
+            throw new AppError("Project not found for design drawing serial generation", 404);
+          }
 
           const serialNo = await generateProjectScopedSerial(tx, {
             prefix: SERIAL_PREFIX.DESIGN_DRAWING,
             projectScopeId: data.projectId,
-            projectToken: project?.projectCode ?? project?.projectNumber ?? data.projectId,
+            projectToken: project.projectCode ?? project.projectNumber,
           });
 
           return tx.designDrawings.create({

@@ -4,6 +4,7 @@ import {
     CreateRFIDto
 } from "../dtos";
 import { generateProjectScopedSerial, SERIAL_PREFIX } from "../../../utils/serial.util";
+import { AppError } from "../../../config/utils/AppError";
 
 export class RFIRepository{
     async create(data:CreateRFIDto,userId:string,isAproovedByAdmin:boolean){
@@ -12,11 +13,14 @@ export class RFIRepository{
             where: { id: data.project_id },
             select: { projectCode: true, projectNumber: true },
           });
+          if (!project) {
+            throw new AppError("Project not found for RFI serial generation", 404);
+          }
 
           const serialNo = await generateProjectScopedSerial(tx, {
             prefix: SERIAL_PREFIX.RFI,
             projectScopeId: data.project_id,
-            projectToken: project?.projectCode ?? project?.projectNumber ?? data.project_id,
+            projectToken: project.projectCode ?? project.projectNumber,
           });
 
           return tx.rFI.create({

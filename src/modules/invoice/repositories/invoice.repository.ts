@@ -2,6 +2,7 @@ import prisma from "../../../config/database/client";
 import { Prisma } from "@prisma/client";
 import {createInvoceData,updateInvoiceData} from "../dtos/invoice.dto"
 import { generateProjectScopedSerial, SERIAL_PREFIX } from "../../../utils/serial.util";
+import { AppError } from "../../../config/utils/AppError";
 
 export class Invoicerepository{
     async createInvoice(data:createInvoceData,userId:string){
@@ -10,11 +11,14 @@ export class Invoicerepository{
             where: { id: data.projectId },
             select: { projectCode: true, projectNumber: true },
           });
+          if (!project) {
+            throw new AppError("Project not found for invoice serial generation", 404);
+          }
 
           const serialNo = await generateProjectScopedSerial(tx, {
             prefix: SERIAL_PREFIX.INVOICE,
             projectScopeId: data.projectId,
-            projectToken: project?.projectCode ?? project?.projectNumber ?? data.projectId,
+            projectToken: project.projectCode ?? project.projectNumber,
           });
 
           return tx.invoice.create({

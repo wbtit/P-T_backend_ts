@@ -1,6 +1,7 @@
 import prisma from "../../../../config/database/client";
 import { CreateNoteInput,UpdateNoteInput } from "../dtos";
 import { generateProjectScopedSerial, SERIAL_PREFIX } from "../../../../utils/serial.util";
+import { AppError } from "../../../../config/utils/AppError";
 
 export class NotesRepository{
     async create(data:CreateNoteInput ) {
@@ -9,11 +10,14 @@ export class NotesRepository{
                 where: { id: data.projectId },
                 select: { projectCode: true, projectNumber: true },
             });
+            if (!project) {
+                throw new AppError("Project not found for notes serial generation", 404);
+            }
 
             const serialNo = await generateProjectScopedSerial(tx, {
                 prefix: SERIAL_PREFIX.NOTES,
                 projectScopeId: data.projectId,
-                projectToken: project?.projectCode ?? project?.projectNumber ?? data.projectId,
+                projectToken: project.projectCode ?? project.projectNumber,
             });
 
             return tx.notes.create({

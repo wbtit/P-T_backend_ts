@@ -1,6 +1,7 @@
 import prisma from "../../../config/database/client";
 import { CotableRowInput, CreateCoInput, CreateCOTableInput, UpdateCoInput } from "../dtos";
 import { generateProjectScopedSerial, SERIAL_PREFIX } from "../../../utils/serial.util";
+import { AppError } from "../../../config/utils/AppError";
 
 export class CORepository {
     async create(data:CreateCoInput,coNum:string,userId:string,approval:boolean){
@@ -9,11 +10,14 @@ export class CORepository {
             where: { id: data.project },
             select: { projectCode: true, projectNumber: true },
           });
+          if (!project) {
+            throw new AppError("Project not found for change order serial generation", 404);
+          }
 
           const serialNo = await generateProjectScopedSerial(tx, {
             prefix: SERIAL_PREFIX.CHANGE_ORDER,
             projectScopeId: data.project,
-            projectToken: project?.projectCode ?? project?.projectNumber ?? data.project,
+            projectToken: project.projectCode ?? project.projectNumber,
           });
 
           return tx.changeOrder.create({

@@ -2,6 +2,7 @@ import prisma from "../../../config/database/client";
 import { cleandata } from "../../../config/utils/cleanDataObject";
 import { CreateMileStoneDto,UpdateMileStoneDto } from "../dtos";
 import { generateProjectScopedSerial, SERIAL_PREFIX } from "../../../utils/serial.util";
+import { AppError } from "../../../config/utils/AppError";
 
 export class MileStoneRepository{
     async create(data:CreateMileStoneDto){
@@ -11,11 +12,14 @@ export class MileStoneRepository{
                 where: { id: cleanData.project_id },
                 select: { projectCode: true, projectNumber: true },
             });
+            if (!project) {
+                throw new AppError("Project not found for milestone serial generation", 404);
+            }
 
             const serialNo = await generateProjectScopedSerial(tx, {
                 prefix: SERIAL_PREFIX.MILESTONE,
                 projectScopeId: cleanData.project_id,
-                projectToken: project?.projectCode ?? project?.projectNumber ?? cleanData.project_id,
+                projectToken: project.projectCode ?? project.projectNumber,
             });
 
             return tx.mileStone.create({
