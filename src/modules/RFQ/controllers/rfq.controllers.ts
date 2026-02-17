@@ -161,4 +161,22 @@ export class RFQController {
             data: pendingRFQs,
         });
     }
+
+    async handlePendingForProjectManager(req: AuthenticateRequest, res: Response) {
+        if (!req.user) throw new AppError('User not found', 404);
+        const pendingRFQs = await rfqService.getPendingRFQsForProjectManager(req.user.id);
+        res.status(200).json({
+            status: 'success',
+            data: pendingRFQs,
+        });
+    }
+
+    async handleNewForProjectManager(req: AuthenticateRequest, res: Response) {
+        if (!req.user) throw new AppError('User not found', 404);
+        const newRFQs = await rfqService.getNewRFQsForProjectManager(req.user.id);
+        res.status(200).json({
+            status: 'success',
+            data: newRFQs,
+        });
+    }
 }

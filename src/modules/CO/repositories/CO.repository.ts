@@ -226,4 +226,44 @@ async pendingCOs(){
         },
     })
 }
+
+async findPendingCOsForProjectManager(managerId: string) {
+    return await prisma.changeOrder.findMany({
+        where: {
+            Project: { managerID: managerId },
+            NOT: {
+                coResponses: {
+                    some: {
+                        childResponses: {
+                            some: { Status: "ACCEPT" },
+                        },
+                    },
+                },
+            },
+        },
+        include: {
+            coResponses: { include: { childResponses: true } },
+            Project: true,
+            Recipients: true,
+            senders: true,
+            CoRefersTo: true,
+        },
+    });
+}
+
+async findNewCOsForProjectManager(managerId: string) {
+    return await prisma.changeOrder.findMany({
+        where: {
+            Project: { managerID: managerId },
+            coResponses: { none: {} },
+        },
+        include: {
+            coResponses: { include: { childResponses: true } },
+            Project: true,
+            Recipients: true,
+            senders: true,
+            CoRefersTo: true,
+        },
+    });
+}
 }

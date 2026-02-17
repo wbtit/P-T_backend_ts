@@ -164,4 +164,22 @@ export class COController {
       data: cos,
     });
   }
+
+  async handlePendingCOsForProjectManager(req: AuthenticateRequest, res: Response) {
+    if (!req.user) throw new AppError("User not found", 404);
+    const cos = await coService.pendingCOsForProjectManager(req.user.id);
+    res.status(200).json({
+      status: "success",
+      data: cos,
+    });
+  }
+
+  async handleNewCOsForProjectManager(req: AuthenticateRequest, res: Response) {
+    if (!req.user) throw new AppError("User not found", 404);
+    const cos = await coService.newCOsForProjectManager(req.user.id);
+    res.status(200).json({
+      status: "success",
+      data: cos,
+    });
+  }
 }

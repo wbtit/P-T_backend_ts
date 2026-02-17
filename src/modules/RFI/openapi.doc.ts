@@ -54,6 +54,34 @@ export const rFIOpenApiDoc: ModuleOpenApiDoc = {
         }
       },
     },
+    "/rfi/pending/projectManager": {
+      get: {
+        tags: ["RFI"],
+        summary: "GET /rfi/pending/projectManager",
+        operationId: "get_RFI_rfi_pending_projectManager",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
+    "/rfi/new/projectManager": {
+      get: {
+        tags: ["RFI"],
+        summary: "GET /rfi/new/projectManager",
+        operationId: "get_RFI_rfi_new_projectManager",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
     "/rfi/received": {
       get: {
         tags: ["RFI"],

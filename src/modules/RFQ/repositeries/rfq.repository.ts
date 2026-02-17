@@ -252,7 +252,45 @@ async getRFQOfConnectionEngineer(userId:string){
             fabricator:true,
             project: {select:{name:true}},
         }
-    })
-}
+        })
+    }
+
+    async findPendingRFQsForProjectManager(managerId: string) {
+        return await prisma.rFQ.findMany({
+            where: {
+                project: { managerID: managerId },
+                responses: {
+                    some: {
+                        childResponses: { none: {} },
+                    },
+                },
+            },
+            include: {
+                sender: true,
+                recipient: true,
+                salesPerson: true,
+                responses: true,
+                fabricator: true,
+                project: { select: { name: true } },
+            },
+        });
+    }
+
+    async findNewRFQsForProjectManager(managerId: string) {
+        return await prisma.rFQ.findMany({
+            where: {
+                project: { managerID: managerId },
+                responses: { none: {} },
+            },
+            include: {
+                sender: true,
+                recipient: true,
+                salesPerson: true,
+                responses: true,
+                fabricator: true,
+                project: { select: { name: true } },
+            },
+        });
+    }
 
 }

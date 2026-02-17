@@ -26,6 +26,16 @@ router.get(
     authMiddleware,
     rfqController.handlePendingForClientAdmin.bind(rfqController)
 )
+router.get(
+    "/pending/projectManager",
+    authMiddleware,
+    rfqController.handlePendingForProjectManager.bind(rfqController)
+)
+router.get(
+    "/new/projectManager",
+    authMiddleware,
+    rfqController.handleNewForProjectManager.bind(rfqController)
+)
 router.put(
     "/update/:id",
     authMiddleware,

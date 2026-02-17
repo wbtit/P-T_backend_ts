@@ -100,6 +100,34 @@ export const rFQOpenApiDoc: ModuleOpenApiDoc = {
         }
       },
     },
+    "/rfq/pending/projectManager": {
+      get: {
+        tags: ["RFQ"],
+        summary: "GET /rfq/pending/projectManager",
+        operationId: "get_RFQ_rfq_pending_projectManager",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
+    "/rfq/new/projectManager": {
+      get: {
+        tags: ["RFQ"],
+        summary: "GET /rfq/new/projectManager",
+        operationId: "get_RFQ_rfq_new_projectManager",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
     "/rfq/received": {
       get: {
         tags: ["RFQ"],

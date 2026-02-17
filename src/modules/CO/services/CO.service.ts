@@ -128,4 +128,12 @@ export class COService {
   async pendingCOs(){
     return await corepo.pendingCOs();
   }
+
+  async pendingCOsForProjectManager(managerId: string) {
+    return await corepo.findPendingCOsForProjectManager(managerId);
+  }
+
+  async newCOsForProjectManager(managerId: string) {
+    return await corepo.findNewCOsForProjectManager(managerId);
+  }
 }

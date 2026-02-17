@@ -224,4 +224,46 @@ export class RFIRepository{
         },
       });
     }
+
+    async findPendingRFIsForProjectManager(managerId: string) {
+      return await prisma.rFI.findMany({
+        where: {
+          project: { managerID: managerId },
+          NOT: {
+            rfiresponse: {
+              some: {
+                childResponses: {
+                  some: {
+                    wbtStatus: "COMPLETE",
+                  },
+                },
+              },
+            },
+          },
+        },
+        include: {
+          fabricator: true,
+          project: { select: { name: true } },
+          recepients: { select: { firstName: true, middleName: true, lastName: true, email: true, id: true } },
+          sender: { select: { firstName: true, middleName: true, lastName: true, email: true, id: true } },
+          rfiresponse: true,
+        },
+      });
+    }
+
+    async findNewRFIsForProjectManager(managerId: string) {
+      return await prisma.rFI.findMany({
+        where: {
+          project: { managerID: managerId },
+          rfiresponse: { none: {} },
+        },
+        include: {
+          fabricator: true,
+          project: { select: { name: true } },
+          recepients: { select: { firstName: true, middleName: true, lastName: true, email: true, id: true } },
+          sender: { select: { firstName: true, middleName: true, lastName: true, email: true, id: true } },
+          rfiresponse: true,
+        },
+      });
+    }
 }

@@ -109,4 +109,12 @@ export class RFIService {
   async getPendingRFIs(role: string) {
     return await rfiRepo.findPendingRFIs(role);
   }
+
+  async getPendingRFIsForProjectManager(managerId: string) {
+    return await rfiRepo.findPendingRFIsForProjectManager(managerId);
+  }
+
+  async getNewRFIsForProjectManager(managerId: string) {
+    return await rfiRepo.findNewRFIsForProjectManager(managerId);
+  }
 }

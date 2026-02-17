@@ -157,4 +157,12 @@ export class RFQService {
     async getPendingRFQs(){
         return await rfqrepo.getPendingRFQs();
     }
+
+    async getPendingRFQsForProjectManager(managerId: string) {
+        return await rfqrepo.findPendingRFQsForProjectManager(managerId);
+    }
+
+    async getNewRFQsForProjectManager(managerId: string) {
+        return await rfqrepo.findNewRFQsForProjectManager(managerId);
+    }
 }

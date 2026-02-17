@@ -54,6 +54,34 @@ export const cOOpenApiDoc: ModuleOpenApiDoc = {
         }
       },
     },
+    "/changeOrder/pending/projectManager": {
+      get: {
+        tags: ["ChangeOrder"],
+        summary: "GET /changeOrder/pending/projectManager",
+        operationId: "get_CO_changeOrder_pending_projectManager",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
+    "/changeOrder/new/projectManager": {
+      get: {
+        tags: ["ChangeOrder"],
+        summary: "GET /changeOrder/new/projectManager",
+        operationId: "get_CO_changeOrder_new_projectManager",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
     "/changeOrder/project/{projectId}": {
       get: {
         tags: ["ChangeOrder"],

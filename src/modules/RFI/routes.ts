@@ -69,6 +69,16 @@ router.get(
   authMiddleware,
   rfiController.handlePendingForClientAdmin.bind(rfiController)
 )
+router.get(
+  "/pending/projectManager",
+  authMiddleware,
+  rfiController.handlePendingForProjectManager.bind(rfiController)
+)
+router.get(
+  "/new/projectManager",
+  authMiddleware,
+  rfiController.handleNewForProjectManager.bind(rfiController)
+)
 
 router.get(
   "/received",

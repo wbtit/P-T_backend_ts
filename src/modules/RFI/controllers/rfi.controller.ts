@@ -167,4 +167,24 @@ export class RFIController {
       data: pendingRFIs,
     });
   }
+
+  async handlePendingForProjectManager(req: AuthenticateRequest, res: Response) {
+    if (!req.user) throw new AppError("User not found", 404);
+    const pendingRFIs = await rfiService.getPendingRFIsForProjectManager(req.user.id);
+
+    res.status(200).json({
+      status: "success",
+      data: pendingRFIs,
+    });
+  }
+
+  async handleNewForProjectManager(req: AuthenticateRequest, res: Response) {
+    if (!req.user) throw new AppError("User not found", 404);
+    const newRFIs = await rfiService.getNewRFIsForProjectManager(req.user.id);
+
+    res.status(200).json({
+      status: "success",
+      data: newRFIs,
+    });
+  }
 }

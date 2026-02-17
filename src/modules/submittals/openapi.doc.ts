@@ -22,6 +22,20 @@ export const submittalsOpenApiDoc: ModuleOpenApiDoc = {
         }
       },
     },
+    "/submittal/pending/projectManager": {
+      get: {
+        tags: ["Submittals"],
+        summary: "GET /submittal/pending/projectManager",
+        operationId: "get_submittals_submittal_pending_projectManager",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
     "/submittal/project/{projectId}": {
       get: {
         tags: ["Submittals"],

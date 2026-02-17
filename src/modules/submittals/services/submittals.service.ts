@@ -72,6 +72,10 @@ export class SubmittalService {
     return await submittalRepo.getPendingSubmittalsForClientAdmin(userId);
   }
 
+  async getPendingSubmittalsForProjectManager(userId: string) {
+    return await submittalRepo.getPendingSubmittalsForProjectManager(userId);
+  }
+
   // ----------------------------------
   // GET SUBMITTAL (WITH FILTERED RESPONSES)
   // ----------------------------------
