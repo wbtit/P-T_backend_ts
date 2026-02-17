@@ -958,12 +958,37 @@ model MileStone{
   stage              Stage              @default(IFA)
   subject            String
   description        String
+  milestoneVersion   Int                 @default(1)
+  currentVersionId   String?             @unique @db.Uuid @default(uuid())
   //relations
   fabricator         Fabricator          @relation("FabricatorMileStone", fields: [fabricator_id], references: [id], onDelete: Cascade)
   project            Project             @relation("ProjectMileStone", fields: [project_id], references: [id], onDelete: Cascade)
   // mileStoneSubmittals Submittals[]       @relation("mileStoneSubmittals")
   Tasks             Task[]              @relation("mileStoneTasks")
-  mileStoneSubmittals Submittals[]       @relation("mileStoneSubmittals") 
+  mileStoneSubmittals Submittals[]       @relation("mileStoneSubmittals")
+  versions           MileStoneVersion[]
+  currentVersion     MileStoneVersion?   @relation("CurrentMileStoneVersion", fields: [currentVersionId], references: [id])
+}
+
+model MileStoneVersion {
+  id            String   @id @default(uuid()) @db.Uuid
+  mileStoneId   String   @db.Uuid
+
+  versionNumber Int
+  approvalDate  DateTime?
+  status        Status   @default(ACTIVE)
+  stage         Stage    @default(IFA)
+  subject       String
+  description   String
+
+  createdAt     DateTime @default(now())
+  isActive      Boolean  @default(true)
+
+  mileStone     MileStone  @relation(fields: [mileStoneId], references: [id], onDelete: Cascade)
+  isCurrentFor  MileStone? @relation("CurrentMileStoneVersion")
+
+  @@unique([mileStoneId, versionNumber])
+  @@index([mileStoneId])
 }
 
 model Task {

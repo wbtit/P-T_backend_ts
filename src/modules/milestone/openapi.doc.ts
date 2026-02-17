@@ -91,7 +91,7 @@ export const milestoneOpenApiDoc: ModuleOpenApiDoc = {
       },
       put: {
         tags: ["Milestone"],
-        summary: "Update milestone by id",
+        summary: "Update milestone by id (creates new version)",
         operationId: "put_milestone_by_id",
         security: [{ bearerAuth: [] }],
         parameters: [

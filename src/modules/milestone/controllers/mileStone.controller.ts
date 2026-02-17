@@ -19,14 +19,14 @@ export class MileStoneController {
   }
 
   async handleUpdate(req: Request, res: Response) {
-    const { data } = req.body;
     const { id } = req.params;
-    const result = await mileStoneService.update(id, data);
+    const payload = req.body?.data ?? req.body;
+    const result = await mileStoneService.update(id, payload);
 
     if (!result) throw new AppError("Failed to update milestone", 400);
 
     return res.status(200).json({
-      message: "MileStone updated successfully",
+      message: "MileStone new version created successfully",
       success: true,
       data: result,
     });

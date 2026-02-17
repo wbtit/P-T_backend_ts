@@ -21,7 +21,13 @@ export class MileStoneRepository{
             include:{
                 project:true,
                 Tasks:true,
-                fabricator:true
+                fabricator:true,
+                currentVersion: true,
+                versions: {
+                    orderBy: {
+                        versionNumber: "desc",
+                    },
+                },
             }
         })
     }
@@ -31,7 +37,13 @@ export class MileStoneRepository{
             include:{
                 project:true,
                 Tasks:true,
-                fabricator:true
+                fabricator:true,
+                currentVersion: true,
+                versions: {
+                    orderBy: {
+                        versionNumber: "desc",
+                    },
+                },
             }
         })
     }
@@ -46,7 +58,13 @@ export class MileStoneRepository{
             include:{
                 project:true,
                 Tasks:true,
-                fabricator:true
+                fabricator:true,
+                currentVersion: true,
+                versions: {
+                    orderBy: {
+                        versionNumber: "desc",
+                    },
+                },
             }
         })
     }
