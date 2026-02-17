@@ -1,13 +1,30 @@
 import prisma from "../../../config/database/client";
 import { cleandata } from "../../../config/utils/cleanDataObject";
 import { CreateMileStoneDto,UpdateMileStoneDto } from "../dtos";
+import { generateProjectScopedSerial, SERIAL_PREFIX } from "../../../utils/serial.util";
 
 export class MileStoneRepository{
     async create(data:CreateMileStoneDto){
         const cleanData= cleandata(data)
-        return await prisma.mileStone.create({
-            data:cleanData
-        })
+        return await prisma.$transaction(async (tx) => {
+            const project = await tx.project.findUnique({
+                where: { id: cleanData.project_id },
+                select: { projectCode: true, projectNumber: true },
+            });
+
+            const serialNo = await generateProjectScopedSerial(tx, {
+                prefix: SERIAL_PREFIX.MILESTONE,
+                projectScopeId: cleanData.project_id,
+                projectToken: project?.projectCode ?? project?.projectNumber ?? cleanData.project_id,
+            });
+
+            return tx.mileStone.create({
+                data: {
+                    ...cleanData,
+                    serialNo,
+                },
+            });
+        });
     }
     async update(data:UpdateMileStoneDto,id:string){
         const cleanData = cleandata(data)

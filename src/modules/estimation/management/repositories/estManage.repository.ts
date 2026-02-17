@@ -1,20 +1,31 @@
 import { CreateEstimationDtoType,UpdateEstimationDtoType } from "../dtos";
 import prisma from "../../../../config/database/client";
 import { cleandata } from "../../../../config/utils/cleanDataObject";
-import { EstimationStatus } from "@prisma/client";
+import { EstimationStatus, Prisma } from "@prisma/client";
 import { LineItemsRepository } from "../../lineItems";
 
 const GroupRepo = new LineItemsRepository()
 export class EstManagementRepository{
-    async create(data:CreateEstimationDtoType,createdById:string){
-        const cleanData=cleandata(data)
-        return await prisma.estimation.create({
-            data:{
+    async create(
+        data: CreateEstimationDtoType & { serialNo: string; estimationNumber: string },
+        createdById: string
+    ) {
+        return this.createWithTx(prisma, data, createdById);
+    }
+
+    async createWithTx(
+        tx: Prisma.TransactionClient | typeof prisma,
+        data: CreateEstimationDtoType & { serialNo: string; estimationNumber: string },
+        createdById: string
+    ) {
+        const cleanData = cleandata(data);
+        return await tx.estimation.create({
+            data: {
                 ...cleanData,
                 createdById
             }
-        })
-    }   
+        });
+    }
     async getAll(){
         return await prisma.estimation.findMany({
             include:{

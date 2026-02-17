@@ -433,6 +433,7 @@ model Fabricator {
 
 model ConnectionDesignerQuota{
   id                   String      @id @default(uuid()) @db.Uuid
+  serialNo             String?     @unique
   connectionDesignerId String      @db.Uuid
   rfqId                String?      @db.Uuid
   bidprice            String? 
@@ -489,6 +490,7 @@ model Vendor{
 
 model VendorQuota{
   id                  String      @id @default(uuid()) @db.Uuid
+  serialNo            String?     @unique
   vendorId            String      @db.Uuid
   rfqId               String?      @db.Uuid
   bidprice            String? 
@@ -581,6 +583,7 @@ model TeamMember {
 
 model RFQ {
   id               String        @id @default(uuid()) @db.Uuid
+  serialNo         String?       @unique
   projectNumber    String?       @default("")
   projectName      String
   location         String?       @default("")
@@ -665,6 +668,8 @@ model RFQResponse {
 
 model Project{          
   id                     String                 @id @default(uuid()) @db.Uuid
+  serialNo               String?                @unique
+  projectCode            String?                @unique
   projectNumber          String                 @unique
   name                   String                 @unique
   description            String         
@@ -749,6 +754,7 @@ model Project{
 
 model Notes{
   id                     String         @id @default(uuid()) @db.Uuid
+  serialNo               String?        @unique
   content                String   
   stage                  Stage         @default(RFI)            
   files                  Json           @default("[]")
@@ -950,6 +956,7 @@ model ProjectStageHistory {
 
 model MileStone{
   id                 String              @id @default(uuid()) @db.Uuid
+  serialNo           String?             @unique
   fabricator_id      String              @db.Uuid
   date               DateTime            @default(now())
   project_id         String              @db.Uuid
@@ -959,7 +966,7 @@ model MileStone{
   subject            String
   description        String
   milestoneVersion   Int                 @default(1)
-  currentVersionId   String?             @unique @db.Uuid @default(uuid())
+  currentVersionId   String?             @unique @db.Uuid
   //relations
   fabricator         Fabricator          @relation("FabricatorMileStone", fields: [fabricator_id], references: [id], onDelete: Cascade)
   project            Project             @relation("ProjectMileStone", fields: [project_id], references: [id], onDelete: Cascade)
@@ -993,6 +1000,7 @@ model MileStoneVersion {
 
 model Task {
   id                 String          @id @default(uuid()) @db.Uuid
+  serialNo           String?         @unique
   name               String
   description        String
   status             TaskStatus     @default(ASSIGNED)
@@ -1134,6 +1142,7 @@ model Comment {
   @@map("comment")
 }
 model Estimation {
+  serialNo         String?              @unique
   estimationNumber String               @unique
   fabricatorName   String?
   projectName      String
@@ -1168,6 +1177,7 @@ model Estimation {
 }
 
 model EstimationTask {
+  serialNo     String?        @unique
   assignedById String         @db.Uuid
   status       TaskStatus     @default(ASSIGNED)
   startDate    DateTime?
@@ -1252,6 +1262,7 @@ model Notification {
 
 model RFI {
   id            String       @id @default(uuid()) @db.Uuid
+  serialNo      String?      @unique
   fabricator_id String       @db.Uuid
   date          DateTime     @default(now())
   project_id    String       @db.Uuid
@@ -1297,6 +1308,7 @@ model RFIResponse {
 
 model Submittals {
   id                 String   @id @default(uuid()) @db.Uuid
+  serialNo           String?  @unique
   fabricator_id      String   @db.Uuid
   mileStoneId        String?  @db.Uuid
   project_id         String   @db.Uuid
@@ -1391,6 +1403,7 @@ model SubmittalsResponse {
 
 model ChangeOrder {
   id          String             @id @default(uuid()) @db.Uuid
+  serialNo    String?            @unique
   project     String             @db.Uuid
   recipients  String             @db.Uuid
   remarks     String             @default("")
@@ -1506,6 +1519,7 @@ model MeetingAttendee {
 }
 model DesignDrawings{
   id          String   @id @default(uuid()) @db.Uuid
+  serialNo    String?  @unique
   projectId   String   @db.Uuid
   stage       Stage    @default(RFI)
   description String   @default("")
@@ -1596,6 +1610,7 @@ model CronLog {
 
 model Invoice {
   id                         String        @id @default(uuid()) @db.Uuid
+  serialNo                   String?       @unique
   projectId                  String        @db.Uuid
   fabricatorId               String        @db.Uuid
   clientId                   String?        @db.Uuid @default("00000000-0000-0000-0000-000000000000")
@@ -1749,4 +1764,17 @@ model ClientCommunication {
   @@index([followUpDate])
   @@index([isCompleted])
   @@index([projectId])
+}
+
+model SerialCounter {
+  id        String   @id @default(uuid()) @db.Uuid
+  scopeType String
+  scopeId   String
+  entity    String
+  lastValue Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([scopeType, scopeId, entity])
+  @@map("serial_counters")
 }

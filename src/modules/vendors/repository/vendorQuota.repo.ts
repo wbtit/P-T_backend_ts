@@ -6,13 +6,21 @@ import {
 } from "../dto";
 
 import prisma from "../../../config/database/client";
+import { Prisma } from "@prisma/client";
 
 export class VendorQuotaRepository {
   // -----------------------------------------------------------------------
   // Create
   // -----------------------------------------------------------------------
-  async create(data: CreateVendorQuotaInput) {
-    return prisma.vendorQuota.create({
+  async create(data: CreateVendorQuotaInput & { serialNo: string }) {
+    return this.createWithTx(prisma, data);
+  }
+
+  async createWithTx(
+    tx: Prisma.TransactionClient | typeof prisma,
+    data: CreateVendorQuotaInput & { serialNo: string }
+  ) {
+    return tx.vendorQuota.create({
       data: {
         ...data,
       },

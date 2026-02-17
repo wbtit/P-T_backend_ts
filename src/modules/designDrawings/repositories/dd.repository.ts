@@ -4,18 +4,33 @@ import { CreateDesignDrawingsInput,
     UpdateDesignDrawingsResponsesInput,
     CreateDesignDrawingsResponsesInput 
 } from "../dtos";
+import { generateProjectScopedSerial, SERIAL_PREFIX } from "../../../utils/serial.util";
 
 export class DesignDrawingsRepository {
     async createDesignDrawings(data: CreateDesignDrawingsInput,userId:string) {
-        return await prisma.designDrawings.create({
-      data: {
-        projectId:data.projectId,
-        description:data.description,
-        stage:data.stage,
-        files: data.files,
-        uploadedBy: userId,
-      },
-    });
+        return await prisma.$transaction(async (tx) => {
+          const project = await tx.project.findUnique({
+            where: { id: data.projectId },
+            select: { projectCode: true, projectNumber: true },
+          });
+
+          const serialNo = await generateProjectScopedSerial(tx, {
+            prefix: SERIAL_PREFIX.DESIGN_DRAWING,
+            projectScopeId: data.projectId,
+            projectToken: project?.projectCode ?? project?.projectNumber ?? data.projectId,
+          });
+
+          return tx.designDrawings.create({
+            data: {
+              serialNo,
+              projectId:data.projectId,
+              description:data.description,
+              stage:data.stage,
+              files: data.files,
+              uploadedBy: userId,
+            },
+          });
+        });
     }
     async getDDByProjectId(projectId:string){
         return await prisma.designDrawings.findMany({

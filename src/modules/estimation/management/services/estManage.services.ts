@@ -6,6 +6,11 @@ import { EstimationStatus } from "@prisma/client";
 import { streamFile } from "../../../../utils/fileUtil";
 import path from "path";
 import { Response } from "express";
+import prisma from "../../../../config/database/client";
+import {
+    generateProjectScopedSerial,
+    SERIAL_PREFIX,
+} from "../../../../utils/serial.util";
 
 
 
@@ -13,7 +18,41 @@ const estManage= new EstManagementRepository();
 
 export class EstimationManageService{
     async create(data:CreateEstimationDtoType,createdById:string){
-        const estimantion = await estManage.create(data,createdById)
+        const estimantion = await prisma.$transaction(async (tx) => {
+            let projectScopeId = `EST_PROJECT:${data.projectName.toUpperCase()}`;
+            let projectToken = data.projectName;
+
+            if (data.rfqId) {
+                const rfq = await tx.rFQ.findUnique({
+                    where: { id: data.rfqId },
+                    select: { projectNumber: true, project: { select: { id: true, projectCode: true } } },
+                });
+
+                if (rfq?.project?.id) {
+                    projectScopeId = rfq.project.id;
+                    projectToken = rfq.project.projectCode ?? rfq.projectNumber ?? data.projectName;
+                } else if (rfq?.projectNumber) {
+                    projectScopeId = `PROJECT_NUMBER:${rfq.projectNumber.toUpperCase()}`;
+                    projectToken = rfq.projectNumber;
+                }
+            }
+
+            const serialNo = await generateProjectScopedSerial(tx, {
+                prefix: SERIAL_PREFIX.ESTIMATION,
+                projectScopeId,
+                projectToken,
+            });
+
+            return estManage.createWithTx(
+                tx,
+                {
+                    ...data,
+                    serialNo,
+                    estimationNumber: serialNo,
+                },
+                createdById
+            );
+        });
 
         return estimantion
     }

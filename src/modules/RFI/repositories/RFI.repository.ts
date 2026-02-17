@@ -3,29 +3,44 @@ import {
     UpdateRFIDto,
     CreateRFIDto
 } from "../dtos";
+import { generateProjectScopedSerial, SERIAL_PREFIX } from "../../../utils/serial.util";
 
 export class RFIRepository{
     async create(data:CreateRFIDto,userId:string,isAproovedByAdmin:boolean){
-        return await prisma.rFI.create({
-      data: {
-        fabricator_id:data.fabricator_id,
-        project_id:data.project_id,
-        recepient_id: data.recepient_id,
-        sender_id: userId,
-        status: true,
-        subject:data.subject,
-        description:data.description,
-        files: data.files,
-        isAproovedByAdmin
-      },
-      include: {
-        
-        recepients:  {select:{firstName:true,middleName:true,lastName:true,email:true,id:true}},
-        project: true,
-        sender :  {select:{firstName:true,middleName:true,lastName:true,email:true,id:true}},
-        rfiresponse:true
-      },
-    });
+        return await prisma.$transaction(async (tx) => {
+          const project = await tx.project.findUnique({
+            where: { id: data.project_id },
+            select: { projectCode: true, projectNumber: true },
+          });
+
+          const serialNo = await generateProjectScopedSerial(tx, {
+            prefix: SERIAL_PREFIX.RFI,
+            projectScopeId: data.project_id,
+            projectToken: project?.projectCode ?? project?.projectNumber ?? data.project_id,
+          });
+
+          return tx.rFI.create({
+            data: {
+              serialNo,
+              fabricator_id:data.fabricator_id,
+              project_id:data.project_id,
+              recepient_id: data.recepient_id,
+              sender_id: userId,
+              status: true,
+              subject:data.subject,
+              description:data.description,
+              files: data.files,
+              isAproovedByAdmin
+            },
+            include: {
+              
+              recepients:  {select:{firstName:true,middleName:true,lastName:true,email:true,id:true}},
+              project: true,
+              sender :  {select:{firstName:true,middleName:true,lastName:true,email:true,id:true}},
+              rfiresponse:true
+            },
+          });
+        });
     }
 
     async findPendingRFIsForClientAdmin(userId: string) {

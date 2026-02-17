@@ -1,5 +1,6 @@
 import prisma from "../../../config/database/client";
 import { CreateSubmittalsDto, UpdateSubmittalsDto } from "../dtos";
+import { generateProjectScopedSerial, SERIAL_PREFIX } from "../../../utils/serial.util";
 
 export class SubmitalRepository {
 
@@ -11,32 +12,44 @@ export class SubmitalRepository {
     userId: string,
     approval: boolean
   ) {
-
-    const mileStone  = await prisma.mileStone.update({
-      where:{id:data.mileStoneId},
-      data:{
-        status:"COMPLETE"
+    return prisma.$transaction(async (tx) => {
+      if (data.mileStoneId) {
+        await tx.mileStone.update({
+          where: { id: data.mileStoneId },
+          data: {
+            status: "COMPLETE"
+          }
+        });
       }
-    })
-    if(!mileStone){
-      throw new Error("MileStone not found")
 
-    }    
-    return prisma.submittals.create({
-      data: {
-        subject: data.subject,
-        fabricator_id: data.fabricator_id,
-        project_id: data.project_id,
-        recepient_id: data.recepient_id,
-        mileStoneId: data.mileStoneId,
-        sender_id: userId,
-        stage: data.stage,
-        isAproovedByAdmin: approval,
-        status: true,
-      },
-      include: {
-        recepients: true,
-      },
+      const project = await tx.project.findUnique({
+        where: { id: data.project_id },
+        select: { projectCode: true, projectNumber: true },
+      });
+
+      const serialNo = await generateProjectScopedSerial(tx, {
+        prefix: SERIAL_PREFIX.SUBMITTAL,
+        projectScopeId: data.project_id,
+        projectToken: project?.projectCode ?? project?.projectNumber ?? data.project_id,
+      });
+
+      return tx.submittals.create({
+        data: {
+          serialNo,
+          subject: data.subject,
+          fabricator_id: data.fabricator_id,
+          project_id: data.project_id,
+          recepient_id: data.recepient_id,
+          mileStoneId: data.mileStoneId,
+          sender_id: userId,
+          stage: data.stage,
+          isAproovedByAdmin: approval,
+          status: true,
+        },
+        include: {
+          recepients: true,
+        },
+      });
     });
   }
 

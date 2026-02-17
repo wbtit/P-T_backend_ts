@@ -4,6 +4,12 @@ import { Response } from "express";
 import path from "path";
 import fs from "fs";
 import { streamFile } from "../../../utils/fileUtil";
+import prisma from "../../../config/database/client";
+import {
+  generateParentScopedSerial,
+  extractProjectToken,
+  SERIAL_PREFIX,
+} from "../../../utils/serial.util";
 
 import {
   CreateConnectionDesignerQuotaInput,
@@ -24,6 +30,9 @@ export class ConnectionDesignerQuotaService {
     if (!data.estimatedHours) {
       throw new AppError("estimatedHours is required", 400);
     }
+    if (!data.rfqId) {
+      throw new AppError("rfqId is required for quota serial generation", 400);
+    }
 
     // Prevent duplicate quota for same Connection Designer & RFQ
     if (data.connectionDesignerId && data.rfqId) {
@@ -38,8 +47,29 @@ export class ConnectionDesignerQuotaService {
       }
     }
 
-    const quota = await quotaRepo.create(data);
-    return quota;
+    return prisma.$transaction(async (tx) => {
+      const rfq = await tx.rFQ.findUnique({
+        where: { id: data.rfqId! },
+        select: { id: true, serialNo: true },
+      });
+
+      if (!rfq?.serialNo) {
+        throw new AppError("RFQ serial number is required before creating quota", 400);
+      }
+
+      const serialNo = await generateParentScopedSerial(tx, {
+        childPrefix: SERIAL_PREFIX.CONNECTION_DESIGNER_QUOTA,
+        parentPrefix: SERIAL_PREFIX.RFQ,
+        parentScopeId: rfq.id,
+        parentSerialNo: rfq.serialNo,
+        projectToken: extractProjectToken(rfq.serialNo),
+      });
+
+      return quotaRepo.createWithTx(tx, {
+        ...data,
+        serialNo,
+      });
+    });
   }
 
   // -----------------------------------------------------------------------

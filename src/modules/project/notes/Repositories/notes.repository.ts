@@ -1,20 +1,37 @@
 import prisma from "../../../../config/database/client";
 import { CreateNoteInput,UpdateNoteInput } from "../dtos";
+import { generateProjectScopedSerial, SERIAL_PREFIX } from "../../../../utils/serial.util";
 
 export class NotesRepository{
     async create(data:CreateNoteInput ) {
-        return await prisma.notes.create({
-            data: data,
-            include:{
-                project:{
-                    select:{
-                        tasks:true,
-                        managerID:true,
-                        name:true,
-                        department:{select:{managerIds:{select:{id:true}}}}
+        return await prisma.$transaction(async (tx) => {
+            const project = await tx.project.findUnique({
+                where: { id: data.projectId },
+                select: { projectCode: true, projectNumber: true },
+            });
+
+            const serialNo = await generateProjectScopedSerial(tx, {
+                prefix: SERIAL_PREFIX.NOTES,
+                projectScopeId: data.projectId,
+                projectToken: project?.projectCode ?? project?.projectNumber ?? data.projectId,
+            });
+
+            return tx.notes.create({
+                data: {
+                    ...data,
+                    serialNo,
+                },
+                include:{
+                    project:{
+                        select:{
+                            tasks:true,
+                            managerID:true,
+                            name:true,
+                            department:{select:{managerIds:{select:{id:true}}}}
+                        }
                     }
                 }
-            }
+            });
         });
     }
 

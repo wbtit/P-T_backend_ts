@@ -10,25 +10,50 @@ import path from "path";
 import { streamFile } from "../../../utils/fileUtil";
 import { Response } from "express";
 import fs from "fs";
+import prisma from "../../../config/database/client";
+import {
+  generateProjectScopedSerial,
+  SERIAL_PREFIX,
+} from "../../../utils/serial.util";
 
 
 const rfqrepo= new RFQRepository();
 
 export class RFQService {
     async createRfq(data: CreateRfqInput, createdById: string) {
-
-
-    // Use senderId from data if provided, otherwise fallback to createdById
     const senderId = data.senderId ?? createdById;
-    const duplicateRfq = await rfqrepo.getbyProjectNameAndLocation(data.projectName, data.location || "");
+    const projectNumber = data.projectNumber?.trim();
+    if (!projectNumber) {
+      throw new AppError("projectNumber is required for RFQ serial generation", 400);
+    }
 
-    const rfq = await rfqrepo.create({
+    const duplicateRfq = await rfqrepo.getbyProjectNameAndLocation(
+      data.projectName,
+      data.location || ""
+    );
+
+    const rfq = await prisma.$transaction(async (tx) => {
+      const project = await tx.project.findUnique({
+        where: { projectNumber },
+        select: { id: true, projectCode: true },
+      });
+
+      const serialNo = await generateProjectScopedSerial(tx, {
+        prefix: SERIAL_PREFIX.RFQ,
+        projectScopeId: project?.id ?? `PROJECT_NUMBER:${projectNumber.toUpperCase()}`,
+        projectToken: project?.projectCode ?? projectNumber,
+      });
+
+      return rfqrepo.createWithTx(tx, {
         ...data,
-        senderId
+        senderId,
+        projectNumber,
+        serialNo,
+      });
     });
 
     return { newRfq: rfq, duplicateRfq };
-}
+  }
 
     async updateRfq(id:string,data:UpdateRfqInput){
         const existing = await rfqrepo.getById({id});

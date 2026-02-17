@@ -10,7 +10,7 @@ export const CreateCoSchema = z.object({
   sender: z.string(),
   recipients: z.string(),
     remarks: z.string(),
-    changeOrderNumber: z.string(),
+    changeOrderNumber: z.string().optional(),
     description: z.string(),
     sentOn: z
       .preprocess(

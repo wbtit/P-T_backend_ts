@@ -2,7 +2,7 @@ import { z } from "zod";
 import { EstimationStatus, Prisma,ProjectComplexity } from "@prisma/client";
 
 export const EstimationSchema = z.object({
-    estimationNumber: z.string().min(1, "Estimation number is required"),
+    estimationNumber: z.string().min(1, "Estimation number is required").optional(),
     fabricatorName: z.string().optional(),
     projectName: z.string().min(1, "Project name is required"),
     projectComplexity:z.enum(ProjectComplexity).optional(),

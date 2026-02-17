@@ -1,6 +1,7 @@
 import prisma from "../../../config/database/client";
 import { createTaskInput, updateTaskInput } from "../dtos";
 import { cleandata } from "../../../config/utils/cleanDataObject";
+import { generateProjectScopedSerial, SERIAL_PREFIX } from "../../../utils/serial.util";
 
 export class TaskRepository {
     async create(data: createTaskInput) {
@@ -14,9 +15,18 @@ export class TaskRepository {
                 throw new Error("Invalid project_bundle_id: ProjectBundle not found");
             }
         }
-        await prisma.$transaction(async (tx) => {
+        return await prisma.$transaction(async (tx) => {
+            const project = await tx.project.findUnique({
+                where: { id: cleanData.project_id },
+                select: { projectCode: true, projectNumber: true },
+            });
             const task = await tx.task.create({
                 data: {
+                    serialNo: await generateProjectScopedSerial(tx, {
+                        prefix: SERIAL_PREFIX.TASK,
+                        projectScopeId: cleanData.project_id,
+                        projectToken: project?.projectCode ?? project?.projectNumber ?? cleanData.project_id,
+                    }),
                     name: cleanData.name,
                     description: cleanData.description,
                     mileStone_id: cleanData.mileStone_id,

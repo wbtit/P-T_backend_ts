@@ -1,24 +1,39 @@
 import prisma from "../../../config/database/client";
 import { CotableRowInput, CreateCoInput, CreateCOTableInput, UpdateCoInput } from "../dtos";
+import { generateProjectScopedSerial, SERIAL_PREFIX } from "../../../utils/serial.util";
 
 export class CORepository {
     async create(data:CreateCoInput,coNum:string,userId:string,approval:boolean){
-        return await prisma.changeOrder.create({
-      data: {
-        changeOrderNumber: coNum,
-        description:data.description,
-        project:data.project,
-        status: "NOT_REPLIED",
-        stage: data.stage || "IFA",
-        recipients:data.recipients,
-        remarks:data.remarks,
-        reason:data.reason,
-        files:data.files,
-        sentOn:data.sentOn|| new Date(),
-        isAproovedByAdmin:approval,
-        sender: userId,
-      },
-    });
+        return await prisma.$transaction(async (tx) => {
+          const project = await tx.project.findUnique({
+            where: { id: data.project },
+            select: { projectCode: true, projectNumber: true },
+          });
+
+          const serialNo = await generateProjectScopedSerial(tx, {
+            prefix: SERIAL_PREFIX.CHANGE_ORDER,
+            projectScopeId: data.project,
+            projectToken: project?.projectCode ?? project?.projectNumber ?? data.project,
+          });
+
+          return tx.changeOrder.create({
+            data: {
+              serialNo,
+              changeOrderNumber: serialNo,
+              description:data.description,
+              project:data.project,
+              status: "NOT_REPLIED",
+              stage: data.stage || "IFA",
+              recipients:data.recipients,
+              remarks:data.remarks,
+              reason:data.reason,
+              files:data.files,
+              sentOn:data.sentOn|| new Date(),
+              isAproovedByAdmin:approval,
+              sender: userId,
+            },
+          });
+        });
     }
     async update(id:string,data:UpdateCoInput){
         return await prisma.changeOrder.update({

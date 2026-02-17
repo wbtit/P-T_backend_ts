@@ -7,19 +7,26 @@ import { CreateRfqInput,
 import { cleandata } from "../../../config/utils/cleanDataObject";
 
 export class RFQRepository {
-    async create(data: CreateRfqInput) {
-  const cleanedData = cleandata(data);
-
-  return await prisma.rFQ.create({
-    data: cleanedData,
-    include: {
-      sender: true,
-      recipient: true,
-      salesPerson: true,
-      responses: true
+    async create(data: CreateRfqInput & { serialNo: string }) {
+      return this.createWithTx(prisma, data);
     }
-  });
-}
+
+    async createWithTx(
+      tx: Prisma.TransactionClient | typeof prisma,
+      data: CreateRfqInput & { serialNo: string }
+    ) {
+      const cleanedData = cleandata(data);
+
+      return await tx.rFQ.create({
+        data: cleanedData,
+        include: {
+          sender: true,
+          recipient: true,
+          salesPerson: true,
+          responses: true
+        }
+      });
+    }
 
     async update(id: string, data: UpdateRfqInput) {
         const { ConnectionDesignerIds,connectionEngineerIds, ...rest } = data;
@@ -244,4 +251,3 @@ async getRFQOfConnectionEngineer(userId:string){
 }
 
 }
-

@@ -6,16 +6,24 @@ import {
 } from "../dtos";
 
 import prisma from "../../../config/database/client";
+import { Prisma } from "@prisma/client";
 
 export class ConnectionDesignerQuotaRepository {
 
   // Create quota entry
-  async create(data: CreateConnectionDesignerQuotaInput) {
+  async create(data: CreateConnectionDesignerQuotaInput & { serialNo: string }) {
+    return this.createWithTx(prisma, data);
+  }
+
+  async createWithTx(
+    tx: Prisma.TransactionClient | typeof prisma,
+    data: CreateConnectionDesignerQuotaInput & { serialNo: string }
+  ) {
     const { createdById, updatedById, ...safeData } = data as CreateConnectionDesignerQuotaInput & {
       createdById?: string;
       updatedById?: string;
     };
-    return prisma.connectionDesignerQuota.create({
+    return tx.connectionDesignerQuota.create({
       data: {
         ...safeData,
       },

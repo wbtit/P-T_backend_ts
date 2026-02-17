@@ -50,7 +50,7 @@ export const createInvoiceSchema = z.object({
   stateCode: z.string().optional(),
   status:z.enum(InvoiceStatus).optional(),
   GSTIN: z.string().optional(),
-  invoiceNumber: z.string().min(1),
+  invoiceNumber: z.string().min(1).optional(),
   invoiceDate: z.string().optional(),
   dateOfSupply: z.string().optional(),
   placeOfSupply: z.string().optional(),
@@ -67,7 +67,6 @@ invoiceItems: z.array(createInvoiceItemSchema).optional(),
 export const updateInvoiceSchema = createInvoiceSchema.partial();
 export type createInvoceData= z.infer<typeof createInvoiceSchema>
 export type updateInvoiceData = z.infer<typeof updateInvoiceSchema>
-
 
 
 

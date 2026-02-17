@@ -1,6 +1,12 @@
 import { EstimationTaskRepository } from "../repositories";
 import { createEstimationTaskInput, updateEstimationTaskInput } from "../dtos";
 import { AppError } from "../../../../config/utils/AppError";
+import prisma from "../../../../config/database/client";
+import {
+    extractProjectToken,
+    generateParentScopedSerial,
+    SERIAL_PREFIX,
+} from "../../../../utils/serial.util";
 
 export class EstimationTaskService {
     private estimationTaskRepo: EstimationTaskRepository;
@@ -10,8 +16,37 @@ export class EstimationTaskService {
     }
 
     async createTask(data: createEstimationTaskInput, assignedById: string) {
-        // You could add additional business logic or validation here
-        return await this.estimationTaskRepo.create(data, assignedById);
+        return await prisma.$transaction(async (tx) => {
+            const estimation = await tx.estimation.findUnique({
+                where: { id: data.estimationId },
+                select: { id: true, serialNo: true },
+            });
+
+            if (!estimation) {
+                throw new AppError("Estimation not found", 404);
+            }
+
+            if (!estimation.serialNo) {
+                throw new AppError("Estimation serial number is missing", 400);
+            }
+
+            const serialNo = await generateParentScopedSerial(tx, {
+                childPrefix: SERIAL_PREFIX.ESTIMATION_TASK,
+                parentPrefix: SERIAL_PREFIX.ESTIMATION,
+                parentScopeId: estimation.id,
+                parentSerialNo: estimation.serialNo,
+                projectToken: extractProjectToken(estimation.serialNo),
+            });
+
+            return this.estimationTaskRepo.createWithTx(
+                tx,
+                {
+                    ...data,
+                    serialNo,
+                },
+                assignedById
+            );
+        });
     }
 
     async reviewTask(taskId: string, data: updateEstimationTaskInput, reviewerId: string) {

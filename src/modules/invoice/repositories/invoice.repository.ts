@@ -1,34 +1,49 @@
 import prisma from "../../../config/database/client";
 import { Prisma } from "@prisma/client";
 import {createInvoceData,updateInvoiceData} from "../dtos/invoice.dto"
+import { generateProjectScopedSerial, SERIAL_PREFIX } from "../../../utils/serial.util";
 
 export class Invoicerepository{
     async createInvoice(data:createInvoceData,userId:string){
-        return  await prisma.invoice.create({
-      data: {
-        projectId:data.projectId,
-        fabricatorId:data.fabricatorId,
-        customerName:data.customerName,
-        contactName:data.contactName,
-        clientId:data.clientId,
-        address:data.address,
-        stateCode:data.stateCode,
-        GSTIN:data.GSTIN,
-        invoiceNumber:data.invoiceNumber,
-        placeOfSupply:data.placeOfSupply,
-        jobName:data.jobName,
-        currencyType:data.currencyType,
-        totalInvoiceValue:data.totalInvoiceValue,
-        totalInvoiceValueInWords:data.totalInvoiceValueInWords,
-        createdBy:userId,
-        pointOfContact:{connect:{id:data.clientId}},
-        invoiceItems: {
-          create: data.invoiceItems || [],
-        },
-        
-      },
-      include: { invoiceItems: true },
-    });
+        return  await prisma.$transaction(async (tx) => {
+          const project = await tx.project.findUnique({
+            where: { id: data.projectId },
+            select: { projectCode: true, projectNumber: true },
+          });
+
+          const serialNo = await generateProjectScopedSerial(tx, {
+            prefix: SERIAL_PREFIX.INVOICE,
+            projectScopeId: data.projectId,
+            projectToken: project?.projectCode ?? project?.projectNumber ?? data.projectId,
+          });
+
+          return tx.invoice.create({
+            data: {
+              serialNo,
+              projectId:data.projectId,
+              fabricatorId:data.fabricatorId,
+              customerName:data.customerName,
+              contactName:data.contactName,
+              clientId:data.clientId,
+              address:data.address,
+              stateCode:data.stateCode,
+              GSTIN:data.GSTIN,
+              invoiceNumber: serialNo,
+              placeOfSupply:data.placeOfSupply,
+              jobName:data.jobName,
+              currencyType:data.currencyType,
+              totalInvoiceValue:data.totalInvoiceValue,
+              totalInvoiceValueInWords:data.totalInvoiceValueInWords,
+              createdBy:userId,
+              pointOfContact:{connect:{id:data.clientId}},
+              invoiceItems: {
+                create: data.invoiceItems || [],
+              },
+              
+            },
+            include: { invoiceItems: true },
+          });
+        });
     }
 
     async getAll(){

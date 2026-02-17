@@ -1,16 +1,27 @@
 import prisma from "../../../../config/database/client";
 import { cleandata } from "../../../../config/utils/cleanDataObject";
 import { createEstimationTaskInput,updateEstimationTaskInput } from "../dtos";
+import { Prisma } from "@prisma/client";
 
 export class EstimationTaskRepository{
-    async create(data:createEstimationTaskInput,assignedById:string){
-        const cleanData= cleandata(data)
-        return await prisma.estimationTask.create({
-            data:{
+    async create(
+        data: createEstimationTaskInput & { serialNo: string },
+        assignedById: string
+    ) {
+        return this.createWithTx(prisma, data, assignedById);
+    }
+    async createWithTx(
+        tx: Prisma.TransactionClient | typeof prisma,
+        data: createEstimationTaskInput & { serialNo: string },
+        assignedById: string
+    ) {
+        const cleanData = cleandata(data);
+        return await tx.estimationTask.create({
+            data: {
                 ...cleanData,
-                assignedById:assignedById
+                assignedById: assignedById
             }
-        })
+        });
     }
     async review(id:string,data:updateEstimationTaskInput,reviewerId:string){
         return await prisma.estimationTask.update({

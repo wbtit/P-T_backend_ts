@@ -1,4 +1,10 @@
 import { AppError } from "../../../config/utils/AppError";
+import prisma from "../../../config/database/client";
+import {
+  extractProjectToken,
+  generateParentScopedSerial,
+  SERIAL_PREFIX,
+} from "../../../utils/serial.util";
 
 import {
   CreateVendorQuotaInput,
@@ -16,6 +22,9 @@ export class VendorQuotaService {
   // Create Quota
   // -----------------------------------------------------------------------
   async createQuota(data: CreateVendorQuotaInput) {
+    if (!data.rfqId) {
+      throw new AppError("rfqId is required for quota serial generation", 400);
+    }
     // Prevent duplicate quota for same Vendor & RFQ
     if (data.vendorId && data.rfqId) {
       const existing = await quotaRepo.findByVendorId(data.vendorId);
@@ -32,8 +41,29 @@ export class VendorQuotaService {
       }
     }
 
-    const quota = await quotaRepo.create(data);
-    return quota;
+    return prisma.$transaction(async (tx) => {
+      const rfq = await tx.rFQ.findUnique({
+        where: { id: data.rfqId! },
+        select: { id: true, serialNo: true },
+      });
+
+      if (!rfq?.serialNo) {
+        throw new AppError("RFQ serial number is required before creating quota", 400);
+      }
+
+      const serialNo = await generateParentScopedSerial(tx, {
+        childPrefix: SERIAL_PREFIX.VENDOR_QUOTA,
+        parentPrefix: SERIAL_PREFIX.RFQ,
+        parentScopeId: rfq.id,
+        parentSerialNo: rfq.serialNo,
+        projectToken: extractProjectToken(rfq.serialNo),
+      });
+
+      return quotaRepo.createWithTx(tx, {
+        ...data,
+        serialNo,
+      });
+    });
   }
 
   // -----------------------------------------------------------------------

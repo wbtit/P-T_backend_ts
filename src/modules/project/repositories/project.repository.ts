@@ -8,12 +8,22 @@ import { CreateProjectInput,
  } from "../dtos";
 import { createProjectWbsForStage } from "../utils/createProjectWbsForStorage";
 import { setProjectWbsSelection } from "../utils/setProjectWbsSelection";
+import { generateProjectSerial } from "../../../utils/serial.util";
 
  export class ProjectRepository {
    async create(data: CreateProjectInput, userId: string) {
   return prisma.$transaction(async tx => {
+    const { wbsTemplateIds = [], ...projectPayload } = data as CreateProjectInput & {
+      wbsTemplateIds?: string[];
+    };
+    const { serialNo, projectCode } = await generateProjectSerial(tx);
+
     const project = await tx.project.create({
-      data,
+      data: {
+        ...projectPayload,
+        serialNo,
+        projectCode,
+      },
       include: {
         stageHistory: true,
         fabricator: { select: { files: true, fabName: true, id: true } },
@@ -24,7 +34,7 @@ import { setProjectWbsSelection } from "../utils/setProjectWbsSelection";
     });
     const validTemplates = await tx.wbsTemplate.findMany({
     where: {
-      id: { in: data.wbsTemplateIds },
+      id: { in: wbsTemplateIds },
       isActive: true,
       isDeleted: false,
     },
@@ -38,7 +48,7 @@ import { setProjectWbsSelection } from "../utils/setProjectWbsSelection";
     await setProjectWbsSelection(
       tx,
       project.id,
-      data.wbsTemplateIds || [],
+      wbsTemplateIds,
       userId
     );
 
