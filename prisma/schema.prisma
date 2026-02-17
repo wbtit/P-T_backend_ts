@@ -183,6 +183,8 @@ enum SubResStatus {
   APPROVED
   PARTIAL
   NOT_APPROVED
+  SUBMITTED_TO_EOR
+  REVISED_RESUBMITTAL
 }
 enum COSTATUS {
   ACCEPT
@@ -967,6 +969,7 @@ model MileStone{
   stage              Stage              @default(IFA)
   subject            String
   description        String
+  completeionPercentage Float?              @default(0.0)
   milestoneVersion   Int                 @default(1)
   currentVersionId   String?             @unique @db.Uuid
   //relations
@@ -1382,7 +1385,7 @@ model SubmittalsResponse {
   reason             String        @default("")
   files              Json          @default("[]")
 
-  status             SubResStatus  @default(NOT_APPROVED)
+  status             SubResStatus  @default(SUBMITTED_TO_EOR)
   wbtStatus          State         @default(SENT)
 
   respondedAt        String        @default("")

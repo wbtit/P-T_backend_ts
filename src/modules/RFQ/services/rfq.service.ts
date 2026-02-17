@@ -20,7 +20,7 @@ import {
 const rfqrepo= new RFQRepository();
 
 export class RFQService {
-    async createRfq(data: CreateRfqInput, createdById: string) {
+  async createRfq(data: CreateRfqInput, createdById: string) {
     const senderId = data.senderId ?? createdById;
     const projectNumber = data.projectNumber?.trim();
     if (!projectNumber) {
@@ -33,6 +33,27 @@ export class RFQService {
     );
 
     const rfq = await prisma.$transaction(async (tx) => {
+      const fabricator = await tx.fabricator.findUnique({
+        where: { id: data.fabricatorId },
+        select: {
+          wbtFabricatorPointOfContact: {
+            select: { id: true },
+          },
+        },
+      });
+
+      if (!fabricator) {
+        throw new AppError("Fabricator not found", 404);
+      }
+
+      const recipientId = fabricator.wbtFabricatorPointOfContact[0]?.id;
+      if (!recipientId) {
+        throw new AppError(
+          "No wbtFabricatorPointOfContact found for selected fabricator",
+          400
+        );
+      }
+
       const project = await tx.project.findUnique({
         where: { projectNumber },
         select: { id: true, projectCode: true },
@@ -47,6 +68,7 @@ export class RFQService {
       return rfqrepo.createWithTx(tx, {
         ...data,
         senderId,
+        recipientId,
         projectNumber,
         serialNo,
       });

@@ -6,14 +6,19 @@ import { CreateRfqInput,
  } from "../dtos";
 import { cleandata } from "../../../config/utils/cleanDataObject";
 
+type CreateRfqPersistInput = Omit<CreateRfqInput, "recipientId"> & {
+  recipientId: string;
+  serialNo: string;
+};
+
 export class RFQRepository {
-    async create(data: CreateRfqInput & { serialNo: string }) {
+    async create(data: CreateRfqPersistInput) {
       return this.createWithTx(prisma, data);
     }
 
     async createWithTx(
       tx: Prisma.TransactionClient | typeof prisma,
-      data: CreateRfqInput & { serialNo: string }
+      data: CreateRfqPersistInput
     ) {
       const cleanedData = cleandata(data);
 
