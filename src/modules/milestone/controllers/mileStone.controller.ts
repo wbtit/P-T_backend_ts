@@ -8,6 +8,11 @@ const mileStoneService = new MileStoneService();
 
 export class MileStoneController {
   async handleCreate(req: Request, res: Response) {
+    console.log("[Milestone][Create] Incoming request", {
+      params: req.params,
+      query: req.query,
+      body: req.body,
+    });
 
     const result = await mileStoneService.create(req.body);
 
@@ -19,6 +24,11 @@ export class MileStoneController {
   }
 
   async handleUpdate(req: Request, res: Response) {
+    console.log("[Milestone][Update] Incoming request", {
+      params: req.params,
+      query: req.query,
+      body: req.body,
+    });
     const { id } = req.params;
     const payload = req.body?.data ?? req.body;
     const result = await mileStoneService.update(id, payload);
@@ -31,7 +41,24 @@ export class MileStoneController {
       data: result,
     });
   }
+  async handleUpdateCompletion(req: Request, res: Response) {
+    console.log("[Milestone][UpdateCompletion] Incoming request", {
+      params: req.params,
+      query: req.query,
+      body: req.body,
+    });
+    const { id } = req.params;
+    const payload = req.body?.data ?? req.body;
+    const result = await mileStoneService.updateCompletion(id, payload);
 
+    if (!result) throw new AppError("Failed to update milestone completion status", 400);
+
+    return res.status(200).json({
+      message: "MileStone completion status updated successfully",
+      success: true,
+      data: result,
+    });
+  }
   async handleGetAll(req: Request, res: Response) {
     const result = await mileStoneService.getAll();
 

@@ -26,6 +26,13 @@ export class MileStoneService{
     async getAll(){
         return await mileStoneRepo.getAll()
     }
+    async updateCompletion(id:string, isComplete:number){
+        const existing = await mileStoneRepo.getById(id);
+        if (!existing) {
+            throw new AppError("MileStone not found", 404);
+        }
+        return await mileStoneRepo.updateCompletion(id, isComplete);
+    }
     async getById(id:string){
         return await mileStoneRepo.getById(id)
     }

@@ -121,6 +121,24 @@ export const milestoneOpenApiDoc: ModuleOpenApiDoc = {
         }
       },
     },
+    "/mileStone/completion/{id}": {
+      put: {
+        tags: ["Milestone"],
+        summary: "Update milestone completion status by id",
+        operationId: "put_milestone_completion_by_id",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { in: "path", name: "id", required: true, schema: { type: "string" } },
+        ],
+        requestBody: zodRequestBody(updateMileStoneSchema),
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
     "/mileStone/project/{id}": {
       get: {
         tags: ["Milestone"],

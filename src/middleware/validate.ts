@@ -11,6 +11,15 @@ type SchemaConfig = {
 const validate = (schemas: SchemaConfig) =>
   (req: Request, res: Response, next: NextFunction) => {
     try {
+      console.log("[Validation] Incoming request", {
+        method: req.method,
+        path: req.originalUrl,
+        contentType: req.headers["content-type"],
+        body: req.body,
+        params: req.params,
+        query: req.query,
+      });
+
       if (schemas.body) {
         // For multipart requests, req.body might not be fully populated yet
         // or might be undefined if the multipart parsing failed
@@ -25,19 +34,40 @@ const validate = (schemas: SchemaConfig) =>
         }
 
         const parsed = schemas.body.safeParse(req.body);
-        if (!parsed.success) throw new AppError(parsed.error.message, 400);
+        if (!parsed.success) {
+          console.error("[Validation][Body] Failed", {
+            path: req.originalUrl,
+            errors: parsed.error.issues,
+            receivedBody: req.body,
+          });
+          throw new AppError(parsed.error.message, 400);
+        }
         req.body = parsed.data;
       }
 
       if (schemas.params) {
         const parsed = schemas.params.safeParse(req.params);
-        if (!parsed.success) throw new AppError(parsed.error.message, 400);
+        if (!parsed.success) {
+          console.error("[Validation][Params] Failed", {
+            path: req.originalUrl,
+            errors: parsed.error.issues,
+            receivedParams: req.params,
+          });
+          throw new AppError(parsed.error.message, 400);
+        }
         req.params = parsed.data as import('express-serve-static-core').ParamsDictionary;
       }
 
       if (schemas.query) {
         const parsed = schemas.query.safeParse(req.query);
-        if (!parsed.success) throw new AppError(parsed.error.message, 400);
+        if (!parsed.success) {
+          console.error("[Validation][Query] Failed", {
+            path: req.originalUrl,
+            errors: parsed.error.issues,
+            receivedQuery: req.query,
+          });
+          throw new AppError(parsed.error.message, 400);
+        }
         req.query = parsed.data as any;
       }
 

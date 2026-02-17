@@ -33,6 +33,12 @@ export class MileStoneRepository{
             data:cleanData
         })
     }
+    updateCompletion(id:string, completionPercentage:number){
+        return prisma.mileStone.update({
+            where:{id},
+            data:{completeionPercentage:completionPercentage}
+        })
+    }   
     async getAll(){
         return await prisma.mileStone.findMany({
             include:{

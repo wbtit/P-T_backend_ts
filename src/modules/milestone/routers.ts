@@ -18,6 +18,12 @@ router.put("/:id",
     validate({params:z.object({id:z.string()}),body:updateMileStoneSchema}),
     mileStoneCtrlr.handleUpdate.bind(mileStoneCtrlr)
 )
+router.put(
+    "/completion/:id",
+    authMiddleware,
+    validate({params:z.object({id:z.string()})}),
+    mileStoneCtrlr.handleUpdateCompletion.bind(mileStoneCtrlr)
+)
 router.get("/",
     authMiddleware,
     mileStoneCtrlr.handleGetAll.bind(mileStoneCtrlr)
