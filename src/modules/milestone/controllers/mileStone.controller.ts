@@ -41,6 +41,25 @@ export class MileStoneController {
       data: result,
     });
   }
+
+  async handleUpdateExisting(req: Request, res: Response) {
+    console.log("[Milestone][UpdateExisting] Incoming request", {
+      params: req.params,
+      query: req.query,
+      body: req.body,
+    });
+    const { id } = req.params;
+    const payload = req.body?.data ?? req.body;
+    const result = await mileStoneService.updateExisting(id, payload);
+
+    if (!result) throw new AppError("Failed to update existing milestone", 400);
+
+    return res.status(200).json({
+      message: "MileStone updated successfully",
+      success: true,
+      data: result,
+    });
+  }
   async handleUpdateCompletion(req: Request, res: Response) {
     console.log("[Milestone][UpdateCompletion] Incoming request", {
       params: req.params,

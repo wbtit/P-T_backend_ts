@@ -96,3 +96,14 @@ export const updateUserProfilePic = async (id: string, profilePic: string) => {
       }
     })
   }
+
+  export const findAllUser = async()=>{
+    return await prisma.user.findMany({
+      where: {
+        isActive: true,
+      },
+      include:{
+        FabricatorPointOfContacts:true
+      }
+    })
+  }

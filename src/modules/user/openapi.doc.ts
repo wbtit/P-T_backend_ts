@@ -1,5 +1,5 @@
 import { ModuleOpenApiDoc } from "../../openapi/types";
-import { genericRequestBody, zodRequestBody } from "../../openapi/zod";
+import { zodRequestBody } from "../../openapi/zod";
 import { publicSignupSchema, resetPasswordSchema, signinSchema } from "./auth/dtos";
 import { UpdateUserSchema, createUserSchema } from "./dtos";
 
@@ -153,6 +153,51 @@ export const userOpenApiDoc: ModuleOpenApiDoc = {
         tags: ["User"],
         summary: "GET /user/me",
         operationId: "get_user_user_me",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
+    "/user/me/profile-pic": {
+      patch: {
+        tags: ["User"],
+        summary: "PATCH /user/me/profile-pic",
+        operationId: "patch_user_user_me_profile_pic",
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "multipart/form-data": {
+              schema: {
+                type: "object",
+                properties: {
+                  files: {
+                    type: "array",
+                    items: { type: "string", format: "binary" },
+                  },
+                },
+                required: ["files"],
+              },
+            },
+          },
+        },
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
+    "/user/getAllUsers": {
+      get: {
+        tags: ["User"],
+        summary: "GET /user/getAllUsers",
+        operationId: "get_user_user_getAllUsers",
         security: [{ bearerAuth: [] }],
         responses: {
           "200": { description: "Success" },

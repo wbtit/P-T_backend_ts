@@ -31,6 +31,7 @@ import { verndorRoute } from "./modules/vendors";
 import { vendorQuotaRoute } from "./modules/vendors";
 import { shareLinkRouter } from "./route";
 import { designDrawingsRoutes } from "./modules/designDrawings";
+import { meetingRoutes } from "./modules/meetings";
 
 const routes = express.Router();
 
@@ -66,5 +67,6 @@ routes.use("/vendors",verndorRoute)
 routes.use("/vendorQuota",vendorQuotaRoute)
 routes.use("/share",shareLinkRouter)
 routes.use("/design-drawings", designDrawingsRoutes);
+routes.use("/meetings", meetingRoutes);
 
 export default routes

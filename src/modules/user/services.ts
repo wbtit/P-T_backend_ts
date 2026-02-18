@@ -13,6 +13,7 @@ import {
     updateUser,
     deleteUser,
     findAllUsers,
+    findAllUser,
     updateUserProfilePic
 } from "./repository";
 import { cleandata } from "../../config/utils/cleanDataObject";
@@ -72,5 +73,11 @@ export class UserService{
         if (!user) throw new AppError("User not Found", 404);
         const updated = await updateUserProfilePic(userId, profilePic);
         return { user: updated };
+    }
+
+    async getAllUsers() {
+        const users = await findAllUser();
+        if (!users) throw new AppError("Failed to fetch users", 500);
+        return { users };
     }
 }

@@ -19,4 +19,10 @@ router.patch(
      asyncHandler(userCtrl.handleUpdateMyProfilePic).bind(userCtrl)
 );
 
+router.get(
+     "/getAllUsers",
+     authMiddleware,
+     asyncHandler(userCtrl.handleGetAllUsers).bind(userCtrl)
+)
+
 export default router;

@@ -23,6 +23,13 @@ export class MileStoneService{
         }
         return await mileStoneVersionRepo.createNewVersion(id, data);
     }
+    async updateExisting(id:string,data:UpdateMileStoneDto){
+        const existing = await mileStoneRepo.getById(id);
+        if (!existing) {
+            throw new AppError("MileStone not found", 404);
+        }
+        return await mileStoneRepo.update(data, id);
+    }
     async getAll(){
         return await mileStoneRepo.getAll()
     }

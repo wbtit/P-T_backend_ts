@@ -40,4 +40,12 @@ export class UserController{
             data: result,
         });
     }
+
+    async handleGetAllUsers(req: AuthenticateRequest, res: Response) {
+        const result = await userService.getAllUsers();
+        return res.status(200).json({
+            status: "success",
+            data: result,
+        });
+    }
 }

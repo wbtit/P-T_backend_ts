@@ -139,6 +139,24 @@ export const milestoneOpenApiDoc: ModuleOpenApiDoc = {
         }
       },
     },
+    "/mileStone/existing/{id}": {
+      put: {
+        tags: ["Milestone"],
+        summary: "Update existing milestone by id (without creating version)",
+        operationId: "put_milestone_existing_by_id",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { in: "path", name: "id", required: true, schema: { type: "string" } },
+        ],
+        requestBody: zodRequestBody(updateMileStoneSchema),
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
     "/mileStone/project/{id}": {
       get: {
         tags: ["Milestone"],
