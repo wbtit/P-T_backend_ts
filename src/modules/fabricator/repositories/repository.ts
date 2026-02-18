@@ -115,6 +115,16 @@ import {
         accountId: data.accountId ?? null,
         currencyType: data.currencyType,
         fabStage: data.fabStage,
+        pointOfContact: data.pointOfContact?.length
+          ? {
+              connect: data.pointOfContact.map((id) => ({ id })),
+            }
+          : undefined,
+        wbtFabricatorPointOfContact: data.wbtFabricatorPointOfContact?.length
+          ? {
+              connect: data.wbtFabricatorPointOfContact.map((id) => ({ id })),
+            }
+          : undefined,
       },
       include:{
         branches:true,

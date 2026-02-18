@@ -1,12 +1,52 @@
 import prisma from "../../../config/database/client";
+import { AppError } from "../../../config/utils/AppError";
 import { endOfToday, startOfToday } from "../utils/dayeRange";
 
 export class ClientCommunicationService {
+  private toDate(value: unknown, fieldName: string): Date {
+    if (value === null || value === undefined || value === "") {
+      throw new AppError(`${fieldName} is required`, 400);
+    }
+
+    const parsed = new Date(String(value));
+    if (Number.isNaN(parsed.getTime())) {
+      throw new AppError(`${fieldName} must be a valid date-time`, 400);
+    }
+
+    return parsed;
+  }
+
+  private toOptionalDate(value: unknown, fieldName: string): Date | undefined {
+    if (value === undefined) return undefined;
+    if (value === null || value === "") {
+      throw new AppError(`${fieldName} must be a valid date-time`, 400);
+    }
+
+    const parsed = new Date(String(value));
+    if (Number.isNaN(parsed.getTime())) {
+      throw new AppError(`${fieldName} must be a valid date-time`, 400);
+    }
+
+    return parsed;
+  }
+
   async create(data: any, userId: string) {
+    const { projectId, fabricatorId, communicationDate, followUpDate, ...rest } = data;
+
+    if (!projectId) {
+      throw new AppError("projectId is required", 400);
+    }
+
     return prisma.clientCommunication.create({
       data: {
-        ...data,
-        createdById: userId,
+        ...rest,
+        communicationDate: communicationDate
+          ? this.toOptionalDate(communicationDate, "communicationDate")
+          : undefined,
+        followUpDate: this.toDate(followUpDate, "followUpDate"),
+        project: { connect: { id: projectId } },
+        createdBy: { connect: { id: userId } },
+        ...(fabricatorId ? { fabricator: { connect: { id: fabricatorId } } } : {}),
       },
     });
   }
@@ -22,11 +62,33 @@ export class ClientCommunicationService {
   }
 
   async update(id: string, data: any) {
+    const {
+      projectId,
+      fabricatorId,
+      communicationDate,
+      followUpDate,
+      ...rest
+    } = data;
+
     return prisma.clientCommunication.update({
       where: { id },
       data: {
-        ...data,
-        reminderSent: false, // reset if follow-up date changes
+        ...rest,
+        ...(projectId ? { project: { connect: { id: projectId } } } : {}),
+        ...(fabricatorId === null
+          ? { fabricator: { disconnect: true } }
+          : fabricatorId
+            ? { fabricator: { connect: { id: fabricatorId } } }
+            : {}),
+        ...(communicationDate !== undefined
+          ? { communicationDate: this.toOptionalDate(communicationDate, "communicationDate") }
+          : {}),
+        ...(followUpDate !== undefined
+          ? {
+              followUpDate: this.toOptionalDate(followUpDate, "followUpDate"),
+              reminderSent: false,
+            }
+          : {}),
       },
     });
   }
