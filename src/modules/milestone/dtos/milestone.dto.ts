@@ -1,5 +1,5 @@
 import z from "zod";
-import { Stage, Status} from "@prisma/client";
+import { Stage, Status, Prisma, mileStoneResponseStatus } from "@prisma/client";
 
 
 const zDateString = z
@@ -25,5 +25,25 @@ export const createMileStoneSchema=z.object({
 })
 export const updateMileStoneSchema=createMileStoneSchema.partial();
 
+export const createMileStoneResponseSchema = z.object({
+    mileStoneId: z.string(),
+    mileStoneVersionId: z.string().uuid().optional(),
+    parentResponseId: z.string().uuid().optional(),
+    description: z.string().optional(),
+    status: z.enum(mileStoneResponseStatus).optional(),
+    files: z
+      .union([
+        z.array(z.any()),
+        z.literal(null),
+      ])
+      .transform(val => (val === null ? Prisma.JsonNull : val))
+      .optional(),
+});
+
+export const updateMileStoneResponseStatusSchema = z.object({
+    status: z.enum(mileStoneResponseStatus),
+});
+
 export type CreateMileStoneDto= z.infer<typeof createMileStoneSchema>
 export type UpdateMileStoneDto= {id:string} & z.infer<typeof updateMileStoneSchema>
+export type CreateMileStoneResponseDto = z.infer<typeof createMileStoneResponseSchema>

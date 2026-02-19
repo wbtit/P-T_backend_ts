@@ -67,6 +67,14 @@ export class MileStoneRepository{
                 fabricator:true,
                 currentVersion: true,
                 versions: {
+                    include:{
+                        responses:{include:
+                            {
+                                childResponses:true,
+                                user:true
+                            }
+                        }
+                    },
                     orderBy: {
                         versionNumber: "desc",
                     },

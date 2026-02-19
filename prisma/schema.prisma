@@ -253,6 +253,13 @@ enum InvoiceStatus{
   CANCELLED
 }
 
+enum mileStoneResponseStatus{
+  DELAYED
+  ON_TIME
+  NOT_STARTED
+  CLARIFICATION_REQUIRED
+}
+
 // ===========================================================
 // MODELS
 // ===========================================================
@@ -339,6 +346,7 @@ model User {
   submittalVersiondoneBy     SubmittalVersion[]
   projectBundleSelections    ProjectBundleSelection[]
   connectionEngineersRFQs    RFQ[]            @relation("RFQ_connectionEngineers")
+  milestoneResponseUser          MileStoneResponse[] @relation("milestoneResponseUser")
 
   @@map("user")
   @@index([email])
@@ -1000,9 +1008,36 @@ model MileStoneVersion {
 
   mileStone     MileStone  @relation(fields: [mileStoneId], references: [id], onDelete: Cascade)
   isCurrentFor  MileStone? @relation("CurrentMileStoneVersion")
+  responses     MileStoneResponse[]
 
-  @@unique([mileStoneId, versionNumber])
   @@index([mileStoneId])
+  @@unique([mileStoneId, versionNumber])
+  @@index([versionNumber])
+  @@map("milestone_version")
+}
+
+model MileStoneResponse{
+  id            String   @id @default(uuid()) @db.Uuid
+  mileStoneVersionId   String   @db.Uuid
+  userId        String   @db.Uuid
+
+  description   String    @default("")
+  files         Json?    @default("[]")
+  createdAt     DateTime  @default(now())
+  status        mileStoneResponseStatus    @default(ON_TIME)
+
+  parentResponseId String? @db.Uuid
+
+  //Relations
+  parentResponse   MileStoneResponse? @relation("MileStoneResponseThread", fields: [parentResponseId], references: [id])
+  childResponses   MileStoneResponse[] @relation("MileStoneResponseThread")
+  mileStoneVersion     MileStoneVersion  @relation(fields: [mileStoneVersionId], references: [id], onDelete: Cascade)
+  user          User       @relation("milestoneResponseUser",fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([mileStoneVersionId])
+  @@index([userId])
+  @@index([parentResponseId])
+   @@map("milestone_response")
 }
 
 model Task {

@@ -134,6 +134,9 @@ export const submittalUploads = createMulterUploader("public/submittals", submit
 export const submittalsResDataMap = {};
 export const submittalResponseUploads = createMulterUploader("public/submittalsresponse", submittalsResDataMap);
 
+export const mileStoneResponseDataMap = {};
+export const mileStoneResponseUploads = createMulterUploader("public/milestoneresponse", mileStoneResponseDataMap);
+
 export const coDataMap = {};
 export const coUploads = createMulterUploader("public/changeorder", coDataMap);
 

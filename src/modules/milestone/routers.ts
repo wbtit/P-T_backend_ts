@@ -1,12 +1,19 @@
 import authMiddleware from "../../middleware/authMiddleware";
 import validate from "../../middleware/validate";
-import { createMileStoneSchema,updateMileStoneSchema } from "./dtos";
+import {
+    createMileStoneSchema,
+    createMileStoneResponseSchema,
+    updateMileStoneResponseStatusSchema,
+    updateMileStoneSchema
+} from "./dtos";
+import { mileStoneResponseUploads } from "../../utils/multerUploader.util";
 import z from "zod"
-import { MileStoneController } from "./controllers";
+import { MileStoneController, MileStoneResponseController } from "./controllers";
 import {Router} from "express"
 
 const router=Router();
 const mileStoneCtrlr= new MileStoneController();
+const mileStoneResCtrlr = new MileStoneResponseController();
 
 router.post("/",
     authMiddleware,
@@ -42,6 +49,42 @@ router.get("/pendingSubmittals/projectManager", authMiddleware, mileStoneCtrlr.h
 
 router.get("/pendingSubmittals/client",authMiddleware,mileStoneCtrlr.handleGetPendingSubmittalsByClient.bind(mileStoneCtrlr))
 
+router.post(
+    "/responses",
+    authMiddleware,
+    mileStoneResponseUploads.array("files"),
+    validate({ body: createMileStoneResponseSchema }),
+    mileStoneResCtrlr.handleCreateResponse.bind(mileStoneResCtrlr)
+)
+
+router.patch(
+    "/responses/:parentResponseId/status",
+    authMiddleware,
+    validate({
+        params: z.object({ parentResponseId: z.string() }),
+        body: updateMileStoneResponseStatusSchema,
+    }),
+    mileStoneResCtrlr.handleUpdateStatus.bind(mileStoneResCtrlr)
+)
+
+router.get(
+    "/responses/:id",
+    authMiddleware,
+    validate({ params: z.object({ id: z.string() }) }),
+    mileStoneResCtrlr.handleGetResponseById.bind(mileStoneResCtrlr)
+)
+
+router.get(
+    "/response/:responseId/viewFile/:fileId",
+    authMiddleware,
+    validate({
+        params: z.object({
+            responseId: z.string(),
+            fileId: z.string(),
+        }),
+    }),
+    mileStoneResCtrlr.handleViewFile.bind(mileStoneResCtrlr)
+)
 
 router.get("/:id",
     authMiddleware,
