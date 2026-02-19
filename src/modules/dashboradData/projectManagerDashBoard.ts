@@ -65,17 +65,15 @@ export const projectManagerDashBoard = async (
       prisma.rFI.count({
         where: {
           project: managerFilter,
-          NOT: {
+          
             rfiresponse: {
               some: {
                 childResponses: {
-                  some: {
-                    wbtStatus: "COMPLETE",
-                  },
+                  none: {},
                 },
               },
             },
-          },
+          
         },
       }),
       prisma.rFI.count({
@@ -87,15 +85,15 @@ export const projectManagerDashBoard = async (
       prisma.changeOrder.count({
         where: {
           Project: managerFilter,
-          NOT: {
+          
             coResponses: {
               some: {
                 childResponses: {
-                  some: { Status: "ACCEPT" },
+                  none:{},
                 },
               },
             },
-          },
+          
         },
       }),
       prisma.changeOrder.count({
@@ -155,8 +153,8 @@ export const projectManagerDashBoard = async (
       newRFI,
       pendingChangeOrders,
       newChangeOrders,
-      pendingRFQ,
-      newRFQ,
+     
+
       pendingSubmittals,
     };
 

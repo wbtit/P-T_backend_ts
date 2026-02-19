@@ -233,16 +233,14 @@ export class RFIRepository{
       return await prisma.rFI.findMany({
         where: {
           project: { managerID: managerId },
-          NOT: {
+          
             rfiresponse: {
               some: {
                 childResponses: {
-                  some: {
-                    wbtStatus: "COMPLETE",
-                  },
+                  none: {},
                 },
               },
-            },
+            
           },
         },
         include: {

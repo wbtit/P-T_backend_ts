@@ -38,6 +38,8 @@ router.get("/pendingSubmittals", authMiddleware, mileStoneCtrlr.handleGetPending
 
 router.get("/pendingSubmittals/clientAdmin", authMiddleware, mileStoneCtrlr.handleGetPendingSubmittalsByFabricator.bind(mileStoneCtrlr))
 
+router.get("/pendingSubmittals/projectManager", authMiddleware, mileStoneCtrlr.handleGetPendingSubmittalsProjectManager.bind(mileStoneCtrlr))
+
 router.get("/pendingSubmittals/client",authMiddleware,mileStoneCtrlr.handleGetPendingSubmittalsByClient.bind(mileStoneCtrlr))
 
 

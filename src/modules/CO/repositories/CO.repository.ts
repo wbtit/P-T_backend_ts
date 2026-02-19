@@ -235,15 +235,15 @@ async findPendingCOsForProjectManager(managerId: string) {
     return await prisma.changeOrder.findMany({
         where: {
             Project: { managerID: managerId },
-            NOT: {
+            
                 coResponses: {
                     some: {
                         childResponses: {
-                            some: { Status: "ACCEPT" },
+                            none:{},
                         },
                     },
                 },
-            },
+            
         },
         include: {
             coResponses: { include: { childResponses: true } },

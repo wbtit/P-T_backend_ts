@@ -1,6 +1,7 @@
 import { ModuleOpenApiDoc } from "../../openapi/types";
 import { zodRequestBody } from "../../openapi/zod";
 import { createMileStoneSchema, updateMileStoneSchema } from "./dtos";
+import z from "zod";
 
 export const milestoneOpenApiDoc: ModuleOpenApiDoc = {
   tag: {
@@ -73,6 +74,19 @@ export const milestoneOpenApiDoc: ModuleOpenApiDoc = {
         }
       },
     },
+    "/mileStone/pendingSubmittals/projectManager": {
+      get: {
+        tags: ["Milestone"],
+        summary: "Get pending submittals for project manager",
+        operationId: "get_milestone_pending_submittals_project_manager",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": { description: "Success" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
     "/mileStone/{id}": {
       get: {
         tags: ["Milestone"],
@@ -130,7 +144,11 @@ export const milestoneOpenApiDoc: ModuleOpenApiDoc = {
         parameters: [
           { in: "path", name: "id", required: true, schema: { type: "string" } },
         ],
-        requestBody: zodRequestBody(updateMileStoneSchema),
+        requestBody: zodRequestBody(
+          z.object({
+            completeionPercentage: z.number().min(0).max(100),
+          })
+        ),
         responses: {
           "200": { description: "Success" },
           "400": { description: "Bad Request" },

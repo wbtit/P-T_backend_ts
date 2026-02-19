@@ -70,4 +70,8 @@ export class MileStoneService{
     async getPendingSubmittalsByClient(clientAdminId:string){
         return await mileStoneRepo.getPendingSubmittalsForClient(clientAdminId)
     }
+
+    async getPendingSubmittalsProjectManager(managerId:string){
+        return await mileStoneRepo.getPendingSubmittalsForProjectManager(managerId)
+    }
 }

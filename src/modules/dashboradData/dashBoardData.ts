@@ -117,7 +117,10 @@ export const DashBoradData = async (
     const pendingSubmittals = await prisma.submittals.count({
       where: {
         currentVersion:{
-          responses:{none:{}}
+          responses:{some:{
+            childResponses:{none:{}}
+          }
+          }
         }
       },
     });

@@ -157,6 +157,19 @@ export class MileStoneController {
     });
   }
 
+  async handleGetPendingSubmittalsProjectManager(req:AuthenticateRequest,res:Response){
+    const id = req.user?.id;
+    const result= await mileStoneService.getPendingSubmittalsProjectManager(id!);
+
+    return res.status(200).json({
+      message: "Pending submittals for project manager fetched successfully",
+      success: true,
+      data: result,
+    });
+  }  
+  
+
+
   async handleGetPendingSubmittalsByClient(req:AuthenticateRequest,res:Response){
     const id = req.user?.id;
     const result= await mileStoneService.getPendingSubmittalsByClient(id!);

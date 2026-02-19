@@ -131,5 +131,18 @@ export class MileStoneRepository{
                 fabricator:{select:{fabName:true}}
             }
         })       
+        
 }
+ async getPendingSubmittalsForProjectManager(managerId:string){
+    return await prisma.mileStone.findMany({
+        where:{
+            project:{managerID:managerId},
+            mileStoneSubmittals:{none:{}}
+        },
+        include:{
+            project:{select:{name:true}},
+            fabricator:{select:{fabName:true}}
+        }
+    })
+ }
 }
