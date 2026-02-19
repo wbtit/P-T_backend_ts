@@ -7,6 +7,7 @@ import { clientDashBoard } from "./clientDashBoard";
 import { hrDashBoard } from "./hrDashBoard";
 import { departmentManagerDashBoard } from "./departmentManagerDashBoard";
 import { projectManagerDashBoard } from "./projectManagerDashBoard";
+import { salesDashBoard } from "./salesDashBoard";
 
 const router = Router();
 
@@ -29,5 +30,6 @@ router.get(
   authMiddleware,
   asyncHandler(projectManagerDashBoard)
 );
+router.get("/sales", authMiddleware, asyncHandler(salesDashBoard));
 
 export default router;
