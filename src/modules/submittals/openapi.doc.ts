@@ -1,6 +1,7 @@
 import { ModuleOpenApiDoc } from "../../openapi/types";
-import { genericRequestBody, zodRequestBody } from "../../openapi/zod";
+import { zodRequestBody } from "../../openapi/zod";
 import { createSubmittalsDto, createSubmittalsResponseDto } from "./dtos";
+import z from "zod";
 
 export const submittalsOpenApiDoc: ModuleOpenApiDoc = {
   tag: {
@@ -30,6 +31,35 @@ export const submittalsOpenApiDoc: ModuleOpenApiDoc = {
         security: [{ bearerAuth: [] }],
         responses: {
           "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
+    "/submittal/pending/clientAdmin": {
+      get: {
+        tags: ["Submittals"],
+        summary: "GET /submittal/pending/clientAdmin",
+        operationId: "get_submittals_submittal_pending_clientAdmin",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
+    "/submittal": {
+      post: {
+        tags: ["Submittals"],
+        summary: "POST /submittal",
+        operationId: "post_submittals_submittal",
+        security: [{ bearerAuth: [] }],
+        requestBody: zodRequestBody(createSubmittalsDto),
+        responses: {
+          "201": { description: "Created" },
           "400": { description: "Bad Request" },
           "401": { description: "Unauthorized" },
           "500": { description: "Internal Server Error" }
@@ -93,7 +123,7 @@ export const submittalsOpenApiDoc: ModuleOpenApiDoc = {
         security: [{ bearerAuth: [] }],
         requestBody: zodRequestBody(createSubmittalsResponseDto),
         responses: {
-          "200": { description: "Success" },
+          "201": { description: "Created" },
           "400": { description: "Bad Request" },
           "401": { description: "Unauthorized" },
           "500": { description: "Internal Server Error" }
@@ -126,7 +156,11 @@ export const submittalsOpenApiDoc: ModuleOpenApiDoc = {
         parameters: [
           { in: "path", name: "parentResponseId", required: true, schema: { type: "string" } },
         ],
-        requestBody: genericRequestBody,
+        requestBody: zodRequestBody(
+          z.object({
+            status: z.string(),
+          })
+        ),
         responses: {
           "200": { description: "Success" },
           "400": { description: "Bad Request" },
@@ -175,9 +209,13 @@ export const submittalsOpenApiDoc: ModuleOpenApiDoc = {
         parameters: [
           { in: "path", name: "id", required: true, schema: { type: "string" } },
         ],
-        requestBody: genericRequestBody,
+        requestBody: zodRequestBody(
+          z.object({
+            description: z.string().min(1),
+          })
+        ),
         responses: {
-          "200": { description: "Success" },
+          "201": { description: "Created" },
           "400": { description: "Bad Request" },
           "401": { description: "Unauthorized" },
           "500": { description: "Internal Server Error" }

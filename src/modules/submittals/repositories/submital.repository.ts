@@ -120,19 +120,13 @@ async getPendingSubmittalsForClientAdmin(userId:string){
 
 async getPendingSubmittalsForProjectManager(managerId: string) {
   return prisma.submittals.findMany({
-    where: {
-      project: { managerID: managerId },
-      currentVersion: {
-        responses: { none: {} },
-      },
-    },
-    include: {
-      project: { select: { name: true } },
-      fabricator: true,
-      recepients: true,
-      currentVersion: true,
-    },
-    orderBy: { date: "desc" },
+    where:{
+      project:{managerID: managerId},
+      currentVersion:{
+        responses:{none:{}},
+      }
+    
+    }
   });
 }
 
