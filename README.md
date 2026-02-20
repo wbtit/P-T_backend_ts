@@ -276,3 +276,192 @@ Range: `0 → 100`
 
 ---
 
+# 📊 **Role-Based Dashboards (What, Why, How It Helps)**
+
+This module exposes role-focused dashboard endpoints under `GET /v1/dashBoardData/*`.
+
+## 1) `GET /dashBoardData` (System / Core dashboard)
+
+### What it shows
+- Project status summary (`ACTIVE`, `COMPLETE`, `ONHOLD`)
+- Total projects
+- Active employee count
+- Workflow pending/new counts for `RFI`, `RFQ`, `ChangeOrder`, `Submittals`
+
+### Why we show it
+- Gives a fast operational pulse across delivery + communication workflows.
+
+### How it helps
+- Leadership can quickly detect operational bottlenecks and backlog growth.
+
+---
+
+## 2) `GET /dashBoardData/projectManager`
+
+### What it shows
+- Project status split for manager-owned projects
+- Task metrics: total, completed, pending, overdue, completion rate
+- Team size under manager
+- Pending/new items in `RFI`, `ChangeOrder`, `RFQ`, `Submittals`
+
+### Why we show it
+- Project managers need execution control + risk visibility in one place.
+
+### How it helps
+- Enables proactive intervention on slippage, overdue work, and blocked approvals.
+
+---
+
+## 3) `GET /dashBoardData/departmentManager`
+
+### What it shows
+- Department people overview (employees, active/inactive, teams)
+- Work overview (projects, tasks, task/project status distributions)
+- Score summaries (MEAS/Bias/EPS overall + current month)
+- Top managers and top employees in department
+
+### Why we show it
+- Department managers need both delivery capacity and performance quality.
+
+### How it helps
+- Supports staffing decisions, coaching plans, and department-level governance.
+
+---
+
+## 4) `GET /dashBoardData/hr`
+
+### What it shows
+- Workforce analytics (total/active/inactive/new employees, role and department distribution)
+- Score trends and aggregates (MEAS, Bias, EPS)
+- Top/bottom performers and manager behavior categories (under/over/balanced estimation)
+
+### Why we show it
+- HR needs objective workforce signals tied to performance and fairness.
+
+### How it helps
+- Improves appraisal quality, training targeting, and policy enforcement.
+
+---
+
+## 5) `GET /dashBoardData/clientAdmin`
+
+### What it shows
+- Fabricator-linked project status summary
+- Pending client-facing workflow items (`RFI`, `RFQ`, `ChangeOrder`, `Submittals`)
+
+### Why we show it
+- Client admins need a concise visibility layer on open coordination items.
+
+### How it helps
+- Reduces missed responses and improves turnaround in external communication loops.
+
+---
+
+## 6) `GET /dashBoardData/client`
+
+### What it shows
+- Client-accessible project status summary
+- Pending communication/workflow queues (`RFI`, `RFQ`, `ChangeOrder`, `Submittals`)
+
+### Why we show it
+- Clients need transparency without deep internal operational noise.
+
+### How it helps
+- Keeps client-side stakeholders aligned on what requires action from them.
+
+---
+
+## 7) `GET /dashBoardData/sales`
+
+In `GET /dashBoardData/sales`, user sees:
+
+1. `totalRFQs`
+- Total opportunities received.
+- Helps measure pipeline size.
+
+2. `inPipelineRFQs`
+- RFQs still open/in-progress.
+- Helps understand active workload and future revenue potential.
+
+3. `quotedRFQs`
+- RFQs moved to quote stage.
+- Shows execution progress from lead to pricing.
+
+4. `awardedRFQs`
+- Won deals.
+- Core success metric for sales performance.
+
+5. `rejectedRFQs`
+- Lost deals.
+- Helps identify loss rate and improve pricing/strategy.
+
+6. `respondedRFQs`
+- RFQs with at least one response.
+- Indicates operational responsiveness.
+
+7. `totalProjectsFromSales`
+- RFQs converted into projects.
+- Measures business impact beyond quoting.
+
+8. `activeProjectsFromSales`
+- Ongoing delivery from sales wins.
+- Shows live commitments and delivery load.
+
+9. `completedProjectsFromSales`
+- Delivered projects from sales wins.
+- Reflects realized value and execution maturity.
+
+10. `winRate`
+- `awardedRFQs / totalRFQs`.
+- Fast health indicator of sales effectiveness.
+
+11. `quoteToAwardRate`
+- `awardedRFQs / quotedRFQs`.
+- Tells how competitive/accurate your quotes are.
+
+12. `responseRate`
+- `respondedRFQs / totalRFQs`.
+- Tracks follow-up discipline and SLA behavior.
+
+13. `projectConversionRate`
+- `convertedToProjects / totalRFQs`.
+- Measures how many opportunities turn into real work.
+
+14. `totalBidPrice`
+- Sum of RFQ bid values.
+- Approximate total quoted pipeline value.
+
+15. `avgBidPrice`
+- Average deal size.
+- Useful for forecasting and segment strategy.
+
+16. `topSalesPeople`
+- Top 5 by awarded count (plus win rate and total RFQs).
+- Helps coaching, recognition, and load balancing.
+
+17. `invoiceAnalytics`
+- `totalInvoices`, `paidInvoices`, `pendingInvoices`, `overdueInvoices`, `partiallyPaidInvoices`, `cancelledInvoices`
+- `totalInvoicedValue`, `collectedInvoiceValue`, `collectionRate`, `avgInvoiceValue`
+- Connects sales to cash realization; helps spot revenue leakage and payment risk.
+
+How it helps overall:
+- Combines funnel metrics (`RFQ -> Quote -> Award -> Project`) and cash metrics (Invoice/Collection), so leadership can see not just activity but actual business outcome and cash-flow quality.
+
+---
+
+## 8) `GET /dashBoardData/operationExecutive`
+
+### What it shows
+- `projectStats` (global project status overview)
+- Project tracking actions:
+  - RFIs where client-side recipient has not responded for > 2 weeks
+  - Submittals tracking list (latest items)
+  - RFQs where the operation executive is recipient
+
+### Why we show it
+- Operations executive role is coordination-heavy and deadline-driven.
+
+### How it helps
+- Surfaces stuck communication early, improves follow-up discipline, and prevents process drift.
+
+---

@@ -62,6 +62,21 @@ export const dashboradDataOpenApiDoc: ModuleOpenApiDoc = {
         }
       },
     },
+    "/dashBoardData/operationExecutive": {
+      get: {
+        tags: ["DashboardData"],
+        summary: "GET /dashBoardData/operationExecutive",
+        operationId: "get_dashboradData_dashBoardData_operationExecutive",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "403": { description: "Access denied" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
   }
 };
 

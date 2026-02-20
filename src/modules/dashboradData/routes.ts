@@ -8,6 +8,7 @@ import { hrDashBoard } from "./hrDashBoard";
 import { departmentManagerDashBoard } from "./departmentManagerDashBoard";
 import { projectManagerDashBoard } from "./projectManagerDashBoard";
 import { salesDashBoard } from "./salesDashBoard";
+import { operationExecutiveDashBoard } from "./operationExecutiveDashBoard";
 
 const router = Router();
 
@@ -31,5 +32,10 @@ router.get(
   asyncHandler(projectManagerDashBoard)
 );
 router.get("/sales", authMiddleware, asyncHandler(salesDashBoard));
+router.get(
+  "/operationExecutive",
+  authMiddleware,
+  asyncHandler(operationExecutiveDashBoard)
+);
 
 export default router;
