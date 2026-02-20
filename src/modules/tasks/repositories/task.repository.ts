@@ -210,10 +210,16 @@ export class TaskRepository {
                     managerID: projectManagerId
                 }
             },
-            include: {
-                project: true,
-                user: true,
-                department: true,
+           include: {
+                project: {
+                    select: {
+                        name: true, manager: {
+                            select: { firstName: true, lastName: true }
+                        }
+                    }
+                },
+                user: { select: { firstName: true, middleName: true, lastName: true } },
+                department: { select: { name: true } },
                 workingHourTask: true,
                 allocationLog:{ select:{ allocatedHours:true } }
             }
