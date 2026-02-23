@@ -193,6 +193,9 @@ export class TaskRepository {
                 }
             },
             include: {
+                taskcomment:{
+                    select:{acknowledged:true}
+                },
                 project: true,
                 user: true,
                 department: true,
@@ -211,6 +214,9 @@ export class TaskRepository {
                 }
             },
            include: {
+            taskcomment:{
+                    select:{acknowledged:true}
+                },
                 project: {
                     select: {
                         name: true, manager: {
@@ -231,6 +237,9 @@ export class TaskRepository {
         const tasks = await prisma.task.findMany({
             where: { user_id },
             include: {
+                taskcomment:{
+                    select:{acknowledged:true}
+                },
                 project: true,
                 user: true,
                 department: true,
@@ -244,7 +253,11 @@ export class TaskRepository {
     async findAll() {
         const tasks = await prisma.task.findMany({
             include: {
+                taskcomment:{
+                    select:{acknowledged:true}
+                },
                 project: {
+
                     select: {
                         name: true, manager: {
                             select: { firstName: true, lastName: true }
@@ -254,7 +267,8 @@ export class TaskRepository {
                 user: { select: { firstName: true, middleName: true, lastName: true } },
                 department: { select: { name: true } },
                 workingHourTask: true,
-                allocationLog:{ select:{ allocatedHours:true } }
+                allocationLog:{ select:{ allocatedHours:true } },
+                
             }
         });
         return tasks;
