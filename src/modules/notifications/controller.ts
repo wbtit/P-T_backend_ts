@@ -17,8 +17,8 @@ export class NotificationController{
         
     }
     async update(req:AuthenticateRequest,res:Response){
-        const {id}=req.params
-        const update = await notifyService.update(id);
+        const {notificationId}=req.params
+        const update = await notifyService.update(notificationId);
         res.status(200).json({
                 message:"Notifications fetched",
                 data:update

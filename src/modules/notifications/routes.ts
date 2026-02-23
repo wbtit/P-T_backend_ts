@@ -16,7 +16,7 @@ router.get("/",
 
 router.patch("/read/:notificationId", 
     authMiddleware,
-    validate({params: z.object({ id: z.string() })}),
+    validate({params: z.object({ notificationId: z.string() })}),
     asyncHandler(notifyCtrlr.update.bind(notifyCtrlr)));
 
 export {router as NotificationRouter}

@@ -6,6 +6,12 @@ const zBooleanString = z
   .union([z.boolean(), z.string()])
   .transform(val => val === true || val === "true");
 
+const zTrimmedNativeEnum = <T extends Record<string, string>>(values: T) =>
+  z.preprocess(
+    (val) => (typeof val === "string" ? val.trim() : val),
+    z.nativeEnum(values)
+  );
+
 // ---------- SUBMITTALS (PARENT / IDENTITY) ----------
 export const createSubmittalsDto = z.object({
   fabricator_id: z.string().uuid(),
@@ -75,8 +81,8 @@ export const createSubmittalsResponseDto = z.object({
     )
     .optional(),
 
-  status: z.enum(SubResStatus).optional(),
-  wbtStatus: z.enum(State).optional(),
+  status: zTrimmedNativeEnum(SubResStatus).optional(),
+  wbtStatus: zTrimmedNativeEnum(State).optional(),
 
   parentResponseId: z.string().uuid().optional(),
 });

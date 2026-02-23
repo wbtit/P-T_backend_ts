@@ -73,7 +73,11 @@ export class SubmitalRepository {
         versions: {
           orderBy: { versionNumber: "desc" },
         },
-        currentVersion: true,
+        currentVersion:{
+          include:{
+            responses:true
+          }
+        },
 
         // Responses
         submittalsResponse: {
