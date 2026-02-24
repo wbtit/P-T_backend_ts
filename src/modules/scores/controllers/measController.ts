@@ -5,6 +5,7 @@ import { calculateManagerBias } from "../../../services/biasDetector";
 import { getMEASTrendline } from "../../../services/measTrendService";
 import { getManagerDashboardData } from "../../../services/managerDashboardService";
 import { calculateEPSForEmployee } from "../../../services/employeePerformanceService";
+import { runMonthlyEPS } from "../../../corn-jobs/runMonthlyEPS";
 
 export async function runMEASManually(req: Request, res: Response) {
   try {
@@ -144,5 +145,55 @@ export async function runEPSManually(req: Request, res: Response) {
   } catch (err: any) {
     console.error("Error running EPS manually", err);
     return res.status(500).json({ success: false, message: err.message });
+  }
+}
+
+export async function runEPSForAllManually(req: Request, res: Response) {
+  try {
+    const { year, month } = req.body ?? {};
+
+    if ((year && !month) || (!year && month)) {
+      return res.status(400).json({
+        success: false,
+        message: "Provide both year and month, or neither.",
+      });
+    }
+
+    const now = new Date();
+    const parsedYear =
+      year !== undefined ? Number(year) : now.getFullYear();
+    const parsedMonth =
+      month !== undefined ? Number(month) : now.getMonth() + 1;
+
+    if (
+      (!Number.isInteger(parsedYear) || parsedYear < 2000 || parsedYear > 2100)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "year must be an integer between 2000 and 2100",
+      });
+    }
+
+    if (
+      (!Number.isInteger(parsedMonth) || parsedMonth < 1 || parsedMonth > 12)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "month must be an integer between 1 and 12",
+      });
+    }
+
+    const summary = await runMonthlyEPS(parsedYear, parsedMonth);
+    return res.status(200).json({
+      success: true,
+      message: "EPS calculation for all eligible employees completed.",
+      data: summary,
+    });
+  } catch (err: any) {
+    console.error("Error running EPS for all employees:", err);
+    return res.status(err?.statusCode || 500).json({
+      success: false,
+      message: err?.message ?? "Failed to run EPS for all employees",
+    });
   }
 }

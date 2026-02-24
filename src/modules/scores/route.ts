@@ -1,18 +1,35 @@
-import { getMEASTrendlineHandler, managerDashboardHandler, runBiasDetector, runEPSManually, runMEASManually } from "./controllers/measController";
+import { getMEASTrendlineHandler, managerDashboardHandler, runBiasDetector, runEPSForAllManually, runEPSManually, runMEASManually } from "./controllers/measController";
 import { Router } from "express";
 import { runMEASMonthly } from "./controllers/measController";
 import authMiddleware from "../../middleware/authMiddleware";
+import roleMiddleware from "../../middleware/roleMiddleware";
 
 const router = Router();
 
-// Route to run MEAS calculation manually
+// Calculate MEAS for one manager-project pair using request body values.
 router.post("/meas/run-manually", authMiddleware,runMEASManually);
-// Route to trigger monthly MEAS calculation
+
+// Trigger batch MEAS computation for all valid manager-project pairs.
 router.post("/meas/run-monthly", authMiddleware, runMEASMonthly);
+
+// Admin/System Admin trigger for MEAS batch run across all manager-project pairs.
+router.post("/admin/analytics/meas/run-all", authMiddleware, roleMiddleware(["ADMIN", "SYSTEM_ADMIN"]), runMEASMonthly);
+
+// Calculate manager bias score (optionally scoped by project).
 router.post("/manager/bias", authMiddleware, runBiasDetector);
-router.get("/admin/analytics/meas/trendline", authMiddleware, getMEASTrendlineHandler);
-router.get("/admin/analytics/manager/dashboard", authMiddleware, managerDashboardHandler);
+
+// Return MEAS trendline analytics for a manager-project pair.
+router.post("/admin/analytics/meas/trendline", authMiddleware, getMEASTrendlineHandler);
+
+// Return aggregated manager analytics dashboard data.
+router.post("/admin/analytics/manager/dashboard", authMiddleware, managerDashboardHandler);
+
+// Calculate EPS for one employee for a specific year/month.
 router.post("/admin/analytics/employee/eps", authMiddleware, runEPSManually);
+
+// Admin/System Admin trigger for EPS batch calculation for all eligible employees.
+// Optional body supports explicit { year, month }.
+router.post("/admin/analytics/employee/eps/run-all", authMiddleware, roleMiddleware(["ADMIN", "SYSTEM_ADMIN"]), runEPSForAllManually);
 
 
 
