@@ -13,7 +13,7 @@ router.post("/meas/run-manually", authMiddleware,runMEASManually);
 router.post("/meas/run-monthly", authMiddleware, runMEASMonthly);
 
 // Admin/System Admin trigger for MEAS batch run across all manager-project pairs.
-router.post("/admin/analytics/meas/run-all", authMiddleware, roleMiddleware(["ADMIN", "SYSTEM_ADMIN"]), runMEASMonthly);
+router.post("/admin/analytics/meas/run-all", authMiddleware, runMEASMonthly);
 
 // Calculate manager bias score (optionally scoped by project).
 router.post("/manager/bias", authMiddleware, runBiasDetector);
@@ -29,15 +29,15 @@ router.post("/admin/analytics/employee/eps", authMiddleware, runEPSManually);
 
 // Admin/System Admin trigger for EPS batch calculation for all eligible employees.
 // Optional body supports explicit { year, month }.
-router.post("/admin/analytics/employee/eps/run-all", authMiddleware, roleMiddleware(["ADMIN", "SYSTEM_ADMIN"]), runEPSForAllManually);
+router.post("/admin/analytics/employee/eps/run-all", authMiddleware, runEPSForAllManually);
 
 // Admin/System Admin trigger for TES calculation for a single team.
 // Optional body supports explicit { year, month } and requires { teamId }.
-router.post("/admin/analytics/team-efficiency/run-team", authMiddleware, roleMiddleware(["ADMIN", "SYSTEM_ADMIN"]), runTESForTeamManually);
+router.post("/admin/analytics/team-efficiency/run-team", authMiddleware, runTESForTeamManually);
 
 // Admin/System Admin trigger for TES batch calculation for all active teams.
 // Optional body supports explicit { year, month }.
-router.post("/admin/analytics/team-efficiency/run-all", authMiddleware, roleMiddleware(["ADMIN", "SYSTEM_ADMIN"]), runTESForAllManually);
+router.post("/admin/analytics/team-efficiency/run-all", authMiddleware,  runTESForAllManually);
 
 
 
