@@ -3,16 +3,12 @@ import { EmployeeController } from "./controllers"
 import validate from "../../../middleware/validate"
 import { asyncHandler } from "../../../config/utils/asyncHandler";
 import authMiddleware from "../../../middleware/authMiddleware";
-import roleMiddleware from "../../../middleware/roleMiddleware";
 import { createUserSchema, UpdateUserSchema, FetchUserSchema } from "../dtos";
 import z from "zod";
 
 const empCtrl = new EmployeeController();
 const router = Router();
-router.use(authMiddleware, roleMiddleware(
-  ["ADMIN","HUMAN_RESOURCE","CLIENT_ADMIN","PROJECT_MANAGER","TEAM_LEAD","STAFF"
-    ,"DEPT_MANAGER","ESTIMATION_HEAD","DEPUTY_MANAGER","OPERATION_EXECUTIVE"
-  ]));
+router.use(authMiddleware);
 
 // Create employee
 router.post(

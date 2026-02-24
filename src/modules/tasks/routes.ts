@@ -1,14 +1,13 @@
 import { Router } from "express";
 import { TaskController } from "./controllers";
 import authMiddleware from "../../middleware/authMiddleware";
-import roleMiddleware from "../../middleware/roleMiddleware";
 import validate from "../../middleware/validate";
 import { createTaskDto,updateTaskDto } from "./dtos";
 import z from "zod";
 const taskController = new TaskController();
 
 const taskRouter = Router();
-taskRouter.use(authMiddleware, roleMiddleware(["ADMIN","PROJECT_MANAGER","OPERATION_EXECUTIVE","STAFF","DEPUTY_MANAGER"]));
+taskRouter.use(authMiddleware);
 
 taskRouter.post("/",
      validate({body:createTaskDto}),
