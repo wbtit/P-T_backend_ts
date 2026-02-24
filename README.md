@@ -332,19 +332,8 @@ Implementation:
 - Batch runner: `src/corn-jobs/runMonthlyTES.ts`
 - Calculation service: `src/services/teamEfficiencyService.ts`
 
-### Manual triggers (Admin/System Admin)
-
-- `POST /v1/analytics/scores/admin/analytics/team-efficiency/run-team`
-  - body: `{ teamId, year?, month? }`
-  - computes TES for one team for given month.
-  - if `year/month` omitted, current month is used.
-
-- `POST /v1/analytics/scores/admin/analytics/team-efficiency/run-all`
-  - body: `{ year?, month? }`
-  - computes TES for all active teams.
-  - if `year/month` omitted, current month is used.
-
-
+---
+---
 # 📊 **Role-Based Dashboards (What, Why, How It Helps)**
 
 This module exposes role-focused dashboard endpoints under `GET /v1/dashBoardData/*`.
