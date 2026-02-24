@@ -8,7 +8,7 @@ export async function calculateManagerBias(managerId: string, projectId?: string
     const tasks = await prisma.task.findMany({
         where: {
             project: { managerID: managerId },
-            ...(projectId ? { projectId } : {}),
+            ...(projectId ? { project_id: projectId } : {}),
             status: "COMPLETED",
         },
         include: {

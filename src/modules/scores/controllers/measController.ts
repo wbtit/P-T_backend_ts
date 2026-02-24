@@ -29,7 +29,7 @@ export async function runMEASManually(req: Request, res: Response) {
     });
   } catch (err: any) {
     console.error("Error running MEAS manually:", err);
-    return res.status(500).json({
+    return res.status(err?.statusCode || 500).json({
       success: false,
       message: err.message,
     });
@@ -38,13 +38,18 @@ export async function runMEASManually(req: Request, res: Response) {
 
 export async function runMEASMonthly(req: Request, res: Response){
     try {
-        const result = await runMonthlyMEAS();
+        const summary = await runMonthlyMEAS();
     return res.status(200).json({
         success:true,
-        message:"Monthly MEAS calculation triggered."
+        message:"Monthly MEAS calculation completed.",
+        data: summary,
     });
-    } catch (error) {
-        
+    } catch (error: any) {
+      console.error("Error running monthly MEAS:", error);
+      return res.status(error?.statusCode || 500).json({
+        success: false,
+        message: error?.message ?? "Failed to run monthly MEAS",
+      });
     }
 } 
 export async function runBiasDetector(req: Request, res: Response) {
@@ -74,7 +79,7 @@ export async function runBiasDetector(req: Request, res: Response) {
 
 export async function getMEASTrendlineHandler(req: Request, res: Response) {
   try {
-    const { managerId, projectId } = req.body;
+    const { managerId, projectId } = req.query;
 
     if (!managerId || !projectId) {
       return res.status(400).json({

@@ -1,6 +1,7 @@
 import prisma from "../config/database/client";
 import { secondsBetween } from "../modules/workingHours/utils/calculateSecs";
 import { parseHHMMToHours } from "../utils/timeFormat";
+import { AppError } from "../config/utils/AppError";
 
 
 
@@ -24,12 +25,10 @@ export async function calculateManagerEstimationScore(managerId:string,projectId
     });
 
     if (tasks.length === 0) {
-        return {
-            projectId,
-            managerId,
-            period: `${year}-${String(month).padStart(2, "0")}`,
-            score: 100 // default when no tasks
-        };
+        throw new AppError(
+            `No completed tasks found for manager ${managerId} on project ${projectId} in ${year}-${String(month).padStart(2, "0")}`,
+            404
+        );
     }
 
 
@@ -54,6 +53,13 @@ export async function calculateManagerEstimationScore(managerId:string,projectId
         if(accuracy <0) accuracy =0;
         scores.push(accuracy);
     }
+    if (scores.length === 0) {
+        throw new AppError(
+            `No valid completed tasks with allocated hours found for manager ${managerId} on project ${projectId} in ${year}-${String(month).padStart(2, "0")}`,
+            404
+        );
+    }
+
     const avgScore = scores.reduce((s,v)=>s+v,0)/scores.length;
     const period = `${year}-${String(month).padStart(2, "0")}`;
     const measRecord = await prisma.managerEstimationScore.upsert({
