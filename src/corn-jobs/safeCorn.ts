@@ -6,6 +6,7 @@ import { check75Alert } from "./check75Alert";
 import { checkOverrunAlert } from "./checkOverrunAlert";
 import { runMonthlyMEAS } from "./runMonthlyMEAS";  
 import {runMonthlyEPS } from "./runMonthlyEPS";
+import { runMonthlyTES } from "./runMonthlyTES";
 import { sendFollowUpReminders } from "./sendFollowUpReminders";
 import { runPMOComplition } from "./pmoComplition";
 // ───────────────────────────────
@@ -226,6 +227,19 @@ async function safeEPS(){
       await releaseLock(lockKey);
     }
 }
+async function safeTES(){
+    const lockKey = 777999111; // unique key
+    const gotLock = await acquireLock(lockKey);
+    if (!gotLock) return console.log("TES already running elsewhere.");
+
+    try {
+      await runMonthlyTES();
+    } catch (err) {
+      console.error("TES job failed", err);
+    } finally {
+      await releaseLock(lockKey);
+    }
+}
 
 //force close stale tasks after grace period
 async function safeForceCloseTasks() {
@@ -345,6 +359,12 @@ if (process.env.ENABLE_CRON === "true") {
   nodeCron.schedule(
     "0 2 1 * *",
     () => void safeEPS(),
+    { timezone: "Asia/Kolkata" }
+  );
+//monthly TES job
+  nodeCron.schedule(
+    "0 3 1 * *",
+    () => void safeTES(),
     { timezone: "Asia/Kolkata" }
   );
 //sendFollowUpMails

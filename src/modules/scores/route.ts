@@ -1,4 +1,4 @@
-import { getMEASTrendlineHandler, managerDashboardHandler, runBiasDetector, runEPSForAllManually, runEPSManually, runMEASManually } from "./controllers/measController";
+import { getMEASTrendlineHandler, managerDashboardHandler, runBiasDetector, runEPSForAllManually, runEPSManually, runMEASManually, runTESForAllManually, runTESForTeamManually } from "./controllers/measController";
 import { Router } from "express";
 import { runMEASMonthly } from "./controllers/measController";
 import authMiddleware from "../../middleware/authMiddleware";
@@ -30,6 +30,14 @@ router.post("/admin/analytics/employee/eps", authMiddleware, runEPSManually);
 // Admin/System Admin trigger for EPS batch calculation for all eligible employees.
 // Optional body supports explicit { year, month }.
 router.post("/admin/analytics/employee/eps/run-all", authMiddleware, roleMiddleware(["ADMIN", "SYSTEM_ADMIN"]), runEPSForAllManually);
+
+// Admin/System Admin trigger for TES calculation for a single team.
+// Optional body supports explicit { year, month } and requires { teamId }.
+router.post("/admin/analytics/team-efficiency/run-team", authMiddleware, roleMiddleware(["ADMIN", "SYSTEM_ADMIN"]), runTESForTeamManually);
+
+// Admin/System Admin trigger for TES batch calculation for all active teams.
+// Optional body supports explicit { year, month }.
+router.post("/admin/analytics/team-efficiency/run-all", authMiddleware, roleMiddleware(["ADMIN", "SYSTEM_ADMIN"]), runTESForAllManually);
 
 
 

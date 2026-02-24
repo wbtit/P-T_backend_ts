@@ -23,6 +23,17 @@ const epsRunAllBodySchema = z.object({
   month: z.number().int().min(1).max(12).optional(),
 });
 
+const tesRunTeamBodySchema = z.object({
+  teamId: z.string().uuid(),
+  year: z.number().int().min(2000).max(2100).optional(),
+  month: z.number().int().min(1).max(12).optional(),
+});
+
+const tesRunAllBodySchema = z.object({
+  year: z.number().int().min(2000).max(2100).optional(),
+  month: z.number().int().min(1).max(12).optional(),
+});
+
 export const scoresOpenApiDoc: ModuleOpenApiDoc = {
   tag: {
     name: "Scores",
@@ -117,6 +128,48 @@ export const scoresOpenApiDoc: ModuleOpenApiDoc = {
           "200": { description: "Success" },
           "400": { description: "Bad Request" },
           "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
+    "/analytics/scores/admin/analytics/team-efficiency/run-team": {
+      post: {
+        tags: ["Scores"],
+        summary: "POST /analytics/scores/admin/analytics/team-efficiency/run-team",
+        operationId: "post_scores_analytics_scores_admin_analytics_team_efficiency_run_team",
+        security: [{ bearerAuth: [] }],
+        requestBody: zodRequestBody(tesRunTeamBodySchema),
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "403": { description: "Forbidden" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
+    "/analytics/scores/admin/analytics/team-efficiency/run-all": {
+      post: {
+        tags: ["Scores"],
+        summary: "POST /analytics/scores/admin/analytics/team-efficiency/run-all",
+        operationId: "post_scores_analytics_scores_admin_analytics_team_efficiency_run_all",
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: false,
+          content: {
+            "application/json": {
+              schema: z.toJSONSchema(tesRunAllBodySchema, {
+                io: "input",
+                unrepresentable: "any",
+              }),
+            },
+          },
+        },
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "403": { description: "Forbidden" },
           "500": { description: "Internal Server Error" }
         }
       },

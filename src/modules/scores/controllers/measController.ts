@@ -6,6 +6,8 @@ import { getMEASTrendline } from "../../../services/measTrendService";
 import { getManagerDashboardData } from "../../../services/managerDashboardService";
 import { calculateEPSForEmployee } from "../../../services/employeePerformanceService";
 import { runMonthlyEPS } from "../../../corn-jobs/runMonthlyEPS";
+import { calculateTeamEfficiencyForTeam } from "../../../services/teamEfficiencyService";
+import { runMonthlyTES } from "../../../corn-jobs/runMonthlyTES";
 
 export async function runMEASManually(req: Request, res: Response) {
   try {
@@ -194,6 +196,110 @@ export async function runEPSForAllManually(req: Request, res: Response) {
     return res.status(err?.statusCode || 500).json({
       success: false,
       message: err?.message ?? "Failed to run EPS for all employees",
+    });
+  }
+}
+
+export async function runTESForTeamManually(req: Request, res: Response) {
+  try {
+    const { teamId, year, month } = req.body ?? {};
+
+    if (!teamId) {
+      return res.status(400).json({
+        success: false,
+        message: "teamId is required",
+      });
+    }
+
+    if ((year && !month) || (!year && month)) {
+      return res.status(400).json({
+        success: false,
+        message: "Provide both year and month, or neither.",
+      });
+    }
+
+    const now = new Date();
+    const parsedYear =
+      year !== undefined ? Number(year) : now.getFullYear();
+    const parsedMonth =
+      month !== undefined ? Number(month) : now.getMonth() + 1;
+
+    if (!Number.isInteger(parsedYear) || parsedYear < 2000 || parsedYear > 2100) {
+      return res.status(400).json({
+        success: false,
+        message: "year must be an integer between 2000 and 2100",
+      });
+    }
+
+    if (!Number.isInteger(parsedMonth) || parsedMonth < 1 || parsedMonth > 12) {
+      return res.status(400).json({
+        success: false,
+        message: "month must be an integer between 1 and 12",
+      });
+    }
+
+    const result = await calculateTeamEfficiencyForTeam(
+      teamId as string,
+      parsedYear,
+      parsedMonth
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "TES calculated for team successfully.",
+      data: result,
+    });
+  } catch (err: any) {
+    console.error("Error running TES for team:", err);
+    return res.status(err?.statusCode || 500).json({
+      success: false,
+      message: err?.message ?? "Failed to run TES for team",
+    });
+  }
+}
+
+export async function runTESForAllManually(req: Request, res: Response) {
+  try {
+    const { year, month } = req.body ?? {};
+
+    if ((year && !month) || (!year && month)) {
+      return res.status(400).json({
+        success: false,
+        message: "Provide both year and month, or neither.",
+      });
+    }
+
+    const now = new Date();
+    const parsedYear =
+      year !== undefined ? Number(year) : now.getFullYear();
+    const parsedMonth =
+      month !== undefined ? Number(month) : now.getMonth() + 1;
+
+    if (!Number.isInteger(parsedYear) || parsedYear < 2000 || parsedYear > 2100) {
+      return res.status(400).json({
+        success: false,
+        message: "year must be an integer between 2000 and 2100",
+      });
+    }
+
+    if (!Number.isInteger(parsedMonth) || parsedMonth < 1 || parsedMonth > 12) {
+      return res.status(400).json({
+        success: false,
+        message: "month must be an integer between 1 and 12",
+      });
+    }
+
+    const summary = await runMonthlyTES(parsedYear, parsedMonth);
+    return res.status(200).json({
+      success: true,
+      message: "TES calculation for all teams completed.",
+      data: summary,
+    });
+  } catch (err: any) {
+    console.error("Error running TES for all teams:", err);
+    return res.status(err?.statusCode || 500).json({
+      success: false,
+      message: err?.message ?? "Failed to run TES for all teams",
     });
   }
 }

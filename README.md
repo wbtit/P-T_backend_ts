@@ -276,6 +276,75 @@ Range: `0 → 100`
 
 ---
 
+## Team Efficiency Score (TES)
+
+TES is a monthly team-level score (`0..100`) that combines employee execution quality and delivery outcomes.
+
+### TES components
+
+- `avgEps`: average employee EPS of team members for the month.
+- `measScore` (optional): average MEAS for the team manager across projects mapped to that team for the month.
+- `onTimeCompletion`: percentage of completed tasks finished on/before due date.
+- `throughput`: completed-in-month tasks / assigned-in-month tasks.
+- `reworkRate`: percentage of completed tasks with rework segments.
+- `reworkScore`: `100 - reworkRate`.
+
+### TES formulas
+
+When MEAS exists for the team context:
+
+```text
+TES =
+  avgEps * 0.35 +
+  measScore * 0.20 +
+  onTimeCompletion * 0.20 +
+  throughput * 0.15 +
+  reworkScore * 0.10
+```
+
+When MEAS is unavailable:
+
+```text
+TES =
+  avgEps * 0.40 +
+  onTimeCompletion * 0.25 +
+  throughput * 0.20 +
+  reworkScore * 0.15
+```
+
+### Persistence
+
+TES snapshots are persisted (upsert by `teamId + period`) in table:
+
+- `team_efficiency_score`
+
+If the table/migration is not yet applied, the API still returns computed TES and logs a persistence warning.
+
+### Monthly cron
+
+TES monthly batch is scheduled in `Asia/Kolkata` timezone:
+
+- `0 3 1 * *` (1st day of every month at 03:00)
+
+Implementation:
+
+- Cron wrapper: `src/corn-jobs/safeCorn.ts`
+- Batch runner: `src/corn-jobs/runMonthlyTES.ts`
+- Calculation service: `src/services/teamEfficiencyService.ts`
+
+### Manual triggers (Admin/System Admin)
+
+- `POST /v1/analytics/scores/admin/analytics/team-efficiency/run-team`
+  - body: `{ teamId, year?, month? }`
+  - computes TES for one team for given month.
+  - if `year/month` omitted, current month is used.
+
+- `POST /v1/analytics/scores/admin/analytics/team-efficiency/run-all`
+  - body: `{ year?, month? }`
+  - computes TES for all active teams.
+  - if `year/month` omitted, current month is used.
+
+
 # 📊 **Role-Based Dashboards (What, Why, How It Helps)**
 
 This module exposes role-focused dashboard endpoints under `GET /v1/dashBoardData/*`.

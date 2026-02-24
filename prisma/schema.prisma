@@ -568,6 +568,7 @@ model Team {
   members      TeamMember[]  @relation("MemberBelongsToTeam") // relation to members
   department   Department?    @relation("DepartmentOfTeam",fields: [departmentID],references: [id])
   project      Project[] @relation("projectTeam")
+  teamEfficiencyScores TeamEfficiencyScore[]
 
 
   @@index([name])
@@ -1761,6 +1762,26 @@ model EmployeePerformanceScore {
 
   @@unique([employeeId, period])
   @@map("employee_performance_score")
+}
+
+model TeamEfficiencyScore {
+  id               String   @id @default(uuid()) @db.Uuid
+  teamId           String   @db.Uuid @map("team_id")
+  period           String
+  score            Float
+  avgEps           Float    @map("avg_eps")
+  measScore        Float?   @map("meas_score")
+  onTimeCompletion Float    @map("on_time_completion")
+  throughput       Float
+  reworkRate       Float    @map("rework_rate")
+  reworkScore      Float    @map("rework_score")
+  calculatedAt     DateTime @default(now()) @map("calculated_at")
+
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, period])
+  @@index([period])
+  @@map("team_efficiency_score")
 }
 
 model FileShareLink {
