@@ -8,7 +8,7 @@ import z from "zod";
 const taskController = new TaskController();
 
 const taskRouter = Router();
-taskRouter.use(authMiddleware, roleMiddleware(["ADMIN","PROJECT_MANAGER","OPERATION_EXECUTIVE","STAFF",]));
+taskRouter.use(authMiddleware, roleMiddleware(["ADMIN","PROJECT_MANAGER","OPERATION_EXECUTIVE","STAFF","DEPUTY_MANAGER"]));
 
 taskRouter.post("/",
      validate({body:createTaskDto}),
