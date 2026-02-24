@@ -19,7 +19,7 @@ async function calculateMEASForMonth(managerId: string, projectId: string, year:
         }
     });
 
-    if (tasks.length === 0) return 100; // Default when no tasks exist.
+    if (tasks.length === 0) return null; // No data for this month.
 
     const now = new Date();
     let scores: number[] = [];
@@ -48,12 +48,14 @@ async function calculateMEASForMonth(managerId: string, projectId: string, year:
         scores.push(accuracy);
     }
 
+    if (scores.length === 0) return null; // Tasks exist but no valid allocated hours.
+
     return Number((scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(2));
 }
 
 export async function getMEASTrendline(managerId: string, projectId: string) {
     const now = new Date();
-    const trend: { period: string; score: number }[] = [];
+    const trend: { period: string; score: number | null }[] = [];
 
     for (let i = 5; i >= 0; i--) {
         const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
