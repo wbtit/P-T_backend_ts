@@ -82,7 +82,7 @@ export async function runBiasDetector(req: Request, res: Response) {
 
 export async function getMEASTrendlineHandler(req: Request, res: Response) {
   try {
-    const { managerId, projectId } = req.query;
+    const { managerId, projectId } = req.body;
 
     if (!managerId || !projectId) {
       return res.status(400).json({
@@ -110,7 +110,7 @@ export async function getMEASTrendlineHandler(req: Request, res: Response) {
 }
 export async function managerDashboardHandler(req: Request, res: Response) {
   try {
-    const { managerId, projectId } = req.query;
+    const { managerId, projectId } = req.body;
 
     if (!managerId || !projectId) {
       return res.status(400).json({
