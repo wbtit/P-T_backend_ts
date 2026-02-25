@@ -347,6 +347,9 @@ export class TaskRepository {
                         }
                     }
                 },
+                allocationLog:{ select:{ allocatedHours:true },
+                },
+                workingHourTask: true,
             }
         });
          if (!tasks) {
