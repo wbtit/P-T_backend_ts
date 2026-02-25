@@ -118,5 +118,8 @@ export class TaskService {
     const tasks = await this.taskRepository.findByProjectId(projectId);
     return tasks;
   }
-
+  async getAllTasksByUserId(user_id: string) {
+    const tasks = await this.taskRepository.findAllByUserId(user_id);
+    return tasks;
+  }
 }

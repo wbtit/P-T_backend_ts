@@ -1,6 +1,15 @@
 import { ModuleOpenApiDoc } from "../../openapi/types";
 import { genericRequestBody, zodRequestBody } from "../../openapi/zod";
 import { createTaskDto, updateTaskDto } from "./dtos";
+import z from "zod";
+
+const whIdBodySchema = z.object({
+  whId: z.string(),
+});
+
+const autoCloseActionBodySchema = z.object({
+  action: z.enum(["end_task", "request_more_hours"]),
+});
 
 export const tasksOpenApiDoc: ModuleOpenApiDoc = {
   tag: {
@@ -44,7 +53,7 @@ export const tasksOpenApiDoc: ModuleOpenApiDoc = {
         parameters: [
           { in: "path", name: "id", required: true, schema: { type: "string" } },
         ],
-        requestBody: genericRequestBody,
+        requestBody: zodRequestBody(whIdBodySchema),
         responses: {
           "200": { description: "Success" },
           "400": { description: "Bad Request" },
@@ -62,7 +71,7 @@ export const tasksOpenApiDoc: ModuleOpenApiDoc = {
         parameters: [
           { in: "path", name: "id", required: true, schema: { type: "string" } },
         ],
-        requestBody: genericRequestBody,
+        requestBody: zodRequestBody(whIdBodySchema),
         responses: {
           "200": { description: "Success" },
           "400": { description: "Bad Request" },
@@ -80,7 +89,6 @@ export const tasksOpenApiDoc: ModuleOpenApiDoc = {
         parameters: [
           { in: "path", name: "id", required: true, schema: { type: "string" } },
         ],
-        requestBody: genericRequestBody,
         responses: {
           "200": { description: "Success" },
           "400": { description: "Bad Request" },
@@ -98,7 +106,7 @@ export const tasksOpenApiDoc: ModuleOpenApiDoc = {
         parameters: [
           { in: "path", name: "id", required: true, schema: { type: "string" } },
         ],
-        requestBody: genericRequestBody,
+        requestBody: zodRequestBody(whIdBodySchema),
         responses: {
           "200": { description: "Success" },
           "400": { description: "Bad Request" },
@@ -116,7 +124,6 @@ export const tasksOpenApiDoc: ModuleOpenApiDoc = {
         parameters: [
           { in: "path", name: "id", required: true, schema: { type: "string" } },
         ],
-        requestBody: genericRequestBody,
         responses: {
           "200": { description: "Success" },
           "400": { description: "Bad Request" },
@@ -134,7 +141,6 @@ export const tasksOpenApiDoc: ModuleOpenApiDoc = {
         parameters: [
           { in: "path", name: "id", required: true, schema: { type: "string" } },
         ],
-        requestBody: genericRequestBody,
         responses: {
           "200": { description: "Success" },
           "400": { description: "Bad Request" },
@@ -169,7 +175,7 @@ export const tasksOpenApiDoc: ModuleOpenApiDoc = {
         parameters: [
           { in: "path", name: "taskId", required: true, schema: { type: "string" } },
         ],
-        requestBody: genericRequestBody,
+        requestBody: zodRequestBody(autoCloseActionBodySchema),
         responses: {
           "200": { description: "Success" },
           "400": { description: "Bad Request" },
@@ -187,7 +193,7 @@ export const tasksOpenApiDoc: ModuleOpenApiDoc = {
         parameters: [
           { in: "path", name: "id", required: true, schema: { type: "string" } },
         ],
-        requestBody: genericRequestBody,
+        requestBody: zodRequestBody(whIdBodySchema),
         responses: {
           "200": { description: "Success" },
           "400": { description: "Bad Request" },
@@ -219,7 +225,7 @@ export const tasksOpenApiDoc: ModuleOpenApiDoc = {
         parameters: [
           { in: "path", name: "id", required: true, schema: { type: "string" } },
         ],
-        requestBody: genericRequestBody,
+        requestBody: zodRequestBody(whIdBodySchema),
         responses: {
           "200": { description: "Success" },
           "400": { description: "Bad Request" },
@@ -254,7 +260,6 @@ export const tasksOpenApiDoc: ModuleOpenApiDoc = {
         parameters: [
           { in: "path", name: "id", required: true, schema: { type: "string" } },
         ],
-        requestBody: genericRequestBody,
         responses: {
           "200": { description: "Success" },
           "400": { description: "Bad Request" },
@@ -272,7 +277,6 @@ export const tasksOpenApiDoc: ModuleOpenApiDoc = {
         parameters: [
           { in: "path", name: "id", required: true, schema: { type: "string" } },
         ],
-        requestBody: genericRequestBody,
         responses: {
           "200": { description: "Success" },
           "400": { description: "Bad Request" },
@@ -290,7 +294,7 @@ export const tasksOpenApiDoc: ModuleOpenApiDoc = {
         parameters: [
           { in: "path", name: "id", required: true, schema: { type: "string" } },
         ],
-        requestBody: genericRequestBody,
+        requestBody: zodRequestBody(whIdBodySchema),
         responses: {
           "200": { description: "Success" },
           "400": { description: "Bad Request" },
@@ -308,7 +312,6 @@ export const tasksOpenApiDoc: ModuleOpenApiDoc = {
         parameters: [
           { in: "path", name: "id", required: true, schema: { type: "string" } },
         ],
-        requestBody: genericRequestBody,
         responses: {
           "200": { description: "Success" },
           "400": { description: "Bad Request" },
@@ -337,6 +340,23 @@ export const tasksOpenApiDoc: ModuleOpenApiDoc = {
         summary: "GET /task/user/tasks",
         operationId: "get_tasks_task_user_tasks",
         security: [{ bearerAuth: [] }],
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
+    "/task/AllTasks/{id}": {
+      get: {
+        tags: ["Tasks"],
+        summary: "GET /task/AllTasks/{id}",
+        operationId: "get_tasks_task_AllTasks_id",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { in: "path", name: "id", required: true, schema: { type: "string" } },
+        ],
         responses: {
           "200": { description: "Success" },
           "400": { description: "Bad Request" },

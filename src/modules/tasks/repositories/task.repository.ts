@@ -331,4 +331,27 @@ export class TaskRepository {
             }
         })
     }
+
+    async findAllByUserId(user_id: string) {
+        const tasks = await prisma.task.findMany({
+            where: { user_id },
+            include: {
+                project:{
+                    select:{
+                        name:true,
+                        manager:{
+                            select:{
+                                firstName:true,
+                                lastName:true
+                            }
+                        }
+                    }
+                },
+            }
+        });
+         if (!tasks) {
+      throw new AppError("No tasks found for the user", 404);
+    }
+    return tasks;
+    }   
 }   

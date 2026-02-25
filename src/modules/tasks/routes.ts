@@ -22,6 +22,11 @@ taskRouter.get("/user/non-completed-tasks",
 taskRouter.get("/user/tasks",
     taskController.handleGetTaskByUserId.bind(taskController));
 
+taskRouter.get("/AllTasks/:id",
+    validate({params:z.object({id:z.string()})}),
+    taskController.handleGetAllTasksByUserId.bind(taskController));     
+
+
 taskRouter.get("/:id",
 validate({params:z.object({id:z.string()})}),
     taskController.handleGetTaskById.bind(taskController));

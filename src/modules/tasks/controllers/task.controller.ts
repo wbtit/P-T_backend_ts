@@ -47,6 +47,16 @@ export class TaskController {
         });
     }
 
+
+    async handleGetAllTasksByUserId(req:Request, res: Response) {
+        const { id } = req.params;
+        const tasks = await taskService.getAllTasksByUserId(id);
+        res.status(200).json({
+            status: 'success',
+            data: tasks,
+        });
+    }
+
     async deleteTask(req:Request, res: Response) {
         const { id } = req.params;
         const result = await taskService.deleteTask(id);
