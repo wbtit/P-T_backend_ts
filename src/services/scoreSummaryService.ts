@@ -22,6 +22,13 @@ type ScoreScopes = {
   allTime: ScoreSummary;
 };
 
+type ProjectUserEPS = {
+  employeeId: string;
+  employeeName: string;
+  period: string | null;
+  score: number | null;
+};
+
 export type ScoresSummaryResult = {
   context: {
     projectId: string | null;
@@ -30,7 +37,9 @@ export type ScoresSummaryResult = {
     projectTeamCount: number;
   };
   meas: ScoreScopes;
-  eps: ScoreScopes;
+  eps: ScoreScopes & {
+    projectUsers: ProjectUserEPS[] | null;
+  };
   tes: ScoreScopes;
 };
 
@@ -126,6 +135,7 @@ export async function getScoresSummary(
   let projectTesRows: ScoreRow[] | null = null;
   let projectEmployeeIds: string[] = [];
   let projectTeamIds: string[] = [];
+  let projectUsersEPS: ProjectUserEPS[] | null = null;
 
   if (projectId) {
     const [measRows, taskUsers, projectTeams] = await Promise.all([
@@ -154,14 +164,53 @@ export async function getScoresSummary(
     projectTeamIds = projectTeams.map((t) => t.id);
 
     if (projectEmployeeIds.length > 0) {
-      projectEpsRows = await prisma.employeePerformanceScore.findMany({
-        where: {
-          employeeId: { in: projectEmployeeIds },
-        },
-        select: { period: true, score: true },
+      const [users, epsRows] = await Promise.all([
+        prisma.user.findMany({
+          where: { id: { in: projectEmployeeIds } },
+          select: {
+            id: true,
+            firstName: true,
+            middleName: true,
+            lastName: true,
+          },
+        }),
+        prisma.employeePerformanceScore.findMany({
+          where: {
+            employeeId: { in: projectEmployeeIds },
+          },
+          select: { employeeId: true, period: true, score: true },
+        }),
+      ]);
+
+      projectEpsRows = epsRows.map((r) => ({ period: r.period, score: r.score }));
+
+      const relevantRows = period
+        ? epsRows.filter((r) => r.period === period)
+        : epsRows;
+      const latestByEmployee = new Map<string, { period: string; score: number }>();
+      for (const row of relevantRows) {
+        const existing = latestByEmployee.get(row.employeeId);
+        if (!existing || row.period > existing.period) {
+          latestByEmployee.set(row.employeeId, {
+            period: row.period,
+            score: row.score,
+          });
+        }
+      }
+
+      projectUsersEPS = users.map((u) => {
+        const picked = latestByEmployee.get(u.id);
+        const nameParts = [u.firstName, u.middleName, u.lastName].filter(Boolean);
+        return {
+          employeeId: u.id,
+          employeeName: nameParts.length ? nameParts.join(" ") : "Unknown User",
+          period: picked?.period ?? null,
+          score: picked ? toFixedOrNull(picked.score) : null,
+        };
       });
     } else {
       projectEpsRows = [];
+      projectUsersEPS = [];
     }
 
     if (projectTeamIds.length > 0) {
@@ -184,7 +233,10 @@ export async function getScoresSummary(
       projectTeamCount: projectTeamIds.length,
     },
     meas: buildScopeSummary(globalMeasRows, period, projectMeasRows),
-    eps: buildScopeSummary(globalEpsRows, period, projectEpsRows),
+    eps: {
+      ...buildScopeSummary(globalEpsRows, period, projectEpsRows),
+      projectUsers: projectUsersEPS,
+    },
     tes: buildScopeSummary(globalTesRows, period, projectTesRows),
   };
 }

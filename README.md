@@ -410,9 +410,12 @@ Project + specific month:
 Response includes:
 
 - `meas`: `{ perProject, specificPeriod, allTime }`
-- `eps`: `{ perProject, specificPeriod, allTime }`
+- `eps`: `{ perProject, specificPeriod, allTime, projectUsers }`
 - `tes`: `{ perProject, specificPeriod, allTime }`
 - each scope contains summary values like average, minimum, maximum, and latest month average.
+- `eps.projectUsers` gives user-wise EPS for all users who worked on that project.
+- if `year/month` is provided, `eps.projectUsers` shows that month's EPS per user.
+- if `year/month` is not provided, `eps.projectUsers` shows each user's latest EPS.
 
 ---
 ---
