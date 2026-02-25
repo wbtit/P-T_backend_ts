@@ -1,4 +1,4 @@
-import { getMEASTrendlineHandler, managerDashboardHandler, runBiasDetector, runEPSForAllManually, runEPSManually, runMEASManually, runTESForAllManually, runTESForTeamManually } from "./controllers/measController";
+import { getMEASTrendlineHandler, getScoresSummaryHandler, managerDashboardHandler, runBiasDetector, runEPSForAllManually, runEPSManually, runMEASManually, runTESForAllManually, runTESForTeamManually } from "./controllers/measController";
 import { Router } from "express";
 import { runMEASMonthly } from "./controllers/measController";
 import authMiddleware from "../../middleware/authMiddleware";
@@ -38,6 +38,9 @@ router.post("/admin/analytics/team-efficiency/run-team", authMiddleware, runTESF
 // Admin/System Admin trigger for TES batch calculation for all active teams.
 // Optional body supports explicit { year, month }.
 router.post("/admin/analytics/team-efficiency/run-all", authMiddleware,  runTESForAllManually);
+
+// Return MEAS, EPS and TES summaries across scopes: per-project, specific-period and all-time.
+router.post("/admin/analytics/summary", authMiddleware, getScoresSummaryHandler);
 
 
 

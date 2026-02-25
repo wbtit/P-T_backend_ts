@@ -8,6 +8,7 @@ import { calculateEPSForEmployee } from "../../../services/employeePerformanceSe
 import { runMonthlyEPS } from "../../../corn-jobs/runMonthlyEPS";
 import { calculateTeamEfficiencyForTeam } from "../../../services/teamEfficiencyService";
 import { runMonthlyTES } from "../../../corn-jobs/runMonthlyTES";
+import { getScoresSummary } from "../../../services/scoreSummaryService";
 
 export async function runMEASManually(req: Request, res: Response) {
   try {
@@ -300,6 +301,66 @@ export async function runTESForAllManually(req: Request, res: Response) {
     return res.status(err?.statusCode || 500).json({
       success: false,
       message: err?.message ?? "Failed to run TES for all teams",
+    });
+  }
+}
+
+export async function getScoresSummaryHandler(req: Request, res: Response) {
+  try {
+    const { projectId, year, month } = req.body ?? {};
+
+    if ((year && !month) || (!year && month)) {
+      return res.status(400).json({
+        success: false,
+        message: "Provide both year and month, or neither.",
+      });
+    }
+
+    let parsedYear: number | undefined;
+    let parsedMonth: number | undefined;
+
+    if (year !== undefined && month !== undefined) {
+      parsedYear = Number(year);
+      parsedMonth = Number(month);
+
+      if (
+        !Number.isInteger(parsedYear) ||
+        parsedYear < 2000 ||
+        parsedYear > 2100
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: "year must be an integer between 2000 and 2100",
+        });
+      }
+
+      if (
+        !Number.isInteger(parsedMonth) ||
+        parsedMonth < 1 ||
+        parsedMonth > 12
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: "month must be an integer between 1 and 12",
+        });
+      }
+    }
+
+    const result = await getScoresSummary(
+      projectId as string | undefined,
+      parsedYear,
+      parsedMonth
+    );
+
+    return res.status(200).json({
+      success: true,
+      data: result,
+    });
+  } catch (err: any) {
+    console.error("Error fetching score summary:", err);
+    return res.status(err?.statusCode || 500).json({
+      success: false,
+      message: err?.message ?? "Failed to fetch score summary",
     });
   }
 }

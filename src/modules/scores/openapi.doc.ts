@@ -34,6 +34,12 @@ const tesRunAllBodySchema = z.object({
   month: z.number().int().min(1).max(12).optional(),
 });
 
+const scoresSummaryBodySchema = z.object({
+  projectId: z.string().uuid().optional(),
+  year: z.number().int().min(2000).max(2100).optional(),
+  month: z.number().int().min(1).max(12).optional(),
+});
+
 export const scoresOpenApiDoc: ModuleOpenApiDoc = {
   tag: {
     name: "Scores",
@@ -170,6 +176,31 @@ export const scoresOpenApiDoc: ModuleOpenApiDoc = {
           "400": { description: "Bad Request" },
           "401": { description: "Unauthorized" },
           "403": { description: "Forbidden" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
+    "/analytics/scores/admin/analytics/summary": {
+      post: {
+        tags: ["Scores"],
+        summary: "POST /analytics/scores/admin/analytics/summary",
+        operationId: "post_scores_analytics_scores_admin_analytics_summary",
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: false,
+          content: {
+            "application/json": {
+              schema: z.toJSONSchema(scoresSummaryBodySchema, {
+                io: "input",
+                unrepresentable: "any",
+              }),
+            },
+          },
+        },
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
           "500": { description: "Internal Server Error" }
         }
       },

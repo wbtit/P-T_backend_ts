@@ -224,10 +224,16 @@ disciplineScore = 100 - (flagsCount * penaltyWeight)
 ## 6️⃣ **Session Quality Score (10%)**
 
 ```
-idlePercentage = idleTime / activeTime
+taskWallTime = lastSegmentEnd - firstSegmentStart
+taskActiveTime = sum(all segment durations)
+taskIdleTime = taskWallTime - taskActiveTime
+taskIdlePercentage = taskIdleTime / taskWallTime
+
+avgIdlePercentage = average(taskIdlePercentage across tasks)
+sessionScore = 100 - (avgIdlePercentage * 100)
 ```
 
-If idle > 20% → score reduced.
+Higher idle percentage continuously reduces score (no fixed threshold in current implementation).
 
 Shows:
 
@@ -331,6 +337,82 @@ Implementation:
 - Cron wrapper: `src/corn-jobs/safeCorn.ts`
 - Batch runner: `src/corn-jobs/runMonthlyTES.ts`
 - Calculation service: `src/services/teamEfficiencyService.ts`
+
+---
+
+# 📌 **One Simple Score Summary API (MEAS + EPS + TES)**
+
+To make reporting easier, we added one endpoint that gives all three score families together:
+
+- `MEAS` (Manager estimation quality)
+- `EPS` (Employee performance)
+- `TES` (Team efficiency)
+
+Endpoint:
+
+- `POST /analytics/scores/admin/analytics/summary`
+
+This endpoint supports **3 easy views**:
+
+1. **Per Project**
+- "How are we doing for this one project?"
+- Send: `projectId`
+
+2. **Specific Period (Month)**
+- "How did we do in one selected month?"
+- Send: `year` + `month` (example: `2026`, `2`)
+
+3. **All Time**
+- "What is the long-term picture?"
+- Send nothing (or any body without filters)
+
+If you send both `projectId` and `year/month`, you get that month's summary for that project context.
+
+### Why non-technical teams can use this easily
+
+- You no longer need separate calls for MEAS, EPS, TES.
+- You can answer business questions quickly:
+- "Show current month quality."
+- "Show this project's history."
+- "Show overall company trend."
+
+### Request examples
+
+All-time (global):
+```json
+{}
+```
+
+Specific month (global):
+```json
+{
+  "year": 2026,
+  "month": 2
+}
+```
+
+Project-focused (all periods):
+```json
+{
+  "projectId": "YOUR_PROJECT_UUID"
+}
+```
+
+Project + specific month:
+```json
+{
+  "projectId": "YOUR_PROJECT_UUID",
+  "year": 2026,
+  "month": 2
+}
+```
+
+Response includes:
+
+- `meas`: `{ perProject, specificPeriod, allTime }`
+- `eps`: `{ perProject, specificPeriod, allTime }`
+- `tes`: `{ perProject, specificPeriod, allTime }`
+- each scope contains summary values like average, minimum, maximum, and latest month average.
 
 ---
 ---
