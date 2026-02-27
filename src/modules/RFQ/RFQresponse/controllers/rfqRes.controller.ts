@@ -6,7 +6,16 @@ import { UserRole } from "@prisma/client";
 
 
 const rfqResponseService = new RfqResponseService();
-const RFQ_NOTIFY_ROLES: UserRole[] = ["ADMIN", "SALES_MANAGER", "SALES_PERSON"];
+const RFQ_NOTIFY_ROLES: UserRole[] = [
+    "ADMIN",
+    "SALES_MANAGER",
+    "SALES_PERSON",
+    "CLIENT",
+    "CLIENT_ADMIN",
+    "CLIENT_PROJECT_COORDINATOR",
+    "VENDOR",
+    "VENDOR_ADMIN",
+];
 export class RfqResponseController {
     async handleCreate(req: Request, res: Response) {
         const uploadedFiles = mapUploadedFiles(

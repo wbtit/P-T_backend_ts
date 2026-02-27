@@ -9,6 +9,7 @@ export async function check75Alert() {
         "ADMIN",
         "DEPUTY_MANAGER",
         "OPERATION_EXECUTIVE",
+        "STAFF",
     ]);
 
     // Find active tasks where 75% alert has NOT been triggered
@@ -100,7 +101,7 @@ export async function check75Alert() {
                 timestamp: new Date(),
             };
 
-            await notifyUsers(recipientIds, payload);
+            await notifyUsers(Array.from(new Set([...recipientIds, task.user_id])), payload);
 
             console.log(`75% alert triggered for task ${task.id}`);
         }

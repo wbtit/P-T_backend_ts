@@ -44,17 +44,13 @@ export class NotesService {
             }
         }
 
-        // ADM + TL + OE + CDE + CLI + FAB
+        // ADM + TL + DGM + OE + CDE
         const roleBasedRecipientIds = await getActiveUserIdsByRoles([
             "ADMIN",
             "TEAM_LEAD",
+            "DEPUTY_MANAGER",
             "OPERATION_EXECUTIVE",
             "CONNECTION_DESIGNER_ENGINEER",
-            "CLIENT",
-            "CLIENT_ADMIN",
-            "CLIENT_PROJECT_COORDINATOR",
-            "VENDOR",
-            "VENDOR_ADMIN",
         ]);
         roleBasedRecipientIds.forEach((id) => recipientIds.add(id));
 

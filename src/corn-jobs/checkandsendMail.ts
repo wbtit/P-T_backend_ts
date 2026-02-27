@@ -100,6 +100,7 @@ export async function checkAndSendReminders(): Promise<void> {
         await sendMeetingReminder(meeting);
         await notifyByRoles(
           [
+            "ADMIN",
             "DEPT_MANAGER",
             "PROJECT_MANAGER",
             "TEAM_LEAD",

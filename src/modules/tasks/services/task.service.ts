@@ -10,8 +10,6 @@ export class TaskService {
   private readonly taskNotifyRoles: UserRole[] = [
     "DEPT_MANAGER",
     "PROJECT_MANAGER",
-    "TEAM_LEAD",
-    "OPERATION_EXECUTIVE",
   ];
 
   constructor() {
@@ -34,14 +32,6 @@ export class TaskService {
       data
     );
     const task = await this.taskRepository.create(data, managerId);
-    await notifyByRoles(this.taskNotifyRoles, {
-      type: "TASK_ASSIGNED",
-      title: "Task Assigned to Employee",
-      message: `Task '${task.name}' was assigned.`,
-      taskId: task.id,
-      assigneeId: task.user_id,
-      timestamp: new Date(),
-    });
     await sendNotification(task.user_id, {
       type: "TASK_ASSIGNED",
       title: "Task Assigned",
@@ -117,14 +107,16 @@ export class TaskService {
     }
     const updatedTask = await this.taskRepository.update(id, data);
     if (data.status) {
-      await notifyByRoles(this.taskNotifyRoles, {
-        type: data.status === "COMPLETED" ? "TASK_COMPLETED" : "TASK_STATUS_CHANGED",
-        title: data.status === "COMPLETED" ? "Task Completed" : "Task Status Changed",
-        message: `Task '${updatedTask.name}' status changed to '${data.status}'.`,
-        taskId: updatedTask.id,
-        status: data.status,
-        timestamp: new Date(),
-      });
+      if (data.status !== "COMPLETED") {
+        await notifyByRoles(this.taskNotifyRoles, {
+          type: "TASK_STATUS_CHANGED",
+          title: "Task Status Changed",
+          message: `Task '${updatedTask.name}' status changed to '${data.status}'.`,
+          taskId: updatedTask.id,
+          status: data.status,
+          timestamp: new Date(),
+        });
+      }
       if (updatedTask.user_id) {
         await sendNotification(updatedTask.user_id, {
           type: data.status === "COMPLETED" ? "TASK_COMPLETED" : "TASK_STATUS_CHANGED",

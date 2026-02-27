@@ -268,6 +268,7 @@ export class TaskRepository {
                 department: { select: { name: true } },
                 workingHourTask: true,
                 allocationLog:{ select:{ allocatedHours:true } },
+            projectBundle:{select:{bundleKey:true}}
                 
             }
         });

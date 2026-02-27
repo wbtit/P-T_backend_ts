@@ -9,7 +9,16 @@ import { notifyByRoles } from "../../../utils/notifyByRole";
 import { UserRole } from "@prisma/client";
 
 const rfqService = new RFQService();
-const RFQ_NOTIFY_ROLES: UserRole[] = ["ADMIN", "SALES_MANAGER", "SALES_PERSON"];
+const RFQ_NOTIFY_ROLES: UserRole[] = [
+  "ADMIN",
+  "SALES_MANAGER",
+  "SALES_PERSON",
+  "CLIENT",
+  "CLIENT_ADMIN",
+  "CLIENT_PROJECT_COORDINATOR",
+  "VENDOR",
+  "VENDOR_ADMIN",
+];
 
 export class RFQController {
     async handleCreateRfq(req:AuthenticateRequest,res:Response){

@@ -12,7 +12,7 @@ export class ClientCommunicationController {
       req.body,
       req.user!.id
     );
-    await notifyByRoles(["OPERATION_EXECUTIVE"], {
+    await notifyByRoles(["DEPUTY_MANAGER", "OPERATION_EXECUTIVE"], {
       type: "CLIENT_COMM_LOG_CREATED",
       title: "Client Communication Log Created",
       message: "A new client communication log was created.",

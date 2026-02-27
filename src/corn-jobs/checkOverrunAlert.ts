@@ -7,8 +7,11 @@ export async function checkOverrunAlert() {
     const now = new Date();
     const recipientIds = await getActiveUserIdsByRoles([
         "ADMIN",
+        "DEPT_MANAGER",
+        "PROJECT_MANAGER",
         "DEPUTY_MANAGER",
         "OPERATION_EXECUTIVE",
+        "STAFF",
     ]);
 
     // Get tasks IN PROGRESS that have NOT triggered overrun alert
@@ -94,7 +97,7 @@ export async function checkOverrunAlert() {
                 timestamp: new Date()
             };
 
-            await notifyUsers(recipientIds, payload);
+            await notifyUsers(Array.from(new Set([...recipientIds, task.user_id])), payload);
 
             console.log(`⚠️ 100% Overrun Alert Triggered for Task ${task.id}`);
         }

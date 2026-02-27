@@ -8,6 +8,7 @@ import { UserRole } from "@prisma/client";
 
 const meetingService = new MeetingService();
 const MEETING_NOTIFY_ROLES: UserRole[] = [
+  "ADMIN",
   "DEPT_MANAGER",
   "PROJECT_MANAGER",
   "TEAM_LEAD",

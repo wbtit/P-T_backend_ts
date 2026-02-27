@@ -7,7 +7,16 @@ import { notifyByRoles } from "../../../utils/notifyByRole";
 import { UserRole } from "@prisma/client";
 
 const invoiceService = new InvoiceService();
-const INVOICE_NOTIFY_ROLES: UserRole[] = ["ADMIN", "PROJECT_MANAGER_OFFICER"];
+const INVOICE_NOTIFY_ROLES: UserRole[] = [
+  "ADMIN",
+  "PROJECT_MANAGER_OFFICER",
+  "CONNECTION_DESIGNER_ENGINEER",
+  "CLIENT",
+  "CLIENT_ADMIN",
+  "CLIENT_PROJECT_COORDINATOR",
+  "VENDOR",
+  "VENDOR_ADMIN",
+];
 
 export class InvoiceController {
   // ---------------------------------------------------------------------------
