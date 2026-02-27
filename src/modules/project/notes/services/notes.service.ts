@@ -5,7 +5,7 @@ import { streamFile } from "../../../../utils/fileUtil";
 import path from "path";
 import { Response } from "express";
 import { AppError } from "../../../../config/utils/AppError";
-import { sendNotification } from "../../../../utils/sendNotification";
+import { getActiveUserIdsByRoles, notifyUsers } from "../../../../utils/notifyByRole";
 import fs from 'fs'
 
 
@@ -14,40 +14,52 @@ const notesRepository = new NotesRepository();
 export class NotesService {
     async create(data: CreateNoteInput) {
         const newNotes = notesRepository.create(data);
-        // Notify project manager about the new note
         const project = (await newNotes).project;
+        const payload = {
+            title: "New Note Created",
+            message: `A new note has been added to the project: ${project?.name}`,
+            projectName: project?.name,
+        };
+
+        const recipientIds = new Set<string>();
+
+        // Notification matrix (1.10): ADM, DM, PM
+
+        // PM
         if (project && project.managerID) {
-            const payload = {
-                title: "New Note Created",
-                message: `A new note has been added to the project: ${project.name}`,
-                projectName: project.name,
-            };
-            await sendNotification(project.managerID, payload);
+            recipientIds.add(project.managerID);
         }
-        // Notify department managers about the new note
+
+        // DM
         if (project && project.department && project.department.managerIds) {
-            const payload = {
-                title: "New Note Created",
-                message: `A new note has been added to the project: ${project.name}`,
-                projectName: project.name,
-            };
             for (const managerId of project.department.managerIds.map(m => m.id)) {
-                await sendNotification(managerId, payload);
+                recipientIds.add(managerId);
             }
         }
-        //Notify the task assignees about the new note
+
+        // STF
         if (project && project.tasks) {
-            const payload = {
-                title: "New Note Created",
-                message: `A new note has been added to the project: ${project.name}`,
-                projectName: project.name,
-            };
             for (const task of project.tasks) {
-                if (task.user_id) {
-                    await sendNotification(task.user_id, payload);
-                }
+                if (task.user_id) recipientIds.add(task.user_id);
             }
         }
+
+        // ADM + TL + OE + CDE + CLI + FAB
+        const roleBasedRecipientIds = await getActiveUserIdsByRoles([
+            "ADMIN",
+            "TEAM_LEAD",
+            "OPERATION_EXECUTIVE",
+            "CONNECTION_DESIGNER_ENGINEER",
+            "CLIENT",
+            "CLIENT_ADMIN",
+            "CLIENT_PROJECT_COORDINATOR",
+            "VENDOR",
+            "VENDOR_ADMIN",
+        ]);
+        roleBasedRecipientIds.forEach((id) => recipientIds.add(id));
+
+        await notifyUsers(Array.from(recipientIds), payload);
+
         return newNotes;
     }
 

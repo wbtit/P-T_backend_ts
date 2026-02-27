@@ -4,8 +4,24 @@ import { SubmittalResponseService } from "../services";
 import { AppError } from "../../../config/utils/AppError";
 import { mapUploadedFiles } from "../../uploads/fileUtil";
 import { State } from "@prisma/client";
+import { notifyByRoles } from "../../../utils/notifyByRole";
+import { UserRole } from "@prisma/client";
 
 const submittalResponseService = new SubmittalResponseService();
+const SUBMITTAL_NOTIFY_ROLES: UserRole[] = [
+  "ADMIN",
+  "DEPT_MANAGER",
+  "PROJECT_MANAGER",
+  "TEAM_LEAD",
+  "PROJECT_MANAGER_OFFICER",
+  "OPERATION_EXECUTIVE",
+  "CONNECTION_DESIGNER_ENGINEER",
+  "CLIENT",
+  "CLIENT_ADMIN",
+  "CLIENT_PROJECT_COORDINATOR",
+  "VENDOR",
+  "VENDOR_ADMIN",
+];
 
 export class SubmittalResponseController {
 
@@ -57,6 +73,14 @@ export class SubmittalResponseController {
       },
       userId
     );
+    await notifyByRoles(SUBMITTAL_NOTIFY_ROLES, {
+      type: "SUBMITTAL_RESPONSE_RECEIVED",
+      title: "Submittal Response Received",
+      message: "A new submittal response has been submitted.",
+      submittalsId,
+      submittalResponseId: response.id,
+      timestamp: new Date(),
+    });
 
     res.status(201).json({
       status: "success",
@@ -87,6 +111,14 @@ export class SubmittalResponseController {
       parentResponseId,
       status as State
     );
+    await notifyByRoles(SUBMITTAL_NOTIFY_ROLES, {
+      type: "SUBMITTAL_STATUS_UPDATED",
+      title: "Submittal Status Updated",
+      message: `Submittal workflow status updated to '${status}'.`,
+      parentResponseId,
+      status,
+      timestamp: new Date(),
+    });
 
     res.status(200).json({
       status: "success",

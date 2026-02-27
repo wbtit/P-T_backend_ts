@@ -3,9 +3,22 @@ import { FabricatorService } from "../services";
 import { AuthenticateRequest } from "../../../middleware/authMiddleware";
 import { AppError } from "../../../config/utils/AppError";
 import { mapUploadedFiles } from "../../uploads/fileUtil";
+import { notifyByRoles } from "../../../utils/notifyByRole";
+import { UserRole } from "@prisma/client";
 
 export class FabricatorController {
   fabService = new FabricatorService();
+  private readonly fabricatorNotifyRoles: UserRole[] = [
+    "ADMIN",
+    "SALES_MANAGER",
+    "SALES_PERSON",
+    "DEPUTY_MANAGER",
+    "CLIENT",
+    "CLIENT_ADMIN",
+    "CLIENT_PROJECT_COORDINATOR",
+    "VENDOR",
+    "VENDOR_ADMIN",
+  ];
 
   async handleCreateFabricator(req: AuthenticateRequest, res: Response) {
     const { body } = req;
@@ -29,6 +42,13 @@ export class FabricatorController {
     };
 
     const fabricator = await this.fabService.createFabricator(payload, userId);
+    await notifyByRoles(this.fabricatorNotifyRoles, {
+      type: "FABRICATOR_CREATED",
+      title: "Fabricator Created",
+      message: `Fabricator '${fabricator.fabName}' was created.`,
+      fabricatorId: fabricator.id,
+      timestamp: new Date(),
+    });
 
     return res.status(201).json({
       message: "Fabricator created successfully",
@@ -92,6 +112,13 @@ export class FabricatorController {
     };
 
     const fabricator = await this.fabService.updateFabricator(id, payload);
+    await notifyByRoles(this.fabricatorNotifyRoles, {
+      type: "FABRICATOR_UPDATED",
+      title: "Fabricator Updated",
+      message: `Fabricator '${fabricator.fabName}' was updated.`,
+      fabricatorId: fabricator.id,
+      timestamp: new Date(),
+    });
 
     return res.status(200).json({
       message: "Fabricator updated successfully",
@@ -106,6 +133,13 @@ export class FabricatorController {
     if (!userId) throw new AppError("createdById is required", 400);
 
     await this.fabService.deleteFabricator(id);
+    await notifyByRoles(this.fabricatorNotifyRoles, {
+      type: "FABRICATOR_DELETED",
+      title: "Fabricator Deleted",
+      message: `Fabricator '${id}' was deleted.`,
+      fabricatorId: id,
+      timestamp: new Date(),
+    });
 
     return res.status(200).json({
       message: "Fabricator deleted successfully",

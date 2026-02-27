@@ -3,8 +3,22 @@ import { AuthenticateRequest } from "../../../middleware/authMiddleware";
 import { AppError } from "../../../config/utils/AppError";
 import { COService } from "../services";
 import { mapUploadedFiles } from "../../uploads/fileUtil";
+import { notifyByRoles } from "../../../utils/notifyByRole";
+import { UserRole } from "@prisma/client";
 
 const coService = new COService();
+const CO_NOTIFY_ROLES: UserRole[] = [
+  "ADMIN",
+  "DEPT_MANAGER",
+  "PROJECT_MANAGER_OFFICER",
+  "DEPUTY_MANAGER",
+  "OPERATION_EXECUTIVE",
+  "CLIENT",
+  "CLIENT_ADMIN",
+  "CLIENT_PROJECT_COORDINATOR",
+  "VENDOR",
+  "VENDOR_ADMIN",
+];
 
 export class COController {
   // ------------------- CO CREATION & UPDATE -------------------
@@ -27,6 +41,13 @@ export class COController {
       coNum,
       id
     );
+    await notifyByRoles(CO_NOTIFY_ROLES, {
+      type: "CO_CREATED",
+      title: "Change Order Created / Sent",
+      message: `Change Order '${co.changeOrderNumber ?? co.id}' was created.`,
+      coId: co.id,
+      timestamp: new Date(),
+    });
 
     res.status(201).json({
       status: "success",
@@ -55,6 +76,14 @@ export class COController {
     const updatedCo = await coService.updateCo(id, {
       ...req.body,
       files: uploadedFiles,
+    });
+    await notifyByRoles(CO_NOTIFY_ROLES, {
+      type: "CO_UPDATED",
+      title: "Change Order Updated",
+      message: `Change Order '${updatedCo.changeOrderNumber ?? updatedCo.id}' was updated.`,
+      coId: updatedCo.id,
+      status: (updatedCo as any).status ?? req.body?.status ?? null,
+      timestamp: new Date(),
     });
 
     res.status(200).json({

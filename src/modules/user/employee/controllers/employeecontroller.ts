@@ -1,12 +1,22 @@
 import { Request,Response } from "express";
 import { EmployeeServices } from "../service/employee.service";
 import { userRole } from "../../dtos";
+import { notifyByRoles } from "../../../../utils/notifyByRole";
+import { UserRole } from "@prisma/client";
 
 export class EmployeeController{
     empService = new EmployeeServices()
+    private readonly userTeamNotifyRoles: UserRole[] = ["ADMIN", "HUMAN_RESOURCE"];
     
     async handleCreateEmp(req:Request,res:Response){
         const result = await this.empService.create(req.body);
+        await notifyByRoles(this.userTeamNotifyRoles, {
+            type: "USER_CREATED",
+            title: "New User Created / Onboarded",
+            message: `A new user '${result.user?.username ?? result.user?.id ?? ""}' was created.`,
+            userId: result.user?.id ?? null,
+            timestamp: new Date(),
+        });
         res.status(201).json({success:true,data:result});
     }
 
@@ -28,6 +38,16 @@ export class EmployeeController{
 
     async handleUpdateProfile(req:Request,res:Response){
         const result = await this.empService.update(req.params.id, req.body);
+        if (req.body?.role) {
+            await notifyByRoles(this.userTeamNotifyRoles, {
+                type: "USER_ROLE_CHANGED",
+                title: "User Role Changed",
+                message: `User role updated to '${req.body.role}'.`,
+                userId: req.params.id,
+                role: req.body.role,
+                timestamp: new Date(),
+            });
+        }
         res.status(200).json({ success: true, data: result });
     }
     

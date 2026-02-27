@@ -3,8 +3,23 @@ import { AuthenticateRequest } from "../../../middleware/authMiddleware";
 import { AppError } from "../../../config/utils/AppError";
 import { MeetingService } from "../services";
 import { sendEmail } from "../../../services/mailServices/mailconfig";
+import { notifyByRoles } from "../../../utils/notifyByRole";
+import { UserRole } from "@prisma/client";
 
 const meetingService = new MeetingService();
+const MEETING_NOTIFY_ROLES: UserRole[] = [
+  "DEPT_MANAGER",
+  "PROJECT_MANAGER",
+  "TEAM_LEAD",
+  "PROJECT_MANAGER_OFFICER",
+  "DEPUTY_MANAGER",
+  "OPERATION_EXECUTIVE",
+  "CLIENT",
+  "CLIENT_ADMIN",
+  "CLIENT_PROJECT_COORDINATOR",
+  "VENDOR",
+  "VENDOR_ADMIN",
+];
 
 export class MeetingController {
   // CREATE MEETING
@@ -40,6 +55,14 @@ export class MeetingController {
         <p><a href="${meeting.link}">🔗 Join Meeting</a></p>
       `
     });
+    await notifyByRoles(MEETING_NOTIFY_ROLES, {
+      type: "MEETING_SCHEDULED",
+      title: "Meeting Scheduled",
+      message: `Meeting '${meeting.title}' has been scheduled.`,
+      meetingId: meeting.id,
+      startTime: meeting.startTime,
+      timestamp: new Date(),
+    });
 
     res.status(201).json({
       message: "Meeting created",
@@ -67,6 +90,15 @@ export class MeetingController {
     const updatedMeeting = await meetingService.update(id, {
       ...req.body,
     });
+    await notifyByRoles(MEETING_NOTIFY_ROLES, {
+      type: "MEETING_RESCHEDULED",
+      title: "Meeting Rescheduled",
+      message: `Meeting '${updatedMeeting.title}' has been updated.`,
+      meetingId: updatedMeeting.id,
+      startTime: updatedMeeting.startTime,
+      endTime: updatedMeeting.endTime,
+      timestamp: new Date(),
+    });
 
     res.status(200).json({
       status: "success",
@@ -79,6 +111,13 @@ export class MeetingController {
     const { id } = req.params;
 
     const deletedMeeting = await meetingService.delete(id);
+    await notifyByRoles(MEETING_NOTIFY_ROLES, {
+      type: "MEETING_CANCELLED",
+      title: "Meeting Cancelled",
+      message: `Meeting '${deletedMeeting.title}' has been cancelled.`,
+      meetingId: deletedMeeting.id,
+      timestamp: new Date(),
+    });
 
     res.status(200).json({
       status: "success",
@@ -92,6 +131,14 @@ export class MeetingController {
 
     const updatedStatusMeeting = await meetingService.updateStatus(id, {
       ...req.body,
+    });
+    await notifyByRoles(MEETING_NOTIFY_ROLES, {
+      type: "MEETING_STATUS_UPDATED",
+      title: "Meeting Status Updated",
+      message: `Meeting '${updatedStatusMeeting.title}' status changed to '${updatedStatusMeeting.status}'.`,
+      meetingId: updatedStatusMeeting.id,
+      status: updatedStatusMeeting.status,
+      timestamp: new Date(),
     });
 
     res.status(200).json({

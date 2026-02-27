@@ -1,9 +1,12 @@
 import { Request,Response } from "express";
 import { RfqResponseService } from "../services/rfqRes.service";
 import { mapUploadedFiles } from "../../../uploads/fileUtil";
+import { notifyByRoles } from "../../../../utils/notifyByRole";
+import { UserRole } from "@prisma/client";
 
 
 const rfqResponseService = new RfqResponseService();
+const RFQ_NOTIFY_ROLES: UserRole[] = ["ADMIN", "SALES_MANAGER", "SALES_PERSON"];
 export class RfqResponseController {
     async handleCreate(req: Request, res: Response) {
         const uploadedFiles = mapUploadedFiles(
@@ -15,6 +18,14 @@ export class RfqResponseController {
       files: uploadedFiles,
     };
         const result = await rfqResponseService.create(payload);
+        await notifyByRoles(RFQ_NOTIFY_ROLES, {
+            type: "RFQ_RESPONSE_RECEIVED",
+            title: "RFQ Response Received",
+            message: "A new RFQ response has been submitted.",
+            rfqId: result.rfqId,
+            rfqResponseId: result.id,
+            timestamp: new Date(),
+        });
         return res.status(201).json({
             success:true,
             data:result

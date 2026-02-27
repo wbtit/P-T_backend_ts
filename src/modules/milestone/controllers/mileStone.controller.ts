@@ -3,8 +3,25 @@ import { MileStoneService } from "../services";
 import { AppError } from "../../../config/utils/AppError";
 import { AuthenticateRequest } from "../../../middleware/authMiddleware";
 import prisma from "../../../config/database/client";
+import { notifyByRoles } from "../../../utils/notifyByRole";
+import { UserRole } from "@prisma/client";
 
 const mileStoneService = new MileStoneService();
+const MILESTONE_NOTIFY_ROLES: UserRole[] = [
+  "ADMIN",
+  "DEPT_MANAGER",
+  "PROJECT_MANAGER",
+  "TEAM_LEAD",
+  "PROJECT_MANAGER_OFFICER",
+  "DEPUTY_MANAGER",
+  "OPERATION_EXECUTIVE",
+  "CONNECTION_DESIGNER_ENGINEER",
+  "CLIENT",
+  "CLIENT_ADMIN",
+  "CLIENT_PROJECT_COORDINATOR",
+  "VENDOR",
+  "VENDOR_ADMIN",
+];
 
 export class MileStoneController {
   async handleCreate(req: Request, res: Response) {
@@ -15,6 +32,13 @@ export class MileStoneController {
     });
 
     const result = await mileStoneService.create(req.body);
+    await notifyByRoles(MILESTONE_NOTIFY_ROLES, {
+      type: "MILESTONE_CREATED",
+      title: "Milestone Created",
+      message: `Milestone '${result?.subject ?? result?.id}' created.`,
+      milestoneId: result?.id,
+      timestamp: new Date(),
+    });
 
     return res.status(201).json({
       message: "MileStone created successfully",
@@ -32,6 +56,13 @@ export class MileStoneController {
     const { id } = req.params;
     const payload = req.body?.data ?? req.body;
     const result = await mileStoneService.update(id, payload);
+    await notifyByRoles(MILESTONE_NOTIFY_ROLES, {
+      type: "MILESTONE_NEW_VERSION",
+      title: "New Milestone Version Created",
+      message: `A new version was created for milestone '${id}'.`,
+      milestoneId: id,
+      timestamp: new Date(),
+    });
 
     if (!result) throw new AppError("Failed to update milestone", 400);
 
@@ -51,6 +82,13 @@ export class MileStoneController {
     const { id } = req.params;
     const payload = req.body?.data ?? req.body;
     const result = await mileStoneService.updateExisting(id, payload);
+    await notifyByRoles(MILESTONE_NOTIFY_ROLES, {
+      type: "MILESTONE_UPDATED",
+      title: "Milestone Updated",
+      message: `Milestone '${id}' was updated.`,
+      milestoneId: id,
+      timestamp: new Date(),
+    });
 
     if (!result) throw new AppError("Failed to update existing milestone", 400);
 

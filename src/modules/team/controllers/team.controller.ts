@@ -2,8 +2,11 @@ import { Request,Response } from "express";
 import { TeamService } from "../services";
 import { AppError } from "../../../config/utils/AppError";
 import { TeamMemberRole } from "../dtos";
+import { notifyByRoles } from "../../../utils/notifyByRole";
+import { UserRole } from "@prisma/client";
 
 const teamService = new TeamService();
+const USER_TEAM_NOTIFY_ROLES: UserRole[] = ["ADMIN", "HUMAN_RESOURCE"];
 
 export class TeamController {
     async create(req: Request, res: Response) {
@@ -25,6 +28,14 @@ export class TeamController {
         console.log("Role in controller:", role);
         console.log("Request body:", req.body);
     const result = await teamService.addTeamMembers(req.body, role);
+    await notifyByRoles(USER_TEAM_NOTIFY_ROLES, {
+        type: "USER_ADDED_TO_TEAM",
+        title: "User Added to Team",
+        message: "A user was added to a team.",
+        teamId: req.body?.teamId,
+        userId: req.body?.userId,
+        timestamp: new Date(),
+    });
     return res.status(200).json({
         message: "Team members added successfully",
         data: result
@@ -77,6 +88,14 @@ export class TeamController {
 
     async removeTeamMembers(req: Request, res: Response) {
         const result = await teamService.removeTeamMembers(req.body);
+        await notifyByRoles(USER_TEAM_NOTIFY_ROLES, {
+            type: "USER_REMOVED_FROM_TEAM",
+            title: "User Removed from Team",
+            message: "A user was removed from a team.",
+            teamId: req.body?.teamId,
+            userId: req.body?.userId,
+            timestamp: new Date(),
+        });
         return res.status(200).json({
             message: "Team members removed successfully",
             data: result

@@ -3,8 +3,22 @@ import { AuthenticateRequest } from "../../../middleware/authMiddleware";
 import { AppError } from "../../../config/utils/AppError";
 import { CoResponseService } from "../services";
 import { mapUploadedFiles } from "../../uploads/fileUtil";
+import { notifyByRoles } from "../../../utils/notifyByRole";
+import { UserRole } from "@prisma/client";
 
 const coResponseService = new CoResponseService();
+const CO_NOTIFY_ROLES: UserRole[] = [
+  "ADMIN",
+  "DEPT_MANAGER",
+  "PROJECT_MANAGER_OFFICER",
+  "DEPUTY_MANAGER",
+  "OPERATION_EXECUTIVE",
+  "CLIENT",
+  "CLIENT_ADMIN",
+  "CLIENT_PROJECT_COORDINATOR",
+  "VENDOR",
+  "VENDOR_ADMIN",
+];
 
 export class CoResponseController {
   // CREATE CO RESPONSE
@@ -27,6 +41,26 @@ export class CoResponseController {
       coId,
       userId
     );
+    const status = (response as any)?.Status;
+    await notifyByRoles(CO_NOTIFY_ROLES, {
+      type:
+        status === "ACCEPT"
+          ? "CO_ACCEPTED_BY_FABRICATOR"
+          : status === "REJECT"
+          ? "CO_REJECTED_BY_FABRICATOR"
+          : "CO_RESPONSE_RECEIVED",
+      title:
+        status === "ACCEPT"
+          ? "Change Order Accepted by Fabricator"
+          : status === "REJECT"
+          ? "Change Order Rejected by Fabricator"
+          : "CO Response / Reply Received",
+      message: "A change-order response was submitted.",
+      coId,
+      coResponseId: response.id,
+      status,
+      timestamp: new Date(),
+    });
 
     res.status(201).json({
       message: "CO Response created",

@@ -3,8 +3,24 @@ import { AuthenticateRequest } from "../../../middleware/authMiddleware";
 import { AppError } from "../../../config/utils/AppError";
 import { RFIResponseService } from "../services";
 import { mapUploadedFiles } from "../../uploads/fileUtil";
+import { notifyByRoles } from "../../../utils/notifyByRole";
+import { UserRole } from "@prisma/client";
 
 const rfiResponseService = new RFIResponseService();
+const RFI_NOTIFY_ROLES: UserRole[] = [
+  "ADMIN",
+  "DEPT_MANAGER",
+  "PROJECT_MANAGER",
+  "TEAM_LEAD",
+  "OPERATION_EXECUTIVE",
+  "CONNECTION_DESIGNER_ENGINEER",
+  "STAFF",
+  "CLIENT",
+  "CLIENT_ADMIN",
+  "CLIENT_PROJECT_COORDINATOR",
+  "VENDOR",
+  "VENDOR_ADMIN",
+];
 
 export class RFIResponseController {
   // CREATE RFI RESPONSE
@@ -22,6 +38,14 @@ export class RFIResponseController {
     const response = await rfiResponseService.create(rfiId, userId, {
       ...req.body,
       files: uploadedFiles,
+    });
+    await notifyByRoles(RFI_NOTIFY_ROLES, {
+      type: req.body?.parentResponseId ? "RFI_REPLY_ADDED" : "RFI_RESPONSE_RECEIVED",
+      title: req.body?.parentResponseId ? "RFI Reply Thread Added" : "RFI Response Received",
+      message: "A new RFI response has been submitted.",
+      rfiId,
+      rfiResponseId: response.id,
+      timestamp: new Date(),
     });
 
     res.status(201).json({

@@ -1,10 +1,15 @@
 import prisma from "../config/database/client";
 import { secondsBetween } from "../modules/workingHours/utils/calculateSecs";
-import { sendNotification } from "../utils/sendNotification";
+import { notifyUsers, getActiveUserIdsByRoles } from "../utils/notifyByRole";
 import { parseHHMMToHours } from "../utils/timeFormat";
 
 export async function check75Alert() {
     const now = new Date();
+    const recipientIds = await getActiveUserIdsByRoles([
+        "ADMIN",
+        "DEPUTY_MANAGER",
+        "OPERATION_EXECUTIVE",
+    ]);
 
     // Find active tasks where 75% alert has NOT been triggered
     const tasks = await prisma.task.findMany({
@@ -82,23 +87,11 @@ export async function check75Alert() {
                 (totalSeconds / allocatedSeconds) * 100
             ).toFixed(2);
 
-            //Payload for employee
-            const userPayload = {
+            // Notification matrix (2.5): notify ADM + DEP + OE
+            const payload = {
                 type: "TASK_75_PERCENT",
-                title: "Task is nearing its allocated limit",
-                message: `You have used ${percentUsed}% (${workedHours} hrs) of allocated hours for task '${task.name}'.`,
-                taskId: task.id,
-                allocatedHours,
-                workedHours,
-                percentUsed,
-                timestamp: new Date(),
-            };
-
-            //Payload for manager
-            const managerPayload = {
-                type: "TASK_75_PERCENT_MANAGER",
-                title: "Task is at risk of slipping",
-                message: `Task '${task.name}' assigned to a team member has reached ${percentUsed}% of allocated hours.`,
+                title: "Task reached 75% allocated hours",
+                message: `Task '${task.name}' has reached ${percentUsed}% of allocated hours.`,
                 taskId: task.id,
                 employeeId: task.user_id,
                 allocatedHours,
@@ -107,13 +100,7 @@ export async function check75Alert() {
                 timestamp: new Date(),
             };
 
-            //Send to User
-            await sendNotification(task.user_id, userPayload);
-
-            //Send to Manager
-            if (task.project.managerID) {
-                await sendNotification(task.project.managerID, managerPayload);
-            }
+            await notifyUsers(recipientIds, payload);
 
             console.log(`75% alert triggered for task ${task.id}`);
         }

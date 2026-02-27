@@ -1,10 +1,15 @@
 import prisma from "../config/database/client";
 import { secondsBetween } from "../modules/workingHours/utils/calculateSecs";
-import { sendNotification } from "../utils/sendNotification";
+import { getActiveUserIdsByRoles, notifyUsers } from "../utils/notifyByRole";
 import { parseHHMMToHours } from "../utils/timeFormat";
 
 export async function checkOverrunAlert() {
     const now = new Date();
+    const recipientIds = await getActiveUserIdsByRoles([
+        "ADMIN",
+        "DEPUTY_MANAGER",
+        "OPERATION_EXECUTIVE",
+    ]);
 
     // Get tasks IN PROGRESS that have NOT triggered overrun alert
     const tasks = await prisma.task.findMany({
@@ -76,21 +81,11 @@ export async function checkOverrunAlert() {
 
             // 4️⃣ Create real-time notifications
 
-            const userPayload = {
+            // Notification matrix (2.6): notify ADM + DEP + OE
+            const payload = {
                 type: "TASK_OVERRUN_100",
-                title: "Task Time Exceeded",
-                message: `You exceeded the allocated ${allocatedHours} hours for task '${task.name}'. Worked: ${workedHours} hrs.`,
-                taskId: task.id,
-                allocatedHours,
-                workedHours,
-                percentUsed,
-                timestamp: new Date()
-            };
-
-            const managerPayload = {
-                type: "TASK_OVERRUN_100_MANAGER",
                 title: "Task Overrun",
-                message: `Task '${task.name}' assigned to your team exceeded allocated time. Used ${percentUsed}% (${workedHours} hrs).`,
+                message: `Task '${task.name}' exceeded allocated time. Used ${percentUsed}% (${workedHours} hrs).`,
                 taskId: task.id,
                 employeeId: task.user_id,
                 allocatedHours,
@@ -99,12 +94,7 @@ export async function checkOverrunAlert() {
                 timestamp: new Date()
             };
 
-            // Send notifications
-            await sendNotification(task.user_id, userPayload);
-
-            if (task.project.managerID) {
-                await sendNotification(task.project.managerID, managerPayload);
-            }
+            await notifyUsers(recipientIds, payload);
 
             console.log(`⚠️ 100% Overrun Alert Triggered for Task ${task.id}`);
         }

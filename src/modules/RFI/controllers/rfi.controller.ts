@@ -5,8 +5,24 @@ import { RFIService } from "../services";
 import { mapUploadedFiles } from "../../uploads/fileUtil";
 import { sendEmail, getCCEmails } from "../../../services/mailServices/mailconfig";
 import { rfihtmlContent } from "../../../services/mailServices/mailtemplates/rfiMailtemplate";
+import { notifyByRoles } from "../../../utils/notifyByRole";
+import { UserRole } from "@prisma/client";
 
 const rfiService = new RFIService();
+const RFI_NOTIFY_ROLES: UserRole[] = [
+  "ADMIN",
+  "DEPT_MANAGER",
+  "PROJECT_MANAGER",
+  "TEAM_LEAD",
+  "OPERATION_EXECUTIVE",
+  "CONNECTION_DESIGNER_ENGINEER",
+  "STAFF",
+  "CLIENT",
+  "CLIENT_ADMIN",
+  "CLIENT_PROJECT_COORDINATOR",
+  "VENDOR",
+  "VENDOR_ADMIN",
+];
 
 export class RFIController {
   // CREATE RFI
@@ -49,6 +65,13 @@ export class RFIController {
           subject: newrfi.subject,
           text: newrfi.description,
         });
+    await notifyByRoles(RFI_NOTIFY_ROLES, {
+      type: "RFI_CREATED",
+      title: "RFI Created / Sent",
+      message: `RFI '${newrfi.subject}' was created and sent.`,
+      rfiId: newrfi.id,
+      timestamp: new Date(),
+    });
 
     res.status(201).json({
       message:"RFI created",
@@ -71,6 +94,14 @@ export class RFIController {
     const updatedRfi = await rfiService.updateRfi(rfiId, {
       ...req.body,
       files: uploadedFiles,
+    });
+    await notifyByRoles(RFI_NOTIFY_ROLES, {
+      type: "RFI_UPDATED",
+      title: "RFI Updated",
+      message: `RFI '${(updatedRfi as any)?.subject ?? rfiId}' was updated.`,
+      rfiId,
+      isAproovedByAdmin: (updatedRfi as any)?.isAproovedByAdmin ?? req.body?.isAproovedByAdmin ?? null,
+      timestamp: new Date(),
     });
 
     res.status(200).json({

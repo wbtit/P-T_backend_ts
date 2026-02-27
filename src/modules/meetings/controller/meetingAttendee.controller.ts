@@ -3,8 +3,23 @@ import { AuthenticateRequest } from "../../../middleware/authMiddleware";
 import { AppError } from "../../../config/utils/AppError";
 import { MeetingAttendeeService } from "../services";
 import { MeetingAttendeeInput, UpdateMeetingAttendeeInput } from "../dtos";
+import { notifyByRoles } from "../../../utils/notifyByRole";
+import { UserRole } from "@prisma/client";
 
 const meetingAttendeeService = new MeetingAttendeeService();
+const MEETING_NOTIFY_ROLES: UserRole[] = [
+  "DEPT_MANAGER",
+  "PROJECT_MANAGER",
+  "TEAM_LEAD",
+  "PROJECT_MANAGER_OFFICER",
+  "DEPUTY_MANAGER",
+  "OPERATION_EXECUTIVE",
+  "CLIENT",
+  "CLIENT_ADMIN",
+  "CLIENT_PROJECT_COORDINATOR",
+  "VENDOR",
+  "VENDOR_ADMIN",
+];
 
 export class MeetingAttendeeController {
   // UPDATE RSVP
@@ -15,6 +30,15 @@ export class MeetingAttendeeController {
     const { rsvp } = req.body as UpdateMeetingAttendeeInput;
 
     const result = await meetingAttendeeService.updateRsvp(meetingId, req.user.id, { rsvp });
+    await notifyByRoles(MEETING_NOTIFY_ROLES, {
+      type: "MEETING_RSVP_RECEIVED",
+      title: "RSVP Response Received",
+      message: `A participant RSVP'd '${rsvp}' for a meeting.`,
+      meetingId,
+      rsvp,
+      userId: req.user.id,
+      timestamp: new Date(),
+    });
 
     res.status(200).json({
       status: "success",

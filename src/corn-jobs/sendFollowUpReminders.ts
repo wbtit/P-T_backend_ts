@@ -1,6 +1,7 @@
 import prisma from "../config/database/client";
 import { sendEmail } from "../services/mailServices/mailconfig";
 import { followUpReminderTemplate } from "../services/mailServices/mailtemplates/followUpMailTemplate";
+import { notifyByRoles } from "../utils/notifyByRole";
 
 export function startOfToday(): Date {
   const now = new Date();
@@ -73,6 +74,32 @@ export async function sendFollowUpReminders() {
     await prisma.clientCommunication.update({
       where: { id: item.id },
       data: { reminderSent: true },
+    });
+    await notifyByRoles(["OPERATION_EXECUTIVE"], {
+      type: "CLIENT_FOLLOWUP_APPROACHING",
+      title: "Follow-Up Date Approaching",
+      message: `Follow-up is due soon for project '${item.project.name}'.`,
+      communicationId: item.id,
+      followUpDate: item.followUpDate,
+      timestamp: new Date(),
+    });
+  }
+
+  const overdueItems = await prisma.clientCommunication.findMany({
+    where: {
+      isCompleted: false,
+      followUpDate: { lt: startOfToday() },
+    },
+    include: { project: true },
+  });
+  for (const item of overdueItems) {
+    await notifyByRoles(["OPERATION_EXECUTIVE"], {
+      type: "CLIENT_FOLLOWUP_OVERDUE",
+      title: "Follow-Up Overdue",
+      message: `Follow-up is overdue for project '${item.project.name}'.`,
+      communicationId: item.id,
+      followUpDate: item.followUpDate,
+      timestamp: new Date(),
     });
   }
 }

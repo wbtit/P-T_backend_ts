@@ -101,10 +101,10 @@ export class TaskRepository {
         });
     }
 
-    async findOperationExecutives() {
+    async findDuplicateTaskRecipients() {
         return prisma.user.findMany({
             where: {
-                role: "OPERATION_EXECUTIVE",
+                role: { in: ["ADMIN", "DEPUTY_MANAGER", "OPERATION_EXECUTIVE"] },
                 isActive: true,
             },
             select: {
@@ -275,7 +275,7 @@ export class TaskRepository {
     }
 
     async update(id: string, data: updateTaskInput) {
-        await prisma.$transaction(async (tx) => {
+        return await prisma.$transaction(async (tx) => {
             const task = await tx.task.update({
                 where: { id },
                 data: {

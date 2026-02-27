@@ -5,8 +5,24 @@ import { SubmittalService } from "../services";
 import { mapUploadedFiles } from "../../uploads/fileUtil";
 import { sendEmail, getCCEmails } from "../../../services/mailServices/mailconfig";
 import { submittalhtmlContent } from "../../../services/mailServices/mailtemplates/submittalMailtemplate";
+import { notifyByRoles } from "../../../utils/notifyByRole";
+import { UserRole } from "@prisma/client";
 
 const submittalService = new SubmittalService();
+const SUBMITTAL_NOTIFY_ROLES: UserRole[] = [
+  "ADMIN",
+  "DEPT_MANAGER",
+  "PROJECT_MANAGER",
+  "TEAM_LEAD",
+  "PROJECT_MANAGER_OFFICER",
+  "OPERATION_EXECUTIVE",
+  "CONNECTION_DESIGNER_ENGINEER",
+  "CLIENT",
+  "CLIENT_ADMIN",
+  "CLIENT_PROJECT_COORDINATOR",
+  "VENDOR",
+  "VENDOR_ADMIN",
+];
 
 export class SubmittalController {
 
@@ -57,6 +73,13 @@ export class SubmittalController {
         html: submittalhtmlContent(submittal),
       });
     }
+    await notifyByRoles(SUBMITTAL_NOTIFY_ROLES, {
+      type: "SUBMITTAL_CREATED",
+      title: "Submittal Created / Sent",
+      message: `Submittal '${submittal.subject}' was created and sent.`,
+      submittalId: submittal.id,
+      timestamp: new Date(),
+    });
 
     res.status(201).json({
       status: "success",
@@ -129,6 +152,14 @@ export class SubmittalController {
       },
       user.id
     );
+    await notifyByRoles(SUBMITTAL_NOTIFY_ROLES, {
+      type: "SUBMITTAL_NEW_VERSION",
+      title: "New Submittal Version Uploaded",
+      message: "A new submittal version has been uploaded.",
+      submittalId,
+      versionId: version.id,
+      timestamp: new Date(),
+    });
 
     res.status(201).json({
       status: "success",

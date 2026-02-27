@@ -2,9 +2,17 @@ import { AppError } from "../../../config/utils/AppError";
 import { TaskRepository } from "../repositories/task.repository";
 import { createTaskInput, updateTaskInput } from "../dtos";
 import { sendNotification } from "../../../utils/sendNotification";
+import { notifyByRoles } from "../../../utils/notifyByRole";
+import { UserRole } from "@prisma/client";
 
 export class TaskService {
   private taskRepository: TaskRepository;
+  private readonly taskNotifyRoles: UserRole[] = [
+    "DEPT_MANAGER",
+    "PROJECT_MANAGER",
+    "TEAM_LEAD",
+    "OPERATION_EXECUTIVE",
+  ];
 
   constructor() {
     this.taskRepository = new TaskRepository();
@@ -26,11 +34,26 @@ export class TaskService {
       data
     );
     const task = await this.taskRepository.create(data, managerId);
+    await notifyByRoles(this.taskNotifyRoles, {
+      type: "TASK_ASSIGNED",
+      title: "Task Assigned to Employee",
+      message: `Task '${task.name}' was assigned.`,
+      taskId: task.id,
+      assigneeId: task.user_id,
+      timestamp: new Date(),
+    });
+    await sendNotification(task.user_id, {
+      type: "TASK_ASSIGNED",
+      title: "Task Assigned",
+      message: `You were assigned task '${task.name}'.`,
+      taskId: task.id,
+      timestamp: new Date(),
+    });
 
     if (duplicateTask) {
       const manager = await this.taskRepository.findUserNameById(managerId);
-      const operationExecutives =
-        await this.taskRepository.findOperationExecutives();
+      const duplicateRecipients =
+        await this.taskRepository.findDuplicateTaskRecipients();
       const severity =
         duplicateTask.status === "COMPLETED" ? "MEDIUM" : "HIGH";
       const reason =
@@ -57,8 +80,8 @@ export class TaskService {
       };
 
       await Promise.all(
-        operationExecutives.map((opsUser) =>
-          sendNotification(opsUser.id, payload)
+        duplicateRecipients.map((recipientUser) =>
+          sendNotification(recipientUser.id, payload)
         )
       );
     }
@@ -93,6 +116,26 @@ export class TaskService {
       throw new AppError("Task not found", 404);
     }
     const updatedTask = await this.taskRepository.update(id, data);
+    if (data.status) {
+      await notifyByRoles(this.taskNotifyRoles, {
+        type: data.status === "COMPLETED" ? "TASK_COMPLETED" : "TASK_STATUS_CHANGED",
+        title: data.status === "COMPLETED" ? "Task Completed" : "Task Status Changed",
+        message: `Task '${updatedTask.name}' status changed to '${data.status}'.`,
+        taskId: updatedTask.id,
+        status: data.status,
+        timestamp: new Date(),
+      });
+      if (updatedTask.user_id) {
+        await sendNotification(updatedTask.user_id, {
+          type: data.status === "COMPLETED" ? "TASK_COMPLETED" : "TASK_STATUS_CHANGED",
+          title: data.status === "COMPLETED" ? "Task Completed" : "Task Status Changed",
+          message: `Your task '${updatedTask.name}' status changed to '${data.status}'.`,
+          taskId: updatedTask.id,
+          status: data.status,
+          timestamp: new Date(),
+        });
+      }
+    }
     return updatedTask;
   }
 

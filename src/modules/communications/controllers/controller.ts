@@ -1,6 +1,7 @@
 import { AuthenticateRequest } from "../../../middleware/authMiddleware";
 import {Request,Response} from "express"
 import { ClientCommunicationService } from "../services";
+import { notifyByRoles } from "../../../utils/notifyByRole";
 
 
 const communicationService = new ClientCommunicationService();
@@ -11,6 +12,13 @@ export class ClientCommunicationController {
       req.body,
       req.user!.id
     );
+    await notifyByRoles(["OPERATION_EXECUTIVE"], {
+      type: "CLIENT_COMM_LOG_CREATED",
+      title: "Client Communication Log Created",
+      message: "A new client communication log was created.",
+      communicationId: data.id,
+      timestamp: new Date(),
+    });
     res.status(201).json({ status: "success", data });
   }
 

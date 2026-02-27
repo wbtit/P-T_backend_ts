@@ -3,8 +3,11 @@ import { InvoiceService } from "../services";
 import { AppError } from "../../../config/utils/AppError";
 import { AuthenticateRequest } from "../../../middleware/authMiddleware";
 import prisma from "../../../config/database/client";
+import { notifyByRoles } from "../../../utils/notifyByRole";
+import { UserRole } from "@prisma/client";
 
 const invoiceService = new InvoiceService();
+const INVOICE_NOTIFY_ROLES: UserRole[] = ["ADMIN", "PROJECT_MANAGER_OFFICER"];
 
 export class InvoiceController {
   // ---------------------------------------------------------------------------
@@ -20,6 +23,13 @@ export class InvoiceController {
       }
 
       const result = await invoiceService.createInvoice(data, user.id);
+      await notifyByRoles(INVOICE_NOTIFY_ROLES, {
+        type: "INVOICE_CREATED",
+        title: "Invoice Created",
+        message: `Invoice '${result.id}' has been created.`,
+        invoiceId: result.id,
+        timestamp: new Date(),
+      });
 
       return res.status(201).json({
         message: "Invoice created successfully",
@@ -115,6 +125,16 @@ export class InvoiceController {
       const data = req.body;
 
       const updatedInvoice = await invoiceService.updateInvoice(id, data);
+      if (data?.status) {
+        await notifyByRoles(INVOICE_NOTIFY_ROLES, {
+          type: "INVOICE_STATUS_UPDATED",
+          title: "Invoice Status Updated",
+          message: `Invoice '${updatedInvoice.id}' status changed to '${data.status}'.`,
+          invoiceId: updatedInvoice.id,
+          status: data.status,
+          timestamp: new Date(),
+        });
+      }
 
       return res.status(200).json({
         message: "Invoice updated successfully",
@@ -195,4 +215,3 @@ export class InvoiceController {
     }
   }
 }
-

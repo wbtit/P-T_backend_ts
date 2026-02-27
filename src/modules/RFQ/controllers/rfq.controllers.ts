@@ -5,8 +5,11 @@ import { RFQService } from "../services/rfq.service";
 import { mapUploadedFiles } from "../../uploads/fileUtil";
 import { sendEmail, getCCEmails } from "../../../services/mailServices/mailconfig";
 import { rfqhtmlContent } from "../../../services/mailServices/mailtemplates/rfqMailtemplate";
+import { notifyByRoles } from "../../../utils/notifyByRole";
+import { UserRole } from "@prisma/client";
 
 const rfqService = new RFQService();
+const RFQ_NOTIFY_ROLES: UserRole[] = ["ADMIN", "SALES_MANAGER", "SALES_PERSON"];
 
 export class RFQController {
     async handleCreateRfq(req:AuthenticateRequest,res:Response){
@@ -38,6 +41,13 @@ export class RFQController {
               subject: newrfq.subject,
               text: newrfq.description,
             });
+                await notifyByRoles(RFQ_NOTIFY_ROLES, {
+                  type: "RFQ_CREATED",
+                  title: "RFQ Created / Sent",
+                  message: `RFQ '${newrfq.subject}' was created and sent.`,
+                  rfqId: newrfq.id,
+                  timestamp: new Date(),
+                });
                 res.status(201).json({
                     status: 'success',
                     data: result,
@@ -56,6 +66,14 @@ export class RFQController {
         const rfq = await rfqService.updateRfq(id, {
           ...req.body,
           files: uploadedFiles
+        });
+        await notifyByRoles(RFQ_NOTIFY_ROLES, {
+          type: "RFQ_UPDATED",
+          title: "RFQ Updated",
+          message: `RFQ '${rfq.subject}' was updated.`,
+          rfqId: rfq.id,
+          status: (rfq as any).status ?? req.body?.status ?? null,
+          timestamp: new Date(),
         });
         res.status(200).json({
             status: 'success',

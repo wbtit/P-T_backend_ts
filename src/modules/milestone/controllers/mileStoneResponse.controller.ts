@@ -4,8 +4,25 @@ import { AppError } from "../../../config/utils/AppError";
 import { mapUploadedFiles } from "../../uploads/fileUtil";
 import { MileStoneResponseService } from "../services";
 import { mileStoneResponseStatus } from "@prisma/client";
+import { notifyByRoles } from "../../../utils/notifyByRole";
+import { UserRole } from "@prisma/client";
 
 const mileStoneResponseService = new MileStoneResponseService();
+const MILESTONE_NOTIFY_ROLES: UserRole[] = [
+  "ADMIN",
+  "DEPT_MANAGER",
+  "PROJECT_MANAGER",
+  "TEAM_LEAD",
+  "PROJECT_MANAGER_OFFICER",
+  "DEPUTY_MANAGER",
+  "OPERATION_EXECUTIVE",
+  "CONNECTION_DESIGNER_ENGINEER",
+  "CLIENT",
+  "CLIENT_ADMIN",
+  "CLIENT_PROJECT_COORDINATOR",
+  "VENDOR",
+  "VENDOR_ADMIN",
+];
 
 export class MileStoneResponseController {
   async handleCreateResponse(req: AuthenticateRequest, res: Response) {
@@ -25,6 +42,14 @@ export class MileStoneResponseController {
       },
       req.user.id
     );
+    await notifyByRoles(MILESTONE_NOTIFY_ROLES, {
+      type: "MILESTONE_RESPONSE_RECEIVED",
+      title: "Milestone Response Received",
+      message: "A milestone response was submitted.",
+      milestoneId: req.body?.mileStoneId,
+      milestoneResponseId: response.id,
+      timestamp: new Date(),
+    });
 
     res.status(201).json({
       status: "success",
@@ -45,6 +70,14 @@ export class MileStoneResponseController {
       parentResponseId,
       status as mileStoneResponseStatus
     );
+    await notifyByRoles(MILESTONE_NOTIFY_ROLES, {
+      type: status === "DELAYED" ? "MILESTONE_DELAYED" : "MILESTONE_STATUS_UPDATED",
+      title: status === "DELAYED" ? "Milestone is DELAYED" : "Milestone Status Updated",
+      message: `Milestone response status changed to '${status}'.`,
+      parentResponseId,
+      status,
+      timestamp: new Date(),
+    });
 
     res.status(200).json({
       status: "success",
