@@ -10,10 +10,13 @@ export class EmployeeController{
     
     async handleCreateEmp(req:Request,res:Response){
         const result = await this.empService.create(req.body);
+        const userName = result.user?.username?.trim();
         await notifyByRoles(this.userTeamNotifyRoles, {
             type: "USER_CREATED",
             title: "New User Created / Onboarded",
-            message: `A new user '${result.user?.username ?? result.user?.id ?? ""}' was created.`,
+            message: userName
+              ? `A new user '${userName}' was created.`
+              : "A new user was created.",
             userId: result.user?.id ?? null,
             timestamp: new Date(),
         });

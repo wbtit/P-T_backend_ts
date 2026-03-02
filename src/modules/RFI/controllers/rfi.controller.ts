@@ -96,10 +96,13 @@ export class RFIController {
       ...req.body,
       files: uploadedFiles,
     });
+    const updatedRfiSubject = (updatedRfi as any)?.subject?.trim?.();
     await notifyByRoles(RFI_NOTIFY_ROLES, {
       type: "RFI_UPDATED",
       title: "RFI Updated",
-      message: `RFI '${(updatedRfi as any)?.subject ?? rfiId}' was updated.`,
+      message: updatedRfiSubject
+        ? `RFI '${updatedRfiSubject}' was updated.`
+        : "An RFI was updated.",
       rfiId,
       isAproovedByAdmin: (updatedRfi as any)?.isAproovedByAdmin ?? req.body?.isAproovedByAdmin ?? null,
       timestamp: new Date(),

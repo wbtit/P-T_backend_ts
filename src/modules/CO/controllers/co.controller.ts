@@ -42,10 +42,13 @@ export class COController {
       coNum,
       id
     );
+    const coNumber = co.changeOrderNumber?.trim();
     await notifyByRoles(CO_NOTIFY_ROLES, {
       type: "CO_CREATED",
       title: "Change Order Created / Sent",
-      message: `Change Order '${co.changeOrderNumber ?? co.id}' was created.`,
+      message: coNumber
+        ? `Change Order '${coNumber}' was created.`
+        : "A new Change Order was created.",
       coId: co.id,
       timestamp: new Date(),
     });
@@ -78,10 +81,13 @@ export class COController {
       ...req.body,
       files: uploadedFiles,
     });
+    const updatedCoNumber = updatedCo.changeOrderNumber?.trim();
     await notifyByRoles(CO_NOTIFY_ROLES, {
       type: "CO_UPDATED",
       title: "Change Order Updated",
-      message: `Change Order '${updatedCo.changeOrderNumber ?? updatedCo.id}' was updated.`,
+      message: updatedCoNumber
+        ? `Change Order '${updatedCoNumber}' was updated.`
+        : "A Change Order was updated.",
       coId: updatedCo.id,
       status: (updatedCo as any).status ?? req.body?.status ?? null,
       timestamp: new Date(),

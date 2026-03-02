@@ -132,11 +132,14 @@ export class FabricatorController {
     const userId = req.user?.id;
     if (!userId) throw new AppError("createdById is required", 400);
 
+    const fabricator = await this.fabService.getFabricatorById(id);
     await this.fabService.deleteFabricator(id);
     await notifyByRoles(this.fabricatorNotifyRoles, {
       type: "FABRICATOR_DELETED",
       title: "Fabricator Deleted",
-      message: `Fabricator '${id}' was deleted.`,
+      message: fabricator?.fabName?.trim()
+        ? `Fabricator '${fabricator.fabName}' was deleted.`
+        : "A fabricator was deleted.",
       fabricatorId: id,
       timestamp: new Date(),
     });

@@ -144,7 +144,9 @@ export class ProjectController {
         await notifyByRoles(PROJECT_DELETED_ROLES, {
           type: "PROJECT_DELETED",
           title: "Project Deleted / Soft Deleted",
-          message: `Project '${req.params.id}' was deleted.`,
+          message: project?.name?.trim()
+            ? `Project '${project.name}' was deleted.`
+            : "A project was deleted.",
           projectId: req.params.id,
           timestamp: new Date(),
         });

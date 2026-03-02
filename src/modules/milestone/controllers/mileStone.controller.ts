@@ -22,6 +22,16 @@ const MILESTONE_NOTIFY_ROLES: UserRole[] = [
   "VENDOR_ADMIN",
 ];
 
+const milestoneReference = (milestone?: { subject?: string | null; serialNo?: string | null }) => {
+  const subject = milestone?.subject?.trim();
+  if (subject) return `"${subject}"`;
+
+  const serialNo = milestone?.serialNo?.trim();
+  if (serialNo) return serialNo;
+
+  return "this milestone";
+};
+
 export class MileStoneController {
   async handleCreate(req: Request, res: Response) {
     console.log("[Milestone][Create] Incoming request", {
@@ -34,7 +44,7 @@ export class MileStoneController {
     await notifyByRoles(MILESTONE_NOTIFY_ROLES, {
       type: "MILESTONE_CREATED",
       title: "Milestone Created",
-      message: `Milestone '${result?.subject ?? result?.id}' created.`,
+      message: `Milestone ${milestoneReference(result ?? undefined)} created.`,
       milestoneId: result?.id,
       timestamp: new Date(),
     });
@@ -58,7 +68,7 @@ export class MileStoneController {
     await notifyByRoles(MILESTONE_NOTIFY_ROLES, {
       type: "MILESTONE_NEW_VERSION",
       title: "New Milestone Version Created",
-      message: `A new version was created for milestone '${id}'.`,
+      message: `A new version (v${result.versionNumber}) was created for milestone ${milestoneReference(result)}.`,
       milestoneId: id,
       timestamp: new Date(),
     });
@@ -84,7 +94,7 @@ export class MileStoneController {
     await notifyByRoles(MILESTONE_NOTIFY_ROLES, {
       type: "MILESTONE_UPDATED",
       title: "Milestone Updated",
-      message: `Milestone '${id}' was updated.`,
+      message: `Milestone ${milestoneReference(result)} was updated.`,
       milestoneId: id,
       timestamp: new Date(),
     });

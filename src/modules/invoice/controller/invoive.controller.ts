@@ -32,10 +32,13 @@ export class InvoiceController {
       }
 
       const result = await invoiceService.createInvoice(data, user.id);
+      const invoiceNumber = result.invoiceNumber?.trim();
       await notifyByRoles(INVOICE_NOTIFY_ROLES, {
         type: "INVOICE_CREATED",
         title: "Invoice Created",
-        message: `Invoice '${result.id}' has been created.`,
+        message: invoiceNumber
+          ? `Invoice '${invoiceNumber}' has been created.`
+          : "A new invoice has been created.",
         invoiceId: result.id,
         timestamp: new Date(),
       });
@@ -135,10 +138,13 @@ export class InvoiceController {
 
       const updatedInvoice = await invoiceService.updateInvoice(id, data);
       if (data?.status) {
+        const updatedInvoiceNumber = updatedInvoice.invoiceNumber?.trim();
         await notifyByRoles(INVOICE_NOTIFY_ROLES, {
           type: "INVOICE_STATUS_UPDATED",
           title: "Invoice Status Updated",
-          message: `Invoice '${updatedInvoice.id}' status changed to '${data.status}'.`,
+          message: updatedInvoiceNumber
+            ? `Invoice '${updatedInvoiceNumber}' status changed to '${data.status}'.`
+            : `An invoice status changed to '${data.status}'.`,
           invoiceId: updatedInvoice.id,
           status: data.status,
           timestamp: new Date(),
