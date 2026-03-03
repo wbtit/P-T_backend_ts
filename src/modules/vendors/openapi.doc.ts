@@ -1,6 +1,11 @@
 import { ModuleOpenApiDoc } from "../../openapi/types";
-import { genericRequestBody, zodRequestBody } from "../../openapi/zod";
-import { VendorQuotaSchema, updateVendorQuotaSchema } from "./dto";
+import { zodRequestBody } from "../../openapi/zod";
+import {
+  VendorQuotaSchema,
+  updateVendorQuotaSchema,
+  VendorSchema,
+  updateVendorSchema,
+} from "./dto";
 
 export const vendorsOpenApiDoc: ModuleOpenApiDoc = {
   tag: {
@@ -16,7 +21,7 @@ export const vendorsOpenApiDoc: ModuleOpenApiDoc = {
         security: [{ bearerAuth: [] }],
         requestBody: zodRequestBody(VendorQuotaSchema),
         responses: {
-          "200": { description: "Success" },
+          "201": { description: "Vendor quota created successfully" },
           "400": { description: "Bad Request" },
           "401": { description: "Unauthorized" },
           "500": { description: "Internal Server Error" }
@@ -46,7 +51,6 @@ export const vendorsOpenApiDoc: ModuleOpenApiDoc = {
         parameters: [
           { in: "path", name: "id", required: true, schema: { type: "string" } },
         ],
-        requestBody: genericRequestBody,
         responses: {
           "200": { description: "Success" },
           "400": { description: "Bad Request" },
@@ -130,9 +134,9 @@ export const vendorsOpenApiDoc: ModuleOpenApiDoc = {
         summary: "POST /vendors",
         operationId: "post_vendors_vendors",
         security: [{ bearerAuth: [] }],
-        requestBody: genericRequestBody,
+        requestBody: zodRequestBody(VendorSchema),
         responses: {
-          "200": { description: "Success" },
+          "201": { description: "Vendor created successfully" },
           "400": { description: "Bad Request" },
           "401": { description: "Unauthorized" },
           "500": { description: "Internal Server Error" }
@@ -233,7 +237,7 @@ export const vendorsOpenApiDoc: ModuleOpenApiDoc = {
         parameters: [
           { in: "path", name: "id", required: true, schema: { type: "string" } },
         ],
-        requestBody: genericRequestBody,
+        requestBody: zodRequestBody(updateVendorSchema),
         responses: {
           "200": { description: "Success" },
           "400": { description: "Bad Request" },

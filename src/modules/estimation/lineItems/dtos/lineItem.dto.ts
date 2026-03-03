@@ -7,7 +7,12 @@ export const createLineItemGroupSchema = z.object({
     notes: z.string().optional(),
     divisor: z.number().optional()
 })
-export const updateLineItemGroupSchema = createLineItemGroupSchema.partial();
+export const updateLineItemGroupSchema = createLineItemGroupSchema
+    .partial()
+    .extend({
+        // Compatibility field: allows updating aggregate hours from group update endpoint.
+        totalHours: z.number().optional(),
+    });
 
 export type lineItemGroupDto = z.infer<typeof createLineItemGroupSchema>;
 export type updateLineItemGroupDto = z.infer<typeof updateLineItemGroupSchema>;

@@ -20,7 +20,22 @@ export class LineItemsService{
         return group;
     }
     async updateLineItemGroup(id:string,data:updateLineItemGroupDto){
-        return await this.lineItemsRepo.updateLineItemGroup(id,data);
+        const { totalHours, ...groupPayload } = data as updateLineItemGroupDto & { totalHours?: number };
+
+        const updatedGroup = await this.lineItemsRepo.updateLineItemGroup(id, groupPayload);
+
+        if (typeof totalHours === "number") {
+            await this.lineItemsRepo.applyGroupTotalHours(
+                id,
+                totalHours,
+                updatedGroup.divisor ?? undefined
+            );
+        } else if (typeof updatedGroup.divisor === "number") {
+            // If divisor changed, keep totals and recompute weeks.
+            await this.lineItemsRepo.recomputeWeeksByGroup(id, updatedGroup.divisor);
+        }
+
+        return await this.lineItemsRepo.getLineItemGroupById(id);
     }
     async getGroupsByEstimationId(estimationId:string){
         return await this.lineItemsRepo.getGroupsByEstimationId(estimationId);
