@@ -1197,6 +1197,7 @@ model Estimation {
   inclusions      String?
   exclusions      String?
   finalHours       Float?
+  fabricationPercentage Float?
   finalWeeks       Float?
   finalPrice       Float?
   files            Json?                 @default("[]")

@@ -21,6 +21,7 @@ export const EstimationSchema = z.object({
     }),
     assignedById: z.string().optional(),
     finalHours: z.number().optional(),
+    fabricationPercentage: z.number().optional(),
     finalWeeks: z.number().optional(),
     finalPrice: z.number().optional(),
     files: z
