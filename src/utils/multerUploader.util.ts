@@ -121,6 +121,9 @@ export const estimationUploads = createMulterUploader("public/estimations", esti
 export const estimationTaskMap={}
 export const estimationTaskUploads = createMulterUploader("public/estimationtasks", estimationTaskMap);
 
+export const estimationResponseMap = {};
+export const estimationResponseUploads = createMulterUploader("public/estimationresponse", estimationResponseMap);
+
 
 export const rfiDataMap = {};
 export const rfiUploads = createMulterUploader("public/rfi", rfiDataMap);

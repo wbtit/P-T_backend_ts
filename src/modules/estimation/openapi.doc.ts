@@ -3,6 +3,7 @@ import { genericRequestBody, zodRequestBody } from "../../openapi/zod";
 import { EstimationTaskDTO, UpdateEstimationTask } from "./estimationTask/dtos";
 import { createLineItemGroupSchema, createLineItemSchema, updateLineItemGroupSchema, updateLineItemSchema } from "./lineItems/dtos";
 import { EstimationSchema, UpdateEstimationDto } from "./management/dtos";
+import { EstimationResponseSchema } from "./response/dtos";
 
 export const estimationOpenApiDoc: ModuleOpenApiDoc = {
   tag: {
@@ -267,6 +268,77 @@ export const estimationOpenApiDoc: ModuleOpenApiDoc = {
           { in: "path", name: "status", required: true, schema: { type: "string" } },
         ],
         requestBody: genericRequestBody,
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
+    "/estimation/estimations/{estimationId}/responses": {
+      post: {
+        tags: ["Estimation"],
+        summary: "POST /estimation/estimations/{estimationId}/responses",
+        operationId: "post_estimation_estimations_estimationId_responses",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { in: "path", name: "estimationId", required: true, schema: { type: "string" } },
+        ],
+        requestBody: zodRequestBody(EstimationResponseSchema),
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
+    "/estimation/responses/{id}": {
+      get: {
+        tags: ["Estimation"],
+        summary: "GET /estimation/responses/{id}",
+        operationId: "get_estimation_responses_id",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { in: "path", name: "id", required: true, schema: { type: "string" } },
+        ],
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
+    "/estimation/responses/{estimationResId}/files/{fileId}": {
+      get: {
+        tags: ["Estimation"],
+        summary: "GET /estimation/responses/{estimationResId}/files/{fileId}",
+        operationId: "get_estimation_responses_estimationResId_files_fileId",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { in: "path", name: "estimationResId", required: true, schema: { type: "string" } },
+          { in: "path", name: "fileId", required: true, schema: { type: "string" } },
+        ],
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
+    "/estimation/response/viewFile/{estimationResId}/{fileId}": {
+      get: {
+        tags: ["Estimation"],
+        summary: "GET /estimation/response/viewFile/{estimationResId}/{fileId}",
+        operationId: "get_estimation_response_viewFile_estimationResId_fileId",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { in: "path", name: "estimationResId", required: true, schema: { type: "string" } },
+          { in: "path", name: "fileId", required: true, schema: { type: "string" } },
+        ],
         responses: {
           "200": { description: "Success" },
           "400": { description: "Bad Request" },

@@ -347,6 +347,7 @@ model User {
   projectBundleSelections    ProjectBundleSelection[]
   connectionEngineersRFQs    RFQ[]            @relation("RFQ_connectionEngineers")
   milestoneResponseUser          MileStoneResponse[] @relation("milestoneResponseUser")
+  estimationResponseBy           EstimationResponse[] @relation("estimationResponseBy")
 
   @@map("user")
   @@index([email])
@@ -1216,8 +1217,31 @@ model Estimation {
   createdBy        User                @relation("CreatedBy", fields: [createdById], references: [id])
   fabricators      Fabricator           @relation("estimationUnderFabricator", fields: [fabricatorId], references: [id])
   rfq              RFQ?                  @relation(fields: [rfqId], references: [id])
+  responses        EstimationResponse[]
   @@index([createdById])
   @@map("estimations")
+}
+
+model EstimationResponse {
+  id               String               @id @default(uuid()) @db.Uuid
+  estimationId     String               @db.Uuid
+  userId           String               @db.Uuid
+  parentResponseId String?              @db.Uuid
+  message          String               @default("")
+  files            Json?                @default("[]")
+  createdAt        DateTime             @default(now())
+  isDeleted        Boolean              @default(false)
+  deletedAt        DateTime?
+
+  parentResponse   EstimationResponse?  @relation("EstimationParentChildResponse", fields: [parentResponseId], references: [id])
+  childResponses   EstimationResponse[] @relation("EstimationParentChildResponse")
+  estimation       Estimation           @relation(fields: [estimationId], references: [id], onDelete: Cascade)
+  user             User                 @relation("estimationResponseBy", fields: [userId], references: [id])
+
+  @@map("estimationresponse")
+  @@index([estimationId])
+  @@index([userId])
+  @@index([parentResponseId])
 }
 
 model EstimationTask {

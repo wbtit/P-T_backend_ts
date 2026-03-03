@@ -1,6 +1,12 @@
 import { z } from "zod";
 import { EstimationStatus, Prisma,ProjectComplexity } from "@prisma/client";
 
+const optionalFloat = z.preprocess((val) => {
+  if (val === "" || val === null || val === undefined) return undefined;
+  if (typeof val === "string") return parseFloat(val);
+  return val;
+}, z.number().optional());
+
 export const EstimationSchema = z.object({
     estimationNumber: z.string().min(1, "Estimation number is required").optional(),
     fabricatorName: z.string().optional(),
@@ -20,9 +26,9 @@ export const EstimationSchema = z.object({
       return val;
     }),
     assignedById: z.string().optional(),
-    finalHours: z.number().optional(),
+    finalHours: optionalFloat,
     fabricationPercentage: z.number().optional(),
-    finalWeeks: z.number().optional(),
+    finalWeeks: optionalFloat,
     finalPrice: z.number().optional(),
     files: z
             .union([

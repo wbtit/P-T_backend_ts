@@ -4,10 +4,16 @@ import authMiddleware from "../../middleware/authMiddleware";
 import { asyncHandler } from "../../config/utils/asyncHandler";
 import validate from "../../middleware/validate";
 import { z } from "zod";
-import { estimationUploads,estimationTaskUploads } from "../../utils/multerUploader.util";
+import {
+  estimationUploads,
+  estimationTaskUploads,
+  estimationResponseUploads,
+} from "../../utils/multerUploader.util";
 import { EstimationSchema,UpdateEstimationDto } from "./management/dtos";
 import { EstimationTaskDTO,UpdateEstimationTask } from "./estimationTask/dtos";
 import { EstimationTaskController } from "./estimationTask/controllers/estTask.controller";
+import { EstimationResponseController } from "./response";
+import { EstimationResponseSchema } from "./response";
 import { TaskStatus } from "@prisma/client";
 
 const router = express.Router();
@@ -191,4 +197,52 @@ router.delete(
   validate({ params: ParamsWithId }),
   asyncHandler(taskController.handleDeleteEstimationTask.bind(taskController))
 );
+
+// ===========================================================
+// ESTIMATION RESPONSE ROUTES
+// ===========================================================
+const estimationResponseController = new EstimationResponseController();
+
+router.post(
+  "/estimations/:estimationId/responses",
+  authMiddleware,
+  estimationResponseUploads.array("files"),
+  validate({
+    params: z.object({ estimationId: z.string() }),
+    body: EstimationResponseSchema,
+  }),
+  asyncHandler(estimationResponseController.handleCreate.bind(estimationResponseController))
+);
+
+router.get(
+  "/responses/:id",
+  authMiddleware,
+  validate({ params: z.object({ id: z.string() }) }),
+  asyncHandler(estimationResponseController.handleGetById.bind(estimationResponseController))
+);
+
+router.get(
+  "/responses/:estimationResId/files/:fileId",
+  authMiddleware,
+  validate({
+    params: z.object({
+      estimationResId: z.string(),
+      fileId: z.string(),
+    }),
+  }),
+  asyncHandler(estimationResponseController.handleGetFile.bind(estimationResponseController))
+);
+
+router.get(
+  "/response/viewFile/:estimationResId/:fileId",
+  authMiddleware,
+  validate({
+    params: z.object({
+      estimationResId: z.string(),
+      fileId: z.string(),
+    }),
+  }),
+  asyncHandler(estimationResponseController.handleViewFile.bind(estimationResponseController))
+);
+
 export default router;
