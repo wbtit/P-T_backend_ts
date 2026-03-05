@@ -32,9 +32,7 @@ export class MileStoneResponseService {
       );
     }
 
-    if (data.parentResponseId) {
-      await responseRepo.updateWorkflowStatus(data.parentResponseId, "ON_TIME");
-    }
+    
 
     return responseRepo.create(data, userId);
   }

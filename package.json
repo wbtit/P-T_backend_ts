@@ -10,7 +10,8 @@
     "dev": "ts-node-dev --respawn src/server.ts",
     "run": "ts-node src/server.ts",
     "build": "tsc",
-    "serve": "node build/server.js"
+    "serve": "node build/server.js",
+    "metrics:percentiles": "ts-node src/scripts/metricsPercentiles.ts"
   },
   "repository": {
     "type": "git",

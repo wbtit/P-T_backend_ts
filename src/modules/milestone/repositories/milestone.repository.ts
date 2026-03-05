@@ -63,7 +63,17 @@ export class MileStoneRepository{
             where:{id},
             include:{
                 project:true,
-                Tasks:true,
+                Tasks:{
+                    select:{
+                        id:true,
+                        due_date:true,
+                        name:true,
+                        wbsType:true,
+                        status:true,
+                        user_id:true,
+                        user:{select:{firstName:true,middleName:true,lastName:true}}
+                    }
+                },
                 fabricator:true,
                 currentVersion: true,
                 versions: {

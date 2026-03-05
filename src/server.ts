@@ -1,6 +1,36 @@
 import express from 'express'
 import dotenv from "dotenv";
+import path from "path";
+import { RotatingFileWriter, getRotateConfig } from "./utils/rotatingFileWriter";
 dotenv.config();
+
+const rotateConfig = getRotateConfig();
+const errorLogWriter = new RotatingFileWriter({
+  filePath: path.join(process.cwd(), "logs", "server.err.log"),
+  maxBytes: rotateConfig.maxBytes,
+  maxFiles: rotateConfig.maxFiles,
+});
+
+function formatLogArg(arg: unknown): string {
+  if (arg instanceof Error) {
+    return arg.stack ?? arg.message;
+  }
+  if (typeof arg === "string") {
+    return arg;
+  }
+  try {
+    return JSON.stringify(arg);
+  } catch {
+    return String(arg);
+  }
+}
+
+const originalConsoleError = console.error.bind(console);
+console.error = (...args: unknown[]) => {
+  const ts = new Date().toISOString();
+  originalConsoleError(`[${ts}]`, ...args);
+  errorLogWriter.write(`[${ts}] ${args.map(formatLogArg).join(" ")}\n`);
+};
 
 import "./corn-jobs/safeCorn"
 
@@ -20,6 +50,7 @@ import rateLimit from "express-rate-limit";
 import slowDown from "express-slow-down";
 import compression from "compression";
 import cookieParser from "cookie-parser";
+import { metricsMiddleware } from "./middleware/metricsMiddleware";
 
 import {Server} from "socket.io"
 import { createServer } from 'http';
@@ -60,6 +91,7 @@ app.use(compression());
 
 // 🍪 Cookie parsing (if needed later for JWT/session)
 app.use(cookieParser());
+app.use(metricsMiddleware);
 
 // ⚡ Rate limit to prevent brute-force
 const apiLimiter = rateLimit({

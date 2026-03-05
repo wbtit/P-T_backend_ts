@@ -9,7 +9,7 @@ export class MileStoneResponseRepository {
         mileStoneVersionId: data.mileStoneVersionId!,
         parentResponseId: data.parentResponseId ?? null,
         description: data.description ?? "",
-        status: data.status ?? "ON_TIME",
+        status: data.status,
         files: data.files,
         userId,
       },
