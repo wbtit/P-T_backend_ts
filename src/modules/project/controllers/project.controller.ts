@@ -1,11 +1,13 @@
 import { Response,Request } from "express";
 import { ProjectService } from "../services";
+import { ProjectAssistService } from "../services/projectAssist.service";
 import { mapUploadedFiles } from "../../uploads/fileUtil";
 import { AuthenticateRequest } from "../../../middleware/authMiddleware";
 import { notifyByRoles } from "../../../utils/notifyByRole";
 import { UserRole } from "@prisma/client";
 
 const projectService = new ProjectService();
+const projectAssistService = new ProjectAssistService();
 const PROJECT_CREATED_ROLES: UserRole[] = [
   "ADMIN", "DEPT_MANAGER", "PROJECT_MANAGER", "PROJECT_MANAGER_OFFICER",
   "DEPUTY_MANAGER", "OPERATION_EXECUTIVE", "ESTIMATION_HEAD", "CONNECTION_DESIGNER_ENGINEER",
@@ -228,6 +230,78 @@ async expandWbs(req: AuthenticateRequest, res: Response) {
       res.status(200).json({
         status: 'success',
         data: documents
+      });
+    }
+
+    async handleCreateProjectAssist(req: AuthenticateRequest, res: Response) {
+      if (!req.user) {
+        return res.status(401).json({ status: "error", message: "Unauthorized" });
+      }
+
+      const { projectId } = req.params;
+      const { userId, isActive } = req.body as { userId: string; isActive?: boolean };
+
+      const result = await projectAssistService.createAssist(
+        projectId,
+        userId,
+        req.user.id,
+        isActive ?? true
+      );
+
+      res.status(201).json({
+        status: "success",
+        message: "Project assist assigned",
+        data: result,
+      });
+    }
+
+    async handleGetProjectAssists(req: AuthenticateRequest, res: Response) {
+      if (!req.user) {
+        return res.status(401).json({ status: "error", message: "Unauthorized" });
+      }
+
+      const { projectId } = req.params;
+      const assists = await projectAssistService.listAssists(projectId, req.user.id);
+
+      res.status(200).json({
+        status: "success",
+        data: assists,
+      });
+    }
+
+    async handlePatchProjectAssist(req: AuthenticateRequest, res: Response) {
+      if (!req.user) {
+        return res.status(401).json({ status: "error", message: "Unauthorized" });
+      }
+
+      const { projectId, userId } = req.params;
+      const { isActive } = req.body as { isActive: boolean };
+
+      const result = await projectAssistService.updateAssist(
+        projectId,
+        userId,
+        req.user.id,
+        isActive
+      );
+
+      res.status(200).json({
+        status: "success",
+        message: "Project assist updated",
+        data: result,
+      });
+    }
+
+    async handleDeleteProjectAssist(req: AuthenticateRequest, res: Response) {
+      if (!req.user) {
+        return res.status(401).json({ status: "error", message: "Unauthorized" });
+      }
+
+      const { projectId, userId } = req.params;
+      await projectAssistService.deleteAssist(projectId, userId, req.user.id);
+
+      res.status(200).json({
+        status: "success",
+        message: "Project assist removed",
       });
     }
 

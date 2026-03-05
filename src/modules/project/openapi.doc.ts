@@ -1,12 +1,17 @@
 import { ModuleOpenApiDoc } from "../../openapi/types";
-import { genericRequestBody, zodRequestBody } from "../../openapi/zod";
+import { zodRequestBody } from "../../openapi/zod";
 import { CreateProjectSchema, UpdateProjectSchema } from "./dtos";
+import {
+  CreateProjectAssistSchema,
+  UpdateProjectAssistSchema,
+} from "./dtos/projectAssist.dtos";
 import { JobStudyRequestSchema, JobStudySchema } from "./jobStudy/dtos";
 import { NoteSchema, NoteUpdateSchema } from "./notes";
 import { ProjectLineItemBulkSchema, UpdateProjectLineItemSchema } from "./projectLineItems";
 import { CreateWbsBundleTemplateDto, UpdateWbsBundleTemplateDto } from "./WBS/WbsTemplates/dtos/wbsBundle.dto";
 import { CreateWbsLineItemTemplateDto, UpdateWbsLineItemTemplateDto } from "./WBS/WbsTemplates/dtos/wbsLineItemTemplates.dto";
 import { CreateWbsTemplateDto, UpdateWbsTemplateDto } from "./WBS/WbsTemplates/dtos/wbsTemplate.dto";
+import z from "zod";
 
 export const projectOpenApiDoc: ModuleOpenApiDoc = {
   tag: {
@@ -407,7 +412,79 @@ export const projectOpenApiDoc: ModuleOpenApiDoc = {
         parameters: [
           { in: "path", name: "projectId", required: true, schema: { type: "string" } },
         ],
-        requestBody: genericRequestBody,
+        requestBody: zodRequestBody(
+          z.object({
+            bundleKeys: z.array(z.string()),
+          })
+        ),
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
+    "/project/projects/{projectId}/assists": {
+      post: {
+        tags: ["Project"],
+        summary: "POST /project/projects/{projectId}/assists",
+        operationId: "post_project_project_projects_projectId_assists",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { in: "path", name: "projectId", required: true, schema: { type: "string" } },
+        ],
+        requestBody: zodRequestBody(CreateProjectAssistSchema),
+        responses: {
+          "201": { description: "Created" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+      get: {
+        tags: ["Project"],
+        summary: "GET /project/projects/{projectId}/assists",
+        operationId: "get_project_project_projects_projectId_assists",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { in: "path", name: "projectId", required: true, schema: { type: "string" } },
+        ],
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
+    "/project/projects/{projectId}/assists/{userId}": {
+      patch: {
+        tags: ["Project"],
+        summary: "PATCH /project/projects/{projectId}/assists/{userId}",
+        operationId: "patch_project_project_projects_projectId_assists_userId",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { in: "path", name: "projectId", required: true, schema: { type: "string" } },
+          { in: "path", name: "userId", required: true, schema: { type: "string" } },
+        ],
+        requestBody: zodRequestBody(UpdateProjectAssistSchema),
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+      delete: {
+        tags: ["Project"],
+        summary: "DELETE /project/projects/{projectId}/assists/{userId}",
+        operationId: "delete_project_project_projects_projectId_assists_userId",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { in: "path", name: "projectId", required: true, schema: { type: "string" } },
+          { in: "path", name: "userId", required: true, schema: { type: "string" } },
+        ],
         responses: {
           "200": { description: "Success" },
           "400": { description: "Bad Request" },

@@ -212,6 +212,7 @@ export const submittalsOpenApiDoc: ModuleOpenApiDoc = {
         requestBody: zodRequestBody(
           z.object({
             description: z.string().min(1),
+            files: z.array(z.any()).optional(),
           })
         ),
         responses: {

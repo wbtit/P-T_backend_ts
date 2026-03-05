@@ -12,6 +12,12 @@ import {
 
  import { ProjectController } from "./controllers";
  import { CreateProjectSchema, UpdateProjectSchema } from "./dtos";
+import {
+  CreateProjectAssistSchema,
+  ProjectAssistParamsSchema,
+  ProjectAssistUserParamsSchema,
+  UpdateProjectAssistSchema,
+} from "./dtos/projectAssist.dtos";
  import { projectUploads,notesUploads } from "../../utils/multerUploader.util";
 
 
@@ -205,6 +211,37 @@ router.get("/projects/:projectId/notes/:id", authMiddleware, asyncHandler(notesC
 router.delete("/projects/:projectId/notes/:id", authMiddleware, asyncHandler(notesController.delete.bind(notesController)));
 router.get("/projects/:projectId/notes", authMiddleware, asyncHandler(notesController.findAll.bind(notesController)));
 router.get("/notes/viewFile/:notesId/:fileId",authMiddleware,asyncHandler(notesController.viewFile.bind(notesController)))
+
+// ===========================================================
+// PROJECT ASSISTS ROUTES
+// ===========================================================
+router.post(
+  "/projects/:projectId/assists",
+  authMiddleware,
+  validate({ params: ProjectAssistParamsSchema, body: CreateProjectAssistSchema }),
+  asyncHandler(projectController.handleCreateProjectAssist.bind(projectController))
+);
+
+router.get(
+  "/projects/:projectId/assists",
+  authMiddleware,
+  validate({ params: ProjectAssistParamsSchema }),
+  asyncHandler(projectController.handleGetProjectAssists.bind(projectController))
+);
+
+router.patch(
+  "/projects/:projectId/assists/:userId",
+  authMiddleware,
+  validate({ params: ProjectAssistUserParamsSchema, body: UpdateProjectAssistSchema }),
+  asyncHandler(projectController.handlePatchProjectAssist.bind(projectController))
+);
+
+router.delete(
+  "/projects/:projectId/assists/:userId",
+  authMiddleware,
+  validate({ params: ProjectAssistUserParamsSchema }),
+  asyncHandler(projectController.handleDeleteProjectAssist.bind(projectController))
+);
 
 
 export default router;

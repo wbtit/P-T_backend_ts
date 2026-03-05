@@ -1,5 +1,5 @@
 import { ModuleOpenApiDoc } from "../../openapi/types";
-import { genericRequestBody, zodRequestBody } from "../../openapi/zod";
+import { zodRequestBody } from "../../openapi/zod";
 import { RFIResponseSchema, RFISchema, UpdateRFISchema } from "./dtos";
 
 export const rFIOpenApiDoc: ModuleOpenApiDoc = {
@@ -68,12 +68,44 @@ export const rFIOpenApiDoc: ModuleOpenApiDoc = {
         }
       },
     },
+    "/rfi/pending/clientAdmin": {
+      get: {
+        tags: ["RFI"],
+        summary: "GET /rfi/pending/clientAdmin",
+        operationId: "get_RFI_rfi_pending_clientAdmin",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
     "/rfi/new/projectManager": {
       get: {
         tags: ["RFI"],
         summary: "GET /rfi/new/projectManager",
         operationId: "get_RFI_rfi_new_projectManager",
         security: [{ bearerAuth: [] }],
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
+    "/rfi/viewFile/{rfiId}/{fileId}": {
+      get: {
+        tags: ["RFI"],
+        summary: "GET /rfi/viewFile/{rfiId}/{fileId}",
+        operationId: "get_RFI_rfi_viewFile_rfiId_fileId",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { in: "path", name: "rfiId", required: true, schema: { type: "string" } },
+          { in: "path", name: "fileId", required: true, schema: { type: "string" } },
+        ],
         responses: {
           "200": { description: "Success" },
           "400": { description: "Bad Request" },

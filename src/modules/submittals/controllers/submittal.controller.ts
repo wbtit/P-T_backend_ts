@@ -7,8 +7,11 @@ import { sendEmail, getCCEmails } from "../../../services/mailServices/mailconfi
 import { submittalhtmlContent } from "../../../services/mailServices/mailtemplates/submittalMailtemplate";
 import { notifyByRoles } from "../../../utils/notifyByRole";
 import { UserRole } from "@prisma/client";
+import { ProjectAssistService } from "../../project/services/projectAssist.service";
+import { sendNotification } from "../../../utils/sendNotification";
 
 const submittalService = new SubmittalService();
+const projectAssistService = new ProjectAssistService();
 const SUBMITTAL_NOTIFY_ROLES: UserRole[] = [
   "ADMIN",
   "DEPT_MANAGER",
@@ -37,6 +40,10 @@ export class SubmittalController {
     if (!user) throw new AppError("User not found", 404);
 
     const { id: userId, role } = user;
+    const access = await projectAssistService.assertRfiSubmittalCreateUpdateAccess(
+      req.body.project_id,
+      user
+    );
 
     const uploadedFiles = mapUploadedFiles(
       (req.files as Express.Multer.File[]) || [],
@@ -80,6 +87,18 @@ export class SubmittalController {
       submittalId: submittal.id,
       timestamp: new Date(),
     });
+    if (access.isAssist) {
+      await sendNotification(access.projectManagerId, {
+        type: "PM_ASSIST_SUBMITTAL_CREATED",
+        title: "Assist Created Submittal",
+        message: `Assist '${user.username}' created submittal '${submittal.subject}'.`,
+        actorUserId: user.id,
+        actorUsername: user.username,
+        projectId: req.body.project_id,
+        submittalId: submittal.id,
+        timestamp: new Date(),
+      });
+    }
 
     res.status(201).json({
       status: "success",
@@ -133,6 +152,11 @@ export class SubmittalController {
     if (!user) throw new AppError("User not found", 404);
 
     const { id: submittalId } = req.params;
+    const existingSubmittal = await submittalService.getSubmittalById(submittalId);
+    const access = await projectAssistService.assertRfiSubmittalCreateUpdateAccess(
+      existingSubmittal.project_id,
+      user
+    );
     const { description } = req.body;
 
     if (!description) {
@@ -160,6 +184,19 @@ export class SubmittalController {
       versionId: version.id,
       timestamp: new Date(),
     });
+    if (access.isAssist) {
+      await sendNotification(access.projectManagerId, {
+        type: "PM_ASSIST_SUBMITTAL_UPDATED",
+        title: "Assist Updated Submittal",
+        message: `Assist '${user.username}' uploaded a new version for submittal '${submittalId}'.`,
+        actorUserId: user.id,
+        actorUsername: user.username,
+        projectId: existingSubmittal.project_id,
+        submittalId,
+        versionId: version.id,
+        timestamp: new Date(),
+      });
+    }
 
     res.status(201).json({
       status: "success",

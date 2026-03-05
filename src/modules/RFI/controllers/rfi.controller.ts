@@ -7,8 +7,11 @@ import { sendEmail, getCCEmails } from "../../../services/mailServices/mailconfi
 import { rfihtmlContent } from "../../../services/mailServices/mailtemplates/rfiMailtemplate";
 import { notifyByRoles } from "../../../utils/notifyByRole";
 import { UserRole } from "@prisma/client";
+import { ProjectAssistService } from "../../project/services/projectAssist.service";
+import { sendNotification } from "../../../utils/sendNotification";
 
 const rfiService = new RFIService();
+const projectAssistService = new ProjectAssistService();
 const RFI_NOTIFY_ROLES: UserRole[] = [
   "ADMIN",
   "DEPT_MANAGER",
@@ -33,6 +36,10 @@ export class RFIController {
       throw new AppError("User not found", 404);
     }
     const { id: userId } = req.user;
+    const access = await projectAssistService.assertRfiSubmittalCreateUpdateAccess(
+      req.body.project_id,
+      req.user
+    );
 
     const uploadedFiles = mapUploadedFiles(
       (req.files as Express.Multer.File[]) || [],
@@ -73,6 +80,18 @@ export class RFIController {
       rfiId: newrfi.id,
       timestamp: new Date(),
     });
+    if (access.isAssist) {
+      await sendNotification(access.projectManagerId, {
+        type: "PM_ASSIST_RFI_CREATED",
+        title: "Assist Created RFI",
+        message: `Assist '${req.user.username}' created RFI '${newrfi.subject}'.`,
+        actorUserId: req.user.id,
+        actorUsername: req.user.username,
+        projectId: req.body.project_id,
+        rfiId: newrfi.id,
+        timestamp: new Date(),
+      });
+    }
 
     res.status(201).json({
       message:"RFI created",
@@ -86,6 +105,11 @@ export class RFIController {
     if (!req.user) throw new AppError("User not found", 404);
 
     const { id: rfiId } = req.params;
+    const existingRfi = await rfiService.getRfiById(rfiId);
+    const access = await projectAssistService.assertRfiSubmittalCreateUpdateAccess(
+      existingRfi.project_id,
+      req.user
+    );
 
     const uploadedFiles = mapUploadedFiles(
       (req.files as Express.Multer.File[]) || [],
@@ -107,6 +131,18 @@ export class RFIController {
       isAproovedByAdmin: (updatedRfi as any)?.isAproovedByAdmin ?? req.body?.isAproovedByAdmin ?? null,
       timestamp: new Date(),
     });
+    if (access.isAssist) {
+      await sendNotification(access.projectManagerId, {
+        type: "PM_ASSIST_RFI_UPDATED",
+        title: "Assist Updated RFI",
+        message: `Assist '${req.user.username}' updated RFI '${updatedRfiSubject || rfiId}'.`,
+        actorUserId: req.user.id,
+        actorUsername: req.user.username,
+        projectId: existingRfi.project_id,
+        rfiId,
+        timestamp: new Date(),
+      });
+    }
 
     res.status(200).json({
       status: "success",
