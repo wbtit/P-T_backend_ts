@@ -129,6 +129,7 @@ export class RFQRepository {
                         CDQuotations:true,
                     }
                 },
+                estimations:{select:{id:true}},
                 CDQuotas:true,
             }
         });

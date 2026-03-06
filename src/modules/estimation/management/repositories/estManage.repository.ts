@@ -40,9 +40,10 @@ export class EstManagementRepository{
             where:{id:id},
             include:{
                 lineItemGroups:true,
-                 rfq:true,
-                 createdBy:true,
-                 tasks:{
+                responses:true,
+                rfq:true,
+                createdBy:true,
+                tasks:{
                     include:{
                         
                         assignedTo:{

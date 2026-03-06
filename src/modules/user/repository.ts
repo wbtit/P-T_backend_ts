@@ -1,6 +1,6 @@
-import prisma from "../../config/database/client"; 
+import prisma from "../../config/database/client";
 import { userRole } from "./dtos";
-import { createUserInput,updateUserInput } from "./dtos";
+import { createUserInput, updateUserInput } from "./dtos";
 import { cleandata } from "../../config/utils/cleanDataObject";
 
 
@@ -8,18 +8,39 @@ export const findUserByUsername = async (username: string) => {
   return prisma.user.findUnique({ where: { username } });
 };
 
-export const findUserById=async(id:string)=>{
-    return prisma.user.findUnique({where:{
-      id},include:{
-        FabricatorPointOfContacts:true
-      }});
+export const findUserById = async (id: string) => {
+  return prisma.user.findUnique(
+    {
+      where: { id },
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        firstName: true,
+        middleName: true,
+        lastName: true,
+        phone: true,
+        landline: true,
+        altLandline: true,
+        altPhone: true,
+        designation: true,
+        city: true,
+        address: true,
+        role: true,
+        profilePic: true,
+        isActive: true,
+        FabricatorPointOfContacts: true,
+      }
+    });
 }
-  
-export const  findAllUsers=async()=>{
-  return await prisma.user.findMany({include:{
-    FabricatorPointOfContacts:true
-  
-  }});
+
+export const findAllUsers = async () => {
+  return await prisma.user.findMany({
+    include: {
+      FabricatorPointOfContacts: true
+
+    }
+  });
 }
 
 export const createUser = async (user: createUserInput) => {
@@ -56,17 +77,17 @@ export const createUser = async (user: createUserInput) => {
   });
 };
 
-export const updateUser=async(id:string,user:updateUserInput)=>{
-    const safeData =cleandata(user); FabricatorPointOfContacts:true
+export const updateUser = async (id: string, user: updateUserInput) => {
+  const safeData = cleandata(user); FabricatorPointOfContacts: true
 
-    return prisma.user.update({
-        where:{id},
-        data:{
-            ...safeData,
-            role: user.role as userRole,
-        }
-    });
-  };
+  return prisma.user.update({
+    where: { id },
+    data: {
+      ...safeData,
+      role: user.role as userRole,
+    }
+  });
+};
 
 export const updateUserProfilePic = async (id: string, profilePic: string) => {
   return prisma.user.update({
@@ -79,31 +100,31 @@ export const updateUserProfilePic = async (id: string, profilePic: string) => {
 };
 
 
-  export const deleteUser=async(id:string)=>{
-    return await prisma.user.update({
-        where:{id},
-        data:{
-          isActive:false
-        }
-    })
-  }
-  export const findUsersByRole= async(role:userRole)=>{
-    return await prisma.user.findMany({
-      where:{
-        role:role
-      },include:{
-        FabricatorPointOfContacts:true
-      }
-    })
-  }
+export const deleteUser = async (id: string) => {
+  return await prisma.user.update({
+    where: { id },
+    data: {
+      isActive: false
+    }
+  })
+}
+export const findUsersByRole = async (role: userRole) => {
+  return await prisma.user.findMany({
+    where: {
+      role: role
+    }, include: {
+      FabricatorPointOfContacts: true
+    }
+  })
+}
 
-  export const findAllUser = async()=>{
-    return await prisma.user.findMany({
-      where: {
-        isActive: true,
-      },
-      include:{
-        FabricatorPointOfContacts:true
-      }
-    })
-  }
+export const findAllUser = async () => {
+  return await prisma.user.findMany({
+    where: {
+      isActive: true,
+    },
+    include: {
+      FabricatorPointOfContacts: true
+    }
+  })
+}
