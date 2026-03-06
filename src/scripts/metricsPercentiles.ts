@@ -31,7 +31,10 @@ function percentile(sorted: number[], p: number): number {
 async function main() {
   const inputPath =
     process.argv[2] ?? path.join(process.cwd(), "logs", "metrics.ndjson");
+  const outputPath =
+    process.argv[3] ?? path.join(process.cwd(), "logs", "metrics.percentiles.json");
   const resolvedPath = path.resolve(inputPath);
+  const resolvedOutputPath = path.resolve(outputPath);
 
   if (!fs.existsSync(resolvedPath)) {
     console.error(`Metrics file not found: ${resolvedPath}`);
@@ -125,7 +128,9 @@ async function main() {
     route_percentiles,
   };
 
-  console.log(JSON.stringify(result, null, 2));
+  fs.mkdirSync(path.dirname(resolvedOutputPath), { recursive: true });
+  fs.writeFileSync(resolvedOutputPath, JSON.stringify(result, null, 2));
+  console.log(`Wrote percentiles to ${resolvedOutputPath}`);
 }
 
 void main();
