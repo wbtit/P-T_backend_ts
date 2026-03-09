@@ -28,10 +28,13 @@ const MODEL_MAP: Record<string, string> = {
   rFIResponse:"rFIResponse",
   rFQ:"rFQ",
   rFQResponse:"rFQResponse",
-  changeOrders:"changeOrders",
+  changeOrder:"changeOrder",
+  changeOrders:"changeOrder",
   cOResponse:"cOResponse",
   estimation:"estimation",
   connectionDesignerQuota: "connectionDesignerQuota",
+  estimationResponse:"estimationResponse",
+  estimationresponse:"estimationResponse"
 };
 
 const createShareLink = async (req: Request, res: Response) => {
@@ -43,8 +46,13 @@ const createShareLink = async (req: Request, res: Response) => {
       return res.status(400).json({ message: "Invalid table" });
     }
 
+    const model = (prisma as Record<string, any>)[modelName];
+    if (!model || typeof model.findUnique !== "function") {
+      return res.status(400).json({ message: "Unsupported table model" });
+    }
+
     // fetch parent row
-    const row = await (prisma as any)[modelName].findUnique({
+    const row = await model.findUnique({
       where: { id: parentId }
     });
 
@@ -98,7 +106,12 @@ const downloadShare = async (req: Request, res: Response) => {
     if (!modelName)
       return res.status(400).json({ message: "Invalid table in link" });
 
-    const row = await (prisma as any)[modelName].findUnique({
+    const model = (prisma as Record<string, any>)[modelName];
+    if (!model || typeof model.findUnique !== "function") {
+      return res.status(400).json({ message: "Unsupported table model" });
+    }
+
+    const row = await model.findUnique({
       where: { id: share.parentId },
     });
 
