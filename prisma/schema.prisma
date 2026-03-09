@@ -312,6 +312,7 @@ model User {
   salesRFQ              RFQ[]                @relation("SalesPersonRFQ")
   receivedRFQ           RFQ[]                @relation("ReceiverRFQ")
   rfqResponseBy         RFQResponse[]        @relation("rfqResponseBy")
+  createdRFQFollowUps   RFQFollowUp[]        @relation("RFQFollowUpCreatedBy")
   createdEstimations    Estimation[]         @relation("CreatedBy")
   assignedEstimations   EstimationTask[]     @relation("AssignedEstimator")
   AssignedByEstimations EstimationTask[]     @relation("AssignedBy")
@@ -641,6 +642,7 @@ model RFQ {
   salesPerson      User?        @relation("SalesPersonRFQ", fields: [salesPersonId], references: [id])
   sender           User?         @relation("SenderRFQ", fields: [senderId], references: [id])
   responses        RFQResponse[]
+  followUps        RFQFollowUp[]
   project          Project?     @relation("ProjectRFQ")
   estimations      Estimation[]
 
@@ -681,6 +683,24 @@ model RFQResponse {
   @@index([rfqId])
   @@index([userId])
   @@index([parentResponseId])
+}
+
+model RFQFollowUp {
+  id          String   @id @default(uuid()) @db.Uuid
+  rfqId       String   @db.Uuid
+  createdById String   @db.Uuid
+  description String   @default("")
+  files       Json?    @default("[]")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  rfq         RFQ      @relation(fields: [rfqId], references: [id], onDelete: Cascade)
+  createdBy   User     @relation("RFQFollowUpCreatedBy", fields: [createdById], references: [id])
+
+  @@map("rfq_follow_up")
+  @@index([rfqId])
+  @@index([createdById])
+  @@index([createdAt])
 }
 
 model Project{          

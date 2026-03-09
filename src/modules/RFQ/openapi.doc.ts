@@ -1,7 +1,8 @@
 import { ModuleOpenApiDoc } from "../../openapi/types";
-import { genericRequestBody, zodRequestBody } from "../../openapi/zod";
+import { zodRequestBody } from "../../openapi/zod";
 import { CreateRfqSchema, UpdateRfqSchema } from "./dtos";
 import { RfqResponseSchema } from "./RFQresponse";
+import { CreateRFQFollowUpSchema, UpdateRFQFollowUpSchema } from "./followUps";
 
 export const rFQOpenApiDoc: ModuleOpenApiDoc = {
   tag: {
@@ -156,6 +157,130 @@ export const rFQOpenApiDoc: ModuleOpenApiDoc = {
           "200": { description: "Success" },
           "400": { description: "Bad Request" },
           "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
+    "/rfq/{rfqId}/followups": {
+      post: {
+        tags: ["RFQ"],
+        summary: "POST /rfq/{rfqId}/followups",
+        operationId: "post_RFQ_rfq_rfqId_followups",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { in: "path", name: "rfqId", required: true, schema: { type: "string" } },
+        ],
+        requestBody: zodRequestBody(CreateRFQFollowUpSchema),
+        responses: {
+          "201": { description: "Created" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "404": { description: "RFQ not found" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+      get: {
+        tags: ["RFQ"],
+        summary: "GET /rfq/{rfqId}/followups",
+        operationId: "get_RFQ_rfq_rfqId_followups",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { in: "path", name: "rfqId", required: true, schema: { type: "string" } },
+        ],
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "404": { description: "RFQ not found" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
+    "/rfq/followups/{id}": {
+      get: {
+        tags: ["RFQ"],
+        summary: "GET /rfq/followups/{id}",
+        operationId: "get_RFQ_rfq_followups_id",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { in: "path", name: "id", required: true, schema: { type: "string" } },
+        ],
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "404": { description: "RFQ follow-up not found" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+      put: {
+        tags: ["RFQ"],
+        summary: "PUT /rfq/followups/{id}",
+        operationId: "put_RFQ_rfq_followups_id",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { in: "path", name: "id", required: true, schema: { type: "string" } },
+        ],
+        requestBody: zodRequestBody(UpdateRFQFollowUpSchema),
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "404": { description: "RFQ follow-up not found" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+      delete: {
+        tags: ["RFQ"],
+        summary: "DELETE /rfq/followups/{id}",
+        operationId: "delete_RFQ_rfq_followups_id",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { in: "path", name: "id", required: true, schema: { type: "string" } },
+        ],
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "404": { description: "RFQ follow-up not found" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
+    "/rfq/followups/{id}/files/{fileId}": {
+      get: {
+        tags: ["RFQ"],
+        summary: "GET /rfq/followups/{id}/files/{fileId}",
+        operationId: "get_RFQ_rfq_followups_id_files_fileId",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { in: "path", name: "id", required: true, schema: { type: "string" } },
+          { in: "path", name: "fileId", required: true, schema: { type: "string" } },
+        ],
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "404": { description: "File not found" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
+    "/rfq/followups/viewFile/{id}/{fileId}": {
+      get: {
+        tags: ["RFQ"],
+        summary: "GET /rfq/followups/viewFile/{id}/{fileId}",
+        operationId: "get_RFQ_rfq_followups_viewFile_id_fileId",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { in: "path", name: "id", required: true, schema: { type: "string" } },
+          { in: "path", name: "fileId", required: true, schema: { type: "string" } },
+        ],
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "404": { description: "File not found" },
           "500": { description: "Internal Server Error" }
         }
       },

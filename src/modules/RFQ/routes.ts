@@ -6,13 +6,23 @@ import { CreateRfqSchema,UpdateRfqSchema } from "./dtos";
 
 import { RfqResponseSchema} from "./RFQresponse";
 import { RfqResponseController } from "./RFQresponse";
-import { rfqUploads,rfqResponseUploads } from "../../utils/multerUploader.util";
+import {
+    rfqUploads,
+    rfqResponseUploads,
+    rfqFollowUpUploads,
+} from "../../utils/multerUploader.util";
+import {
+    CreateRFQFollowUpSchema,
+    RFQFollowUpController,
+    UpdateRFQFollowUpSchema,
+} from "./followUps";
 
 import z from "zod";
 
 const router = Router();
 const rfqController = new RFQController();
 const rfqResponseController = new RfqResponseController();
+const rfqFollowUpController = new RFQFollowUpController();
 
 router.post(
     "/",
@@ -104,6 +114,67 @@ router.get(
     authMiddleware,
     rfqController.handlePendingRFQs.bind(rfqController)
 )
+
+// ===========================================================
+// RFQ FOLLOW-UP ROUTES
+// ===========================================================
+
+router.post(
+    "/:rfqId/followups",
+    authMiddleware,
+    rfqFollowUpUploads.array("files"),
+    validate({
+        params: z.object({ rfqId: z.string() }),
+        body: CreateRFQFollowUpSchema,
+    }),
+    rfqFollowUpController.handleCreate.bind(rfqFollowUpController)
+);
+
+router.get(
+    "/:rfqId/followups",
+    authMiddleware,
+    validate({ params: z.object({ rfqId: z.string() }) }),
+    rfqFollowUpController.handleListByRfq.bind(rfqFollowUpController)
+);
+
+router.get(
+    "/followups/:id",
+    authMiddleware,
+    validate({ params: z.object({ id: z.string() }) }),
+    rfqFollowUpController.handleGetById.bind(rfqFollowUpController)
+);
+
+router.put(
+    "/followups/:id",
+    authMiddleware,
+    rfqFollowUpUploads.array("files"),
+    validate({
+        params: z.object({ id: z.string() }),
+        body: UpdateRFQFollowUpSchema,
+    }),
+    rfqFollowUpController.handleUpdate.bind(rfqFollowUpController)
+);
+
+router.delete(
+    "/followups/:id",
+    authMiddleware,
+    validate({ params: z.object({ id: z.string() }) }),
+    rfqFollowUpController.handleDelete.bind(rfqFollowUpController)
+);
+
+router.get(
+    "/followups/:id/files/:fileId",
+    authMiddleware,
+    validate({ params: z.object({ id: z.string(), fileId: z.string() }) }),
+    rfqFollowUpController.handleGetFile.bind(rfqFollowUpController)
+);
+
+router.get(
+    "/followups/viewFile/:id/:fileId",
+    authMiddleware,
+    validate({ params: z.object({ id: z.string(), fileId: z.string() }) }),
+    rfqFollowUpController.handleViewFile.bind(rfqFollowUpController)
+);
 // ===========================================================
 // RFQ RESPONSE ROUTES
 // ===========================================================

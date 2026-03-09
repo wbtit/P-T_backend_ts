@@ -130,6 +130,21 @@ export class RFQRepository {
                     }
                 },
                 estimations:{select:{id:true}},
+                followUps: {
+                    include: {
+                        createdBy: {
+                            select: {
+                                id: true,
+                                firstName: true,
+                                middleName: true,
+                                lastName: true,
+                                username: true,
+                                email: true,
+                            }
+                        }
+                    },
+                    orderBy: { createdAt: "desc" }
+                },
                 CDQuotas:true,
             }
         });
