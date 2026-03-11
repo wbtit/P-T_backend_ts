@@ -119,12 +119,21 @@ export const projectManagerDashBoard = async (
         },
       }),
       prisma.submittals.count({
-        where: {
-          project: managerFilter,
-          currentVersion: {
-            responses: { none: {} },
-          },
+        where:{
+      status:false,
+      project:{managerID: userId},
+      currentVersion:{
+        NOT:{
+        responses:{some:{
+          childResponses:{some:{
+            status:"SUBMITTED_TO_EOR"
+          }
+          }
+        }
+      }
         },
+      }
+    }
       }),
       prisma.teamMember.count({
         where: {
