@@ -34,9 +34,10 @@ export class DeptController{
         
     }
     async handleUpdateDept(req:Request,res:Response){
-        const data = req.body;
-        const existing = await deptService.get(data);
-        if (!existing) {
+        const { id } = req.params;
+        const data = { ...req.body, id };
+        const existing = await deptService.get({ id });
+        if (!existing?.dept) {
             throw new AppError("Department not found", 404);
         }
         const result = await deptService.update(data);
@@ -71,12 +72,12 @@ export class DeptController{
         });
     }
     async handleDeleteDept(req:Request,res:Response){
-        const data = req.body;
-        const existing = await deptService.get(data);
-        if (!existing) {
+        const { id } = req.params;
+        const existing = await deptService.get({ id });
+        if (!existing?.dept) {
             throw new AppError("Department not found", 404);
         }
-        const result = await deptService.delete(data);
+        const result = await deptService.delete({ id });
         await notifyByRoles(DEPT_NOTIFY_ROLES, {
             type: "DEPARTMENT_DELETED",
             title: "Department Deleted",
