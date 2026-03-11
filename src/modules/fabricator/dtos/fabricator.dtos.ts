@@ -45,9 +45,16 @@ export const FabricatorIdSchema=z.object({
     id:z.string(),
 })
 
+export const FabricatorClientAdminHandoverSchema = z.object({
+    fabricatorId: z.string(),
+    oldAdminId: z.string(),
+    newAdminId: z.string(),
+});
+
 // Export TS types
 
 export type CreateFabricatorInput=z.infer<typeof CreateFabricatorSchema>;
 export type UpdateFabricatorInput=z.infer<typeof UpdateFabricatorSchema>;
 export type GetFabricatorInput=z.infer<typeof FabricatorIdSchema>
 export type DeleteFabricatorInput=z.infer<typeof FabricatorIdSchema>
+export type FabricatorClientAdminHandoverInput = z.infer<typeof FabricatorClientAdminHandoverSchema>

@@ -1,11 +1,12 @@
 import path from "path";
 import { AppError } from "../../../config/utils/AppError";
 import { FileObject } from "../../../shared/fileType";
-import { CreateFabricatorInput, UpdateFabricatorInput } from "../dtos";
+import { CreateFabricatorInput, FabricatorClientAdminHandoverInput, UpdateFabricatorInput } from "../dtos";
 import { FabricatorRepository } from "../repositories";
 import { streamFile } from "../../../utils/fileUtil";
 import { Response } from "express";
 import fs from "fs"
+import prisma from "../../../config/database/client";
 
 const fabRepo = new FabricatorRepository();
 
@@ -101,7 +102,7 @@ async viewFile(fabricatorId: string, fileId: string, res: Response) {
   return streamFile(res, filePath, fileObject.originalName);
 }
  //Delete file
- async deleteFile(fabricatorId: string, fileId: string) {
+  async deleteFile(fabricatorId: string, fileId: string) {
     const fabricator = await fabRepo.findById({ id: fabricatorId });
     if (!fabricator) throw new Error("Fabricator not found");
 
@@ -109,5 +110,84 @@ async viewFile(fabricatorId: string, fileId: string, res: Response) {
     const updatedFiles = files.filter((file) => file.id !== fileId);
 
     return fabRepo.update({ id: fabricatorId }, { files: updatedFiles });
+  }
+
+  async handoverClientAdmin(data: FabricatorClientAdminHandoverInput) {
+    const { fabricatorId, oldAdminId, newAdminId } = data;
+    if (oldAdminId === newAdminId) {
+      throw new AppError("oldAdminId and newAdminId must be different", 400);
+    }
+
+    const [fabricator, newAdmin] = await Promise.all([
+      prisma.fabricator.findFirst({
+        where: {
+          id: fabricatorId,
+          pointOfContact: { some: { id: oldAdminId, role: "CLIENT_ADMIN" } },
+        },
+        include: { pointOfContact: true },
+      }),
+      prisma.user.findUnique({
+        where: { id: newAdminId },
+        select: { id: true, role: true },
+      }),
+    ]);
+
+    if (!fabricator) {
+      throw new AppError("Fabricator not found for the old client admin", 404);
+    }
+    if (!newAdmin || newAdmin.role !== "CLIENT_ADMIN") {
+      throw new AppError("New admin must be a CLIENT_ADMIN user", 400);
+    }
+
+    const result = await prisma.$transaction(async (tx) => {
+      const updatedFabricator = await tx.fabricator.update({
+        where: { id: fabricatorId },
+        data: {
+          pointOfContact: {
+            disconnect: [{ id: oldAdminId }],
+            connect: [{ id: newAdminId }],
+          },
+        },
+        include: { pointOfContact: true },
+      });
+
+      await tx.rFI.updateMany({
+        where: {
+          fabricator_id: fabricatorId,
+          recepient_id: oldAdminId,
+        },
+        data: { recepient_id: newAdminId },
+      });
+
+      await tx.rFQ.updateMany({
+        where: {
+          fabricatorId: fabricatorId,
+          recipientId: oldAdminId,
+        },
+        data: { recipientId: newAdminId },
+      });
+
+      await tx.submittals.updateMany({
+        where: {
+          fabricator_id: fabricatorId,
+          recepient_id: oldAdminId,
+        },
+        data: { recepient_id: newAdminId },
+      });
+
+      await tx.changeOrder.updateMany({
+        where: {
+          recipients: oldAdminId,
+          Recipients: {
+            FabricatorPointOfContacts: { some: { id: fabricatorId } },
+          },
+        },
+        data: { recipients: newAdminId },
+      });
+
+      return updatedFabricator;
+    });
+
+    return result;
   }
 }

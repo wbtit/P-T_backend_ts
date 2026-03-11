@@ -5,6 +5,7 @@ import { asyncHandler } from "../../config/utils/asyncHandler";
 import authMiddleware from "../../middleware/authMiddleware";
 import {CreateFabricatorSchema,
     UpdateFabricatorSchema,
+    FabricatorClientAdminHandoverSchema,
 } from "./dtos"
 import z from 'zod'
 import { fabricatorsUploads } from "../../utils/multerUploader.util";
@@ -29,6 +30,13 @@ router.put(
     fabricatorsUploads.array("files"),
     validate({params:z.object({id:z.string()}),body:UpdateFabricatorSchema}),
     asyncHandler(fabCtrl.handleUpdateFabricator.bind(fabCtrl))
+)
+
+router.post(
+    "/handover-client-admin",
+    authMiddleware,
+    validate({body:FabricatorClientAdminHandoverSchema}),
+    asyncHandler(fabCtrl.handleHandoverClientAdmin.bind(fabCtrl))
 )
 
 

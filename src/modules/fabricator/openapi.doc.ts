@@ -1,6 +1,6 @@
 import { ModuleOpenApiDoc } from "../../openapi/types";
 import { zodRequestBody } from "../../openapi/zod";
-import { CreateFabricatorSchema, UpdateFabricatorSchema } from "./dtos";
+import { CreateFabricatorSchema, FabricatorClientAdminHandoverSchema, UpdateFabricatorSchema } from "./dtos";
 import { branchSchema } from "./branches";
 
 export const fabricatorOpenApiDoc: ModuleOpenApiDoc = {
@@ -38,6 +38,22 @@ export const fabricatorOpenApiDoc: ModuleOpenApiDoc = {
           "200": { description: "Fabricator updated successfully" },
           "400": { description: "Bad Request" },
           "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
+    "/fabricator/handover-client-admin": {
+      post: {
+        tags: ["Fabricator"],
+        summary: "POST /fabricator/handover-client-admin",
+        operationId: "post_fabricator_handover_client_admin",
+        security: [{ bearerAuth: [] }],
+        requestBody: zodRequestBody(FabricatorClientAdminHandoverSchema),
+        responses: {
+          "200": { description: "Client admin handover completed successfully" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "404": { description: "Fabricator not found" },
           "500": { description: "Internal Server Error" }
         }
       },

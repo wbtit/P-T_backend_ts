@@ -5,6 +5,7 @@ import { AppError } from "../../../config/utils/AppError";
 import { mapUploadedFiles } from "../../uploads/fileUtil";
 import { notifyByRoles } from "../../../utils/notifyByRole";
 import { UserRole } from "@prisma/client";
+import { FabricatorClientAdminHandoverSchema } from "../dtos";
 
 export class FabricatorController {
   fabService = new FabricatorService();
@@ -158,6 +159,17 @@ export class FabricatorController {
       message: "File fetched successfully",
       success: true,
       data: file,
+    });
+  }
+
+  async handleHandoverClientAdmin(req: AuthenticateRequest, res: Response) {
+    const payload = FabricatorClientAdminHandoverSchema.parse(req.body);
+    const fabricator = await this.fabService.handoverClientAdmin(payload);
+
+    return res.status(200).json({
+      message: "Client admin handover completed successfully",
+      success: true,
+      data: fabricator,
     });
   }
 
