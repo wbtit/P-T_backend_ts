@@ -1,5 +1,6 @@
 import { Response } from "express";
 import prisma from "../../config/database/client";
+import { SubmitalRepository } from "../submittals/repositories";
 import { AuthenticateRequest } from "../../middleware/authMiddleware";
 
 export const projectManagerDashBoard = async (
@@ -7,6 +8,7 @@ export const projectManagerDashBoard = async (
   res: Response
 ) => {
   try {
+    const submittalRepo = new SubmitalRepository();
     const { role, id: userId } = req.user ?? {};
 
     if (!role || !userId) {
@@ -35,7 +37,7 @@ export const projectManagerDashBoard = async (
       newChangeOrders,
       pendingRFQ,
       newRFQ,
-      pendingSubmittals,
+      pendingSubmittalsList,
       totalTeamMembers,
     ] = await Promise.all([
       prisma.project.groupBy({
@@ -118,23 +120,7 @@ export const projectManagerDashBoard = async (
           responses: { none: {} },
         },
       }),
-      prisma.submittals.count({
-        where:{
-      status:false,
-      project:{managerID: userId},
-      currentVersion:{
-        NOT:{
-        responses:{some:{
-          childResponses:{some:{
-            status:"SUBMITTED_TO_EOR"
-          }
-          }
-        }
-      }
-        },
-      }
-    }
-      }),
+      submittalRepo.getPendingSubmittalsForProjectManager(userId),
       prisma.teamMember.count({
         where: {
           team: {
@@ -164,7 +150,7 @@ export const projectManagerDashBoard = async (
       newChangeOrders,
      
 
-      pendingSubmittals,
+      pendingSubmittals: pendingSubmittalsList.length,
     };
 
     const statusMap: Record<string, keyof typeof response> = {
