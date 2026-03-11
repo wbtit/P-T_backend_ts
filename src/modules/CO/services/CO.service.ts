@@ -99,11 +99,10 @@ export class COService {
   // ------------------ File Handling ------------------
 
   async getFile(coId: string, fileId: string) {
-    const cos = await corepo.getByProjectId(coId);
-    if (!cos || cos.length === 0) throw new AppError("Change Order not found", 404);
+    const co = await corepo.findById(coId);
+    if (!co) throw new AppError("Change Order not found", 404);
 
-    // Assuming each CO can have a 'files' array similar to RFQ
-    const files = (cos[0].files as unknown as FileObject[]) || [];
+    const files = (co.files as unknown as FileObject[]) || [];
     const fileObject = files.find((file: FileObject) => file.id === fileId);
 
     if (!fileObject) throw new AppError("File not found", 404);
@@ -111,16 +110,23 @@ export class COService {
   }
 
   async viewFile(coId: string, fileId: string, res: Response) {
-    const cos = await corepo.getByProjectId(coId);
-    if (!cos || cos.length === 0) throw new AppError("Change Order not found", 404);
+    const co = await corepo.findById(coId);
+    if (!co) throw new AppError("Change Order not found", 404);
 
-    const files = (cos[0].files as unknown as FileObject[]) || [];
-    const fileObject = files.find((file: FileObject) => file.id === fileId);
+    const files = (co.files as unknown as FileObject[]) || [];
+    const cleanFileId = fileId.replace(/\.[^/.]+$/, "");
+    const fileObject = files.find((file: FileObject) => file.id === cleanFileId);
 
     if (!fileObject) throw new AppError("File not found", 404);
 
     const __dirname = path.resolve();
-    const filePath = path.join(__dirname, fileObject.path);
+    let relativePath = fileObject.path || "";
+    if (relativePath.startsWith("/public/")) {
+      relativePath = relativePath.slice("/public/".length);
+    } else if (relativePath.startsWith("public/")) {
+      relativePath = relativePath.slice("public/".length);
+    }
+    const filePath = path.join(__dirname, "public", relativePath);
     return streamFile(res, filePath, fileObject.originalName);
   }
 

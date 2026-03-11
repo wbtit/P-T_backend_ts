@@ -64,6 +64,21 @@ export const clientAdminDashBoard = async (req: AuthenticateRequest, res: Respon
                            }
                         }
         })
+        const totalRFI = await prisma.rFI.count({
+            where: {
+                fabricator_id: fabricator?.id,
+            },
+        });
+        const totalRFQ = await prisma.rFQ.count({
+            where: {
+                fabricator: { id: fabricator?.id },
+            },
+        });
+        const totalSubmittals = await prisma.submittals.count({
+            where: {
+                fabricator: { id: fabricator?.id },
+            },
+        });
         const response: Record<string, any> ={
             totalActiveProjects: 0,
             totalCompleteProject: 0,
@@ -73,7 +88,10 @@ export const clientAdminDashBoard = async (req: AuthenticateRequest, res: Respon
             pendingRFI:newRFI,
             pendingChangeOrders,
             pendingRFQ,
-            pendingSubmittals
+            pendingSubmittals,
+            totalRFI,
+            totalRFQ,
+            totalSubmittals
         }
         const statusMap: Record<string, keyof typeof response> = {
             ACTIVE: "totalActiveProjects",
