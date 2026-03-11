@@ -61,12 +61,16 @@ export class TaskService {
       });
 
       const payload = {
+        type: "TASK_DUPLICATE_DETECTED",
+        title: "Duplicate Task Detected",
+        message: `Duplicate task detected for '${data.name}' in project '${duplicateTask.project.name}'.`,
         managerName: this.formatName(manager) || "Unknown",
         projectName: duplicateTask.project.name,
         userName: this.formatName(duplicateTask.user) || "Unknown",
         taskName: data.name,
         severity,
         reason,
+        timestamp: new Date(),
       };
 
       await Promise.all(

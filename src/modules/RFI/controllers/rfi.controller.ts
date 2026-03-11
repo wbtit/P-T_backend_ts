@@ -80,6 +80,15 @@ export class RFIController {
       rfiId: newrfi.id,
       timestamp: new Date(),
     });
+    if (isAproovedByAdmin) {
+      await notifyByRoles(RFI_NOTIFY_ROLES, {
+        type: "RFI_APPROVED_BY_ADMIN",
+        title: "RFI Approved by Admin",
+        message: `RFI '${newrfi.subject}' was approved by admin.`,
+        rfiId: newrfi.id,
+        timestamp: new Date(),
+      });
+    }
     if (access.isAssist) {
       await sendNotification(access.projectManagerId, {
         type: "PM_ASSIST_RFI_CREATED",
@@ -121,6 +130,9 @@ export class RFIController {
       files: uploadedFiles,
     });
     const updatedRfiSubject = (updatedRfi as any)?.subject?.trim?.();
+    const approvalWasGranted =
+      !existingRfi.isAproovedByAdmin &&
+      (updatedRfi as any)?.isAproovedByAdmin === true;
     await notifyByRoles(RFI_NOTIFY_ROLES, {
       type: "RFI_UPDATED",
       title: "RFI Updated",
@@ -131,11 +143,22 @@ export class RFIController {
       isAproovedByAdmin: (updatedRfi as any)?.isAproovedByAdmin ?? req.body?.isAproovedByAdmin ?? null,
       timestamp: new Date(),
     });
+    if (approvalWasGranted) {
+      await notifyByRoles(RFI_NOTIFY_ROLES, {
+        type: "RFI_APPROVED_BY_ADMIN",
+        title: "RFI Approved by Admin",
+        message: updatedRfiSubject
+          ? `RFI '${updatedRfiSubject}' was approved by admin.`
+          : "An RFI was approved by admin.",
+        rfiId,
+        timestamp: new Date(),
+      });
+    }
     if (access.isAssist) {
       await sendNotification(access.projectManagerId, {
         type: "PM_ASSIST_RFI_UPDATED",
         title: "Assist Updated RFI",
-        message: `Assist '${req.user.username}' updated RFI '${updatedRfiSubject || rfiId}'.`,
+        message: `Assist '${req.user.username}' updated RFI '${updatedRfiSubject ?? existingRfi.subject ?? "this RFI"}'.`,
         actorUserId: req.user.id,
         actorUsername: req.user.username,
         projectId: existingRfi.project_id,

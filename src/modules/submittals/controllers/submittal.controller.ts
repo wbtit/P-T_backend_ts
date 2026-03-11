@@ -188,7 +188,7 @@ export class SubmittalController {
       await sendNotification(access.projectManagerId, {
         type: "PM_ASSIST_SUBMITTAL_UPDATED",
         title: "Assist Updated Submittal",
-        message: `Assist '${user.username}' uploaded a new version for submittal '${submittalId}'.`,
+        message: `Assist '${user.username}' uploaded a new version for submittal '${existingSubmittal.subject ?? "this submittal"}'.`,
         actorUserId: user.id,
         actorUsername: user.username,
         projectId: existingSubmittal.project_id,
