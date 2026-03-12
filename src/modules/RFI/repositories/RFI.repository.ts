@@ -57,7 +57,7 @@ export class RFIRepository{
                         role: "CLIENT_ADMIN"
                     }
                 },
-                project: { some: { status: { in: ["ACTIVE"] } } }
+                project: { some: { status: { in: ["ACTIVE", "ONHOLD"] } } }
             },
             
         })
@@ -67,7 +67,7 @@ export class RFIRepository{
       return await prisma.rFI.findMany({
         where:{
           fabricator_id:fabricator.id,
-          project: { status: "ACTIVE" },
+          project: { status: { in: ["ACTIVE", "ONHOLD"] } },
           rfiresponse:{
             none:{}
           }

@@ -84,13 +84,13 @@ export class RFQRepository {
                         role: "CLIENT_ADMIN"
                     }
                 },
-                project: { some: { status: { in: ["ACTIVE"] } } }
+                project: { some: { status: { in: ["ACTIVE", "ONHOLD"] } } }
             }
         })
         return await prisma.rFQ.findMany({
             where: {
                             fabricator:{id:fabricator?.id},
-                            project: { status: "ACTIVE" },
+                            project: { status: { in: ["ACTIVE", "ONHOLD"] } },
                             responses:{some:{
                                 childResponses:{
                                     none:{}}

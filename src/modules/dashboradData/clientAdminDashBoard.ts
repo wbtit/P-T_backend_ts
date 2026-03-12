@@ -48,7 +48,7 @@ export const clientAdminDashBoard = async (req: AuthenticateRequest, res: Respon
 
       prisma.rFI.count({
         where: {
-          project: { status: "ACTIVE" },
+          project: { status: { in: ["ACTIVE", "ONHOLD"] } },
           fabricator_id: { in: fabricatorIds },
           rfiresponse: { none: {} },
         },
@@ -56,7 +56,7 @@ export const clientAdminDashBoard = async (req: AuthenticateRequest, res: Respon
 
       prisma.changeOrder.count({
         where: {
-          Project: { status: "ACTIVE" },
+          Project: { status: { in: ["ACTIVE", "ONHOLD"] } },
           Recipients: {
             FabricatorPointOfContacts: {
               some: { id: { in: fabricatorIds } },
@@ -68,7 +68,7 @@ export const clientAdminDashBoard = async (req: AuthenticateRequest, res: Respon
 
       prisma.rFQ.count({
         where: {
-          project: { status: "ACTIVE" },
+          project: { status: { in: ["ACTIVE", "ONHOLD"] } },
           fabricatorId: { in: fabricatorIds },
           responses: { some: { childResponses: { none: {} } } },
         },
@@ -77,7 +77,7 @@ export const clientAdminDashBoard = async (req: AuthenticateRequest, res: Respon
      
       prisma.submittals.count({
         where: {
-          project: { status: "ACTIVE" },
+          project: { status: { in: ["ACTIVE", "ONHOLD"] } },
           fabricator_id: { in: fabricatorIds },
           currentVersion: {
             responses: { none: {} },
@@ -86,15 +86,15 @@ export const clientAdminDashBoard = async (req: AuthenticateRequest, res: Respon
       }),
 
       prisma.rFI.count({
-        where: { project: { status: "ACTIVE" }, fabricator_id: { in: fabricatorIds } },
+        where: { project: { status: { in: ["ACTIVE", "ONHOLD"] } }, fabricator_id: { in: fabricatorIds } },
       }),
 
       prisma.rFQ.count({
-        where: { project: { status: "ACTIVE" }, fabricatorId: { in: fabricatorIds } },
+        where: { project: { status: { in: ["ACTIVE", "ONHOLD"] } }, fabricatorId: { in: fabricatorIds } },
       }),
 
       prisma.submittals.count({
-        where: { project: { status: "ACTIVE" }, fabricator_id: { in: fabricatorIds } },
+        where: { project: { status: { in: ["ACTIVE", "ONHOLD"] } }, fabricator_id: { in: fabricatorIds } },
       }),
     ]);
 

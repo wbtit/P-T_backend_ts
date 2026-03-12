@@ -120,7 +120,7 @@ export class MileStoneRepository{
                 mileStoneSubmittals:{none:{}},
                 project: {
                     isDeleted: false,
-                    status: "ACTIVE",
+                    status: { in: ["ACTIVE", "ONHOLD"] },
                 },
             },
             include:{
@@ -136,7 +136,7 @@ export class MileStoneRepository{
                 mileStoneSubmittals:{none:{}},
                 project: {
                     isDeleted: false,
-                    status: "ACTIVE",
+                    status: { in: ["ACTIVE", "ONHOLD"] },
                 },
             },
             include:{
@@ -155,7 +155,7 @@ export class MileStoneRepository{
                 // Only milestones from active, non-deleted projects
                 project: {
                     isDeleted: false,
-                    status: "ACTIVE",
+                    status: { in: ["ACTIVE", "ONHOLD"] },
                 },
             },
             include: {
@@ -171,7 +171,7 @@ export class MileStoneRepository{
             project:{
                 managerID:managerId,
                 isDeleted: false,
-                status: "ACTIVE",
+                status: { in: ["ACTIVE", "ONHOLD"] },
             },
             mileStoneSubmittals:{none:{}}
         },

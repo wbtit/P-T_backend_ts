@@ -99,7 +99,7 @@ async getPendingSubmittalsForClientAdmin(userId: string) {
         pointOfContact: {
           some: { id: userId, role: "CLIENT_ADMIN" },
         },
-        project: { some: { status: { in: ["ACTIVE"] } } }
+        project: { some: { status: { in: ["ACTIVE", "ONHOLD"] } } }
       },
       select: { id: true },
     });
@@ -109,7 +109,7 @@ async getPendingSubmittalsForClientAdmin(userId: string) {
     return prisma.submittals.findMany({
       where: {
         fabricator_id: { in: fabricatorIds },
-        project: { status: "ACTIVE" },
+        project: { status: { in: ["ACTIVE", "ONHOLD"] } },
         currentVersionId: { not: null },
         currentVersion: {
           responses: { none: {} },
