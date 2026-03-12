@@ -70,6 +70,7 @@ export class CORepository {
         })
         return await prisma.changeOrder.findMany({
           where:{
+                Project: { status: "ACTIVE" },
                 Recipients:{FabricatorPointOfContacts:{
                         some:{
                             id:fabricator?.id,

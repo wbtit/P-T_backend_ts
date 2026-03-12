@@ -109,7 +109,7 @@ async getPendingSubmittalsForClientAdmin(userId: string) {
     return prisma.submittals.findMany({
       where: {
         fabricator_id: { in: fabricatorIds },
-       
+        project: { status: "ACTIVE" },
         currentVersionId: { not: null },
         currentVersion: {
           responses: { none: {} },

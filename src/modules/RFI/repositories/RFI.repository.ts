@@ -67,6 +67,7 @@ export class RFIRepository{
       return await prisma.rFI.findMany({
         where:{
           fabricator_id:fabricator.id,
+          project: { status: "ACTIVE" },
           rfiresponse:{
             none:{}
           }

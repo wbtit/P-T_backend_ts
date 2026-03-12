@@ -90,6 +90,7 @@ export class RFQRepository {
         return await prisma.rFQ.findMany({
             where: {
                             fabricator:{id:fabricator?.id},
+                            project: { status: "ACTIVE" },
                             responses:{some:{
                                 childResponses:{
                                     none:{}}
