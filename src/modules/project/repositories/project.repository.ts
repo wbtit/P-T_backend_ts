@@ -289,8 +289,9 @@ import { generateProjectSerial } from "../../../utils/serial.util";
    async getProjectsForClientAdmin(clientAdminId: string) {
     return await prisma.project.findMany({
       where:{
+        isDeleted: false,
         status: { not: "INACTIVE" },
-        fabricator:{pointOfContact: { some: { id: clientAdminId } }},
+        fabricator:{ pointOfContact: { some: { id: clientAdminId } } },
       },
       include:{
         stageHistory:true,

@@ -324,17 +324,12 @@ async expandProjectWbs(
    const cleanFileId = fileId.replace(/\.[^/.]+$/, "");
       const fileObject = files.find((file: FileObject) => file.id === cleanFileId);
       if (!fileObject) {
-         console.warn("⚠️ [viewFile] File not found in fabricator.files", {
-           fileId,
-           availableFileIds: files.map(f => f.id),
-         });
          throw new AppError("File not found", 404);
        }
    
        const __dirname = path.resolve();
        const filePath = path.join(__dirname, "public", fileObject.path);
        if (!fs.existsSync(filePath)) {
-           console.error("🚨 [viewFile] File does not exist on disk:", filePath);
            throw new AppError("File not found on server", 404);
          }
    
