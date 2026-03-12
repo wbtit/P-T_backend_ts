@@ -137,20 +137,25 @@ export class MileStoneRepository{
             }
         })
     }
-    async getPendingSubmittalsForClient(clientId:string){
+    async getPendingSubmittalsForClient(clientId: string) {
+        // Fetch ALL fabricators this CLIENT_ADMIN is a point of contact for.
+        // Filtering directly on the relation handles this correctly,
+        // but we also need the mileStoneSubmittals: { none: {} } guard
+        // to only return milestones that haven't been submitted yet.
         return await prisma.mileStone.findMany({
-            where:{
-                fabricator:{
-                    pointOfContact:{some:{id:clientId}}
-                }
+            where: {
+                fabricator: {
+                    pointOfContact: { some: { id: clientId, role: "CLIENT_ADMIN" } },
+                },
+                // Only return milestones with no submittals yet (i.e. pending)
+                mileStoneSubmittals: { none: {} },
             },
-            include:{
-                project:{select:{name:true}},
-                fabricator:{select:{fabName:true}}
-            }
-        })       
-        
-}
+            include: {
+                project: { select: { name: true } },
+                fabricator: { select: { fabName: true } },
+            },
+        });
+    }
  async getPendingSubmittalsForProjectManager(managerId:string){
     return await prisma.mileStone.findMany({
         where:{
