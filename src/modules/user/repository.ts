@@ -1,47 +1,47 @@
 import prisma from "../../config/database/client";
-import { userRole } from "./dtos";
-import { createUserInput, updateUserInput } from "./dtos";
+import { userRole, createUserInput, updateUserInput } from "./dtos";
 import { cleandata } from "../../config/utils/cleanDataObject";
-
 
 export const findUserByUsername = async (username: string) => {
   return prisma.user.findUnique({ where: { username } });
 };
 
 export const findUserById = async (id: string) => {
-  return prisma.user.findUnique(
-    {
-      where: { id },
-      select: {
-        id: true,
-        username: true,
-        email: true,
-        firstName: true,
-        middleName: true,
-        lastName: true,
-        phone: true,
-        landline: true,
-        altLandline: true,
-        altPhone: true,
-        designation: true,
-        city: true,
-        address: true,
-        role: true,
-        profilePic: true,
-        isActive: true,
-        FabricatorPointOfContacts: true,
-      }
-    });
-}
+  return prisma.user.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      username: true,
+      email: true,
+      firstName: true,
+      middleName: true,
+      lastName: true,
+      phone: true,
+      landline: true,
+      altLandline: true,
+      altPhone: true,
+      designation: true,
+      city: true,
+      address: true,
+      role: true,
+      profilePic: true,
+      isActive: true,
+      FabricatorPointOfContacts: true,
+    },
+  });
+};
 
+/**
+ * Returns ALL users regardless of active status.
+ * Used internally by admin-level queries.
+ */
 export const findAllUsers = async () => {
   return await prisma.user.findMany({
     include: {
-      FabricatorPointOfContacts: true
-
-    }
+      FabricatorPointOfContacts: true,
+    },
   });
-}
+};
 
 export const createUser = async (user: createUserInput) => {
   return prisma.user.create({
@@ -72,20 +72,18 @@ export const createUser = async (user: createUserInput) => {
       ...(user.connectionDesignerId
         ? { connectionDesigner: { connect: { id: user.connectionDesignerId } } }
         : {}),
-
     },
   });
 };
 
 export const updateUser = async (id: string, user: updateUserInput) => {
-  const safeData = cleandata(user); FabricatorPointOfContacts: true
-
+  // Note: data should already be cleaned by the service layer before calling this
   return prisma.user.update({
     where: { id },
     data: {
-      ...safeData,
+      ...user,
       role: user.role as userRole,
-    }
+    },
   });
 };
 
@@ -99,32 +97,35 @@ export const updateUserProfilePic = async (id: string, profilePic: string) => {
   });
 };
 
-
 export const deleteUser = async (id: string) => {
   return await prisma.user.update({
     where: { id },
     data: {
-      isActive: false
-    }
-  })
-}
+      isActive: false,
+    },
+  });
+};
+
 export const findUsersByRole = async (role: userRole) => {
   return await prisma.user.findMany({
-    where: {
-      role: role
-    }, include: {
-      FabricatorPointOfContacts: true
-    }
-  })
-}
+    where: { role },
+    include: {
+      FabricatorPointOfContacts: true,
+    },
+  });
+};
 
+/**
+ * Returns only ACTIVE users (isActive: true).
+ * Use this for general user listings shown to the frontend.
+ */
 export const findAllUser = async () => {
   return await prisma.user.findMany({
     where: {
       isActive: true,
     },
     include: {
-      FabricatorPointOfContacts: true
-    }
-  })
-}
+      FabricatorPointOfContacts: true,
+    },
+  });
+};

@@ -3,24 +3,27 @@ import { Router } from "express";
 import authMiddleware from "../../middleware/authMiddleware";
 import { asyncHandler } from "../../config/utils/asyncHandler";
 import { userProfilePicUploads } from "../../utils/multerUploader.util";
+
 const userCtrl = new UserController();
 const router = Router();
 
-router.get("/me",
-     authMiddleware, 
-     asyncHandler(userCtrl.handleGetUserByToken).bind(userCtrl));
+router.get(
+  "/me",
+  authMiddleware,
+  asyncHandler(userCtrl.handleGetUserByToken.bind(userCtrl))
+);
 
 router.patch(
-     "/me/profile-pic",
-     authMiddleware,
-     userProfilePicUploads.array("files", 1),
-     asyncHandler(userCtrl.handleUpdateMyProfilePic).bind(userCtrl)
+  "/me/profile-pic",
+  authMiddleware,
+  userProfilePicUploads.array("files", 1),
+  asyncHandler(userCtrl.handleUpdateMyProfilePic.bind(userCtrl))
 );
 
 router.get(
-     "/getAllUsers",
-     authMiddleware,
-     asyncHandler(userCtrl.handleGetAllUsers).bind(userCtrl)
-)
+  "/getAllUsers",
+  authMiddleware,
+  asyncHandler(userCtrl.handleGetAllUsers.bind(userCtrl))
+);
 
 export default router;
