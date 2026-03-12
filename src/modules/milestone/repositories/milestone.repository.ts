@@ -129,7 +129,11 @@ export class MileStoneRepository{
         return await prisma.mileStone.findMany({
             where:{
                 fabricator_id:fabricatorId,
-                mileStoneSubmittals:{none:{}}
+                mileStoneSubmittals:{none:{}},
+                project: {
+                    isDeleted: false,
+                    status: { not: "INACTIVE" },
+                },
             },
             include:{
                 project:{select:{name:true}},
