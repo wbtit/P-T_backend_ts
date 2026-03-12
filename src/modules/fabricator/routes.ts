@@ -1,107 +1,114 @@
-import {Router} from "express";
+import { Router } from "express";
 import { FabricatorController } from "./controllers";
 import validate from "../../middleware/validate";
 import { asyncHandler } from "../../config/utils/asyncHandler";
 import authMiddleware from "../../middleware/authMiddleware";
-import {CreateFabricatorSchema,
-    UpdateFabricatorSchema,
-    FabricatorClientAdminHandoverSchema,
-} from "./dtos"
-import z from 'zod'
+import {
+  CreateFabricatorSchema,
+  UpdateFabricatorSchema,
+  FabricatorClientAdminHandoverSchema,
+} from "./dtos";
+import z from "zod";
 import { fabricatorsUploads } from "../../utils/multerUploader.util";
 import { BranchController } from "./branches";
 import { branchSchema } from "./branches";
 
- const fabCtrl=new FabricatorController();
- const branchCtrl = new BranchController();
- const router = Router();
+const fabCtrl = new FabricatorController();
+const branchCtrl = new BranchController();
+const router = Router();
 
 router.post(
-    "/",
-    authMiddleware,
-    fabricatorsUploads.array("files"),
-    validate({body:CreateFabricatorSchema}),
-    asyncHandler(fabCtrl.handleCreateFabricator.bind(fabCtrl))
+  "/",
+  authMiddleware,
+  fabricatorsUploads.array("files"),
+  validate({ body: CreateFabricatorSchema }),
+  asyncHandler(fabCtrl.handleCreateFabricator.bind(fabCtrl))
 );
 
 router.put(
-    "/update/:id",
-    authMiddleware,
-    fabricatorsUploads.array("files"),
-    validate({params:z.object({id:z.string()}),body:UpdateFabricatorSchema}),
-    asyncHandler(fabCtrl.handleUpdateFabricator.bind(fabCtrl))
-)
+  "/update/:id",
+  authMiddleware,
+  fabricatorsUploads.array("files"),
+  validate({ params: z.object({ id: z.string() }), body: UpdateFabricatorSchema }),
+  asyncHandler(fabCtrl.handleUpdateFabricator.bind(fabCtrl))
+);
 
 router.post(
-    "/handover-client-admin",
-    authMiddleware,
-    validate({body:FabricatorClientAdminHandoverSchema}),
-    asyncHandler(fabCtrl.handleHandoverClientAdmin.bind(fabCtrl))
-)
-
-
-router.get(
-    "/all",
-    authMiddleware,
-    asyncHandler(fabCtrl.handleGetAllFabricators.bind(fabCtrl))
-)
+  "/handover-client-admin",
+  authMiddleware,
+  validate({ body: FabricatorClientAdminHandoverSchema }),
+  asyncHandler(fabCtrl.handleHandoverClientAdmin.bind(fabCtrl))
+);
 
 router.get(
-    "/:id",
-    authMiddleware,
-    validate({params:z.object({id:z.string()})}),
-    asyncHandler(fabCtrl.handleGetFabricatorById.bind(fabCtrl))
-)
+  "/all",
+  authMiddleware,
+  asyncHandler(fabCtrl.handleGetAllFabricators.bind(fabCtrl))
+);
 
+// NOTE: /createdBy MUST be registered before /:id — otherwise Express
+// matches "createdBy" as the :id param and this handler is never reached.
+router.get(
+  "/createdBy",
+  authMiddleware,
+  validate({ params: z.object({ id: z.string() }) }),
+  asyncHandler(fabCtrl.handleGetFabricatorByCreatedById.bind(fabCtrl))
+);
 
 router.get(
-    "/createdBy",
-    authMiddleware,
-    validate({params:z.object({id:z.string()})}),
-    asyncHandler(fabCtrl.handleGetFabricatorByCreatedById.bind(fabCtrl))
-)
+  "/file/:fabricatorId/:fileId",
+  authMiddleware,
+  validate({ params: z.object({ fabricatorId: z.string(), fileId: z.string() }) }),
+  asyncHandler(fabCtrl.handleGetFile.bind(fabCtrl))
+);
+
 router.get(
-    "/file/:fabricatorId/:fileId",
-    authMiddleware,
-    validate({params:z.object({fabricatorId:z.string(),fileId:z.string()})}),
-    asyncHandler(fabCtrl.handleGetFile.bind(fabCtrl))   
-)
+  "/viewFile/:fabricatorId/:fileId",
+  authMiddleware,
+  validate({ params: z.object({ fabricatorId: z.string(), fileId: z.string() }) }),
+  asyncHandler(fabCtrl.handleViewFile.bind(fabCtrl))
+);
+
 router.get(
-    "/viewFile/:fabricatorId/:fileId",
-    authMiddleware,
-    validate({params:z.object({fabricatorId:z.string(),fileId:z.string()})}),
-    asyncHandler(fabCtrl.handleViewFile.bind(fabCtrl))
-)
+  "/:id",
+  authMiddleware,
+  validate({ params: z.object({ id: z.string() }) }),
+  asyncHandler(fabCtrl.handleGetFabricatorById.bind(fabCtrl))
+);
+
 router.delete(
-    "/id/:id",
-    authMiddleware,
-    validate({params:z.object({id:z.string()})}),
-    asyncHandler(fabCtrl.handleDeleteFabricator.bind(fabCtrl))
-)
+  "/id/:id",
+  authMiddleware,
+  validate({ params: z.object({ id: z.string() }) }),
+  asyncHandler(fabCtrl.handleDeleteFabricator.bind(fabCtrl))
+);
+
+router.delete(
+  "/files/:fabricatorId/:fileId",
+  authMiddleware,
+  validate({ params: z.object({ fabricatorId: z.string(), fileId: z.string() }) }),
+  asyncHandler(fabCtrl.handleDeleteFile.bind(fabCtrl))
+);
+
 router.post(
-    "/branch",
-    authMiddleware,
-    validate({body:branchSchema}),
-    asyncHandler(branchCtrl.createBranch.bind(branchCtrl))
-)
-router.delete(
-    "/files/:fabricatorId/:fileId",
-    authMiddleware,
-    validate({params:z.object({fabricatorId:z.string(),fileId:z.string()})}),
-    asyncHandler(fabCtrl.handleDeleteFile.bind(fabCtrl))
-)
+  "/branch",
+  authMiddleware,
+  validate({ body: branchSchema }),
+  asyncHandler(branchCtrl.createBranch.bind(branchCtrl))
+);
+
 router.put(
-    "/branch/:id",
-    authMiddleware,
-    validate({params:z.object({id:z.string()}),body:branchSchema}),
-    asyncHandler(branchCtrl.updateBranch.bind(branchCtrl))
-)
-router.delete(
-    "/branch/:id",
-    authMiddleware,
-    validate({params:z.object({id:z.string()})}),
-    asyncHandler(branchCtrl.deleteBranch.bind(branchCtrl))
-)
+  "/branch/:id",
+  authMiddleware,
+  validate({ params: z.object({ id: z.string() }), body: branchSchema }),
+  asyncHandler(branchCtrl.updateBranch.bind(branchCtrl))
+);
 
+router.delete(
+  "/branch/:id",
+  authMiddleware,
+  validate({ params: z.object({ id: z.string() }) }),
+  asyncHandler(branchCtrl.deleteBranch.bind(branchCtrl))
+);
 
 export default router;

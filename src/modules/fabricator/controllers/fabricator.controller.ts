@@ -8,7 +8,7 @@ import { UserRole } from "@prisma/client";
 import { FabricatorClientAdminHandoverSchema } from "../dtos";
 
 export class FabricatorController {
-  fabService = new FabricatorService();
+  private readonly fabService = new FabricatorService();
   private readonly fabricatorNotifyRoles: UserRole[] = [
     "ADMIN",
     "SALES_MANAGER",

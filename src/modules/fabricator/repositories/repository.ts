@@ -1,107 +1,74 @@
-import { 
-     CreateFabricatorInput,
-     UpdateFabricatorInput, 
-     GetFabricatorInput, 
-     DeleteFabricatorInput
- } from "../dtos";
+import {
+  CreateFabricatorInput,
+  UpdateFabricatorInput,
+  GetFabricatorInput,
+  DeleteFabricatorInput,
+} from "../dtos";
 
- import prisma from "../../../config/database/client";
+import prisma from "../../../config/database/client";
 
- export class FabricatorRepository {
-      async create(data: CreateFabricatorInput, userId: string) {
-    const {
-      pointOfContact,
-      wbtFabricatorPointOfContact,
-      ...safeData
-    } = data;
+// Shared include block — avoids repeating the same 4 relations in every query
+const FABRICATOR_INCLUDE = {
+  branches: true,
+  project: true,
+  pointOfContact: true,
+  wbtFabricatorPointOfContact: true,
+} as const;
+
+export class FabricatorRepository {
+  async create(data: CreateFabricatorInput, userId: string) {
+    const { pointOfContact, wbtFabricatorPointOfContact, ...safeData } = data;
 
     return prisma.fabricator.create({
       data: {
         ...safeData,
         createdById: userId,
         pointOfContact: pointOfContact?.length
-          ? {
-              connect: pointOfContact.map((id) => ({ id })),
-            }
+          ? { connect: pointOfContact.map((id) => ({ id })) }
           : undefined,
         wbtFabricatorPointOfContact: wbtFabricatorPointOfContact?.length
-          ? {
-              connect: wbtFabricatorPointOfContact.map((id) => ({ id })),
-            }
+          ? { connect: wbtFabricatorPointOfContact.map((id) => ({ id })) }
           : undefined,
       },
-    include:{
-      branches:true,
-      project:true,
-      pointOfContact:true,
-      wbtFabricatorPointOfContact:true
-    }
+      include: FABRICATOR_INCLUDE,
     });
   }
 
-
-
-  // Get all fabricators
   async findAll() {
     return prisma.fabricator.findMany({
       orderBy: { createdAt: "desc" },
-       include:{
-      branches:true,
-      project:true,
-      pointOfContact:true,
-      wbtFabricatorPointOfContact:true
-    }
+      include: FABRICATOR_INCLUDE,
     });
   }
 
-  // Get fabricator by ID
-  async findById(input: GetFabricatorInput){
+  async findById(input: GetFabricatorInput) {
     return prisma.fabricator.findUnique({
       where: { id: input.id },
-      include:{
-        branches:true,
-        project:true,
-        pointOfContact:true,
-        wbtFabricatorPointOfContact:true
-      }
+      include: FABRICATOR_INCLUDE,
     });
   }
-  async findByIdHeadquaters(id:string){
+
+  async findByIdHeadquaters(id: string) {
     return await prisma.fabricator.findFirst({
-      where:{
-        id,
-        
-      }
-    })
+      where: { id },
+    });
   }
 
-  //Get by fabName
   async findByName(fabName: string) {
     return prisma.fabricator.findUnique({
       where: { fabName },
-      include:{
-        branches:true,
-        project:true,
-        pointOfContact:true,
-        wbtFabricatorPointOfContact:true
-      }
-    });
-  }
-  //Get by createdById
-  async findByCreatedById(createdById: GetFabricatorInput) {
-    return prisma.fabricator.findMany({
-      where: { createdById: createdById.id },
-      include:{
-        branches:true,
-        project:true,
-        pointOfContact:true,
-        wbtFabricatorPointOfContact:true
-      }
+      include: FABRICATOR_INCLUDE,
     });
   }
 
-  // Update fabricator
-  async update(input: GetFabricatorInput, data: UpdateFabricatorInput){
+  async findByCreatedById(createdById: GetFabricatorInput) {
+    return prisma.fabricator.findMany({
+      where: { createdById: createdById.id },
+      include: FABRICATOR_INCLUDE,
+    });
+  }
+
+  async update(input: GetFabricatorInput, data: UpdateFabricatorInput) {
     return prisma.fabricator.update({
       where: { id: input.id },
       data: {
@@ -116,32 +83,20 @@ import {
         currencyType: data.currencyType,
         fabStage: data.fabStage,
         pointOfContact: data.pointOfContact?.length
-          ? {
-              connect: data.pointOfContact.map((id) => ({ id })),
-            }
+          ? { connect: data.pointOfContact.map((id) => ({ id })) }
           : undefined,
         wbtFabricatorPointOfContact: data.wbtFabricatorPointOfContact?.length
-          ? {
-              connect: data.wbtFabricatorPointOfContact.map((id) => ({ id })),
-            }
+          ? { connect: data.wbtFabricatorPointOfContact.map((id) => ({ id })) }
           : undefined,
       },
-      include:{
-        branches:true,
-        project:true,
-        pointOfContact:true,
-        wbtFabricatorPointOfContact:true
-      }
+      include: FABRICATOR_INCLUDE,
     });
   }
 
-  // Delete fabricator
-  async delete(input: DeleteFabricatorInput){
+  async delete(input: DeleteFabricatorInput) {
     return prisma.fabricator.update({
       where: { id: input.id },
-      data:{
-        isDeleted: true
-      }
+      data: { isDeleted: true },
     });
   }
- }
+}
