@@ -364,6 +364,7 @@ model User {
   projectAssistMemberships       ProjectAssist[]      @relation("ProjectAssistUser")
   assignedProjectAssists         ProjectAssist[]      @relation("ProjectAssistAssignedBy")
   teamMeetingNotesCreated        TeamMeetingNotes[]   @relation("TeamMeetingNotesCreatedBy")
+  teamMeetingNoteResponsesCreated TeamMeetingNoteResponse[] @relation("TeamMeetingNoteResponseCreatedBy")
 
   @@map("user")
   @@index([email])
@@ -858,11 +859,33 @@ model TeamMeetingNotes {
   meeting   Meeting? @relation("MeetingTeamMeetingNotes", fields: [meetingId], references: [id], onDelete: Cascade)
   project   Project @relation("ProjectTeamMeetingNotes", fields: [projectId], references: [id], onDelete: Cascade)
   createdBy User    @relation("TeamMeetingNotesCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
+  responses TeamMeetingNoteResponse[] @relation("TeamMeetingNoteResponses")
 
   @@index([projectId])
   @@index([meetingId])
   @@index([createdById])
   @@map("team_meeting_notes")
+}
+
+model TeamMeetingNoteResponse {
+  id               String   @id @default(uuid()) @db.Uuid
+  content          String
+  files            Json     @default("[]")
+  noteId           String   @db.Uuid
+  parentResponseId String?  @db.Uuid
+  createdById      String   @db.Uuid
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  note           TeamMeetingNotes @relation("TeamMeetingNoteResponses", fields: [noteId], references: [id], onDelete: Cascade)
+  parentResponse TeamMeetingNoteResponse? @relation("TeamMeetingNoteResponseThreads", fields: [parentResponseId], references: [id])
+  childResponses TeamMeetingNoteResponse[] @relation("TeamMeetingNoteResponseThreads")
+  createdBy      User    @relation("TeamMeetingNoteResponseCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
+
+  @@index([noteId])
+  @@index([parentResponseId])
+  @@index([createdById])
+  @@map("team_meeting_note_responses")
 }
 
 model JobStudy {

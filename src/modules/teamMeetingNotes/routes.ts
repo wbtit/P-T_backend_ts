@@ -3,12 +3,15 @@ import authMiddleware from "../../middleware/authMiddleware";
 import validate from "../../middleware/validate";
 import { asyncHandler } from "../../config/utils/asyncHandler";
 import z from "zod";
-import { teamMeetingNotesUploads } from "../../utils/multerUploader.util";
+import { teamMeetingNotesUploads, teamMeetingNotesResponsesUploads } from "../../utils/multerUploader.util";
 import { TeamMeetingNotesController } from "./controllers/teamMeetingNotes.controller";
 import { TeamMeetingNoteSchema, TeamMeetingNoteUpdateSchema } from "./dtos";
+import { TeamMeetingNoteResponseController } from "./responses/controllers/teamMeetingNoteResponse.controller";
+import { TeamMeetingNoteResponseSchema } from "./responses/dtos";
 
 const router = Router();
 const controller = new TeamMeetingNotesController();
+const responseController = new TeamMeetingNoteResponseController();
 
 router.post(
   "/",
@@ -72,6 +75,57 @@ router.get(
   authMiddleware,
   validate({ params: z.object({ noteId: z.string(), fileId: z.string() }) }),
   asyncHandler(controller.viewFile.bind(controller))
+);
+
+router.post(
+  "/:noteId/responses",
+  authMiddleware,
+  teamMeetingNotesResponsesUploads.array("files"),
+  validate({ params: z.object({ noteId: z.string() }), body: TeamMeetingNoteResponseSchema }),
+  asyncHandler(responseController.handleCreate.bind(responseController))
+);
+
+router.get(
+  "/:noteId/responses",
+  authMiddleware,
+  validate({ params: z.object({ noteId: z.string() }) }),
+  asyncHandler(responseController.handleGetByNote.bind(responseController))
+);
+
+router.get(
+  "/responses/:id",
+  authMiddleware,
+  validate({ params: z.object({ id: z.string() }) }),
+  asyncHandler(responseController.handleGetById.bind(responseController))
+);
+
+router.put(
+  "/responses/:id",
+  authMiddleware,
+  teamMeetingNotesResponsesUploads.array("files"),
+  validate({ params: z.object({ id: z.string() }), body: TeamMeetingNoteResponseSchema.partial() }),
+  asyncHandler(responseController.handleUpdate.bind(responseController))
+);
+
+router.delete(
+  "/responses/:id",
+  authMiddleware,
+  validate({ params: z.object({ id: z.string() }) }),
+  asyncHandler(responseController.handleDelete.bind(responseController))
+);
+
+router.get(
+  "/responses/file/:responseId/:fileId",
+  authMiddleware,
+  validate({ params: z.object({ responseId: z.string(), fileId: z.string() }) }),
+  asyncHandler(responseController.handleGetFile.bind(responseController))
+);
+
+router.get(
+  "/responses/viewFile/:responseId/:fileId",
+  authMiddleware,
+  validate({ params: z.object({ responseId: z.string(), fileId: z.string() }) }),
+  asyncHandler(responseController.handleViewFile.bind(responseController))
 );
 
 export default router;

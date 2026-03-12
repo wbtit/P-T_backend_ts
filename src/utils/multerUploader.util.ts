@@ -236,5 +236,11 @@ export const teamMeetingNotesUploads = createMulterUploader(
   teamMeetingNotesDataMap
 );
 
+export const teamMeetingNotesResponsesDataMap = {};
+export const teamMeetingNotesResponsesUploads = createMulterUploader(
+  "public/team-meeting-notes-responses",
+  teamMeetingNotesResponsesDataMap
+);
+
 export const userProfilePicMap = {};
 export const userProfilePicUploads = createMulterUploader("public/userprofiles", userProfilePicMap);
