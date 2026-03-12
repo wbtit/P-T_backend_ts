@@ -3,7 +3,7 @@ import { AuthenticateRequest } from "../../../middleware/authMiddleware";
 import { AppError } from "../../../config/utils/AppError";
 import { COService } from "../services";
 import { mapUploadedFiles } from "../../uploads/fileUtil";
-import { notifyByRoles } from "../../../utils/notifyByRole";
+import { notifyProjectStakeholders } from "../../../utils/notifyProjectStakeholders";
 import { UserRole } from "@prisma/client";
 
 const coService = new COService();
@@ -43,7 +43,7 @@ export class COController {
       id
     );
     const coNumber = co.changeOrderNumber?.trim();
-    await notifyByRoles(CO_NOTIFY_ROLES, {
+    await notifyProjectStakeholders(co.project, CO_NOTIFY_ROLES, {
       type: "CO_CREATED",
       title: "Change Order Created / Sent",
       message: coNumber
@@ -82,7 +82,7 @@ export class COController {
       files: uploadedFiles,
     });
     const updatedCoNumber = updatedCo.changeOrderNumber?.trim();
-    await notifyByRoles(CO_NOTIFY_ROLES, {
+    await notifyProjectStakeholders(updatedCo.project, CO_NOTIFY_ROLES, {
       type: "CO_UPDATED",
       title: "Change Order Updated",
       message: updatedCoNumber

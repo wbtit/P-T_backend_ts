@@ -5,7 +5,7 @@ import { RFIService } from "../services";
 import { mapUploadedFiles } from "../../uploads/fileUtil";
 import { sendEmail, getCCEmails } from "../../../services/mailServices/mailconfig";
 import { rfihtmlContent } from "../../../services/mailServices/mailtemplates/rfiMailtemplate";
-import { notifyByRoles } from "../../../utils/notifyByRole";
+import { notifyProjectStakeholders } from "../../../utils/notifyProjectStakeholders";
 import { UserRole } from "@prisma/client";
 import { ProjectAssistService } from "../../project/services/projectAssist.service";
 import { sendNotification } from "../../../utils/sendNotification";
@@ -73,7 +73,7 @@ export class RFIController {
           subject: newrfi.subject,
           text: newrfi.description,
         });
-    await notifyByRoles(RFI_NOTIFY_ROLES, {
+    await notifyProjectStakeholders(newrfi.project_id, RFI_NOTIFY_ROLES, {
       type: "RFI_CREATED",
       title: "RFI Created / Sent",
       message: `RFI '${newrfi.subject}' was created and sent.`,
@@ -81,7 +81,7 @@ export class RFIController {
       timestamp: new Date(),
     });
     if (isAproovedByAdmin) {
-      await notifyByRoles(RFI_NOTIFY_ROLES, {
+      await notifyProjectStakeholders(newrfi.project_id, RFI_NOTIFY_ROLES, {
         type: "RFI_APPROVED_BY_ADMIN",
         title: "RFI Approved by Admin",
         message: `RFI '${newrfi.subject}' was approved by admin.`,
@@ -133,7 +133,7 @@ export class RFIController {
     const approvalWasGranted =
       !existingRfi.isAproovedByAdmin &&
       (updatedRfi as any)?.isAproovedByAdmin === true;
-    await notifyByRoles(RFI_NOTIFY_ROLES, {
+    await notifyProjectStakeholders(existingRfi.project_id, RFI_NOTIFY_ROLES, {
       type: "RFI_UPDATED",
       title: "RFI Updated",
       message: updatedRfiSubject
@@ -144,7 +144,7 @@ export class RFIController {
       timestamp: new Date(),
     });
     if (approvalWasGranted) {
-      await notifyByRoles(RFI_NOTIFY_ROLES, {
+      await notifyProjectStakeholders(existingRfi.project_id, RFI_NOTIFY_ROLES, {
         type: "RFI_APPROVED_BY_ADMIN",
         title: "RFI Approved by Admin",
         message: updatedRfiSubject

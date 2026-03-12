@@ -2,7 +2,7 @@ import { AppError } from "../../../config/utils/AppError";
 import { TaskRepository } from "../repositories/task.repository";
 import { createTaskInput, updateTaskInput } from "../dtos";
 import { sendNotification } from "../../../utils/sendNotification";
-import { notifyByRoles } from "../../../utils/notifyByRole";
+import { notifyProjectStakeholders } from "../../../utils/notifyProjectStakeholders";
 import { UserRole } from "@prisma/client";
 
 export class TaskService {
@@ -112,7 +112,7 @@ export class TaskService {
     const updatedTask = await this.taskRepository.update(id, data);
     if (data.status) {
       if (data.status !== "COMPLETED") {
-        await notifyByRoles(this.taskNotifyRoles, {
+        await notifyProjectStakeholders(updatedTask.project_id, this.taskNotifyRoles, {
           type: "TASK_STATUS_CHANGED",
           title: "Task Status Changed",
           message: `Task '${updatedTask.name}' status changed to '${data.status}'.`,

@@ -3,7 +3,8 @@ import { AuthenticateRequest } from "../../../middleware/authMiddleware";
 import { AppError } from "../../../config/utils/AppError";
 import { CoResponseService } from "../services";
 import { mapUploadedFiles } from "../../uploads/fileUtil";
-import { notifyByRoles } from "../../../utils/notifyByRole";
+import { notifyProjectStakeholders } from "../../../utils/notifyProjectStakeholders";
+import prisma from "../../../config/database/client";
 import { UserRole } from "@prisma/client";
 
 const coResponseService = new CoResponseService();
@@ -43,25 +44,28 @@ export class CoResponseController {
       userId
     );
     const status = (response as any)?.Status;
-    await notifyByRoles(CO_NOTIFY_ROLES, {
-      type:
-        status === "ACCEPT"
-          ? "CO_ACCEPTED_BY_FABRICATOR"
-          : status === "REJECT"
-          ? "CO_REJECTED_BY_FABRICATOR"
-          : "CO_RESPONSE_RECEIVED",
-      title:
-        status === "ACCEPT"
-          ? "Change Order Accepted by Fabricator"
-          : status === "REJECT"
-          ? "Change Order Rejected by Fabricator"
-          : "CO Response / Reply Received",
-      message: "A change-order response was submitted.",
-      coId,
-      coResponseId: response.id,
-      status,
-      timestamp: new Date(),
-    });
+    const co = await prisma.changeOrder.findUnique({ where: { id: coId } });
+    if (co) {
+      await notifyProjectStakeholders(co.project, CO_NOTIFY_ROLES, {
+        type:
+          status === "ACCEPT"
+            ? "CO_ACCEPTED_BY_FABRICATOR"
+            : status === "REJECT"
+            ? "CO_REJECTED_BY_FABRICATOR"
+            : "CO_RESPONSE_RECEIVED",
+        title:
+          status === "ACCEPT"
+            ? "Change Order Accepted by Fabricator"
+            : status === "REJECT"
+            ? "Change Order Rejected by Fabricator"
+            : "CO Response / Reply Received",
+        message: "A change-order response was submitted.",
+        coId,
+        coResponseId: response.id,
+        status,
+        timestamp: new Date(),
+      });
+    }
 
     res.status(201).json({
       message: "CO Response created",

@@ -1,7 +1,7 @@
 import { Request,Response } from "express";
 import { RfqResponseService } from "../services/rfqRes.service";
 import { mapUploadedFiles } from "../../../uploads/fileUtil";
-import { notifyByRoles } from "../../../../utils/notifyByRole";
+import { notifyRfqStakeholders } from "../../../../utils/notifyRfqStakeholders";
 import { UserRole } from "@prisma/client";
 
 
@@ -27,7 +27,7 @@ export class RfqResponseController {
       files: uploadedFiles,
     };
         const result = await rfqResponseService.create(payload);
-        await notifyByRoles(RFQ_NOTIFY_ROLES, {
+        await notifyRfqStakeholders(result.rfqId, RFQ_NOTIFY_ROLES, {
             type: "RFQ_RESPONSE_RECEIVED",
             title: "RFQ Response Received",
             message: "A new RFQ response has been submitted.",

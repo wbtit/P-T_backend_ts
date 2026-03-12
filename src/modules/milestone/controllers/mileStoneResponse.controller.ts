@@ -4,7 +4,8 @@ import { AppError } from "../../../config/utils/AppError";
 import { mapUploadedFiles } from "../../uploads/fileUtil";
 import { MileStoneResponseService } from "../services";
 import { mileStoneResponseStatus } from "@prisma/client";
-import { notifyByRoles } from "../../../utils/notifyByRole";
+import { notifyProjectStakeholders } from "../../../utils/notifyProjectStakeholders";
+import prisma from "../../../config/database/client";
 import { UserRole } from "@prisma/client";
 
 const mileStoneResponseService = new MileStoneResponseService();
@@ -41,14 +42,18 @@ export class MileStoneResponseController {
       },
       req.user.id
     );
-    await notifyByRoles(MILESTONE_NOTIFY_ROLES, {
-      type: "MILESTONE_RESPONSE_RECEIVED",
-      title: "Milestone Response Received",
-      message: "A milestone response was submitted.",
-      milestoneId: req.body?.mileStoneId,
-      milestoneResponseId: response.id,
-      timestamp: new Date(),
-    });
+    const version = await prisma.mileStoneVersion.findUnique({where: {id: req.body?.mileStoneVersionId || (response as any).mileStoneVersionId}});
+    const milestone = version ? await prisma.mileStone.findUnique({where: {id: version.mileStoneId}}) : null;
+    if (milestone) {
+      await notifyProjectStakeholders(milestone.project_id, MILESTONE_NOTIFY_ROLES, {
+        type: "MILESTONE_RESPONSE_RECEIVED",
+        title: "Milestone Response Received",
+        message: "A milestone response was submitted.",
+        milestoneId: milestone.id,
+        milestoneResponseId: response.id,
+        timestamp: new Date(),
+      });
+    }
 
     res.status(201).json({
       status: "success",
@@ -69,14 +74,18 @@ export class MileStoneResponseController {
       parentResponseId,
       status as mileStoneResponseStatus
     );
-    await notifyByRoles(MILESTONE_NOTIFY_ROLES, {
-      type: status === "DELAYED" ? "MILESTONE_DELAYED" : "MILESTONE_STATUS_UPDATED",
-      title: status === "DELAYED" ? "Milestone is DELAYED" : "Milestone Status Updated",
-      message: `Milestone response status changed to '${status}'.`,
-      parentResponseId,
-      status,
-      timestamp: new Date(),
-    });
+    const version = await prisma.mileStoneVersion.findUnique({where: {id: (updated as any).mileStoneVersionId}});
+    const milestone = version ? await prisma.mileStone.findUnique({where: {id: version.mileStoneId}}) : null;
+    if (milestone) {
+      await notifyProjectStakeholders(milestone.project_id, MILESTONE_NOTIFY_ROLES, {
+        type: status === "DELAYED" ? "MILESTONE_DELAYED" : "MILESTONE_STATUS_UPDATED",
+        title: status === "DELAYED" ? "Milestone is DELAYED" : "Milestone Status Updated",
+        message: `Milestone response status changed to '${status}'.`,
+        parentResponseId,
+        status,
+        timestamp: new Date(),
+      });
+    }
 
     res.status(200).json({
       status: "success",

@@ -3,7 +3,7 @@ import { MileStoneService } from "../services";
 import { AppError } from "../../../config/utils/AppError";
 import { AuthenticateRequest } from "../../../middleware/authMiddleware";
 import prisma from "../../../config/database/client";
-import { notifyByRoles } from "../../../utils/notifyByRole";
+import { notifyProjectStakeholders } from "../../../utils/notifyProjectStakeholders";
 import { UserRole } from "@prisma/client";
 
 const mileStoneService = new MileStoneService();
@@ -41,13 +41,15 @@ export class MileStoneController {
     });
 
     const result = await mileStoneService.create(req.body);
-    await notifyByRoles(MILESTONE_NOTIFY_ROLES, {
-      type: "MILESTONE_CREATED",
-      title: "Milestone Created",
-      message: `Milestone ${milestoneReference(result ?? undefined)} created.`,
-      milestoneId: result?.id,
-      timestamp: new Date(),
-    });
+    if (result && result.project_id) {
+      await notifyProjectStakeholders(result.project_id, MILESTONE_NOTIFY_ROLES, {
+        type: "MILESTONE_CREATED",
+        title: "Milestone Created",
+        message: `Milestone ${milestoneReference(result ?? undefined)} created.`,
+        milestoneId: result.id,
+        timestamp: new Date(),
+      });
+    }
 
     return res.status(201).json({
       message: "MileStone created successfully",
@@ -65,13 +67,18 @@ export class MileStoneController {
     const { id } = req.params;
     const payload = req.body?.data ?? req.body;
     const result = await mileStoneService.update(id, payload);
-    await notifyByRoles(MILESTONE_NOTIFY_ROLES, {
-      type: "MILESTONE_NEW_VERSION",
-      title: "New Milestone Version Created",
-      message: `A new version (v${result.versionNumber}) was created for milestone ${milestoneReference(result)}.`,
-      milestoneId: id,
-      timestamp: new Date(),
-    });
+    if (result) {
+      const milestone = await prisma.mileStone.findUnique({ where: { id: result.mileStoneId || id } });
+      if (milestone) {
+        await notifyProjectStakeholders(milestone.project_id, MILESTONE_NOTIFY_ROLES, {
+          type: "MILESTONE_NEW_VERSION",
+          title: "New Milestone Version Created",
+          message: `A new version (v${result.versionNumber}) was created for milestone ${milestoneReference(result as any)}.`,
+          milestoneId: id,
+          timestamp: new Date(),
+        });
+      }
+    }
 
     if (!result) throw new AppError("Failed to update milestone", 400);
 
@@ -91,13 +98,18 @@ export class MileStoneController {
     const { id } = req.params;
     const payload = req.body?.data ?? req.body;
     const result = await mileStoneService.updateExisting(id, payload);
-    await notifyByRoles(MILESTONE_NOTIFY_ROLES, {
-      type: "MILESTONE_UPDATED",
-      title: "Milestone Updated",
-      message: `Milestone ${milestoneReference(result)} was updated.`,
-      milestoneId: id,
-      timestamp: new Date(),
-    });
+    if (result) {
+      const milestone = await prisma.mileStone.findUnique({ where: { id: (result as any).mileStoneId || id } });
+      if (milestone) {
+        await notifyProjectStakeholders(milestone.project_id, MILESTONE_NOTIFY_ROLES, {
+          type: "MILESTONE_UPDATED",
+          title: "Milestone Updated",
+          message: `Milestone ${milestoneReference(result as any)} was updated.`,
+          milestoneId: id,
+          timestamp: new Date(),
+        });
+      }
+    }
 
     if (!result) throw new AppError("Failed to update existing milestone", 400);
 

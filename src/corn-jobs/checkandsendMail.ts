@@ -2,7 +2,7 @@ import prisma from "../config/database/client";
 import sendApprovalReminder from "../services/mailServices/approvalMailReminder";
 import sendSubmissionReminder from "../services/mailServices/sendSubmissionMailReminder";
 import {sendMeetingReminder} from "../services/mailServices/sendMeetingReminder";
-import { notifyByRoles } from "../utils/notifyByRole";
+import { notifyUsers } from "../utils/notifyByRole";
 
 // ───────────────────────────────
 // Reminder Checker
@@ -74,7 +74,7 @@ export async function checkAndSendReminders(): Promise<void> {
   const meetings = await prisma.meeting.findMany({
     include: {
       participants: {
-        select: { email: true },
+        select: { userId: true, email: true },
       },
     },
   });
@@ -98,30 +98,16 @@ export async function checkAndSendReminders(): Promise<void> {
           `Attempting to send meeting reminder for meeting: ${meeting.title}`
         );
         await sendMeetingReminder(meeting);
-        await notifyByRoles(
-          [
-            "ADMIN",
-            "DEPT_MANAGER",
-            "PROJECT_MANAGER",
-            "TEAM_LEAD",
-            "PROJECT_MANAGER_OFFICER",
-            "DEPUTY_MANAGER",
-            "OPERATION_EXECUTIVE",
-            "CLIENT",
-            "CLIENT_ADMIN",
-            "CLIENT_PROJECT_COORDINATOR",
-            "VENDOR",
-            "VENDOR_ADMIN",
-          ],
-          {
-            type: "MEETING_REMINDER",
-            title: "Meeting Reminder",
-            message: `Meeting '${meeting.title}' starts soon.`,
-            meetingId: meeting.id,
-            startTime: meeting.startTime,
-            timestamp: new Date(),
-          }
-        );
+        const participantIds = meeting.participants.map((p) => p.userId).filter(Boolean) as string[];
+        const recipientIds = Array.from(new Set([meeting.createdById, ...participantIds]));
+        await notifyUsers(recipientIds, {
+          type: "MEETING_REMINDER",
+          title: "Meeting Reminder",
+          message: `Meeting '${meeting.title}' starts soon.`,
+          meetingId: meeting.id,
+          startTime: meeting.startTime,
+          timestamp: new Date(),
+        });
         await prisma.meeting.update({
           where: { id: meeting.id },
           data: { reminderSent: true },

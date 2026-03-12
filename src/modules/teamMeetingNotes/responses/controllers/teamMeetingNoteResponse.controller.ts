@@ -3,7 +3,7 @@ import { AuthenticateRequest } from "../../../../middleware/authMiddleware";
 import { AppError } from "../../../../config/utils/AppError";
 import { mapUploadedFiles } from "../../../uploads/fileUtil";
 import { TeamMeetingNoteResponseService } from "../services/teamMeetingNoteResponse.service";
-import { notifyByRoles } from "../../../../utils/notifyByRole";
+import { notifyProjectStakeholders } from "../../../../utils/notifyProjectStakeholders";
 import { UserRole } from "@prisma/client";
 import prisma from "../../../../config/database/client";
 
@@ -45,15 +45,17 @@ export class TeamMeetingNoteResponseController {
       select: { projectId: true },
     });
 
-    await notifyByRoles(NOTE_RESPONSE_NOTIFY_ROLES, {
-      type: req.body?.parentResponseId ? "TEAM_MEETING_NOTE_REPLY" : "TEAM_MEETING_NOTE_RESPONSE",
-      title: req.body?.parentResponseId ? "Team Meeting Note Reply" : "Team Meeting Note Response",
-      message: "A new team meeting note response was submitted.",
-      noteId,
-      noteResponseId: response.id,
-      projectId: note?.projectId,
-      timestamp: new Date(),
-    });
+    if (note && note.projectId) {
+      await notifyProjectStakeholders(note.projectId, NOTE_RESPONSE_NOTIFY_ROLES, {
+        type: req.body?.parentResponseId ? "TEAM_MEETING_NOTE_REPLY" : "TEAM_MEETING_NOTE_RESPONSE",
+        title: req.body?.parentResponseId ? "Team Meeting Note Reply" : "Team Meeting Note Response",
+        message: "A new team meeting note response was submitted.",
+        noteId,
+        noteResponseId: response.id,
+        projectId: note.projectId,
+        timestamp: new Date(),
+      });
+    }
 
     return res.status(201).json({
       message: "Team meeting note response created",

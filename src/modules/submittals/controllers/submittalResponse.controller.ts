@@ -4,7 +4,8 @@ import { SubmittalResponseService } from "../services";
 import { AppError } from "../../../config/utils/AppError";
 import { mapUploadedFiles } from "../../uploads/fileUtil";
 import { State } from "@prisma/client";
-import { notifyByRoles } from "../../../utils/notifyByRole";
+import { notifyProjectStakeholders } from "../../../utils/notifyProjectStakeholders";
+import prisma from "../../../config/database/client";
 import { UserRole } from "@prisma/client";
 
 const submittalResponseService = new SubmittalResponseService();
@@ -73,14 +74,17 @@ export class SubmittalResponseController {
       },
       userId
     );
-    await notifyByRoles(SUBMITTAL_NOTIFY_ROLES, {
-      type: "SUBMITTAL_RESPONSE_RECEIVED",
-      title: "Submittal Response Received",
-      message: "A new submittal response has been submitted.",
-      submittalsId,
-      submittalResponseId: response.id,
-      timestamp: new Date(),
-    });
+    const submittal = await prisma.submittals.findUnique({ where: { id: submittalsId } });
+    if (submittal) {
+      await notifyProjectStakeholders(submittal.project_id, SUBMITTAL_NOTIFY_ROLES, {
+        type: "SUBMITTAL_RESPONSE_RECEIVED",
+        title: "Submittal Response Received",
+        message: "A new submittal response has been submitted.",
+        submittalsId,
+        submittalResponseId: response.id,
+        timestamp: new Date(),
+      });
+    }
 
     res.status(201).json({
       status: "success",
@@ -111,14 +115,17 @@ export class SubmittalResponseController {
       parentResponseId,
       status as State
     );
-    await notifyByRoles(SUBMITTAL_NOTIFY_ROLES, {
-      type: "SUBMITTAL_STATUS_UPDATED",
-      title: "Submittal Status Updated",
-      message: `Submittal workflow status updated to '${status}'.`,
-      parentResponseId,
-      status,
-      timestamp: new Date(),
-    });
+    const submittal = await prisma.submittals.findUnique({ where: { id: (updated as any).submittalsId } });
+    if (submittal) {
+      await notifyProjectStakeholders(submittal.project_id, SUBMITTAL_NOTIFY_ROLES, {
+        type: "SUBMITTAL_STATUS_UPDATED",
+        title: "Submittal Status Updated",
+        message: `Submittal workflow status updated to '${status}'.`,
+        parentResponseId,
+        status,
+        timestamp: new Date(),
+      });
+    }
 
     res.status(200).json({
       status: "success",

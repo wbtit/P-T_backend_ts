@@ -3,7 +3,8 @@ import { AuthenticateRequest } from "../../../middleware/authMiddleware";
 import { AppError } from "../../../config/utils/AppError";
 import { RFIResponseService } from "../services";
 import { mapUploadedFiles } from "../../uploads/fileUtil";
-import { notifyByRoles } from "../../../utils/notifyByRole";
+import { notifyProjectStakeholders } from "../../../utils/notifyProjectStakeholders";
+import prisma from "../../../config/database/client";
 import { UserRole } from "@prisma/client";
 
 const rfiResponseService = new RFIResponseService();
@@ -40,14 +41,17 @@ export class RFIResponseController {
       ...req.body,
       files: uploadedFiles,
     });
-    await notifyByRoles(RFI_NOTIFY_ROLES, {
-      type: req.body?.parentResponseId ? "RFI_REPLY_ADDED" : "RFI_RESPONSE_RECEIVED",
-      title: req.body?.parentResponseId ? "RFI Reply Thread Added" : "RFI Response Received",
-      message: "A new RFI response has been submitted.",
-      rfiId,
-      rfiResponseId: response.id,
-      timestamp: new Date(),
-    });
+    const rfi = await prisma.rFI.findUnique({ where: { id: rfiId } });
+    if (rfi) {
+      await notifyProjectStakeholders(rfi.project_id, RFI_NOTIFY_ROLES, {
+        type: req.body?.parentResponseId ? "RFI_REPLY_ADDED" : "RFI_RESPONSE_RECEIVED",
+        title: req.body?.parentResponseId ? "RFI Reply Thread Added" : "RFI Response Received",
+        message: "A new RFI response has been submitted.",
+        rfiId,
+        rfiResponseId: response.id,
+        timestamp: new Date(),
+      });
+    }
 
     res.status(201).json({
       message: "RFI Response created",

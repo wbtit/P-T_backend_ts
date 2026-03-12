@@ -3,7 +3,7 @@ import { InvoiceService } from "../services";
 import { AppError } from "../../../config/utils/AppError";
 import { AuthenticateRequest } from "../../../middleware/authMiddleware";
 import prisma from "../../../config/database/client";
-import { notifyByRoles } from "../../../utils/notifyByRole";
+import { notifyProjectStakeholders } from "../../../utils/notifyProjectStakeholders";
 import { UserRole } from "@prisma/client";
 
 const invoiceService = new InvoiceService();
@@ -33,7 +33,7 @@ export class InvoiceController {
 
       const result = await invoiceService.createInvoice(data, user.id);
       const invoiceNumber = result.invoiceNumber?.trim();
-      await notifyByRoles(INVOICE_NOTIFY_ROLES, {
+      await notifyProjectStakeholders(result.projectId, INVOICE_NOTIFY_ROLES, {
         type: "INVOICE_CREATED",
         title: "Invoice Created",
         message: invoiceNumber
@@ -139,7 +139,7 @@ export class InvoiceController {
       const updatedInvoice = await invoiceService.updateInvoice(id, data);
       if (data?.status) {
         const updatedInvoiceNumber = updatedInvoice.invoiceNumber?.trim();
-        await notifyByRoles(INVOICE_NOTIFY_ROLES, {
+        await notifyProjectStakeholders(updatedInvoice.projectId, INVOICE_NOTIFY_ROLES, {
           type: "INVOICE_STATUS_UPDATED",
           title: "Invoice Status Updated",
           message: updatedInvoiceNumber

@@ -76,7 +76,7 @@ router.get(
   validate({ params: z.object({ noteId: z.string(), fileId: z.string() }) }),
   asyncHandler(controller.viewFile.bind(controller))
 );
-
+//Responses routes
 router.post(
   "/:noteId/responses",
   authMiddleware,

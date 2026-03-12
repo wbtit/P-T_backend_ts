@@ -1,7 +1,7 @@
 import prisma from "../config/database/client";
 import sendIFACompletionAlertPMO from "../services/mailServices/sendIFACompletionAlertPMO";
 import sendIFCCompletionAlertPMO from "../services/mailServices/sendIFCCOmpletionAlertPMO";
-import { notifyByRoles } from "../utils/notifyByRole";
+import { notifyProjectStakeholders } from "../utils/notifyProjectStakeholders";
 import { UserRole } from "@prisma/client";
 
 const COMPLETION_NOTIFY_ROLES: UserRole[] = [
@@ -64,7 +64,7 @@ export async function runPMOComplition() {
             !project.IFACompletionAlertSent
         ){
         await sendIFACompletionAlertPMO(project, project.fabricator);
-            await notifyByRoles(COMPLETION_NOTIFY_ROLES, {
+            await notifyProjectStakeholders(project.id, COMPLETION_NOTIFY_ROLES, {
               type: "PROJECT_IFA_COMPLETED",
               title: "IFA Stage Completed",
               message: `IFA stage completed for project '${project.name}'.`,
@@ -80,7 +80,7 @@ export async function runPMOComplition() {
             !project.IFCCompletionAlertSent
         ){
         await sendIFCCompletionAlertPMO(project, project.fabricator);
-            await notifyByRoles(COMPLETION_NOTIFY_ROLES, {
+            await notifyProjectStakeholders(project.id, COMPLETION_NOTIFY_ROLES, {
               type: "PROJECT_IFC_COMPLETED",
               title: "IFC Stage Completed",
               message: `IFC stage completed for project '${project.name}'.`,

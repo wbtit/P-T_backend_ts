@@ -3,7 +3,8 @@ import { AuthenticateRequest } from "../../../middleware/authMiddleware";
 import { AppError } from "../../../config/utils/AppError";
 import { DesignDrawingsService } from "../services";
 import { mapUploadedFiles } from "../../uploads/fileUtil";
-import { notifyByRoles } from "../../../utils/notifyByRole";
+import { notifyProjectStakeholders } from "../../../utils/notifyProjectStakeholders";
+import prisma from "../../../config/database/client";
 import { UserRole } from "@prisma/client";
 
 const designService = new DesignDrawingsService();
@@ -40,7 +41,7 @@ export class DesignDrawingsController {
     };
 
     const drawing = await designService.create(data, userId);
-    await notifyByRoles(DESIGN_DRAWING_NOTIFY_ROLES, {
+    await notifyProjectStakeholders(drawing.projectId, DESIGN_DRAWING_NOTIFY_ROLES, {
       type: "DESIGN_DRAWING_UPLOADED",
       title: "Design Drawing Uploaded",
       message: "A design drawing was uploaded.",
@@ -88,7 +89,7 @@ export class DesignDrawingsController {
   async handleUpdateStage(req: Request, res: Response) {
     const { id } = req.params;
     const updated = await designService.updateStage(id, req.body);
-    await notifyByRoles(DESIGN_DRAWING_NOTIFY_ROLES, {
+    await notifyProjectStakeholders(updated.projectId, DESIGN_DRAWING_NOTIFY_ROLES, {
       type: "DESIGN_DRAWING_UPDATED",
       title: "Design Drawing Updated",
       message: "A design drawing was updated.",
@@ -127,14 +128,17 @@ export class DesignDrawingsController {
       { ...req.body, files: uploadedFiles },
       userId
     );
-    await notifyByRoles(DESIGN_DRAWING_NOTIFY_ROLES, {
-      type: "DESIGN_DRAWING_RESPONSE_RECEIVED",
-      title: "Design Drawing Response Received",
-      message: "A design drawing response was submitted.",
-      designDrawingId: req.body?.designDrawingsId,
-      designDrawingResponseId: response.id,
-      timestamp: new Date(),
-    });
+    const design = await prisma.designDrawings.findUnique({ where: { id: req.body?.designDrawingsId } });
+    if (design) {
+      await notifyProjectStakeholders(design.projectId, DESIGN_DRAWING_NOTIFY_ROLES, {
+        type: "DESIGN_DRAWING_RESPONSE_RECEIVED",
+        title: "Design Drawing Response Received",
+        message: "A design drawing response was submitted.",
+        designDrawingId: req.body?.designDrawingsId,
+        designDrawingResponseId: response.id,
+        timestamp: new Date(),
+      });
+    }
 
     res.status(201).json({
       message: "Response created successfully",

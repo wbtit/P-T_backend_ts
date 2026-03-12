@@ -11,14 +11,11 @@ export class FabricatorController {
   private readonly fabService = new FabricatorService();
   private readonly fabricatorNotifyRoles: UserRole[] = [
     "ADMIN",
+    "SYSTEM_ADMIN",
     "SALES_MANAGER",
     "SALES_PERSON",
     "DEPUTY_MANAGER",
-    "CLIENT",
-    "CLIENT_ADMIN",
-    "CLIENT_PROJECT_COORDINATOR",
-    "VENDOR",
-    "VENDOR_ADMIN",
+    "PROJECT_MANAGER_OFFICER"
   ];
 
   async handleCreateFabricator(req: AuthenticateRequest, res: Response) {

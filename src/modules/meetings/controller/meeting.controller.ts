@@ -3,7 +3,8 @@ import { AuthenticateRequest } from "../../../middleware/authMiddleware";
 import { AppError } from "../../../config/utils/AppError";
 import { MeetingService } from "../services";
 import { sendEmail } from "../../../services/mailServices/mailconfig";
-import { notifyByRoles } from "../../../utils/notifyByRole";
+import { notifyUsers, notifyByRoles } from "../../../utils/notifyByRole";
+import prisma from "../../../config/database/client";
 import { UserRole } from "@prisma/client";
 
 const meetingService = new MeetingService();
@@ -56,7 +57,9 @@ export class MeetingController {
         <p><a href="${meeting.link}">🔗 Join Meeting</a></p>
       `
     });
-    await notifyByRoles(MEETING_NOTIFY_ROLES, {
+    const participantIds = (meeting as any).participants?.map((p: any) => p.userId).filter(Boolean) || [];
+    const recipientIds = Array.from(new Set([...participantIds, meeting.createdById]));
+    await notifyUsers(recipientIds, {
       type: "MEETING_SCHEDULED",
       title: "Meeting Scheduled",
       message: `Meeting '${meeting.title}' has been scheduled.`,
@@ -91,7 +94,9 @@ export class MeetingController {
     const updatedMeeting = await meetingService.update(id, {
       ...req.body,
     });
-    await notifyByRoles(MEETING_NOTIFY_ROLES, {
+    const attendees = await prisma.meetingAttendee.findMany({ where: { meetingId: updatedMeeting.id, userId: { not: null } } });
+    const recipientIds = Array.from(new Set([updatedMeeting.createdById, ...attendees.map(a => a.userId as string)]));
+    await notifyUsers(recipientIds, {
       type: "MEETING_RESCHEDULED",
       title: "Meeting Rescheduled",
       message: `Meeting '${updatedMeeting.title}' has been updated.`,
@@ -112,7 +117,9 @@ export class MeetingController {
     const { id } = req.params;
 
     const deletedMeeting = await meetingService.delete(id);
-    await notifyByRoles(MEETING_NOTIFY_ROLES, {
+    const attendees = await prisma.meetingAttendee.findMany({ where: { meetingId: deletedMeeting.id, userId: { not: null } } });
+    const recipientIds = Array.from(new Set([deletedMeeting.createdById, ...attendees.map(a => a.userId as string)]));
+    await notifyUsers(recipientIds, {
       type: "MEETING_CANCELLED",
       title: "Meeting Cancelled",
       message: `Meeting '${deletedMeeting.title}' has been cancelled.`,
@@ -133,7 +140,9 @@ export class MeetingController {
     const updatedStatusMeeting = await meetingService.updateStatus(id, {
       ...req.body,
     });
-    await notifyByRoles(MEETING_NOTIFY_ROLES, {
+    const attendees = await prisma.meetingAttendee.findMany({ where: { meetingId: updatedStatusMeeting.id, userId: { not: null } } });
+    const recipientIds = Array.from(new Set([updatedStatusMeeting.createdById, ...attendees.map(a => a.userId as string)]));
+    await notifyUsers(recipientIds, {
       type: "MEETING_STATUS_UPDATED",
       title: "Meeting Status Updated",
       message: `Meeting '${updatedStatusMeeting.title}' status changed to '${updatedStatusMeeting.status}'.`,

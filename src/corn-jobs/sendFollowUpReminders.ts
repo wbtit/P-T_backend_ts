@@ -1,7 +1,7 @@
 import prisma from "../config/database/client";
 import { sendEmail } from "../services/mailServices/mailconfig";
 import { followUpReminderTemplate } from "../services/mailServices/mailtemplates/followUpMailTemplate";
-import { notifyByRoles } from "../utils/notifyByRole";
+import { notifyProjectStakeholders } from "../utils/notifyProjectStakeholders";
 
 export function startOfToday(): Date {
   const now = new Date();
@@ -75,7 +75,7 @@ export async function sendFollowUpReminders() {
       where: { id: item.id },
       data: { reminderSent: true },
     });
-    await notifyByRoles(["DEPUTY_MANAGER", "OPERATION_EXECUTIVE"], {
+    await notifyProjectStakeholders(item.projectId, ["DEPUTY_MANAGER", "OPERATION_EXECUTIVE"], {
       type: "CLIENT_FOLLOWUP_APPROACHING",
       title: "Follow-Up Date Approaching",
       message: `Follow-up is due soon for project '${item.project.name}'.`,
@@ -93,7 +93,7 @@ export async function sendFollowUpReminders() {
     include: { project: true },
   });
   for (const item of overdueItems) {
-    await notifyByRoles(["DEPUTY_MANAGER", "OPERATION_EXECUTIVE"], {
+    await notifyProjectStakeholders(item.projectId, ["DEPUTY_MANAGER", "OPERATION_EXECUTIVE"], {
       type: "CLIENT_FOLLOWUP_OVERDUE",
       title: "Follow-Up Overdue",
       message: `Follow-up is overdue for project '${item.project.name}'.`,

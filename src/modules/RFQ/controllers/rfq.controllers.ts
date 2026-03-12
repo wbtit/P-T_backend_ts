@@ -5,7 +5,7 @@ import { RFQService } from "../services/rfq.service";
 import { mapUploadedFiles } from "../../uploads/fileUtil";
 import { sendEmail, getCCEmails } from "../../../services/mailServices/mailconfig";
 import { rfqhtmlContent } from "../../../services/mailServices/mailtemplates/rfqMailtemplate";
-import { notifyByRoles } from "../../../utils/notifyByRole";
+import { notifyRfqStakeholders } from "../../../utils/notifyRfqStakeholders";
 import { UserRole } from "@prisma/client";
 
 const rfqService = new RFQService();
@@ -50,7 +50,7 @@ export class RFQController {
               subject: newrfq.subject,
               text: newrfq.description,
             });
-                await notifyByRoles(RFQ_NOTIFY_ROLES, {
+                await notifyRfqStakeholders(newrfq.id, RFQ_NOTIFY_ROLES, {
                   type: "RFQ_CREATED",
                   title: "RFQ Created / Sent",
                   message: `RFQ '${newrfq.subject}' was created and sent.`,
@@ -76,7 +76,7 @@ export class RFQController {
           ...req.body,
           files: uploadedFiles
         });
-        await notifyByRoles(RFQ_NOTIFY_ROLES, {
+        await notifyRfqStakeholders(rfq.id, RFQ_NOTIFY_ROLES, {
           type: "RFQ_UPDATED",
           title: "RFQ Updated",
           message: `RFQ '${rfq.subject}' was updated.`,

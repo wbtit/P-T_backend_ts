@@ -3,7 +3,8 @@ import { AuthenticateRequest } from "../../../middleware/authMiddleware";
 import { AppError } from "../../../config/utils/AppError";
 import { MeetingAttendeeService } from "../services";
 import { MeetingAttendeeInput, UpdateMeetingAttendeeInput } from "../dtos";
-import { notifyByRoles } from "../../../utils/notifyByRole";
+import { notifyUsers } from "../../../utils/notifyByRole";
+import prisma from "../../../config/database/client";
 import { UserRole } from "@prisma/client";
 
 const meetingAttendeeService = new MeetingAttendeeService();
@@ -31,7 +32,10 @@ export class MeetingAttendeeController {
     const { rsvp } = req.body as UpdateMeetingAttendeeInput;
 
     const result = await meetingAttendeeService.updateRsvp(meetingId, req.user.id, { rsvp });
-    await notifyByRoles(MEETING_NOTIFY_ROLES, {
+    const meeting = await prisma.meeting.findUnique({ where: { id: meetingId }});
+    const attendees = await prisma.meetingAttendee.findMany({ where: { meetingId, userId: { not: null } }});
+    const recipientIds = Array.from(new Set([meeting?.createdById, ...attendees.map(a => a.userId as string)])).filter(Boolean);
+    await notifyUsers(recipientIds as string[], {
       type: "MEETING_RSVP_RECEIVED",
       title: "RSVP Response Received",
       message: `A participant RSVP'd '${rsvp}' for a meeting.`,

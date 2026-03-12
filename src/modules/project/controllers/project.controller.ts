@@ -3,7 +3,7 @@ import { ProjectService } from "../services";
 import { ProjectAssistService } from "../services/projectAssist.service";
 import { mapUploadedFiles } from "../../uploads/fileUtil";
 import { AuthenticateRequest } from "../../../middleware/authMiddleware";
-import { notifyByRoles } from "../../../utils/notifyByRole";
+import { notifyProjectStakeholders } from "../../../utils/notifyProjectStakeholders";
 import { UserRole } from "@prisma/client";
 
 const projectService = new ProjectService();
@@ -44,7 +44,7 @@ export class ProjectController {
           ...req.body,
           files: uploadedFiles
         }, req.user?.id || "");
-        await notifyByRoles(PROJECT_CREATED_ROLES, {
+        await notifyProjectStakeholders(project.id, PROJECT_CREATED_ROLES, {
           type: "PROJECT_CREATED",
           title: "Project Created",
           message: `Project '${project.name}' was created.`,
@@ -68,7 +68,7 @@ export class ProjectController {
         }, id);
         const updates = req.body ?? {};
         if ("stage" in updates) {
-          await notifyByRoles(PROJECT_STAGE_CHANGED_ROLES, {
+          await notifyProjectStakeholders(project.id, PROJECT_STAGE_CHANGED_ROLES, {
             type: "PROJECT_STAGE_CHANGED",
             title: "Project Stage Changed",
             message: `Project '${project.name}' stage changed to '${updates.stage}'.`,
@@ -78,7 +78,7 @@ export class ProjectController {
           });
         }
         if ("endDate" in updates) {
-          await notifyByRoles(PROJECT_ENDDATE_CHANGED_ROLES, {
+          await notifyProjectStakeholders(project.id, PROJECT_ENDDATE_CHANGED_ROLES, {
             type: "PROJECT_END_DATE_CHANGED",
             title: "Project End Date Changed",
             message: `Project '${project.name}' end date was changed.`,
@@ -88,7 +88,7 @@ export class ProjectController {
           });
         }
         if ("status" in updates) {
-          await notifyByRoles(PROJECT_STATUS_CHANGED_ROLES, {
+          await notifyProjectStakeholders(project.id, PROJECT_STATUS_CHANGED_ROLES, {
             type: "PROJECT_STATUS_CHANGED",
             title: "Project Status Changed",
             message: `Project '${project.name}' status changed to '${updates.status}'.`,
@@ -98,7 +98,7 @@ export class ProjectController {
           });
         }
         if ("approvalDate" in updates) {
-          await notifyByRoles(PROJECT_APPROVAL_FAB_DATE_ROLES, {
+          await notifyProjectStakeholders(project.id, PROJECT_APPROVAL_FAB_DATE_ROLES, {
             type: "PROJECT_APPROVAL_DATE_CHANGED",
             title: "Project Approval Date Set / Changed",
             message: `Project '${project.name}' approval date was updated.`,
@@ -108,7 +108,7 @@ export class ProjectController {
           });
         }
         if ("fabricationDate" in updates) {
-          await notifyByRoles(PROJECT_APPROVAL_FAB_DATE_ROLES, {
+          await notifyProjectStakeholders(project.id, PROJECT_APPROVAL_FAB_DATE_ROLES, {
             type: "PROJECT_FABRICATION_DATE_CHANGED",
             title: "Fabrication Date Set / Changed",
             message: `Project '${project.name}' fabrication date was updated.`,
@@ -143,7 +143,7 @@ export class ProjectController {
             message: 'Project not found'
           });
         }
-        await notifyByRoles(PROJECT_DELETED_ROLES, {
+        await notifyProjectStakeholders(req.params.id, PROJECT_DELETED_ROLES, {
           type: "PROJECT_DELETED",
           title: "Project Deleted / Soft Deleted",
           message: project?.name?.trim()
