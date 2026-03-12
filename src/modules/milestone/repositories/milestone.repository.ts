@@ -132,7 +132,7 @@ export class MileStoneRepository{
                 mileStoneSubmittals:{none:{}},
                 project: {
                     isDeleted: false,
-                    status: { not: "INACTIVE" },
+                    status: { notIn: ["INACTIVE","ONHOLD"] },
                 },
             },
             include:{
@@ -151,7 +151,7 @@ export class MileStoneRepository{
                 // Only milestones from active, non-deleted projects
                 project: {
                     isDeleted: false,
-                    status: { not: "INACTIVE" },
+                    status: { notIn: ["INACTIVE","ONHOLD"]},
                 },
             },
             include: {
