@@ -131,11 +131,13 @@ import { generateProjectSerial } from "../../../utils/serial.util";
           username:true,
           id:true
         }},
+        teamMeetingNotes:true,
         team:true,
         department:{select:{
           name:true,
           id:true
         }}
+      
        }
      });
      if(!project || project.isDeleted){

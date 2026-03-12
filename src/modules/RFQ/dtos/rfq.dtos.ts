@@ -14,6 +14,8 @@ export const CreateRfqSchema = z.object({
   bidPrice: z.string().optional(),
   fabricatorId: z.string(),
   senderId: z.string().optional(),
+  MTOManual: zBooleanString.optional(),
+  MTOStickModel: z.string().optional(),
   recipientId: z.string().optional(),
   ConnectionDesignerIds: z.array(z.string()).optional(),
   connectionEngineerIds: z.array(z.string()).optional(),

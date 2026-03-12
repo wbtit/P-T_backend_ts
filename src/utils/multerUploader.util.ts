@@ -230,5 +230,11 @@ export const vendorCombinedUploads = multer({
 export const notesDataMap={}
 export const notesUploads = createMulterUploader("public/notes", notesDataMap);
 
+export const teamMeetingNotesDataMap = {};
+export const teamMeetingNotesUploads = createMulterUploader(
+  "public/team-meeting-notes",
+  teamMeetingNotesDataMap
+);
+
 export const userProfilePicMap = {};
 export const userProfilePicUploads = createMulterUploader("public/userprofiles", userProfilePicMap);

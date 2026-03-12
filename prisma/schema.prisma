@@ -221,6 +221,10 @@ enum MeetingRole {
   ATTENDEE   
   OBSERVER   
 }
+enum TeamMeetingNoteVisibility {
+  INTERNAL
+  EXTERNAL
+}
 enum WbsDiscipline {
   EXECUTION
   CHECKING
@@ -359,6 +363,7 @@ model User {
   estimationResponseBy           EstimationResponse[] @relation("estimationResponseBy")
   projectAssistMemberships       ProjectAssist[]      @relation("ProjectAssistUser")
   assignedProjectAssists         ProjectAssist[]      @relation("ProjectAssistAssignedBy")
+  teamMeetingNotesCreated        TeamMeetingNotes[]   @relation("TeamMeetingNotesCreatedBy")
 
   @@map("user")
   @@index([email])
@@ -615,7 +620,7 @@ model RFQ {
   location         String?       @default("")
   bidPrice         String?
   MTOManual         Boolean?       @default(false)   
-  MTOStckModel     String?        @default("")
+  MTOStickModel     String?        @default("")
   senderId         String?       @db.Uuid
   recipientId      String        @db.Uuid
   salesPersonId    String?       @db.Uuid
@@ -772,6 +777,7 @@ model Project{
   tasks                  Task[]                @relation("TaskBelongsToProject")
   projectJobStudy        JobStudy?             @relation("projectJobStudy") 
   notes                  Notes[]               @relation("projectNotes")
+  teamMeetingNotes       TeamMeetingNotes[]    @relation("ProjectTeamMeetingNotes")
   rfq                    RFQ?                  @relation("ProjectRFQ", fields: [rfqId], references: [id])
   mileStones             MileStone[]           @relation("ProjectMileStone")
   rfi                    RFI[]                 @relation("ProjectRFI")
@@ -834,6 +840,29 @@ model Notes{
 
   @@index([projectId])
   @@map("notes")
+}
+
+model TeamMeetingNotes {
+  id          String                    @id @default(uuid()) @db.Uuid
+  serialNo    String?                   @unique
+  title       String
+  content     String
+  visibility  TeamMeetingNoteVisibility @default(INTERNAL)
+  files       Json                      @default("[]")
+  meetingId   String?                   @db.Uuid
+  projectId   String                    @db.Uuid
+  createdById String                    @db.Uuid
+  createdAt   DateTime                  @default(now())
+  updatedAt   DateTime                  @updatedAt
+
+  meeting   Meeting? @relation("MeetingTeamMeetingNotes", fields: [meetingId], references: [id], onDelete: Cascade)
+  project   Project @relation("ProjectTeamMeetingNotes", fields: [projectId], references: [id], onDelete: Cascade)
+  createdBy User    @relation("TeamMeetingNotesCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([meetingId])
+  @@index([createdById])
+  @@map("team_meeting_notes")
 }
 
 model JobStudy {
@@ -1612,6 +1641,7 @@ model Meeting {
   createdBy   User             @relation("MeetingCreatedBy", fields: [createdById], references: [id])
 
   participants MeetingAttendee[]
+  teamMeetingNotes TeamMeetingNotes[] @relation("MeetingTeamMeetingNotes")
 
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt

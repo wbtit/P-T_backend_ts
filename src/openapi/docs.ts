@@ -22,6 +22,7 @@ import scores_doc from "../modules/scores/openapi.doc";
 import submittals_doc from "../modules/submittals/openapi.doc";
 import tasks_doc from "../modules/tasks/openapi.doc";
 import team_doc from "../modules/team/openapi.doc";
+import teamMeetingNotes_doc from "../modules/teamMeetingNotes/openapi.doc";
 import uploads_doc from "../modules/uploads/openapi.doc";
 import user_doc from "../modules/user/openapi.doc";
 import vendors_doc from "../modules/vendors/openapi.doc";
@@ -51,6 +52,7 @@ const moduleDocs: ModuleOpenApiDoc[] = [
   submittals_doc,
   tasks_doc,
   team_doc,
+  teamMeetingNotes_doc,
   uploads_doc,
   user_doc,
   vendors_doc,
