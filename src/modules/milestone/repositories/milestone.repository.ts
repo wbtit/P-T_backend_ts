@@ -117,7 +117,11 @@ export class MileStoneRepository{
     async getPendingSubmittals(){
         return await prisma.mileStone.findMany({
             where:{
-                mileStoneSubmittals:{none:{}}
+                mileStoneSubmittals:{none:{}},
+                project: {
+                    isDeleted: false,
+                    status: "ACTIVE",
+                },
             },
             include:{
                 project:{select:{name:true}},
@@ -132,7 +136,7 @@ export class MileStoneRepository{
                 mileStoneSubmittals:{none:{}},
                 project: {
                     isDeleted: false,
-                    status: { notIn: ["INACTIVE","ONHOLD"] },
+                    status: "ACTIVE",
                 },
             },
             include:{
@@ -151,7 +155,7 @@ export class MileStoneRepository{
                 // Only milestones from active, non-deleted projects
                 project: {
                     isDeleted: false,
-                    status: { notIn: ["INACTIVE","ONHOLD"]},
+                    status: "ACTIVE",
                 },
             },
             include: {
@@ -164,7 +168,11 @@ export class MileStoneRepository{
  async getPendingSubmittalsForProjectManager(managerId:string){
     return await prisma.mileStone.findMany({
         where:{
-            project:{managerID:managerId},
+            project:{
+                managerID:managerId,
+                isDeleted: false,
+                status: "ACTIVE",
+            },
             mileStoneSubmittals:{none:{}}
         },
         include:{

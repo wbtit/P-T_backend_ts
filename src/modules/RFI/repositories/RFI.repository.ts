@@ -56,7 +56,8 @@ export class RFIRepository{
                         id: userId,
                         role: "CLIENT_ADMIN"
                     }
-                }
+                },
+                project: { some: { status: { in: ["ACTIVE"] } } }
             },
             
         })

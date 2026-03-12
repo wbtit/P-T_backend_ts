@@ -99,6 +99,7 @@ async getPendingSubmittalsForClientAdmin(userId: string) {
         pointOfContact: {
           some: { id: userId, role: "CLIENT_ADMIN" },
         },
+        project: { some: { status: { in: ["ACTIVE"] } } }
       },
       select: { id: true },
     });

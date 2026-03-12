@@ -83,7 +83,8 @@ export class RFQRepository {
                         id: userId,
                         role: "CLIENT_ADMIN"
                     }
-                }
+                },
+                project: { some: { status: { in: ["ACTIVE"] } } }
             }
         })
         return await prisma.rFQ.findMany({
