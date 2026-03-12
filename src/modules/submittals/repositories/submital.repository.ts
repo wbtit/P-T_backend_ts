@@ -93,34 +93,37 @@ export class SubmitalRepository {
   }
 
 
-async getPendingSubmittalsForClientAdmin(userId:string){
-  const fabricator = await prisma.fabricator.findFirst({
-            where: {
-                pointOfContact: {
-                    some: {
-                        id: userId,
-                        role: "CLIENT_ADMIN"
-                    }
-                }
-            }
-        })
+async getPendingSubmittalsForClientAdmin(userId: string) {
+    // Fetch ALL fabricators this CLIENT_ADMIN is a point of contact for.
+    // Using findFirst here was the bug — it returned only one fabricator,
+    // causing submittals from other fabricators to bleed into the results.
+    const fabricators = await prisma.fabricator.findMany({
+      where: {
+        pointOfContact: {
+          some: { id: userId, role: "CLIENT_ADMIN" },
+        },
+      },
+      select: { id: true },
+    });
 
-        return prisma.submittals.findMany({
-          where: {
-                           fabricator:{id:fabricator?.id},
-                           currentVersion:{
-                            responses:{none:{}},
-                           }
-                        },
-                        include: {
+    const fabricatorIds = fabricators.map((f) => f.id);
+
+    return prisma.submittals.findMany({
+      where: {
+        fabricator_id: { in: fabricatorIds },
+        currentVersion: {
+          responses: { none: {} },
+        },
+      },
+      include: {
         project: { select: { name: true } },
         fabricator: true,
         recepients: true,
         currentVersion: true,
       },
       orderBy: { date: "desc" },
-        })
-}
+    });
+  }
 
 async getPendingSubmittalsForProjectManager(managerId: string) {
   return prisma.submittals.findMany({
