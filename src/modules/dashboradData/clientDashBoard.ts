@@ -4,15 +4,17 @@ import { Response } from "express";
 
 export const clientDashBoard = async (req: AuthenticateRequest, res: Response) => {
     try {
-        const projectStats = await prisma.project.groupBy({
+    const projectStats = await prisma.project.groupBy({
         by:["status"],
         _count:{_all:true},
         where:{
+            status:{not:"INACTIVE"},
             fabricator:{pointOfContact:{some:{id:req.user?.id}}}
         }
     })
     const totalProjects = await prisma.project.count({
         where:{
+            status:{not:"INACTIVE"},
             fabricator:{pointOfContact:{some:{id:req.user?.id}}}
         }
     })

@@ -288,7 +288,10 @@ import { generateProjectSerial } from "../../../utils/serial.util";
 
    async getProjectsForClientAdmin(clientAdminId: string) {
     return await prisma.project.findMany({
-      where:{fabricator:{pointOfContact: { some: { id: clientAdminId } }}},
+      where:{
+        status: { not: "INACTIVE" },
+        fabricator:{pointOfContact: { some: { id: clientAdminId } }},
+      },
       include:{
         stageHistory:true,
         fabricator:{select:{
@@ -315,6 +318,7 @@ import { generateProjectSerial } from "../../../utils/serial.util";
    async getProjectsForClient(clientId: string){
     return await prisma.project.findMany({
       where:{
+        status: { not: "INACTIVE" },
         rfq:{sender:{id:clientId}}
       },
       include:{

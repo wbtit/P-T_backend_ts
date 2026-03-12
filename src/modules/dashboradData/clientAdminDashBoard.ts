@@ -19,12 +19,14 @@ export const clientAdminDashBoard = async (req: AuthenticateRequest, res: Respon
             by: ["status"],
             _count: { _all: true },
             where: {
+                status:{not:"INACTIVE"},
                 fabricator:{id:fabricator?.id
                 }
             }
         })
         const totalProjects = await prisma.project.count({
             where: {
+                status:{not:"INACTIVE"},
                 fabricator:{id:fabricator?.id}
                 }
                 
