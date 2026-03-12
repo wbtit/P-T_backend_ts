@@ -47,9 +47,9 @@ export class TeamMeetingNoteResponseController {
 
     if (note && note.projectId) {
       await notifyProjectStakeholders(note.projectId, NOTE_RESPONSE_NOTIFY_ROLES, {
-        type: req.body?.parentResponseId ? "TEAM_MEETING_NOTE_REPLY" : "TEAM_MEETING_NOTE_RESPONSE",
-        title: req.body?.parentResponseId ? "Team Meeting Note Reply" : "Team Meeting Note Response",
-        message: "A new team meeting note response was submitted.",
+        type: req.body?.parentResponseId ? "PROJECT_NOTE_REPLY" : "PROJECT_NOTE_RESPONSE",
+        title: req.body?.parentResponseId ? "Project Note Reply" : "Project Note Response",
+        message: "A new project note response was submitted.",
         noteId,
         noteResponseId: response.id,
         projectId: note.projectId,
