@@ -6,44 +6,47 @@ export const clientDashBoard = async (req: AuthenticateRequest, res: Response) =
     try {
     const projectStats = await prisma.project.groupBy({
         by:["status"],
-        _count:{_all:true},
+        _count:{ status: true },
         where:{
             status:{not:"INACTIVE"},
-            fabricator:{pointOfContact:{some:{id:req.user?.id}}}
+            clientProjectManager: req.user?.id
         }
     })
     const totalProjects = await prisma.project.count({
         where:{
             status:{not:"INACTIVE"},
-            fabricator:{pointOfContact:{some:{id:req.user?.id}}}
+            clientProjectManager: req.user?.id
         }
     })
     const activeEmployeeCount = await prisma.user.count({ where: { isActive: true } });
     const newRFI = await prisma.rFI.count({
                         where: {
-                            fabricator:{pointOfContact:{some:{id:req.user?.id}}},
+                            project: { clientProjectManager: req.user?.id, status: { not: "INACTIVE" } },
                             rfiresponse: { none: {} },
                         },
                     });
     const pendingChangeOrders = await prisma.changeOrder.count({
                 where:{
                     Project: {
-                        fabricator: {
-                            pointOfContact: {
-                                some: { id: req.user?.id }
-                            }
-                        }
+                        clientProjectManager: req.user?.id,
+                        status: { not: "INACTIVE" }
                     },
                     coResponses:{none:{}}
                 }
         })
     const pendingRFQ = await prisma.rFQ.count({
                         where: {
-                          responses: { none: {} },
+                            fabricator: {
+                                pointOfContact: {
+                                    some: { id: req.user?.id }
+                                }
+                            },
+                            responses: { none: {} },
                         },
                     });
     const pendingSubmittals = await prisma.submittals.count({
                         where: {
+                           project: { clientProjectManager: req.user?.id, status: { not: "INACTIVE" } },
                            currentVersion:{
                             responses:{none:{}},
                            }
@@ -67,7 +70,7 @@ export const clientDashBoard = async (req: AuthenticateRequest, res: Response) =
     }
     projectStats.forEach(({ status, _count }) => {
       const key = statusMap[status];
-      if (key) response[key] = _count._all;
+      if (key) response[key] = _count.status;
     });
 
     return res.status(200).json({

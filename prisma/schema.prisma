@@ -365,6 +365,7 @@ model User {
   assignedProjectAssists         ProjectAssist[]      @relation("ProjectAssistAssignedBy")
   teamMeetingNotesCreated        TeamMeetingNotes[]   @relation("TeamMeetingNotesCreatedBy")
   teamMeetingNoteResponsesCreated TeamMeetingNoteResponse[] @relation("TeamMeetingNoteResponseCreatedBy")
+  clientProjectManagers          Project[]            @relation("clientProjectManagerProjects")
 
   @@map("user")
   @@index([email])
@@ -726,6 +727,7 @@ model Project{
   projectNumber          String                 @unique
   name                   String                 @unique
   description            String         
+  clientProjectManager   String?                @db.Uuid
   fabricatorID           String                 @db.Uuid
   departmentID           String                 @db.Uuid
   teamID                 String?                @db.Uuid
@@ -763,8 +765,10 @@ model Project{
   IFCompletionPercentage  Float                 @default(0.0)
   IFACompletionAlertSent  Boolean               @default(false)
   IFCCompletionAlertSent  Boolean               @default(false)
+
   
   //Relations
+  clientPM   User?                @relation("clientProjectManagerProjects", fields: [clientProjectManager], references: [id])
   vendorAwardedQuota     VendorQuota?   @relation("vendorAwardedQuota",fields: [vendorquotatioID],references: [id])
   awardedQuota ConnectionDesignerQuota? @relation("awardedQuota", fields: [CDQuataionID], references: [id])
   connectionDesigner      ConnectionDesigner?  @relation("awardedConnectionDesignerProjects", fields: [connectionDesignerID], references: [id])

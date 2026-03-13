@@ -36,7 +36,7 @@ export const CreateProjectSchema = z.object({
   teamID: z.string().min(1).optional(),
   managerID: z.string().min(1),
   rfqId: z.string().min(1).optional(),
-
+  clientProjectManager: z.string().min(1).optional(), 
   status: z.enum(Status),
   stage: z.enum(Stage),
   tools: z.enum(Tools),
