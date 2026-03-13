@@ -27,11 +27,13 @@ export const clientDashBoard = async (req: AuthenticateRequest, res: Response) =
                     });
     const pendingChangeOrders = await prisma.changeOrder.count({
                 where:{
-                    Recipients:{FabricatorPointOfContacts:{
-                        some:{
-                            id:req.user?.id,
+                    Project: {
+                        fabricator: {
+                            pointOfContact: {
+                                some: { id: req.user?.id }
+                            }
                         }
-                    }},
+                    },
                     coResponses:{none:{}}
                 }
         })
