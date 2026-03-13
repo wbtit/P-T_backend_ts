@@ -71,6 +71,11 @@ router.get(
   coController.handlePendingCOsForClientAdmin.bind(coController)
 )
 router.get(
+  "/pending/client",
+  authMiddleware,
+  coController.handlePendingCOsForClient.bind(coController)
+)
+router.get(
   "/pending/projectManager",
   authMiddleware,
   coController.handlePendingCOsForProjectManager.bind(coController)

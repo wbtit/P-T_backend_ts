@@ -88,6 +88,25 @@ export class CORepository {
         })
     }
 
+    async findPendingCOsForClient(userId:string){
+      return await prisma.changeOrder.findMany({
+         where:{
+                    Project: {
+                        clientProjectManager: userId,
+                        status: { not: "INACTIVE" }
+                    },
+                    coResponses:{none:{}}
+                },
+                include:{
+            coResponses:{include:{childResponses:true}},
+            Project:true,
+            Recipients:true,
+            senders:true,
+            CoRefersTo:true,
+          }
+      })
+    }
+        
     async recivedCos(userId:string){
         return await prisma.changeOrder.findMany({
             where:{
