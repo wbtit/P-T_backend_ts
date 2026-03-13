@@ -320,7 +320,8 @@ import { generateProjectSerial } from "../../../utils/serial.util";
     return await prisma.project.findMany({
       where:{
         status: { not: "INACTIVE" },
-        rfq:{sender:{id:clientId}}
+        clientProjectManager:clientId
+       
       },
       include:{
         stageHistory:true,

@@ -103,6 +103,10 @@ export class RFQService {
     async getPendingForClientAdmin(userId:string){
         return await rfqrepo.findPendingRFQsForClientAdmin(userId);
     }
+
+    async getPendingForClient(userId:string){
+        return await rfqrepo.findPendingRFQsForClient(userId);
+    }
     async closeRfq(id:string){
         return await rfqrepo.closeRfq(id);
     }

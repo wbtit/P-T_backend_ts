@@ -36,6 +36,11 @@ router.get(
     authMiddleware,
     rfqController.handlePendingForClientAdmin.bind(rfqController)
 )
+
+router.get("/pending/client",
+    authMiddleware,
+    rfqController.handlePendingForClient.bind(rfqController)
+)
 router.get(
     "/pending/projectManager",
     authMiddleware,

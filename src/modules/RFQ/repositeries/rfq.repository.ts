@@ -114,6 +114,42 @@ export class RFQRepository {
             }
         })
     }
+
+
+    async findPendingRFQsForClient(userId:string){
+        return await prisma.rFQ.findMany({
+            where: {
+                fabricator:{
+                    pointOfContact:{
+                        some:{
+                            id:userId
+                        }
+                    }
+                },
+                project: { status: { in: ["ACTIVE", "ONHOLD"] } },
+                responses:{some:{
+                    childResponses:{
+                        none:{}}
+                }}
+            },
+            include:{
+                sender: true,
+                recipient: true,
+                salesPerson: true,
+                responses:true,
+                fabricator:true,
+                project: {select:{name:true}},
+                connectionEngineers:{select:{firstName:true,lastName:true,id:true}},
+                connectionDesignerRFQ:{
+                    include:{
+                        CDEngineers: true,
+                        CDQuotations:true,
+                    }
+                },
+                CDQuotas:true,
+            }
+        })
+    }
     async getById(data:GetRfqInput) {
         return await prisma.rFQ.findUnique({
             where: { id: data.id },
