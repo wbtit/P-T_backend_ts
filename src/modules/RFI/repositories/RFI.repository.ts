@@ -99,6 +99,42 @@ export class RFIRepository{
       })
     }
 
+    async findPendingRFIsForClient(userId: string){
+      return await prisma.rFI.findMany({
+        where:{
+          project:{
+            clientProjectManager:userId
+          },
+          rfiresponse:{
+            none:{}
+          }
+        },include: {
+        fabricator:{select:{
+          fabName:true,
+          id:true,
+        }},
+        project: {select:{name:true}},
+        sender :  {select:{firstName:true,middleName:true,lastName:true,email:true,id:true}},
+        recepients: {
+          include: {
+            managedFabricator: {
+              select: {
+                fabName: true,
+                branches:true,
+              },
+            },
+          },
+        },
+        rfiresponse:{
+          include:{
+            childResponses:true
+          }
+        },
+        
+      },
+      })
+    }
+
 
     async findById(id:string){
         return await prisma.rFI.findUnique({

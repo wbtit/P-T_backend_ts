@@ -51,6 +51,9 @@ export class RFIService {
   async getPendingForClientAdmin(userId: string) {
     return await rfiRepo.findPendingRFIsForClientAdmin(userId);
   }
+  async getPendingForClient(userId: string) {
+    return await rfiRepo.findPendingRFIsForClient(userId);
+  }
 
   async closeRfi(id: string) {
     return await rfiRepo.updateStatus(id);
