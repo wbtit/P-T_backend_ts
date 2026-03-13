@@ -9,12 +9,41 @@ export const departmentOpenApiDoc: ModuleOpenApiDoc = {
   },
   paths: {
     "/department": {
+      get: {
+        tags: ["Department"],
+        summary: "GET /department",
+        operationId: "get_department_department",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
       post: {
         tags: ["Department"],
         summary: "POST /department",
         operationId: "post_department_department",
         security: [{ bearerAuth: [] }],
         requestBody: zodRequestBody(createDeptZod),
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
+    "/department/department/{id}": {
+      get: {
+        tags: ["Department"],
+        summary: "GET /department/department/{id}",
+        operationId: "get_department_department_id",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { in: "path", name: "id", required: true, schema: { type: "string" } },
+        ],
         responses: {
           "200": { description: "Success" },
           "400": { description: "Bad Request" },

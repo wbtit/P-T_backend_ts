@@ -148,6 +148,20 @@ export const invoiceOpenApiDoc: ModuleOpenApiDoc = {
         }
       },
     },
+    "/invoice/pending/client": {
+      get: {
+        tags: ["Invoice"],
+        summary: "GET /invoice/pending/client",
+        operationId: "get_invoice_invoice_pending_client",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
     "/invoice/pending/fabricator": {
       get: {
         tags: ["Invoice"],

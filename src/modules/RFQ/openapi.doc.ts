@@ -101,6 +101,20 @@ export const rFQOpenApiDoc: ModuleOpenApiDoc = {
         }
       },
     },
+    "/rfq/pending/client": {
+      get: {
+        tags: ["RFQ"],
+        summary: "GET /rfq/pending/client",
+        operationId: "get_RFQ_rfq_pending_client",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
     "/rfq/pending/projectManager": {
       get: {
         tags: ["RFQ"],
@@ -397,6 +411,24 @@ export const rFQOpenApiDoc: ModuleOpenApiDoc = {
           { in: "path", name: "rfqId", required: true, schema: { type: "string" } },
           { in: "path", name: "fileId", required: true, schema: { type: "string" } },
         ],
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
+    "/rfq/{rfqId}/responses": {
+      post: {
+        tags: ["RFQ"],
+        summary: "POST /rfq/{rfqId}/responses",
+        operationId: "post_RFQ_rfq_rfqId_responses",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { in: "path", name: "rfqId", required: true, schema: { type: "string" } },
+        ],
+        requestBody: zodRequestBody(RfqResponseSchema),
         responses: {
           "200": { description: "Success" },
           "400": { description: "Bad Request" },

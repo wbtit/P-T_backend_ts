@@ -144,6 +144,22 @@ export const projectOpenApiDoc: ModuleOpenApiDoc = {
         }
       },
     },
+    "/project/getAllDocuments/{id}": {
+      get: {
+        tags: ["Project"],
+        summary: "GET /project/getAllDocuments/{id}",
+        operationId: "get_project_project_get_all_documents_id",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { in: "path", name: "id", required: true, schema: { type: "string" } },
+        ],
+        responses: {
+          "200": { description: "Success" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
     "/project/projects/{id}": {
       delete: {
         tags: ["Project"],
@@ -488,6 +504,23 @@ export const projectOpenApiDoc: ModuleOpenApiDoc = {
         responses: {
           "200": { description: "Success" },
           "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
+    "/project/notes/viewFile/{notesId}/{fileId}": {
+      get: {
+        tags: ["Project"],
+        summary: "GET /project/notes/viewFile/{notesId}/{fileId}",
+        operationId: "get_project_project_notes_view_file_notesId_fileId",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { in: "path", name: "notesId", required: true, schema: { type: "string" } },
+          { in: "path", name: "fileId", required: true, schema: { type: "string" } },
+        ],
+        responses: {
+          "200": { description: "Success" },
           "401": { description: "Unauthorized" },
           "500": { description: "Internal Server Error" }
         }

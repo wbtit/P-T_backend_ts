@@ -34,6 +34,48 @@ export const dashboradDataOpenApiDoc: ModuleOpenApiDoc = {
         }
       },
     },
+    "/dashBoardData/client": {
+      get: {
+        tags: ["DashboardData"],
+        summary: "GET /dashBoardData/client",
+        operationId: "get_dashboradData_dashBoardData_client",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
+    "/dashBoardData/hr": {
+      get: {
+        tags: ["DashboardData"],
+        summary: "GET /dashBoardData/hr",
+        operationId: "get_dashboradData_dashBoardData_hr",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
+    "/dashBoardData/departmentManager": {
+      get: {
+        tags: ["DashboardData"],
+        summary: "GET /dashBoardData/departmentManager",
+        operationId: "get_dashboradData_dashBoardData_departmentManager",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
     "/dashBoardData/projectManager": {
       get: {
         tags: ["DashboardData"],

@@ -1,5 +1,6 @@
 import { ModuleOpenApiDoc } from "../../openapi/types";
 import { genericRequestBody, zodRequestBody } from "../../openapi/zod";
+import z from "zod";
 
 export const chatSystemOpenApiDoc: ModuleOpenApiDoc = {
   tag: {
@@ -13,7 +14,7 @@ export const chatSystemOpenApiDoc: ModuleOpenApiDoc = {
         summary: "POST /chat/group",
         operationId: "post_chatSystem_chat_group",
         security: [{ bearerAuth: [] }],
-        requestBody: genericRequestBody,
+        requestBody: zodRequestBody(z.object({ name: z.string().min(1, "Group name is required") })),
         responses: {
           "200": { description: "Success" },
           "400": { description: "Bad Request" },
@@ -28,7 +29,10 @@ export const chatSystemOpenApiDoc: ModuleOpenApiDoc = {
         summary: "POST /chat/group/members",
         operationId: "post_chatSystem_chat_group_members",
         security: [{ bearerAuth: [] }],
-        requestBody: genericRequestBody,
+        requestBody: zodRequestBody(z.object({
+          groupId: z.string(),
+          memberIds: z.array(z.string()).min(1, "At least one member required"),
+        })),
         responses: {
           "200": { description: "Success" },
           "400": { description: "Bad Request" },
@@ -62,7 +66,7 @@ export const chatSystemOpenApiDoc: ModuleOpenApiDoc = {
         security: [{ bearerAuth: [] }],
         parameters: [
           { in: "path", name: "groupId", required: true, schema: { type: "string" } },
-          { in: "path", name: "lastMessageId", required: true, schema: { type: "string" } },
+          { in: "path", name: "lastMessageId", required: false, schema: { type: "string" } },
         ],
         responses: {
           "200": { description: "Success" },
@@ -115,6 +119,7 @@ export const chatSystemOpenApiDoc: ModuleOpenApiDoc = {
         security: [{ bearerAuth: [] }],
         parameters: [
           { in: "path", name: "userId", required: true, schema: { type: "string" } },
+          { in: "query", name: "lastMessageId", required: false, schema: { type: "string" } },
         ],
         responses: {
           "200": { description: "Success" },

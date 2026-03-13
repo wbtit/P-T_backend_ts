@@ -68,6 +68,20 @@ export const rFIOpenApiDoc: ModuleOpenApiDoc = {
         }
       },
     },
+    "/rfi/pending/client": {
+      get: {
+        tags: ["RFI"],
+        summary: "GET /rfi/pending/client",
+        operationId: "get_RFI_rfi_pending_client",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
     "/rfi/pending/clientAdmin": {
       get: {
         tags: ["RFI"],

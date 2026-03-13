@@ -1,6 +1,7 @@
 import { ModuleOpenApiDoc } from "../../openapi/types";
 import { genericRequestBody, zodRequestBody } from "../../openapi/zod";
 import { CreateTeamSchema } from "./dtos";
+import z from "zod";
 
 export const teamOpenApiDoc: ModuleOpenApiDoc = {
   tag: {
@@ -44,7 +45,12 @@ export const teamOpenApiDoc: ModuleOpenApiDoc = {
         parameters: [
           { in: "path", name: "role", required: true, schema: { type: "string" } },
         ],
-        requestBody: genericRequestBody,
+        requestBody: zodRequestBody(
+          z.object({
+            teamId: z.string().uuid(),
+            userId: z.string(),
+          })
+        ),
         responses: {
           "200": { description: "Success" },
           "400": { description: "Bad Request" },
@@ -59,6 +65,12 @@ export const teamOpenApiDoc: ModuleOpenApiDoc = {
         summary: "DELETE /team/removeMembers",
         operationId: "delete_team_team_removeMembers",
         security: [{ bearerAuth: [] }],
+        requestBody: zodRequestBody(
+          z.object({
+            teamId: z.string().uuid(),
+            userId: z.string(),
+          })
+        ),
         responses: {
           "200": { description: "Success" },
           "400": { description: "Bad Request" },
@@ -76,7 +88,12 @@ export const teamOpenApiDoc: ModuleOpenApiDoc = {
         parameters: [
           { in: "path", name: "id", required: true, schema: { type: "string" } },
         ],
-        requestBody: genericRequestBody,
+        requestBody: zodRequestBody(
+          z.object({
+            userId: z.string(),
+            newRole: z.string(),
+          })
+        ),
         responses: {
           "200": { description: "Success" },
           "400": { description: "Bad Request" },

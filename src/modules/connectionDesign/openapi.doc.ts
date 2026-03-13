@@ -1,6 +1,6 @@
 import { ModuleOpenApiDoc } from "../../openapi/types";
 import { genericRequestBody, zodRequestBody } from "../../openapi/zod";
-import { ConnectionDesignerQuotaSchema, updateConnectionDesignerQuotaSchema } from "./dtos";
+import { ConnectionDesignerSchema, ConnectionDesignerQuotaSchema, updateConnectionDesignerQuotaSchema, updateConnectionDesignerSchema } from "./dtos";
 
 export const connectionDesignOpenApiDoc: ModuleOpenApiDoc = {
   tag: {
@@ -14,7 +14,7 @@ export const connectionDesignOpenApiDoc: ModuleOpenApiDoc = {
         summary: "POST /connectionDesign",
         operationId: "post_connectionDesign_connectionDesign",
         security: [{ bearerAuth: [] }],
-        requestBody: genericRequestBody,
+        requestBody: zodRequestBody(ConnectionDesignerSchema),
         responses: {
           "200": { description: "Success" },
           "400": { description: "Bad Request" },
@@ -99,7 +99,7 @@ export const connectionDesignOpenApiDoc: ModuleOpenApiDoc = {
         parameters: [
           { in: "path", name: "id", required: true, schema: { type: "string" } },
         ],
-        requestBody: genericRequestBody,
+        requestBody: zodRequestBody(updateConnectionDesignerSchema),
         responses: {
           "200": { description: "Success" },
           "400": { description: "Bad Request" },

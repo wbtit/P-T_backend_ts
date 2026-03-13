@@ -63,7 +63,7 @@ router.get(
 )
 
 router.get(
-  "/pending/clinet",
+  "/pending/client",
   authMiddleware,
   submittalController.handlePendingForClient.bind(submittalController) 
 )
