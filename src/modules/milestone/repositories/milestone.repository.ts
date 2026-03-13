@@ -148,15 +148,14 @@ export class MileStoneRepository{
     async getPendingSubmittalsForClient(clientId: string) {
         return await prisma.mileStone.findMany({
             where: {
-                fabricator: {
-                    pointOfContact: { some: { id: clientId, role: "CLIENT_ADMIN" } },
+                project:{
+                    clientProjectManager:clientId,
+                    isDeleted: false,
+                    status: { not: "INACTIVE" },
                 },
                 mileStoneSubmittals: { none: {} },
-                // Only milestones from active, non-deleted projects
-                project: {
-                    isDeleted: false,
-                    status: { in: ["ACTIVE", "ONHOLD"] },
-                },
+               
+               
             },
             include: {
                 project: { select: { name: true } },
