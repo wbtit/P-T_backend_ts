@@ -116,6 +116,19 @@ export class SubmittalController {
       data: pendingSubmittals,
     });
   }
+
+  async handlePendingForClient(req: AuthenticateRequest, res: Response) {
+    if (!req.user) throw new AppError("User not found", 404);
+    const { id } = req.user;
+    
+    const pendingSubmittals = await submittalService.getPendingSubmittalsForClient(id);
+    res.status(200).json({
+      status: "success",
+      data: pendingSubmittals,
+    });
+  }
+
+
   async handlePendingForProjectManager(req: AuthenticateRequest, res: Response) {
     if (!req.user) throw new AppError("User not found", 404);
     const { id } = req.user;

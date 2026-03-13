@@ -61,6 +61,12 @@ router.get(
   authMiddleware,
   submittalController.handlePendingForClientAdmin.bind(submittalController)
 )
+
+router.get(
+  "/pending/clinet",
+  authMiddleware,
+  submittalController.handlePendingForClient.bind(submittalController) 
+)
 router.get(
   "/pending/projectManager",
   authMiddleware,

@@ -125,6 +125,27 @@ async getPendingSubmittalsForClientAdmin(userId: string) {
     });
   }
 
+  async getPendingSubmittalsForClient(userId: string) {
+    return prisma.submittals.findMany({
+      where: {
+        
+        project: { clientProjectManager: userId,status: { not: "INACTIVE" } },
+        currentVersionId: { not: null },
+        currentVersion: {
+          responses: { none: {} },
+        },
+      },
+      include: {
+        project: { select: { name: true } },
+        fabricator: true,
+        recepients: true,
+        currentVersion: true,
+      },
+      orderBy: { date: "desc" },
+    });
+  }
+
+
 async getPendingSubmittalsForProjectManager(managerId: string) {
   return prisma.submittals.findMany({
     where:{
