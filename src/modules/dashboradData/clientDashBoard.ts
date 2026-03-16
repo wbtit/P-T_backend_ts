@@ -41,7 +41,11 @@ export const clientDashBoard = async (req: AuthenticateRequest, res: Response) =
                                     some: { id: req.user?.id }
                                 }
                             },
-                            responses: { none: {} },
+                             project: { status: { in: ["ACTIVE", "ONHOLD"] } },
+                            responses:{some:{
+                                    childResponses:{
+                                    none:{}}
+                            }}
                         },
                     });
     const pendingSubmittals = await prisma.submittals.count({
@@ -74,7 +78,7 @@ export const clientDashBoard = async (req: AuthenticateRequest, res: Response) =
     });
 
     return res.status(200).json({
-            message: " CLIENT_ADMIN Dashboard data fetched successfully",
+            message: " CLIENT  Dashboard data fetched successfully",
             success: true,
             data: response,
           });
