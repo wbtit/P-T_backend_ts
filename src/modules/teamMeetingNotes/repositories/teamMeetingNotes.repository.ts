@@ -45,12 +45,32 @@ export class TeamMeetingNotesRepository {
   async findById(id: string) {
     return prisma.teamMeetingNotes.findUnique({
       where: { id },
+      include:{
+        createdBy:{
+          select:{
+            id:true,
+            firstName:true,
+            middleName:true,
+            lastName:true
+          }
+      }
+    }
     });
   }
 
   async findByProjectId(projectId: string) {
     return prisma.teamMeetingNotes.findMany({
       where: { projectId },
+      include:{
+        createdBy:{
+          select:{
+            id:true,
+            firstName:true,
+            middleName:true,
+            lastName:true
+          }
+      }
+    },
       orderBy: { createdAt: "desc" },
     });
   }
@@ -58,6 +78,16 @@ export class TeamMeetingNotesRepository {
   async findByMeetingId(meetingId: string) {
     return prisma.teamMeetingNotes.findMany({
       where: { meetingId },
+      include:{
+        createdBy:{
+          select:{
+            id:true,
+            firstName:true,
+            middleName:true,
+            lastName:true
+          }
+      }
+    },
       orderBy: { createdAt: "desc" },
     });
   }
@@ -65,6 +95,16 @@ export class TeamMeetingNotesRepository {
   async findAll() {
     return prisma.teamMeetingNotes.findMany({
       orderBy: { createdAt: "desc" },
+      include:{
+        createdBy:{
+          select:{
+            id:true,
+            firstName:true,
+            middleName:true,
+            lastName:true
+          }
+      }
+    }
     });
   }
 }
