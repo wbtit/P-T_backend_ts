@@ -149,7 +149,7 @@ export class MileStoneRepository{
         return await prisma.mileStone.findMany({
             where: {
                 project:{
-                    clientProjectManager:clientId,
+                    clientProjectManagers: { some: { id: clientId } },
                     isDeleted: false,
                     status: { not: "INACTIVE" },
                 },

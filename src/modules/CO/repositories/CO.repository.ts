@@ -92,7 +92,7 @@ export class CORepository {
       return await prisma.changeOrder.findMany({
          where:{
                     Project: {
-                        clientProjectManager: userId,
+                        clientProjectManagers: { some: { id: userId } },
                         status: { not: "INACTIVE" }
                     },
                     coResponses:{none:{}}

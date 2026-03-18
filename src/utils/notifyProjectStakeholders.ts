@@ -34,7 +34,7 @@ export async function notifyProjectStakeholders(projectId: string, roles: UserRo
       connectionDesigner: {
         include: { CDEngineers: true }
       },
-      clientPM: true
+      clientProjectManagers: true
     }
   });
 
@@ -97,8 +97,10 @@ export async function notifyProjectStakeholders(projectId: string, roles: UserRo
         }
         break;
       case "CLIENT":
-        if (project.clientPM?.isActive) {
-          recipientIds.add(project.clientPM.id);
+        if (project.clientProjectManagers?.length) {
+          project.clientProjectManagers.forEach((pm) => {
+            if (pm.isActive) recipientIds.add(pm.id);
+          });
         }
         break;
       case "CLIENT_ADMIN":

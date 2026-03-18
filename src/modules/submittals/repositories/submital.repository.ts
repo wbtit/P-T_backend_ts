@@ -48,7 +48,6 @@ export class SubmitalRepository {
           sender_id: userId,
           stage: data.stage,
           isAproovedByAdmin: approval,
-          status: true,
         },
         include: {
           recepients: true,
@@ -129,7 +128,7 @@ async getPendingSubmittalsForClientAdmin(userId: string) {
     return prisma.submittals.findMany({
       where: {
         
-        project: { clientProjectManager: userId,status: { not: "INACTIVE" } },
+        project: { clientProjectManagers: { some: { id: userId } }, status: { not: "INACTIVE" } },
         currentVersionId: { not: null },
         currentVersion: {
           responses: { none: {} },

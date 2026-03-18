@@ -14,9 +14,19 @@ import { generateProjectSerial } from "../../../utils/serial.util";
  export class ProjectRepository {
    async create(data: CreateProjectInput, userId: string) {
   return prisma.$transaction(async tx => {
-    const { wbsTemplateIds = [], ...projectPayload } = data as CreateProjectInput & {
+    const {
+      wbsTemplateIds = [],
+      clientProjectManagers,
+      clientProjectManager,
+      ...projectPayload
+    } = data as CreateProjectInput & {
       wbsTemplateIds?: string[];
     };
+    const mergedClientManagers = [
+      ...(clientProjectManagers ?? []),
+      ...(clientProjectManager ? [clientProjectManager] : []),
+    ].filter(Boolean);
+    const uniqueClientManagers = Array.from(new Set(mergedClientManagers));
     const { serialNo, projectCode } = await generateProjectSerial(tx);
 
     const project = await tx.project.create({
@@ -24,6 +34,13 @@ import { generateProjectSerial } from "../../../utils/serial.util";
         ...projectPayload,
         serialNo,
         projectCode,
+        ...(uniqueClientManagers.length
+          ? {
+              clientProjectManagers: {
+                connect: uniqueClientManagers.map((id) => ({ id })),
+              },
+            }
+          : {}),
       },
       include: {
         stageHistory: true,
@@ -31,6 +48,9 @@ import { generateProjectSerial } from "../../../utils/serial.util";
         manager: { select: { firstName: true, middleName: true, lastName: true, username: true, id: true } },
         team: true,
         department: { select: { name: true, id: true } },
+        clientProjectManagers: {
+          select: { firstName: true, middleName: true, lastName: true, username: true, id: true },
+        },
       },
     });
     const validTemplates = await tx.wbsTemplate.findMany({
@@ -68,9 +88,34 @@ import { generateProjectSerial } from "../../../utils/serial.util";
   id: string,
   data: UpdateprojectInput
 ) {
+  const {
+    clientProjectManagers,
+    clientProjectManager,
+    ...projectPayload
+  } = data as UpdateprojectInput & {
+    clientProjectManagers?: string[];
+    clientProjectManager?: string;
+  };
+  const hasClientManagerUpdate =
+    Object.prototype.hasOwnProperty.call(data, "clientProjectManagers") ||
+    Object.prototype.hasOwnProperty.call(data, "clientProjectManager");
+  const mergedClientManagers = [
+    ...(clientProjectManagers ?? []),
+    ...(clientProjectManager ? [clientProjectManager] : []),
+  ].filter(Boolean);
+  const uniqueClientManagers = Array.from(new Set(mergedClientManagers));
   return tx.project.update({
     where: { id },
-    data,
+    data: {
+      ...projectPayload,
+      ...(hasClientManagerUpdate
+        ? {
+            clientProjectManagers: {
+              set: uniqueClientManagers.map((id) => ({ id })),
+            },
+          }
+        : {}),
+    },
     include: {
       stageHistory: true,
       fabricator: {
@@ -88,6 +133,9 @@ import { generateProjectSerial } from "../../../utils/serial.util";
       team: true,
       department: {
         select: { name: true, id: true },
+      },
+      clientProjectManagers: {
+        select: { firstName: true, middleName: true, lastName: true, username: true, id: true },
       },
     },
   });
@@ -125,6 +173,13 @@ import { generateProjectSerial } from "../../../utils/serial.util";
           id:true
         }},
         manager:{select:{
+          firstName:true,
+          middleName:true,
+          lastName:true,
+          username:true,
+          id:true
+        }},
+        clientProjectManagers:{select:{
           firstName:true,
           middleName:true,
           lastName:true,
@@ -191,6 +246,13 @@ import { generateProjectSerial } from "../../../utils/serial.util";
           username:true,
           id:true
         }},
+        clientProjectManagers:{select:{
+          firstName:true,
+          middleName:true,
+          lastName:true,
+          username:true,
+          id:true
+        }},
         team:true,
         department:{select:{
           name:true,
@@ -225,6 +287,13 @@ import { generateProjectSerial } from "../../../utils/serial.util";
           username:true,
           id:true
         }},
+        clientProjectManagers:{select:{
+          firstName:true,
+          middleName:true,
+          lastName:true,
+          username:true,
+          id:true
+        }},
         team:true,
         department:{select:{
           name:true,
@@ -251,6 +320,13 @@ import { generateProjectSerial } from "../../../utils/serial.util";
           username:true,
           id:true
         }},
+        clientProjectManagers:{select:{
+          firstName:true,
+          middleName:true,
+          lastName:true,
+          username:true,
+          id:true
+        }},
         team:true,
         department:{select:{
           name:true,
@@ -271,6 +347,13 @@ import { generateProjectSerial } from "../../../utils/serial.util";
           id:true
         }},
         manager:{select:{
+          firstName:true,
+          middleName:true,
+          lastName:true,
+          username:true,
+          id:true
+        }},
+        clientProjectManagers:{select:{
           firstName:true,
           middleName:true,
           lastName:true,
@@ -307,6 +390,13 @@ import { generateProjectSerial } from "../../../utils/serial.util";
           username:true,
           id:true
         }},
+        clientProjectManagers:{select:{
+          firstName:true,
+          middleName:true,
+          lastName:true,
+          username:true,
+          id:true
+        }},
         team:true,
         department:{select:{
           name:true,
@@ -320,7 +410,7 @@ import { generateProjectSerial } from "../../../utils/serial.util";
     return await prisma.project.findMany({
       where:{
         status: { not: "INACTIVE" },
-        clientProjectManager:clientId
+        clientProjectManagers: { some: { id: clientId } }
        
       },
       include:{
@@ -331,6 +421,13 @@ import { generateProjectSerial } from "../../../utils/serial.util";
           id:true
         }},
         manager:{select:{
+          firstName:true,
+          middleName:true,
+          lastName:true,
+          username:true,
+          id:true
+        }},
+        clientProjectManagers:{select:{
           firstName:true,
           middleName:true,
           lastName:true,
@@ -360,6 +457,13 @@ async getForStaff(staffId: string) {
           id:true
         }},
         manager:{select:{
+          firstName:true,
+          middleName:true,
+          lastName:true,
+          username:true,
+          id:true
+        }},
+        clientProjectManagers:{select:{
           firstName:true,
           middleName:true,
           lastName:true,

@@ -9,26 +9,26 @@ export const clientDashBoard = async (req: AuthenticateRequest, res: Response) =
         _count:{ status: true },
         where:{
             status:{not:"INACTIVE"},
-            clientProjectManager: req.user?.id
+            clientProjectManagers: { some: { id: req.user?.id } }
         }
     })
     const totalProjects = await prisma.project.count({
         where:{
             status:{not:"INACTIVE"},
-            clientProjectManager: req.user?.id
+            clientProjectManagers: { some: { id: req.user?.id } }
         }
     })
     const activeEmployeeCount = await prisma.user.count({ where: { isActive: true } });
     const newRFI = await prisma.rFI.count({
                         where: {
-                            project: { clientProjectManager: req.user?.id, status: { not: "INACTIVE" } },
+                            project: { clientProjectManagers: { some: { id: req.user?.id } }, status: { not: "INACTIVE" } },
                             rfiresponse: { none: {} },
                         },
                     });
     const pendingChangeOrders = await prisma.changeOrder.count({
                 where:{
                     Project: {
-                        clientProjectManager: req.user?.id,
+                        clientProjectManagers: { some: { id: req.user?.id } },
                         status: { not: "INACTIVE" }
                     },
                     coResponses:{none:{}}
@@ -50,7 +50,7 @@ export const clientDashBoard = async (req: AuthenticateRequest, res: Response) =
                     });
     const pendingSubmittals = await prisma.submittals.count({
                         where: {
-                           project: { clientProjectManager: req.user?.id, status: { not: "INACTIVE" } },
+                           project: { clientProjectManagers: { some: { id: req.user?.id } }, status: { not: "INACTIVE" } },
                            currentVersion:{
                             responses:{none:{}},
                            }

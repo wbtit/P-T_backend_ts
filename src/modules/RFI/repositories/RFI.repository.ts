@@ -103,7 +103,7 @@ export class RFIRepository{
       return await prisma.rFI.findMany({
         where:{
           project:{
-            clientProjectManager:userId
+            clientProjectManagers: { some: { id: userId } }
           },
           rfiresponse:{
             none:{}

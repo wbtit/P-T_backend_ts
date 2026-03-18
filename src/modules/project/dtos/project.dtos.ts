@@ -24,6 +24,19 @@ const zNumberString = z
   .transform((val) => Number(val))
   .refine((v) => !isNaN(v), "Invalid number");
 
+const zStringArray = z
+  .union([z.array(z.string()), z.string()])
+  .transform((val) => {
+    if (Array.isArray(val)) return val;
+    if (typeof val === "string" && val.includes(",")) {
+      return val
+        .split(",")
+        .map((v) => v.trim())
+        .filter(Boolean);
+    }
+    return [val];
+  });
+
 // ------------------------
 // FINAL PROJECT SCHEMA
 // ------------------------
@@ -36,7 +49,9 @@ export const CreateProjectSchema = z.object({
   teamID: z.string().min(1).optional(),
   managerID: z.string().min(1),
   rfqId: z.string().min(1).optional(),
-  clientProjectManager: z.string().min(1).optional(), 
+  clientProjectManagers: zStringArray.optional(),
+  // Deprecated single field (kept for backward compatibility)
+  clientProjectManager: z.string().min(1).optional(),
   status: z.enum(Status),
   stage: z.enum(Stage),
   tools: z.enum(Tools),
