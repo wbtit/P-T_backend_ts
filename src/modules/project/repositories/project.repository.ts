@@ -186,7 +186,15 @@ import { generateProjectSerial } from "../../../utils/serial.util";
           username:true,
           id:true
         }},
-        teamMeetingNotes:true,
+        teamMeetingNotes:{
+          include:{
+            responses:{
+              include:{
+                childResponses:true,
+              }
+            }
+          }
+        },
         team:true,
         department:{select:{
           name:true,
