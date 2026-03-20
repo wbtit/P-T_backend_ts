@@ -60,10 +60,9 @@ export class RFIController {
       isAproovedByAdmin
     );
 
-    const email = newrfi.recepients.email; // This might be null
-
+    const email = newrfi.recepients?.email ?? null;
     if (!email) {
-      throw new Error("No recipient email provided");
+      throw new AppError("No recipient email provided", 400);
     }
     const ccEmails = await getCCEmails();
         await sendEmail({

@@ -38,9 +38,9 @@ export class RFQController {
         }, id);
         console.log("rfq created: ", result);
         const newrfq = result.newRfq;
-        const email = newrfq.recipient.email; // This might be null
+        const email = newrfq.recipient?.email ?? null;
         if (!email) {
-          throw new Error("No recipient email provided");
+          throw new AppError("No recipient email provided", 400);
         }
         const ccEmails = await getCCEmails();
                 await sendEmail({

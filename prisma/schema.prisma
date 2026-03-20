@@ -624,7 +624,7 @@ model RFQ {
   MTOManual         Boolean?       @default(false)   
   MTOStickModel     String?        @default("")
   senderId         String?       @db.Uuid
-  recipientId      String        @db.Uuid
+  recipientId      String?       @db.Uuid
   salesPersonId    String?       @db.Uuid
   fabricatorId     String?        @db.Uuid
   subject          String
@@ -655,7 +655,7 @@ model RFQ {
   CDQuotas         ConnectionDesignerQuota[] @relation("referRFQs")
   vendorQuotas     VendorQuota[] @relation("referRFQsByVendor")
   fabricator       Fabricator?  @relation("fabricatorRFQ",fields: [fabricatorId], references: [id])
-  recipient        User         @relation("ReceiverRFQ", fields: [recipientId], references: [id])
+  recipient        User?         @relation("ReceiverRFQ", fields: [recipientId], references: [id])
   salesPerson      User?        @relation("SalesPersonRFQ", fields: [salesPersonId], references: [id])
   sender           User?         @relation("SenderRFQ", fields: [senderId], references: [id])
   responses        RFQResponse[]
@@ -1441,7 +1441,7 @@ model RFI {
   fabricator_id String       @db.Uuid
   date          DateTime     @default(now())
   project_id    String       @db.Uuid
-  recepient_id  String       @db.Uuid
+  recepient_id  String?      @db.Uuid
   sender_id     String       @db.Uuid
   status        Boolean      @default(false)
   subject       String
@@ -1451,7 +1451,7 @@ model RFI {
   //Relations
   fabricator    Fabricator   @relation("FabricatorRFI", fields: [fabricator_id], references: [id], onDelete: Cascade)
   project       Project      @relation("ProjectRFI", fields: [project_id], references: [id], onDelete: Cascade)
-  recepients    User        @relation("recipientRFI", fields: [recepient_id], references: [id], onDelete: Cascade)
+  recepients    User?        @relation("recipientRFI", fields: [recepient_id], references: [id], onDelete: Cascade)
   sender        User        @relation("senderRFI", fields: [sender_id], references: [id], onDelete: Cascade)
   rfiresponse   RFIResponse[] @relation("rfiresponse")
 
@@ -1487,7 +1487,7 @@ model Submittals {
   fabricator_id      String   @db.Uuid
   mileStoneId        String?  @db.Uuid
   project_id         String   @db.Uuid
-  recepient_id       String   @db.Uuid
+  recepient_id       String?  @db.Uuid
   sender_id          String   @db.Uuid
   date               DateTime @default(now())
   stage              Stage    @default(IFA)
@@ -1502,7 +1502,7 @@ model Submittals {
   mileStoneBelongsTo MileStone? @relation("mileStoneSubmittals",fields: [mileStoneId],references: [id],onDelete: Cascade)
   fabricator Fabricator @relation("FabricatorSubmittals",fields: [fabricator_id],references: [id],onDelete: Cascade)
   project Project @relation("ProjectSubmittals",fields: [project_id],references: [id],onDelete: Cascade)
-  recepients User @relation("SubmittalsRecepient",fields: [recepient_id],references: [id],onDelete: Cascade)
+  recepients User? @relation("SubmittalsRecepient",fields: [recepient_id],references: [id],onDelete: Cascade)
   sender User @relation("SubmittalsSender",fields: [sender_id],references: [id],onDelete: Cascade)
   // Versioning relations
   versions       SubmittalVersion[]
@@ -1580,7 +1580,7 @@ model ChangeOrder {
   id          String             @id @default(uuid()) @db.Uuid
   serialNo    String?            @unique
   project     String             @db.Uuid
-  recipients  String             @db.Uuid
+  recipients  String?            @db.Uuid
   remarks     String             @default("")
   changeOrderNumber String       @default("")
   description String             @default("")
@@ -1596,7 +1596,7 @@ model ChangeOrder {
   //Relations
   coResponses COResponse[]        @relation("coResponse")
   Project     Project            @relation("ChangeOrderProject", fields: [project], references: [id], onDelete: Cascade)
-  Recipients  User              @relation("ChangeOrderRecipients", fields: [recipients], references: [id], onDelete: Cascade)
+  Recipients  User?              @relation("ChangeOrderRecipients", fields: [recipients], references: [id], onDelete: Cascade)
   senders     User              @relation("ChangeOrderSender", fields: [sender], references: [id], onDelete: Cascade)
   CoRefersTo  ChangeOrdertable[] @relation("CoRefersTo")
 
