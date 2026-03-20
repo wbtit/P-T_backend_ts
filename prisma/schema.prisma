@@ -3,23 +3,15 @@
 // ===========================================================
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
   previewFeatures = ["postgresqlExtensions"]
-    extensions = [uuid_ossp(map: "uuid-ossp")]
+  extensions      = [uuid_ossp(map: "uuid-ossp")]
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
-
-
-
-
-
-
-
-
 
 // ===========================================================
 // ENUMS
@@ -47,11 +39,9 @@ enum UserRole {
   CLIENT_ADMIN
   CLIENT_PROJECT_COORDINATOR
   CLIENT_GENERAL_CONSTRUCTOR
-
-
 }
 
-enum TeamMemberRole{
+enum TeamMemberRole {
   CHECKER
   DETAILER
   ERECTER
@@ -60,6 +50,7 @@ enum TeamMemberRole{
   ESTIMATOR
   GUEST
 }
+
 enum Status {
   ACTIVE
   ONHOLD
@@ -68,6 +59,7 @@ enum Status {
   COMPLETE
   ASSIGNED
 }
+
 enum TaskStatus {
   ASSIGNED
   IN_PROGRESS
@@ -82,10 +74,11 @@ enum TaskStatus {
   WRONG_ALLOCATION
 }
 
-enum WorkSegmentType{
+enum WorkSegmentType {
   WORK
   REWORK
 }
+
 enum Stage {
   RFI
   IFA
@@ -100,6 +93,7 @@ enum Stage {
   CO
   COMPLETED
 }
+
 enum Tools {
   TEKLA
   SDS2
@@ -112,7 +106,6 @@ enum WorkSessionStatus {
   PAUSED
   ENDED
 }
-
 
 enum WorkEventType {
   START
@@ -136,6 +129,7 @@ enum Activity {
   DESIGN_CHECKING
   OTHERS
 }
+
 enum RFQStatus {
   OPEN
   IN_REVIEW
@@ -152,6 +146,7 @@ enum RFQStatus {
   RE_ESTIMATION_REQUESTED
   SENT
 }
+
 enum EstimationStatus {
   DRAFT
   IN_PROGRESS
@@ -161,8 +156,6 @@ enum EstimationStatus {
   RE_ESTIMATION_REQUIRED
   QUOTED
 }
-
-
 
 enum AlertType {
   APPROACHING_75_PERCENT
@@ -179,6 +172,7 @@ enum FlagType {
   MANAGER_OVER_ALLOCATED
   FREQUENT_75_PERCENT_ALERTS
 }
+
 enum State {
   PARTIAL
   COMPLETE
@@ -187,6 +181,7 @@ enum State {
   RECEIVED
   IN_REVIEW
 }
+
 enum SubResStatus {
   APPROVED
   PARTIAL
@@ -194,6 +189,7 @@ enum SubResStatus {
   SUBMITTED_TO_EOR
   REVISED_RESUBMITTAL
 }
+
 enum COSTATUS {
   ACCEPT
   REJECT
@@ -201,47 +197,50 @@ enum COSTATUS {
 }
 
 enum MeetingStatus {
-  SCHEDULED   
-  ONGOING     
-  COMPLETED   
-  CANCELLED   
-  RESCHEDULED 
+  SCHEDULED
+  ONGOING
+  COMPLETED
+  CANCELLED
+  RESCHEDULED
 }
 
 // RSVP values for attendees
 enum RSVPStatus {
-  ACCEPTED   
-  DECLINED   
-  MAYBE      
-  PENDING    
+  ACCEPTED
+  DECLINED
+  MAYBE
+  PENDING
 }
+
 enum MeetingRole {
-  HOST       
-  PRESENTER  
-  ATTENDEE   
-  OBSERVER   
+  HOST
+  PRESENTER
+  ATTENDEE
+  OBSERVER
 }
+
 enum TeamMeetingNoteVisibility {
   INTERNAL
   EXTERNAL
 }
+
 enum WbsDiscipline {
   EXECUTION
   CHECKING
 }
-enum FabricatirStage{
+
+enum FabricatirStage {
   RFQ
   PRODUCTION
 }
 
-enum ProjectComplexity{
+enum ProjectComplexity {
   TRIVIAL
   SIMPLE
   MODERATE
   COMPLEX
   VERY_COMPLEX
   ENTERPRISE
-
 }
 
 enum LineItemCompletionPercentageRange {
@@ -257,7 +256,7 @@ enum LineItemCompletionPercentageRange {
   RANGE_91_100
 }
 
-enum InvoiceStatus{
+enum InvoiceStatus {
   PENDING
   PAID
   OVERDUE
@@ -265,7 +264,7 @@ enum InvoiceStatus{
   CANCELLED
 }
 
-enum mileStoneResponseStatus{
+enum mileStoneResponseStatus {
   DELAYED
   ON_TIME
   NOT_STARTED
@@ -277,42 +276,42 @@ enum mileStoneResponseStatus{
 // ===========================================================
 
 model User {
-  id              String      @id @default(uuid()) @db.Uuid
-  username        String      @unique
-  password        String
-  email           String?     @db.VarChar(150)
-  firstName       String      @db.VarChar(50) @map("f_name")
-  middleName      String?     @db.VarChar(50) @map("m_name")
-  lastName        String?     @db.VarChar(50) @map("l_name")
-  phone           String      @db.VarChar(20)
-  extension      String?     @default("") @db.VarChar(10)
-  landline        String?     @default("") @db.VarChar(20)
-  altLandline     String?     @default("") @db.VarChar(20)
-  altPhone        String?     @default("") @db.VarChar(20)
-  designation     String?     @default("") @db.VarChar(50)
-  city            String?     @default("")
-  zipCode         String?     @default("") @map("zip_code")
-  state           String?     @default("")
-  country         String?     @default("")
-  address         String?     @default("")
-  profilePic      String?
-  role            UserRole
-  connectionDesignerId String?   @db.Uuid
-  vendorId        String?   @db.Uuid
-  departmentId    String?     @db.Uuid
-  isActive        Boolean     @default(true) @map("is_active")
-  isFirstLogin    Boolean     @default(true) @map("is_firstLogin")
-  updatedAt       DateTime    @updatedAt
-  createdAt       DateTime    @default(now())
+  id                   String   @id @default(uuid()) @db.Uuid
+  username             String   @unique
+  password             String
+  email                String?  @db.VarChar(150)
+  firstName            String   @map("f_name") @db.VarChar(50)
+  middleName           String?  @map("m_name") @db.VarChar(50)
+  lastName             String?  @map("l_name") @db.VarChar(50)
+  phone                String   @db.VarChar(20)
+  extension            String?  @default("") @db.VarChar(10)
+  landline             String?  @default("") @db.VarChar(20)
+  altLandline          String?  @default("") @db.VarChar(20)
+  altPhone             String?  @default("") @db.VarChar(20)
+  designation          String?  @default("") @db.VarChar(50)
+  city                 String?  @default("")
+  zipCode              String?  @default("") @map("zip_code")
+  state                String?  @default("")
+  country              String?  @default("")
+  address              String?  @default("")
+  profilePic           String?
+  role                 UserRole
+  connectionDesignerId String?  @db.Uuid
+  vendorId             String?  @db.Uuid
+  departmentId         String?  @db.Uuid
+  isActive             Boolean  @default(true) @map("is_active")
+  isFirstLogin         Boolean  @default(true) @map("is_firstLogin")
+  updatedAt            DateTime @updatedAt
+  createdAt            DateTime @default(now())
 
   // Relations
-  vendorPOC          Vendor?             @relation("userOfvendor",fields: [vendorId],references: [id])
-  connectionDesigner ConnectionDesigner? @relation("userOfConnectionDesigner", fields: [connectionDesignerId], references: [id])
-  department            Department?          @relation("UserOfTheDepartment",fields: [departmentId], references: [id])
+  vendorPOC             Vendor?              @relation("userOfvendor", fields: [vendorId], references: [id])
+  connectionDesigner    ConnectionDesigner?  @relation("userOfConnectionDesigner", fields: [connectionDesignerId], references: [id])
+  department            Department?          @relation("UserOfTheDepartment", fields: [departmentId], references: [id])
   managedDepartment     Department[]         @relation("ManagerOfDepartment")
   managedFabricator     Fabricator[]         @relation("FabricatorCreatedBy")
   branchesPOC           Branch[]             @relation("BranchPointOfContacts")
-  connectionDesignerPOC   Project[]            @relation("pocOfConnectionDesignerProjects")
+  connectionDesignerPOC Project[]            @relation("pocOfConnectionDesignerProjects")
   managedTeam           Team[]               @relation("TeamManager")
   teamMember            TeamMember[]         @relation("TeamMember")
   managedProject        Project[]            @relation("projectManager")
@@ -335,260 +334,248 @@ model User {
   submittalRecepients   Submittals[]         @relation("SubmittalsRecepient")
   submittalsender       Submittals[]         @relation("SubmittalsSender")
   submittalsresponseBy  SubmittalsResponse[] @relation("submittalsRespondedBy")
-  changeOrderSender     ChangeOrder[]        @relation("ChangeOrderSender") 
+  changeOrderSender     ChangeOrder[]        @relation("ChangeOrderSender")
   changeOrderRecipients ChangeOrder[]        @relation("ChangeOrderRecipients")
   COrespondedby         COResponse[]         @relation("COrespondedby")
-  meetingsCreated      Meeting[]            @relation("MeetingCreatedBy")
-  meetingAttendee      MeetingAttendee[]    @relation("MeetingAttendeeUser")
-  designDrawnBy        DesignDrawings[]      @relation("designdrawingsuser")
-  designDrwingRespondedBy DesignDrawingsResponses[] @relation("designdrawingsresponseuser")
-  groupadmin              Group[]         @relation("groupAdmin")
-  groupmembers            GroupUser[]     @relation("groupMembers")
-  messageReceivedBy         Message[]       @relation("messageReceivedBy")
-  messageSentBy             Message[]        @relation("messageSentBy")
-  taggedUsers               Message[]       @relation("TaggedUsers")
-  invoicePointOfContact     Invoice[]       @relation("invoicePointOfContact")
-  invoiceCreatedBy          Invoice[]       @relation("invoiceCreatedBy")
-  FabricatorPointOfContacts Fabricator[]    @relation("FabricatorPointOfContacts")
-  wbtFabricatorPointOfContact     Fabricator[]    @relation("wbtFabricatorPointOfContacts")
-  taskCreatedByUser        Task[]          @relation("taskCreatedByUser")
-  ManagerEstimationScore   ManagerEstimationScore[] @relation("ManagerEstimationScore")
-  managerbias              ManagerBiasRecord[]      @relation("managerbias")
-  employeeperformance      EmployeePerformanceScore[] @relation("employeeperformance")
-  clientCommunicatedBy       ClientCommunication[]
-  submittalVersiondoneBy     SubmittalVersion[]
-  projectBundleSelections    ProjectBundleSelection[]
-  connectionEngineersRFQs    RFQ[]            @relation("RFQ_connectionEngineers")
-  milestoneResponseUser          MileStoneResponse[] @relation("milestoneResponseUser")
-  estimationResponseBy           EstimationResponse[] @relation("estimationResponseBy")
-  projectAssistMemberships       ProjectAssist[]      @relation("ProjectAssistUser")
-  assignedProjectAssists         ProjectAssist[]      @relation("ProjectAssistAssignedBy")
-  teamMeetingNotesCreated        TeamMeetingNotes[]   @relation("TeamMeetingNotesCreatedBy")
-  teamMeetingNoteResponsesCreated TeamMeetingNoteResponse[] @relation("TeamMeetingNoteResponseCreatedBy")
-  clientProjectManagers          Project[]            @relation("clientProjectManagerProjects")
 
-  @@map("user")
+  // New Multiple Recipients Relations
+  multipleRFQsReceived         RFQ[]         @relation("RFQMultipleRecipients")
+  multipleRFIsReceived         RFI[]         @relation("RFIMultipleRecipients")
+  multipleSubmittalsReceived   Submittals[]  @relation("SubmittalMultipleRecipients")
+  multipleChangeOrdersReceived ChangeOrder[] @relation("ChangeOrderMultipleRecipients")
+
+  meetingsCreated                 Meeting[]                  @relation("MeetingCreatedBy")
+  meetingAttendee                 MeetingAttendee[]          @relation("MeetingAttendeeUser")
+  designDrawnBy                   DesignDrawings[]           @relation("designdrawingsuser")
+  designDrwingRespondedBy         DesignDrawingsResponses[]  @relation("designdrawingsresponseuser")
+  groupadmin                      Group[]                    @relation("groupAdmin")
+  groupmembers                    GroupUser[]                @relation("groupMembers")
+  messageReceivedBy               Message[]                  @relation("messageReceivedBy")
+  messageSentBy                   Message[]                  @relation("messageSentBy")
+  taggedUsers                     Message[]                  @relation("TaggedUsers")
+  invoicePointOfContact           Invoice[]                  @relation("invoicePointOfContact")
+  invoiceCreatedBy                Invoice[]                  @relation("invoiceCreatedBy")
+  FabricatorPointOfContacts       Fabricator[]               @relation("FabricatorPointOfContacts")
+  wbtFabricatorPointOfContact     Fabricator[]               @relation("wbtFabricatorPointOfContacts")
+  taskCreatedByUser               Task[]                     @relation("taskCreatedByUser")
+  ManagerEstimationScore          ManagerEstimationScore[]   @relation("ManagerEstimationScore")
+  managerbias                     ManagerBiasRecord[]        @relation("managerbias")
+  employeeperformance             EmployeePerformanceScore[] @relation("employeeperformance")
+  clientCommunicatedBy            ClientCommunication[]
+  submittalVersiondoneBy          SubmittalVersion[]
+  projectBundleSelections         ProjectBundleSelection[]
+  connectionEngineersRFQs         RFQ[]                      @relation("RFQ_connectionEngineers")
+  milestoneResponseUser           MileStoneResponse[]        @relation("milestoneResponseUser")
+  estimationResponseBy            EstimationResponse[]       @relation("estimationResponseBy")
+  projectAssistMemberships        ProjectAssist[]            @relation("ProjectAssistUser")
+  assignedProjectAssists          ProjectAssist[]            @relation("ProjectAssistAssignedBy")
+  teamMeetingNotesCreated         TeamMeetingNotes[]         @relation("TeamMeetingNotesCreatedBy")
+  teamMeetingNoteResponsesCreated TeamMeetingNoteResponse[]  @relation("TeamMeetingNoteResponseCreatedBy")
+  clientProjectManagers           Project[]                  @relation("clientProjectManagerProjects")
+
   @@index([email])
   @@index([phone])
   @@index([role])
   @@index([isActive])
   @@index([role, isActive])
   @@index([departmentId])
+  @@map("user")
 }
 
 model Department {
   id          String   @id @default(uuid()) @db.Uuid
-  name        String   @unique   
+  name        String   @unique
   createdById String?  @db.Uuid
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   isDeleted   Boolean  @default(false) @map("is_bin")
 
   // Relations
-  managerIds     User[]    @relation("ManagerOfDepartment")
-  users       User[]    @relation("UserOfTheDepartment")
-  teams       Team[]    @relation("DepartmentOfTeam")
-  tasks       Task[]    @relation("TaskBelongsToDepartment")
-  projects    Project[] @relation("projectDepartment")
+  managerIds User[]    @relation("ManagerOfDepartment")
+  users      User[]    @relation("UserOfTheDepartment")
+  teams      Team[]    @relation("DepartmentOfTeam")
+  tasks      Task[]    @relation("TaskBelongsToDepartment")
+  projects   Project[] @relation("projectDepartment")
 
-  @@map("department")
   @@index([createdById])
+  @@map("department")
 }
 
 model Fabricator {
-  id           String               @id @default(uuid()) @db.Uuid
-  createdById  String               @db.Uuid
-  fabName      String               @unique @default("")
-  website      String?              @default("")
-  drive        String?              @default("")
-  SAC          String               @default("")
-  fabricatPercentage Float          @default(0.0)
-  approvalPercentage  Float         @default(0.0)
-  paymenTDueDate    Int             @default(0)
-  createdAt    DateTime             @default(now())
-  updatedAt    DateTime             @updatedAt
-  files        Json?                @default("[]")
-  isDeleted    Boolean              @default(false) @map("is_bin")
-  currencyType String               @default("")
-  accountId    String?              @unique @db.Uuid
-  fabStage     FabricatirStage      @default(RFQ)
-
+  id                 String          @id @default(uuid()) @db.Uuid
+  createdById        String          @db.Uuid
+  fabName            String          @unique @default("")
+  website            String?         @default("")
+  drive              String?         @default("")
+  SAC                String          @default("")
+  fabricatPercentage Float           @default(0.0)
+  approvalPercentage Float           @default(0.0)
+  paymenTDueDate     Int             @default(0)
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+  files              Json?           @default("[]")
+  isDeleted          Boolean         @default(false) @map("is_bin")
+  currencyType       String          @default("")
+  accountId          String?         @unique @db.Uuid
+  fabStage           FabricatirStage @default(RFQ)
 
   // Relations      
-  branches     Branch[]    @relation("FabricatorBranches")
-  createdBy    User        @relation("FabricatorCreatedBy", fields: [createdById], references: [id])
-  project     Project[]    @relation("projectFabricator")
-  mileStones  MileStone[]  @relation("FabricatorMileStone")
-  estimation  Estimation[] @relation("estimationUnderFabricator")
-  rfi         RFI[]        @relation("FabricatorRFI")
-  submittals  Submittals[] @relation("FabricatorSubmittals")
-  fabricatorInvoice   Invoice[]  @relation("fabricatorInvoice")
-  bankAccount         AccountInfo? @relation("bankAccount",fields: [accountId], references: [id])
-  pointOfContact User[]      @relation("FabricatorPointOfContacts")
-  wbtFabricatorPointOfContact User[]      @relation("wbtFabricatorPointOfContacts")
-  rfq         RFQ[]        @relation("fabricatorRFQ")
-  communications    ClientCommunication[]
+  branches                    Branch[]              @relation("FabricatorBranches")
+  createdBy                   User                  @relation("FabricatorCreatedBy", fields: [createdById], references: [id])
+  project                     Project[]             @relation("projectFabricator")
+  mileStones                  MileStone[]           @relation("FabricatorMileStone")
+  estimation                  Estimation[]          @relation("estimationUnderFabricator")
+  rfi                         RFI[]                 @relation("FabricatorRFI")
+  submittals                  Submittals[]          @relation("FabricatorSubmittals")
+  fabricatorInvoice           Invoice[]             @relation("fabricatorInvoice")
+  bankAccount                 AccountInfo?          @relation("bankAccount", fields: [accountId], references: [id])
+  pointOfContact              User[]                @relation("FabricatorPointOfContacts")
+  wbtFabricatorPointOfContact User[]                @relation("wbtFabricatorPointOfContacts")
+  rfq                         RFQ[]                 @relation("fabricatorRFQ")
+  communications              ClientCommunication[]
 
-
-  @@map("fabricators")
   @@index([createdById])
   @@index([fabName])
+  @@map("fabricators")
 }
 
- model ConnectionDesigner{
-  id           String       @id @default(uuid()) @db.Uuid
-  name         String       @default("")
-  state        Json         @default("[]")
-  contactInfo  String?       @default("")
-  websiteLink  String?      @default("")
-  email        String?      @default("")
-  location     String?      @default("")
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
-  isDeleted    Boolean      @default(false) @map("is_bin") 
-  files        Json?        @default("[]")
-  certificates Json?        @default("[]")
-  insurenceLiability    String?     @default("")
-
+model ConnectionDesigner {
+  id                 String   @id @default(uuid()) @db.Uuid
+  name               String   @default("")
+  state              Json     @default("[]")
+  contactInfo        String?  @default("")
+  websiteLink        String?  @default("")
+  email              String?  @default("")
+  location           String?  @default("")
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  isDeleted          Boolean  @default(false) @map("is_bin")
+  files              Json?    @default("[]")
+  certificates       Json?    @default("[]")
+  insurenceLiability String?  @default("")
 
   // Relations
-  CDEngineers  User[]       @relation("userOfConnectionDesigner") 
-  
+  CDEngineers User[] @relation("userOfConnectionDesigner")
 
-  RFQs         RFQ[] @relation("RFQ_ConnectionDesigner")
+  RFQs         RFQ[]                     @relation("RFQ_ConnectionDesigner")
   CDQuotations ConnectionDesignerQuota[] @relation("connectionDesignerQuotas")
-  project     Project[]     @relation("awardedConnectionDesignerProjects")
+  project      Project[]                 @relation("awardedConnectionDesignerProjects")
 
   @@map("connectionDesigner")
- }
+}
 
-
-model ConnectionDesignerQuota{
-  id                   String      @id @default(uuid()) @db.Uuid
-  serialNo             String?     @unique
-  connectionDesignerId String      @db.Uuid
-  rfqId                String?      @db.Uuid
-  bidprice            String? 
-  estimatedHours      String
-  weeks               String
-  files                Json?        @default("[]")
-  approvalStatus      Boolean      @default(false)
-  approvalDate        DateTime?
-  createdAt           DateTime    @default(now())
-  updatedAt           DateTime    @updatedAt
-  isDeleted           Boolean     @default(false)
-  deletedAt           DateTime?
-
-
+model ConnectionDesignerQuota {
+  id                   String    @id @default(uuid()) @db.Uuid
+  serialNo             String?   @unique
+  connectionDesignerId String    @db.Uuid
+  rfqId                String?   @db.Uuid
+  bidprice             String?
+  estimatedHours       String
+  weeks                String
+  files                Json?     @default("[]")
+  approvalStatus       Boolean   @default(false)
+  approvalDate         DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  isDeleted            Boolean   @default(false)
+  deletedAt            DateTime?
 
   // Relations
-  connectionDesigner  ConnectionDesigner  @relation("connectionDesignerQuotas",fields: [connectionDesignerId], references: [id])
-  rfq                 RFQ?                 @relation("referRFQs",fields: [rfqId], references: [id])
-  awardedProjects    Project?            @relation("awardedQuota")
+  connectionDesigner ConnectionDesigner @relation("connectionDesignerQuotas", fields: [connectionDesignerId], references: [id])
+  rfq                RFQ?               @relation("referRFQs", fields: [rfqId], references: [id])
+  awardedProjects    Project?           @relation("awardedQuota")
 
   @@index([connectionDesignerId])
   @@map("connection_designer_quota")
-
 }
 
-
-model Vendor{
-  id           String       @id @default(uuid()) @db.Uuid
-  name         String       @default("")
-  state        Json         @default("[]")
-  contactInfo  String?       @default("")
-  websiteLink  String?      @default("")
-  email        String?      @default("")
-  location     String?      @default("")
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
-  isDeleted    Boolean      @default(false) @map("is_bin") 
-  files        Json?        @default("[]")
-  certificates Json?        @default("[]")
-  insurenceLiability    String?      @default("")
-
+model Vendor {
+  id                 String   @id @default(uuid()) @db.Uuid
+  name               String   @default("")
+  state              Json     @default("[]")
+  contactInfo        String?  @default("")
+  websiteLink        String?  @default("")
+  email              String?  @default("")
+  location           String?  @default("")
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  isDeleted          Boolean  @default(false) @map("is_bin")
+  files              Json?    @default("[]")
+  certificates       Json?    @default("[]")
+  insurenceLiability String?  @default("")
 
   // Relations
-  pointOfContacts  User[]       @relation("userOfvendor") 
-  
+  pointOfContacts User[] @relation("userOfvendor")
 
-  RFQs         RFQ[] @relation("RFQ_vendor")
+  RFQs             RFQ[]         @relation("RFQ_vendor")
   vendorQuotations VendorQuota[] @relation("vendorQuotas")
-  project     Project[]     @relation("awardedVendorProjects")
+  project          Project[]     @relation("awardedVendorProjects")
 
   @@map("vendor")
- }
+}
 
-
-model VendorQuota{
-  id                  String      @id @default(uuid()) @db.Uuid
-  serialNo            String?     @unique
-  vendorId            String      @db.Uuid
-  rfqId               String?      @db.Uuid
-  bidprice            String? 
-  estimatedHours      String
-  weeks               String
-  approvalStatus      Boolean      @default(false)
-  approvalDate        DateTime?
-  createdAt           DateTime    @default(now())
-  updatedAt           DateTime    @updatedAt
-  isDeleted           Boolean     @default(false)
-  deletedAt           DateTime?
-
-
+model VendorQuota {
+  id             String    @id @default(uuid()) @db.Uuid
+  serialNo       String?   @unique
+  vendorId       String    @db.Uuid
+  rfqId          String?   @db.Uuid
+  bidprice       String?
+  estimatedHours String
+  weeks          String
+  approvalStatus Boolean   @default(false)
+  approvalDate   DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  isDeleted      Boolean   @default(false)
+  deletedAt      DateTime?
 
   // Relations
-  vendor  Vendor  @relation("vendorQuotas",fields: [vendorId], references: [id])
-  rfq                 RFQ?                 @relation("referRFQsByVendor",fields: [rfqId], references: [id])
-  awardedProjects    Project?            @relation("vendorAwardedQuota")
+  vendor          Vendor   @relation("vendorQuotas", fields: [vendorId], references: [id])
+  rfq             RFQ?     @relation("referRFQsByVendor", fields: [rfqId], references: [id])
+  awardedProjects Project? @relation("vendorAwardedQuota")
 
   @@index([vendorId])
   @@map("vendorQuota")
-
 }
 
-
-
 model Branch {
-  id             String      @id @default(uuid()) @db.Uuid
-  fabricatorId   String      @db.Uuid
-  name           String      @default("")
-  address        String      @default("")
-  city           String      @default("")
-  state          String      @default("")
-  country        String      @default("")
-  zipCode        String      @default("")
-  phone          String?     @db.VarChar(20)
-  email          String?     @db.VarChar(150)
-  isHeadquarters Boolean     @default(false)
-  isDeleted      Boolean     @default(false)
+  id             String  @id @default(uuid()) @db.Uuid
+  fabricatorId   String  @db.Uuid
+  name           String  @default("")
+  address        String  @default("")
+  city           String  @default("")
+  state          String  @default("")
+  country        String  @default("")
+  zipCode        String  @default("")
+  phone          String? @db.VarChar(20)
+  email          String? @db.VarChar(150)
+  isHeadquarters Boolean @default(false)
+  isDeleted      Boolean @default(false)
 
   // Relations
-  fabricator     Fabricator  @relation("FabricatorBranches", fields: [fabricatorId], references: [id])
-  pointOfContact User[]      @relation("BranchPointOfContacts")
+  fabricator     Fabricator @relation("FabricatorBranches", fields: [fabricatorId], references: [id])
+  pointOfContact User[]     @relation("BranchPointOfContacts")
 
-  @@map("branches")
+  @@unique([fabricatorId, isHeadquarters], map: "one_hq_per_fabricator")
   @@index([fabricatorId])
   @@index([city])
   @@index([state])
   @@index([zipCode])
-  @@unique([fabricatorId, isHeadquarters], map: "one_hq_per_fabricator")
+  @@map("branches")
 }
 
-
 model Team {
-  id           String         @id @default(uuid()) @db.Uuid
-  name         String         @unique
-  managerID    String         @db.Uuid
-  departmentID String        @db.Uuid
-  isDeleted    Boolean      @default(false) @map("is_bin")
+  id                   String                @id @default(uuid()) @db.Uuid
+  name                 String                @unique
+  managerID            String                @db.Uuid
+  departmentID         String                @db.Uuid
+  isDeleted            Boolean               @default(false) @map("is_bin")
   //Relations
-  manager      User          @relation("TeamManager", fields: [managerID], references: [id])
-  members      TeamMember[]  @relation("MemberBelongsToTeam") // relation to members
-  department   Department?    @relation("DepartmentOfTeam",fields: [departmentID],references: [id])
-  project      Project[] @relation("projectTeam")
+  manager              User                  @relation("TeamManager", fields: [managerID], references: [id])
+  members              TeamMember[]          @relation("MemberBelongsToTeam") // relation to members
+  department           Department?           @relation("DepartmentOfTeam", fields: [departmentID], references: [id])
+  project              Project[]             @relation("projectTeam")
   teamEfficiencyScores TeamEfficiencyScore[]
-
 
   @@index([name])
   @@index([departmentID])
@@ -596,74 +583,70 @@ model Team {
   @@map("team")
 }
 
-
-
 model TeamMember {
-  id        String   @id @default(uuid()) @db.Uuid
-  teamId    String   @db.Uuid
-  userId    String   @db.Uuid
-  role      TeamMemberRole   
+  id     String         @id @default(uuid()) @db.Uuid
+  teamId String         @db.Uuid
+  userId String         @db.Uuid
+  role   TeamMemberRole
   //Relations
-  team      Team     @relation("MemberBelongsToTeam",fields: [teamId], references: [id])
-  member    User    @relation("TeamMember",fields: [userId], references: [id])
+  team   Team           @relation("MemberBelongsToTeam", fields: [teamId], references: [id])
+  member User           @relation("TeamMember", fields: [userId], references: [id])
 
-  @@index([teamId])
   @@unique([teamId, userId]) // prevents duplicate members in same team
+  @@index([teamId])
   @@map("team_members")
 }
 
-
-
 model RFQ {
-  id               String        @id @default(uuid()) @db.Uuid
-  serialNo         String?       @unique
-  projectNumber    String?       @default("")
-  projectName      String
-  location         String?       @default("")
-  bidPrice         String?
-  MTOManual         Boolean?       @default(false)   
-  MTOStickModel     String?        @default("")
-  senderId         String?       @db.Uuid
-  recipientId      String?       @db.Uuid
-  salesPersonId    String?       @db.Uuid
-  fabricatorId     String?        @db.Uuid
-  subject          String
-  description      String
-  status           RFQStatus     @default(SENT)
-  wbtStatus        RFQStatus     @default(RECEIVED)
-  estimationDate   DateTime?
-  tools            String?
+  id             String    @id @default(uuid()) @db.Uuid
+  serialNo       String?   @unique
+  projectNumber  String?   @default("")
+  projectName    String
+  location       String?   @default("")
+  bidPrice       String?
+  MTOManual      Boolean?  @default(false)
+  MTOStickModel  String?   @default("")
+  senderId       String?   @db.Uuid
+  recipientId    String?   @db.Uuid
+  salesPersonId  String?   @db.Uuid
+  fabricatorId   String?   @db.Uuid
+  subject        String
+  description    String
+  status         RFQStatus @default(SENT)
+  wbtStatus      RFQStatus @default(RECEIVED)
+  estimationDate DateTime?
+  tools          String?
 
-  connectionDesign Boolean       @default(false)
-  customerDesign   Boolean       @default(false)
-  miscDesign       Boolean       @default(false)
-  detailingMain    Boolean       @default(false)
-  detailingMisc    Boolean       @default(false)
-  files            Json?          @default("[]")
-  link             String?       @default("")
+  connectionDesign Boolean @default(false)
+  customerDesign   Boolean @default(false)
+  miscDesign       Boolean @default(false)
+  detailingMain    Boolean @default(false)
+  detailingMisc    Boolean @default(false)
+  files            Json?   @default("[]")
+  link             String? @default("")
 
-  createdAt        DateTime      @default(now())
-  updatedAt        DateTime      @default(now()) @updatedAt
-  createdById      String?
-  isDeleted        Boolean       @default(false)
-  deletedAt        DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @default(now()) @updatedAt
+  createdById String?
+  isDeleted   Boolean   @default(false)
+  deletedAt   DateTime?
 
   //Relations
-  vendorRFQ        Vendor[]   @relation("RFQ_vendor")
-  connectionEngineers   User[]  @relation("RFQ_connectionEngineers")
-  connectionDesignerRFQ ConnectionDesigner[] @relation("RFQ_ConnectionDesigner")
-  CDQuotas         ConnectionDesignerQuota[] @relation("referRFQs")
-  vendorQuotas     VendorQuota[] @relation("referRFQsByVendor")
-  fabricator       Fabricator?  @relation("fabricatorRFQ",fields: [fabricatorId], references: [id])
-  recipient        User?         @relation("ReceiverRFQ", fields: [recipientId], references: [id])
-  salesPerson      User?        @relation("SalesPersonRFQ", fields: [salesPersonId], references: [id])
-  sender           User?         @relation("SenderRFQ", fields: [senderId], references: [id])
-  responses        RFQResponse[]
-  followUps        RFQFollowUp[]
-  project          Project?     @relation("ProjectRFQ")
-  estimations      Estimation[]
+  vendorRFQ             Vendor[]                  @relation("RFQ_vendor")
+  connectionEngineers   User[]                    @relation("RFQ_connectionEngineers")
+  connectionDesignerRFQ ConnectionDesigner[]      @relation("RFQ_ConnectionDesigner")
+  CDQuotas              ConnectionDesignerQuota[] @relation("referRFQs")
+  vendorQuotas          VendorQuota[]             @relation("referRFQsByVendor")
+  fabricator            Fabricator?               @relation("fabricatorRFQ", fields: [fabricatorId], references: [id])
+  recipient             User?                     @relation("ReceiverRFQ", fields: [recipientId], references: [id])
+  multipleRecipients    User[]                    @relation("RFQMultipleRecipients")
+  salesPerson           User?                     @relation("SalesPersonRFQ", fields: [salesPersonId], references: [id])
+  sender                User?                     @relation("SenderRFQ", fields: [senderId], references: [id])
+  responses             RFQResponse[]
+  followUps             RFQFollowUp[]
+  project               Project?                  @relation("ProjectRFQ")
+  estimations           Estimation[]
 
-  @@map("rfq")
   @@index([projectName])
   @@index([projectNumber])
   @@index([senderId])
@@ -672,34 +655,33 @@ model RFQ {
   @@index([status])
   @@index([wbtStatus])
   @@index([createdById])
-  
+  @@map("rfq")
 }
 
 model RFQResponse {
-  id               String        @id @default(uuid()) @db.Uuid
-  rfqId            String        @db.Uuid
-  userId           String        @db.Uuid
-  parentResponseId String?       @db.Uuid
-  description      String        @default("")
-  status           RFQStatus     @default(RECEIVED)
-  wbtStatus        RFQStatus     @default(SENT)
-  files            Json?         @default("[]")
-  link             String?       @default("")
+  id               String    @id @default(uuid()) @db.Uuid
+  rfqId            String    @db.Uuid
+  userId           String    @db.Uuid
+  parentResponseId String?   @db.Uuid
+  description      String    @default("")
+  status           RFQStatus @default(RECEIVED)
+  wbtStatus        RFQStatus @default(SENT)
+  files            Json?     @default("[]")
+  link             String?   @default("")
 
-  createdAt        DateTime      @default(now())
-  isDeleted        Boolean       @default(false)
-  deletedAt        DateTime?
+  createdAt DateTime  @default(now())
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
 
-  
-  parentResponse   RFQResponse?  @relation("ParentChildResponse", fields: [parentResponseId], references: [id])
-  childResponses   RFQResponse[] @relation("ParentChildResponse")
-  rfq              RFQ           @relation(fields: [rfqId], references: [id])
-  user             User         @relation("rfqResponseBy", fields: [userId], references: [id])
+  parentResponse RFQResponse?  @relation("ParentChildResponse", fields: [parentResponseId], references: [id])
+  childResponses RFQResponse[] @relation("ParentChildResponse")
+  rfq            RFQ           @relation(fields: [rfqId], references: [id])
+  user           User          @relation("rfqResponseBy", fields: [userId], references: [id])
 
-  @@map("rfqresponse")
   @@index([rfqId])
   @@index([userId])
   @@index([parentResponseId])
+  @@map("rfqresponse")
 }
 
 model RFQFollowUp {
@@ -711,95 +693,92 @@ model RFQFollowUp {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  rfq         RFQ      @relation(fields: [rfqId], references: [id], onDelete: Cascade)
-  createdBy   User     @relation("RFQFollowUpCreatedBy", fields: [createdById], references: [id])
+  rfq       RFQ  @relation(fields: [rfqId], references: [id], onDelete: Cascade)
+  createdBy User @relation("RFQFollowUpCreatedBy", fields: [createdById], references: [id])
 
-  @@map("rfq_follow_up")
   @@index([rfqId])
   @@index([createdById])
   @@index([createdAt])
+  @@map("rfq_follow_up")
 }
 
-model Project{          
-  id                     String                 @id @default(uuid()) @db.Uuid
-  serialNo               String?                @unique
-  projectCode            String?                @unique
-  projectNumber          String                 @unique
-  name                   String                 @unique
-  description            String         
-  fabricatorID           String                 @db.Uuid
-  departmentID           String                 @db.Uuid
-  teamID                 String?                @db.Uuid
-  managerID              String                 @db.Uuid
-  connectionDesignerID   String?                @db.Uuid
-  vendorId               String?                @db.Uuid
-  CDQuataionID           String?                @unique @db.Uuid
-  vendorquotatioID       String?                @unique @db.Uuid
-  rfqId                  String?                @unique @db.Uuid
-  status                 Status                 @default(ACTIVE)
-  stage                  Stage                  @default(RFI)
-  tools                  Tools                  @default(TEKLA)
-  files                  Json                   @default("[]")
-  connectionDesign       Boolean                @default(false)
-  miscDesign             Boolean                @default(false)
-  customerDesign         Boolean                @default(false)
-  startDate              DateTime               @default(now())
-  endDate                DateTime?              
-  endDateChangeLog       Json                   @default("[]")
-  approvalDate           DateTime?                        
-  fabricationDate        DateTime?               
-  estimatedHours         Float                  @default(0)
-  modelingHours          Float?                 @default(0)
-  detailCheckingHours    Float?                 @default(0)
-  detailingHours         Float?                 @default(0)
-  executionCheckingHours Float?                 @default(0)
-  executionHours         Float?                 @default(0)
-  modelCheckingHours     Float?                 @default(0)
-  mailReminder           Boolean                @default(false)
-  submissionMailReminder Boolean                @default(false)
-  isDeleted              Boolean                @default(false)
-  detailingMain          Boolean                @default(false)
-  detailingMisc          Boolean                @default(false)   
-  IFAComepletionPercentage Float                @default(0.0)
-  IFCompletionPercentage  Float                 @default(0.0)
-  IFACompletionAlertSent  Boolean               @default(false)
-  IFCCompletionAlertSent  Boolean               @default(false)
+model Project {
+  id                       String    @id @default(uuid()) @db.Uuid
+  serialNo                 String?   @unique
+  projectCode              String?   @unique
+  projectNumber            String    @unique
+  name                     String    @unique
+  description              String
+  fabricatorID             String    @db.Uuid
+  departmentID             String    @db.Uuid
+  teamID                   String?   @db.Uuid
+  managerID                String    @db.Uuid
+  connectionDesignerID     String?   @db.Uuid
+  vendorId                 String?   @db.Uuid
+  CDQuataionID             String?   @unique @db.Uuid
+  vendorquotatioID         String?   @unique @db.Uuid
+  rfqId                    String?   @unique @db.Uuid
+  status                   Status    @default(ACTIVE)
+  stage                    Stage     @default(RFI)
+  tools                    Tools     @default(TEKLA)
+  files                    Json      @default("[]")
+  connectionDesign         Boolean   @default(false)
+  miscDesign               Boolean   @default(false)
+  customerDesign           Boolean   @default(false)
+  startDate                DateTime  @default(now())
+  endDate                  DateTime?
+  endDateChangeLog         Json      @default("[]")
+  approvalDate             DateTime?
+  fabricationDate          DateTime?
+  estimatedHours           Float     @default(0)
+  modelingHours            Float?    @default(0)
+  detailCheckingHours      Float?    @default(0)
+  detailingHours           Float?    @default(0)
+  executionCheckingHours   Float?    @default(0)
+  executionHours           Float?    @default(0)
+  modelCheckingHours       Float?    @default(0)
+  mailReminder             Boolean   @default(false)
+  submissionMailReminder   Boolean   @default(false)
+  isDeleted                Boolean   @default(false)
+  detailingMain            Boolean   @default(false)
+  detailingMisc            Boolean   @default(false)
+  IFAComepletionPercentage Float     @default(0.0)
+  IFCompletionPercentage   Float     @default(0.0)
+  IFACompletionAlertSent   Boolean   @default(false)
+  IFCCompletionAlertSent   Boolean   @default(false)
 
-  
   //Relations
-  clientProjectManagers  User[]              @relation("clientProjectManagerProjects")
-  vendorAwardedQuota     VendorQuota?   @relation("vendorAwardedQuota",fields: [vendorquotatioID],references: [id])
-  awardedQuota ConnectionDesignerQuota? @relation("awardedQuota", fields: [CDQuataionID], references: [id])
-  connectionDesigner      ConnectionDesigner?  @relation("awardedConnectionDesignerProjects", fields: [connectionDesignerID], references: [id])
-  vendor                 Vendor?              @relation("awardedVendorProjects", fields: [vendorId], references: [id])
-  pocOfConnectionDesigner User[]               @relation("pocOfConnectionDesignerProjects")
-  department             Department            @relation("projectDepartment", fields: [departmentID], references: [id])
-  stageHistory           ProjectStageHistory[]
-  fabricator             Fabricator            @relation("projectFabricator", fields: [fabricatorID], references: [id])
-  manager                User                  @relation("projectManager", fields: [managerID], references: [id])
-  team                   Team?                 @relation("projectTeam", fields: [teamID], references: [id])
-  tasks                  Task[]                @relation("TaskBelongsToProject")
-  projectJobStudy        JobStudy?             @relation("projectJobStudy") 
-  notes                  Notes[]               @relation("projectNotes")
-  teamMeetingNotes       TeamMeetingNotes[]    @relation("ProjectTeamMeetingNotes")
-  rfq                    RFQ?                  @relation("ProjectRFQ", fields: [rfqId], references: [id])
-  mileStones             MileStone[]           @relation("ProjectMileStone")
-  rfi                    RFI[]                 @relation("ProjectRFI")
-  submittals             Submittals[]  @relation("ProjectSubmittals")
-  changeOrders          ChangeOrder[]    @relation("ChangeOrderProject")
-  designDrawings        DesignDrawings[]      @relation("designdrawingsproject")  
-  invoice                 Invoice[]       @relation("projectInvoice")
-  ManagerEstimationScore   ManagerEstimationScore[] @relation("ManagerEstimationScore")
-  projectbias              ManagerBiasRecord[]      @relation("projectbias")
+  clientProjectManagers   User[]                   @relation("clientProjectManagerProjects")
+  vendorAwardedQuota      VendorQuota?             @relation("vendorAwardedQuota", fields: [vendorquotatioID], references: [id])
+  awardedQuota            ConnectionDesignerQuota? @relation("awardedQuota", fields: [CDQuataionID], references: [id])
+  connectionDesigner      ConnectionDesigner?      @relation("awardedConnectionDesignerProjects", fields: [connectionDesignerID], references: [id])
+  vendor                  Vendor?                  @relation("awardedVendorProjects", fields: [vendorId], references: [id])
+  pocOfConnectionDesigner User[]                   @relation("pocOfConnectionDesignerProjects")
+  department              Department               @relation("projectDepartment", fields: [departmentID], references: [id])
+  stageHistory            ProjectStageHistory[]
+  fabricator              Fabricator               @relation("projectFabricator", fields: [fabricatorID], references: [id])
+  manager                 User                     @relation("projectManager", fields: [managerID], references: [id])
+  team                    Team?                    @relation("projectTeam", fields: [teamID], references: [id])
+  tasks                   Task[]                   @relation("TaskBelongsToProject")
+  projectJobStudy         JobStudy?                @relation("projectJobStudy")
+  notes                   Notes[]                  @relation("projectNotes")
+  teamMeetingNotes        TeamMeetingNotes[]       @relation("ProjectTeamMeetingNotes")
+  rfq                     RFQ?                     @relation("ProjectRFQ", fields: [rfqId], references: [id])
+  mileStones              MileStone[]              @relation("ProjectMileStone")
+  rfi                     RFI[]                    @relation("ProjectRFI")
+  submittals              Submittals[]             @relation("ProjectSubmittals")
+  changeOrders            ChangeOrder[]            @relation("ChangeOrderProject")
+  designDrawings          DesignDrawings[]         @relation("designdrawingsproject")
+  invoice                 Invoice[]                @relation("projectInvoice")
+  ManagerEstimationScore  ManagerEstimationScore[] @relation("ManagerEstimationScore")
+  projectbias             ManagerBiasRecord[]      @relation("projectbias")
 
-    // NEW WBS ARCHITECTURE RELATIONS
-  projectWbs      ProjectWbs[]
+  // NEW WBS ARCHITECTURE RELATIONS
+  projectWbs              ProjectWbs[]
   projectBundleSelections ProjectBundleSelection[]
-  projectBundles ProjectBundle[]
+  projectBundles          ProjectBundle[]
   clentCommunications     ClientCommunication[]
   assists                 ProjectAssist[]
-
-            
 
   @@index([name])
   @@index([fabricatorID])
@@ -829,18 +808,18 @@ model ProjectAssist {
   @@map("project_assists")
 }
 
-model Notes{
-  id                     String         @id @default(uuid()) @db.Uuid
-  serialNo               String?        @unique
-  content                String   
-  stage                  Stage         @default(RFI)            
-  files                  Json           @default("[]")
-  createdAt              DateTime       @default(now())
-  updatedAt              DateTime       @updatedAt
-  projectId              String         @db.Uuid
+model Notes {
+  id        String   @id @default(uuid()) @db.Uuid
+  serialNo  String?  @unique
+  content   String
+  stage     Stage    @default(RFI)
+  files     Json     @default("[]")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  projectId String   @db.Uuid
 
   // Relations
-  project                Project        @relation("projectNotes",fields:[projectId],references:[id])
+  project Project @relation("projectNotes", fields: [projectId], references: [id])
 
   @@index([projectId])
   @@map("notes")
@@ -859,9 +838,9 @@ model TeamMeetingNotes {
   createdAt   DateTime                  @default(now())
   updatedAt   DateTime                  @updatedAt
 
-  meeting   Meeting? @relation("MeetingTeamMeetingNotes", fields: [meetingId], references: [id], onDelete: Cascade)
-  project   Project @relation("ProjectTeamMeetingNotes", fields: [projectId], references: [id], onDelete: Cascade)
-  createdBy User    @relation("TeamMeetingNotesCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
+  meeting   Meeting?                  @relation("MeetingTeamMeetingNotes", fields: [meetingId], references: [id], onDelete: Cascade)
+  project   Project                   @relation("ProjectTeamMeetingNotes", fields: [projectId], references: [id], onDelete: Cascade)
+  createdBy User                      @relation("TeamMeetingNotesCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
   responses TeamMeetingNoteResponse[] @relation("TeamMeetingNoteResponses")
 
   @@index([projectId])
@@ -880,10 +859,10 @@ model TeamMeetingNoteResponse {
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
-  note           TeamMeetingNotes @relation("TeamMeetingNoteResponses", fields: [noteId], references: [id], onDelete: Cascade)
-  parentResponse TeamMeetingNoteResponse? @relation("TeamMeetingNoteResponseThreads", fields: [parentResponseId], references: [id])
+  note           TeamMeetingNotes          @relation("TeamMeetingNoteResponses", fields: [noteId], references: [id], onDelete: Cascade)
+  parentResponse TeamMeetingNoteResponse?  @relation("TeamMeetingNoteResponseThreads", fields: [parentResponseId], references: [id])
   childResponses TeamMeetingNoteResponse[] @relation("TeamMeetingNoteResponseThreads")
-  createdBy      User    @relation("TeamMeetingNoteResponseCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
+  createdBy      User                      @relation("TeamMeetingNoteResponseCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
 
   @@index([noteId])
   @@index([parentResponseId])
@@ -892,74 +871,75 @@ model TeamMeetingNoteResponse {
 }
 
 model JobStudy {
-  id          String      @id @default(uuid()) @db.Uuid
-  QtyNo       Int   
-  unitTime    Float       @default(0.0)
-  execTime    Float       @default(0.0)
-  projectId   String      @unique @db.Uuid
-  description String    
-  project    Project     @relation("projectJobStudy", fields: [projectId], references: [id], onDelete: Cascade)
-
+  id          String  @id @default(uuid()) @db.Uuid
+  QtyNo       Int
+  unitTime    Float   @default(0.0)
+  execTime    Float   @default(0.0)
+  projectId   String  @unique @db.Uuid
+  description String
+  project     Project @relation("projectJobStudy", fields: [projectId], references: [id], onDelete: Cascade)
 
   @@index([projectId])
   @@map("jobStudy")
 }
+
 //TEMPLATES
 model WbsBundleTemplate {
   id        String   @id @default(uuid()) @db.Uuid
   bundleKey String   @unique
   name      String
-  category  Activity   // MODELING | DETAILING | ERECTION
+  category  Activity // MODELING | DETAILING | ERECTION
   stage     Stage
   isActive  Boolean  @default(true)
 
-  wbsTemplates WbsTemplate[]
+  wbsTemplates            WbsTemplate[]
   projectBundleSelections ProjectBundleSelection[]
-  projectBundles ProjectBundle[]
+  projectBundles          ProjectBundle[]
 
   @@map("wbs_bundle_template")
 }
+
 model WbsTemplate {
-  id            String   @id @default(uuid()) @db.Uuid
-  name          String
-  templateKey   String   @unique
+  id          String @id @default(uuid()) @db.Uuid
+  name        String
+  templateKey String @unique
 
-  bundleKey     String
-  discipline    WbsDiscipline  // EXECUTION | CHECKING
+  bundleKey  String
+  discipline WbsDiscipline // EXECUTION | CHECKING
 
-  version       Int      @default(1)
+  version Int @default(1)
 
-  isActive      Boolean  @default(true)
-  isDeleted     Boolean  @default(false)
+  isActive  Boolean @default(true)
+  isDeleted Boolean @default(false)
 
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  bundle        WbsBundleTemplate @relation(fields: [bundleKey],references: [bundleKey],onDelete: Restrict)
+  bundle WbsBundleTemplate @relation(fields: [bundleKey], references: [bundleKey], onDelete: Restrict)
 
-  lineItems     WbsLineItemTemplate[]
-  projectWbs    ProjectWbs[]
+  lineItems  WbsLineItemTemplate[]
+  projectWbs ProjectWbs[]
 
   @@index([bundleKey])
 }
 
 model WbsLineItemTemplate {
-  id              String   @id @default(uuid()) @db.Uuid
-  wbsTemplateId   String   @db.Uuid
+  id            String @id @default(uuid()) @db.Uuid
+  wbsTemplateId String @db.Uuid
 
-  description     String
-  unitTime        Float
-  checkUnitTime   Float
-  templateKey     String   // formerly parentTemplateKey
+  description   String
+  unitTime      Float
+  checkUnitTime Float
+  templateKey   String // formerly parentTemplateKey
 
-  isActive        Boolean  @default(true)
-  isDeleted       Boolean  @default(false)
+  isActive  Boolean @default(true)
+  isDeleted Boolean @default(false)
 
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // RELATIONS
-  wbsTemplate     WbsTemplate @relation(fields: [wbsTemplateId], references: [id])
+  wbsTemplate      WbsTemplate       @relation(fields: [wbsTemplateId], references: [id])
   projectLineItems ProjectLineItem[]
 
   @@unique([wbsTemplateId, templateKey])
@@ -967,230 +947,224 @@ model WbsLineItemTemplate {
 
 //PROJECT
 model ProjectBundleSelection {
-  id          String   @id @default(uuid()) @db.Uuid
-  projectId   String   @db.Uuid
-  bundleKey   String
-  selectedBy  String   @db.Uuid
+  id         String   @id @default(uuid()) @db.Uuid
+  projectId  String   @db.Uuid
+  bundleKey  String
+  selectedBy String   @db.Uuid
   selectedAt DateTime @default(now())
 
-  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  bundle  WbsBundleTemplate @relation(fields: [bundleKey],references: [bundleKey],onDelete: Restrict)
-  selectedByUser User @relation(fields: [selectedBy], references: [id], onDelete: Cascade)
-
+  project        Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  bundle         WbsBundleTemplate @relation(fields: [bundleKey], references: [bundleKey], onDelete: Restrict)
+  selectedByUser User              @relation(fields: [selectedBy], references: [id], onDelete: Cascade)
 
   @@unique([projectId, bundleKey])
 }
 
-
-
 model ProjectBundle {
-  id        String   @id @default(uuid()) @db.Uuid
-  projectId String   @db.Uuid
+  id        String @id @default(uuid()) @db.Uuid
+  projectId String @db.Uuid
   bundleKey String
   stage     Stage
 
-  totalQtyNo             Int    @default(0)
-  totalExecHr            Float  @default(0)
-  totalCheckHr           Float  @default(0)
-  totalExecHrWithRework  Float  @default(0)
-  totalCheckHrWithRework Float  @default(0)
+  totalQtyNo             Int   @default(0)
+  totalExecHr            Float @default(0)
+  totalCheckHr           Float @default(0)
+  totalExecHrWithRework  Float @default(0)
+  totalCheckHrWithRework Float @default(0)
 
-  project Project @relation(fields: [projectId], references: [id])
+  project Project           @relation(fields: [projectId], references: [id])
   bundle  WbsBundleTemplate @relation(fields: [bundleKey], references: [bundleKey])
 
-  @@unique([projectId, bundleKey, stage])
-
-
-  wbs ProjectWbs[]
+  wbs   ProjectWbs[]
   tasks Task[]
+
+  @@unique([projectId, bundleKey, stage])
 }
 
-
 model ProjectWbs {
-  id              String   @id @default(uuid()) @db.Uuid
-  projectId       String   @db.Uuid
-  projectBundleId String   @db.Uuid
+  id              String        @id @default(uuid()) @db.Uuid
+  projectId       String        @db.Uuid
+  projectBundleId String        @db.Uuid
   wbsTemplateKey  String
   discipline      WbsDiscipline
   stage           Stage
 
   // Aggregates
-  totalQtyNo             Int    @default(0)
-  totalCheckHr           Float  @default(0)
-  totalExecHr            Float  @default(0)
-  totalCheckHrWithRework Float  @default(0)
-  totalExecHrWithRework  Float  @default(0)
+  totalQtyNo             Int   @default(0)
+  totalCheckHr           Float @default(0)
+  totalExecHr            Float @default(0)
+  totalCheckHrWithRework Float @default(0)
+  totalExecHrWithRework  Float @default(0)
 
-  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project       Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
   projectBundle ProjectBundle @relation(fields: [projectBundleId], references: [id], onDelete: Cascade)
-  wbsTemplate WbsTemplate @relation(fields: [wbsTemplateKey], references: [templateKey])
+  wbsTemplate   WbsTemplate   @relation(fields: [wbsTemplateKey], references: [templateKey])
 
   lineItems ProjectLineItem[]
 
   @@unique([projectBundleId, wbsTemplateKey])
 }
 
-
 model ProjectLineItem {
-  id              String   @id @default(uuid()) @db.Uuid
-  projectWbsId    String   @db.Uuid
+  id           String @id @default(uuid()) @db.Uuid
+  projectWbsId String @db.Uuid
 
   lineItemTemplateId String @db.Uuid
 
-  description     String
-  unitTime        Float
-  checkUnitTime   Float
+  description   String
+  unitTime      Float
+  checkUnitTime Float
 
-  qtyNo           Int     @default(0)
-  execHr          Float   @default(0)
-  checkHr         Float   @default(0)
-  execHrWithRework Float  @default(0)
+  qtyNo             Int   @default(0)
+  execHr            Float @default(0)
+  checkHr           Float @default(0)
+  execHrWithRework  Float @default(0)
   checkHrWithRework Float @default(0)
 
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  projectWbs      ProjectWbs            @relation(fields: [projectWbsId], references: [id], onDelete: Cascade)
-  template        WbsLineItemTemplate   @relation(fields: [lineItemTemplateId], references: [id])
+  projectWbs ProjectWbs          @relation(fields: [projectWbsId], references: [id], onDelete: Cascade)
+  template   WbsLineItemTemplate @relation(fields: [lineItemTemplateId], references: [id])
 
   @@unique([projectWbsId, lineItemTemplateId])
 }
 
 model ProjectStageHistory {
-  id         String   @id @default(uuid()) @db.Uuid
-  projectID  String   @db.Uuid
-  stage      Stage
-  approvalDate DateTime?
-  approvalDteChangeReason String?
-  fabricationDate DateTime?
+  id                          String    @id @default(uuid()) @db.Uuid
+  projectID                   String    @db.Uuid
+  stage                       Stage
+  approvalDate                DateTime?
+  approvalDteChangeReason     String?
+  fabricationDate             DateTime?
   fabricationDateChangeReason String?
-  startDate  DateTime @default(now())
-  endDate    DateTime?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime? @updatedAt
+  startDate                   DateTime  @default(now())
+  endDate                     DateTime?
+  createdAt                   DateTime  @default(now())
+  updatedAt                   DateTime? @updatedAt
 
-  project    Project  @relation(fields: [projectID], references: [id], onDelete: Cascade)
+  project Project @relation(fields: [projectID], references: [id], onDelete: Cascade)
 
   @@index([stage])
   @@index([projectID])
   @@map("project_stage_history")
 }
 
-model MileStone{
-  id                 String              @id @default(uuid()) @db.Uuid
-  serialNo           String?             @unique
-  fabricator_id      String              @db.Uuid
-  date               DateTime            @default(now())
-  project_id         String              @db.Uuid
-  approvalDate      DateTime?
-  status             Status             @default(ACTIVE)
-  stage              Stage              @default(IFA)
-  subject            String
-  reason             String?             @default("")
-  description        String
-  completeionPercentage Float?              @default(0.0)
-  milestoneVersion   Int                 @default(1)
-  currentVersionId   String?             @unique @db.Uuid
+model MileStone {
+  id                    String             @id @default(uuid()) @db.Uuid
+  serialNo              String?            @unique
+  fabricator_id         String             @db.Uuid
+  date                  DateTime           @default(now())
+  project_id            String             @db.Uuid
+  approvalDate          DateTime?
+  status                Status             @default(ACTIVE)
+  stage                 Stage              @default(IFA)
+  subject               String
+  reason                String?            @default("")
+  description           String
+  completeionPercentage Float?             @default(0.0)
+  milestoneVersion      Int                @default(1)
+  currentVersionId      String?            @unique @db.Uuid
   //relations
-  fabricator         Fabricator          @relation("FabricatorMileStone", fields: [fabricator_id], references: [id], onDelete: Cascade)
-  project            Project             @relation("ProjectMileStone", fields: [project_id], references: [id], onDelete: Cascade)
+  fabricator            Fabricator         @relation("FabricatorMileStone", fields: [fabricator_id], references: [id], onDelete: Cascade)
+  project               Project            @relation("ProjectMileStone", fields: [project_id], references: [id], onDelete: Cascade)
   // mileStoneSubmittals Submittals[]       @relation("mileStoneSubmittals")
-  Tasks             Task[]              @relation("mileStoneTasks")
-  mileStoneSubmittals Submittals[]       @relation("mileStoneSubmittals")
-  versions           MileStoneVersion[]
-  currentVersion     MileStoneVersion?   @relation("CurrentMileStoneVersion", fields: [currentVersionId], references: [id])
+  Tasks                 Task[]             @relation("mileStoneTasks")
+  mileStoneSubmittals   Submittals[]       @relation("mileStoneSubmittals")
+  versions              MileStoneVersion[]
+  currentVersion        MileStoneVersion?  @relation("CurrentMileStoneVersion", fields: [currentVersionId], references: [id])
 }
 
 model MileStoneVersion {
-  id            String   @id @default(uuid()) @db.Uuid
-  mileStoneId   String   @db.Uuid
+  id          String @id @default(uuid()) @db.Uuid
+  mileStoneId String @db.Uuid
 
   versionNumber Int
   approvalDate  DateTime?
-  status        Status   @default(ACTIVE)
-  stage         Stage    @default(IFA)
+  status        Status    @default(ACTIVE)
+  stage         Stage     @default(IFA)
   subject       String
   description   String
 
-  createdAt     DateTime @default(now())
-  isActive      Boolean  @default(true)
+  createdAt DateTime @default(now())
+  isActive  Boolean  @default(true)
 
-  mileStone     MileStone  @relation(fields: [mileStoneId], references: [id], onDelete: Cascade)
-  isCurrentFor  MileStone? @relation("CurrentMileStoneVersion")
-  responses     MileStoneResponse[]
+  mileStone    MileStone           @relation(fields: [mileStoneId], references: [id], onDelete: Cascade)
+  isCurrentFor MileStone?          @relation("CurrentMileStoneVersion")
+  responses    MileStoneResponse[]
 
-  @@index([mileStoneId])
   @@unique([mileStoneId, versionNumber])
+  @@index([mileStoneId])
   @@index([versionNumber])
   @@map("milestone_version")
 }
 
-model MileStoneResponse{
-  id            String   @id @default(uuid()) @db.Uuid
-  mileStoneVersionId   String   @db.Uuid
-  userId        String   @db.Uuid
+model MileStoneResponse {
+  id                 String @id @default(uuid()) @db.Uuid
+  mileStoneVersionId String @db.Uuid
+  userId             String @db.Uuid
 
-  description   String    @default("")
-  files         Json?    @default("[]")
-  createdAt     DateTime  @default(now())
-  status        mileStoneResponseStatus    @default(ON_TIME)
+  description String                  @default("")
+  files       Json?                   @default("[]")
+  createdAt   DateTime                @default(now())
+  status      mileStoneResponseStatus @default(ON_TIME)
 
   parentResponseId String? @db.Uuid
 
   //Relations
-  parentResponse   MileStoneResponse? @relation("MileStoneResponseThread", fields: [parentResponseId], references: [id])
+  parentResponse   MileStoneResponse?  @relation("MileStoneResponseThread", fields: [parentResponseId], references: [id])
   childResponses   MileStoneResponse[] @relation("MileStoneResponseThread")
-  mileStoneVersion     MileStoneVersion  @relation(fields: [mileStoneVersionId], references: [id], onDelete: Cascade)
-  user          User       @relation("milestoneResponseUser",fields: [userId], references: [id], onDelete: Cascade)
+  mileStoneVersion MileStoneVersion    @relation(fields: [mileStoneVersionId], references: [id], onDelete: Cascade)
+  user             User                @relation("milestoneResponseUser", fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([mileStoneVersionId])
   @@index([userId])
   @@index([parentResponseId])
-   @@map("milestone_response")
+  @@map("milestone_response")
 }
 
 model Task {
-  id                 String          @id @default(uuid()) @db.Uuid
-  serialNo           String?         @unique
-  name               String
-  description        String
-  status             TaskStatus     @default(ASSIGNED)
-  priority           Int
-  wbsType               String?        @default("")
-  created_on         DateTime        @default(now())
-  reworkStartTime    DateTime?
-  LineItemCompletion LineItemCompletionPercentageRange @default(RANGE_0_10)
-  seventyFiveAlertSent Boolean @default(false)
-  overrunAlertSent Boolean @default(false)
-  autoCloseWarningSent Boolean @default(false)
+  id                     String                            @id @default(uuid()) @db.Uuid
+  serialNo               String?                           @unique
+  name                   String
+  description            String
+  status                 TaskStatus                        @default(ASSIGNED)
+  priority               Int
+  wbsType                String?                           @default("")
+  created_on             DateTime                          @default(now())
+  reworkStartTime        DateTime?
+  LineItemCompletion     LineItemCompletionPercentageRange @default(RANGE_0_10)
+  seventyFiveAlertSent   Boolean                           @default(false)
+  overrunAlertSent       Boolean                           @default(false)
+  autoCloseWarningSent   Boolean                           @default(false)
   autoCloseWarningSentAt DateTime?
-  autoCloseActionTaken Boolean @default(false)
-  autoCloseActionAt DateTime?
-  autoCloseActionType String?
-  userFault          String          @default("")
-  due_date           DateTime
-  project_id         String          @db.Uuid
-  user_id            String          @db.Uuid
-  created_by         String          @db.Uuid
-  mileStone_id        String?         @db.Uuid
-  start_date         DateTime
-  Stage              Stage           @default(IFA)
-  departmentId       String          @db.Uuid
-  project_bundle_id  String?         @db.Uuid
-  updatedAt          DateTime        @updatedAt
+  autoCloseActionTaken   Boolean                           @default(false)
+  autoCloseActionAt      DateTime?
+  autoCloseActionType    String?
+  userFault              String                            @default("")
+  due_date               DateTime
+  project_id             String                            @db.Uuid
+  user_id                String                            @db.Uuid
+  created_by             String                            @db.Uuid
+  mileStone_id           String?                           @db.Uuid
+  start_date             DateTime
+  Stage                  Stage                             @default(IFA)
+  departmentId           String                            @db.Uuid
+  project_bundle_id      String?                           @db.Uuid
+  updatedAt              DateTime                          @updatedAt
 
   //Relations
-  taskcomment        Comment[]       @relation("taskcomment")
-  project            Project         @relation("TaskBelongsToProject", fields: [project_id], references: [id])
-  workingHourTask    WorkingHours[]  @relation("workingHourTask")
-  user               User            @relation("usersTask", fields: [user_id], references: [id])
-  credatedByUser     User            @relation("taskCreatedByUser", fields: [created_by], references: [id])
-  department         Department      @relation("TaskBelongsToDepartment",fields: [departmentId],references: [id])
-  mileStone          MileStone?      @relation("mileStoneTasks", fields: [mileStone_id], references: [id])
-  allocationLog      TaskAllocation? @relation("allocationLog")
-  alert              TaskAlert[] @relation("taskAllocationAlerts")
-  flags              TaskFlag[]   @relation("taskAllocationFlags")
-  projectBundle      ProjectBundle?  @relation(fields: [project_bundle_id], references: [id])
+  taskcomment     Comment[]       @relation("taskcomment")
+  project         Project         @relation("TaskBelongsToProject", fields: [project_id], references: [id])
+  workingHourTask WorkingHours[]  @relation("workingHourTask")
+  user            User            @relation("usersTask", fields: [user_id], references: [id])
+  credatedByUser  User            @relation("taskCreatedByUser", fields: [created_by], references: [id])
+  department      Department      @relation("TaskBelongsToDepartment", fields: [departmentId], references: [id])
+  mileStone       MileStone?      @relation("mileStoneTasks", fields: [mileStone_id], references: [id])
+  allocationLog   TaskAllocation? @relation("allocationLog")
+  alert           TaskAlert[]     @relation("taskAllocationAlerts")
+  flags           TaskFlag[]      @relation("taskAllocationFlags")
+  projectBundle   ProjectBundle?  @relation(fields: [project_bundle_id], references: [id])
 
   @@index([name])
   @@index([status])
@@ -1202,222 +1176,216 @@ model Task {
   @@index([user_id, status])
   @@index([project_id, status])
   @@index([Stage])
-
   @@map("task")
 }
 
 model TaskAllocation {
-  id              String    @id @default(uuid()) @db.Uuid
-  taskId          String    @unique @db.Uuid
-  allocatedHours  String
-  createdBy       String    @db.Uuid
-  createdAt       DateTime  @default(now())
+  id             String   @id @default(uuid()) @db.Uuid
+  taskId         String   @unique @db.Uuid
+  allocatedHours String
+  createdBy      String   @db.Uuid
+  createdAt      DateTime @default(now())
 
-  task            Task      @relation("allocationLog",fields: [taskId], references: [id])
-
- 
+  task Task @relation("allocationLog", fields: [taskId], references: [id])
 }
 
 model TaskAlert {
-  id         String    @id @default(uuid()) @db.Uuid
-  taskId     String    @db.Uuid
-  userId     String?   @db.Uuid      // optional, if alert sent to user
-  managerId  String?   @db.Uuid      // optional, if alert sent to manager
+  id        String  @id @default(uuid()) @db.Uuid
+  taskId    String  @db.Uuid
+  userId    String? @db.Uuid // optional, if alert sent to user
+  managerId String? @db.Uuid // optional, if alert sent to manager
 
-  type       AlertType
-  createdAt  DateTime  @default(now())
+  type      AlertType
+  createdAt DateTime  @default(now())
 
-  meta       Json?
+  meta Json?
 
-  task       Task      @relation("taskAllocationAlerts",fields: [taskId], references: [id])
+  task Task @relation("taskAllocationAlerts", fields: [taskId], references: [id])
 }
 
 model TaskFlag {
-  id         String     @id @default(uuid()) @db.Uuid
-  taskId     String?    @db.Uuid
-  userId     String?    @db.Uuid
-  managerId  String?    @db.Uuid
+  id        String  @id @default(uuid()) @db.Uuid
+  taskId    String? @db.Uuid
+  userId    String? @db.Uuid
+  managerId String? @db.Uuid
 
-  type       FlagType
-  severity   Int
-  reason     String?
-  createdAt  DateTime    @default(now())
+  type      FlagType
+  severity  Int
+  reason    String?
+  createdAt DateTime @default(now())
 
-  task       Task?       @relation("taskAllocationFlags",fields: [taskId], references: [id])
+  task Task? @relation("taskAllocationFlags", fields: [taskId], references: [id])
 }
 
-
-
 model WorkingHours {
-  id               String             @id @default(uuid()) @db.Uuid
-  task_id          String?            @db.Uuid
-  estimationTaskId String?            @db.Uuid
-  user_id          String             @db.Uuid
+  id               String          @id @default(uuid()) @db.Uuid
+  task_id          String?         @db.Uuid
+  estimationTaskId String?         @db.Uuid
+  user_id          String          @db.Uuid
   type             WorkSegmentType
-  started_at       DateTime           @default(now())
+  started_at       DateTime        @default(now())
   ended_at         DateTime?
-  duration_seconds Int?            // calculated when ended_at is set
-  created_at       DateTime           @default(now())
-  updated_at       DateTime           @updatedAt
-//Relations 
-  task             Task?            @relation("workingHourTask", fields: [task_id], references: [id], onDelete: Cascade)
-  estimationTask   EstimationTask?  @relation("workingHourEstimationTask",fields:[estimationTaskId],references:[id],onDelete:Cascade)
-  user             User            @relation("WorkSessionOfuser",fields: [user_id], references: [id], onDelete: Cascade)
+  duration_seconds Int? // calculated when ended_at is set
+  created_at       DateTime        @default(now())
+  updated_at       DateTime        @updatedAt
+  //Relations 
+  task             Task?           @relation("workingHourTask", fields: [task_id], references: [id], onDelete: Cascade)
+  estimationTask   EstimationTask? @relation("workingHourEstimationTask", fields: [estimationTaskId], references: [id], onDelete: Cascade)
+  user             User            @relation("WorkSessionOfuser", fields: [user_id], references: [id], onDelete: Cascade)
 
   @@index([task_id])
   @@index([user_id])
 }
 
-
-
 model Comment {
-  id                    String    @id @default(uuid()) @db.Uuid
-  created_on            DateTime  @default(now())
-  data                  String
-  task_id               String?    @db.Uuid
-  user_id               String    @db.Uuid
-  file                  Json      @default("[]")
-  acknowledged          Boolean   @default(false)
-  acknowledgedTime      DateTime?
+  id               String    @id @default(uuid()) @db.Uuid
+  created_on       DateTime  @default(now())
+  data             String
+  task_id          String?   @db.Uuid
+  user_id          String    @db.Uuid
+  file             Json      @default("[]")
+  acknowledged     Boolean   @default(false)
+  acknowledgedTime DateTime?
 
   //Relations   
 
-  estimationTaskId   String?    @db.Uuid
-  estimationTask     EstimationTask?   @relation("estComment",fields:[estimationTaskId],references:[id],onDelete:Cascade)
-  task                  Task?      @relation("taskcomment", fields: [task_id], references: [id], onDelete: Cascade)
-  user                  User     @relation("taskcommentuser", fields: [user_id], references: [id], onDelete: Cascade)
+  estimationTaskId String?         @db.Uuid
+  estimationTask   EstimationTask? @relation("estComment", fields: [estimationTaskId], references: [id], onDelete: Cascade)
+  task             Task?           @relation("taskcomment", fields: [task_id], references: [id], onDelete: Cascade)
+  user             User            @relation("taskcommentuser", fields: [user_id], references: [id], onDelete: Cascade)
 
   @@index([task_id])
   @@index([user_id])
-
   @@map("comment")
 }
+
 model Estimation {
-  serialNo         String?              @unique
-  estimationNumber String               @unique
-  fabricatorName   String?
-  projectName      String
-  projectComplexity ProjectComplexity?  @default(MODERATE)
-  description      String?
-  estimateDate     DateTime
-  status           EstimationStatus     @default(DRAFT)
-  assignedById     String?
-  inclusions      String?
-  exclusions      String?
-  finalHours       Float?
+  serialNo              String?                   @unique
+  estimationNumber      String                    @unique
+  fabricatorName        String?
+  projectName           String
+  projectComplexity     ProjectComplexity?        @default(MODERATE)
+  description           String?
+  estimateDate          DateTime
+  status                EstimationStatus          @default(DRAFT)
+  assignedById          String?
+  inclusions            String?
+  exclusions            String?
+  finalHours            Float?
   fabricationPercentage Float?
-  finalWeeks       Float?
-  finalPrice       Float?
-  files            Json?                 @default("[]")
-  createdAt        DateTime             @default(now())
-  updatedAt        DateTime             @updatedAt
-  rfqId            String?              @db.Uuid
-  createdById      String               @db.Uuid
-  id               String               @id @default(uuid()) @db.Uuid
-  fabricatorId     String               @db.Uuid
-  tools            String?
-  startDate        DateTime             @default(now())
+  finalWeeks            Float?
+  finalPrice            Float?
+  files                 Json?                     @default("[]")
+  createdAt             DateTime                  @default(now())
+  updatedAt             DateTime                  @updatedAt
+  rfqId                 String?                   @db.Uuid
+  createdById           String                    @db.Uuid
+  id                    String                    @id @default(uuid()) @db.Uuid
+  fabricatorId          String                    @db.Uuid
+  tools                 String?
+  startDate             DateTime                  @default(now())
   //Relations
-  lineItemGroups   EstimationLineItemGroup[]
-  tasks            EstimationTask[]
+  lineItemGroups        EstimationLineItemGroup[]
+  tasks                 EstimationTask[]
   // template         EstimationTemplate?
-  createdBy        User                @relation("CreatedBy", fields: [createdById], references: [id])
-  fabricators      Fabricator           @relation("estimationUnderFabricator", fields: [fabricatorId], references: [id])
-  rfq              RFQ?                  @relation(fields: [rfqId], references: [id])
-  responses        EstimationResponse[]
+  createdBy             User                      @relation("CreatedBy", fields: [createdById], references: [id])
+  fabricators           Fabricator                @relation("estimationUnderFabricator", fields: [fabricatorId], references: [id])
+  rfq                   RFQ?                      @relation(fields: [rfqId], references: [id])
+  responses             EstimationResponse[]
+
   @@index([createdById])
   @@map("estimations")
 }
 
 model EstimationResponse {
-  id               String               @id @default(uuid()) @db.Uuid
-  estimationId     String               @db.Uuid
-  userId           String               @db.Uuid
-  parentResponseId String?              @db.Uuid
-  message          String               @default("")
-  files            Json?                @default("[]")
-  createdAt        DateTime             @default(now())
-  isDeleted        Boolean              @default(false)
+  id               String    @id @default(uuid()) @db.Uuid
+  estimationId     String    @db.Uuid
+  userId           String    @db.Uuid
+  parentResponseId String?   @db.Uuid
+  message          String    @default("")
+  files            Json?     @default("[]")
+  createdAt        DateTime  @default(now())
+  isDeleted        Boolean   @default(false)
   deletedAt        DateTime?
 
-  parentResponse   EstimationResponse?  @relation("EstimationParentChildResponse", fields: [parentResponseId], references: [id])
-  childResponses   EstimationResponse[] @relation("EstimationParentChildResponse")
-  estimation       Estimation           @relation(fields: [estimationId], references: [id], onDelete: Cascade)
-  user             User                 @relation("estimationResponseBy", fields: [userId], references: [id])
+  parentResponse EstimationResponse?  @relation("EstimationParentChildResponse", fields: [parentResponseId], references: [id])
+  childResponses EstimationResponse[] @relation("EstimationParentChildResponse")
+  estimation     Estimation           @relation(fields: [estimationId], references: [id], onDelete: Cascade)
+  user           User                 @relation("estimationResponseBy", fields: [userId], references: [id])
 
-  @@map("estimationresponse")
   @@index([estimationId])
   @@index([userId])
   @@index([parentResponseId])
+  @@map("estimationresponse")
 }
 
 model EstimationTask {
-  serialNo     String?        @unique
-  assignedById String         @db.Uuid
-  status       TaskStatus     @default(ASSIGNED)
+  serialNo     String?    @unique
+  assignedById String     @db.Uuid
+  status       TaskStatus @default(ASSIGNED)
   startDate    DateTime?
   endDate      DateTime?
   notes        String?
   reviewNotes  String?
-  userFault    String         @default("")
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
-  estimationId String         @db.Uuid
-  assignedToId String         @db.Uuid
-  reviewedById String?        @db.Uuid
-  id           String         @id @default(uuid()) @db.Uuid
-  files        Json?          @default("[]")
+  userFault    String     @default("")
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  estimationId String     @db.Uuid
+  assignedToId String     @db.Uuid
+  reviewedById String?    @db.Uuid
+  id           String     @id @default(uuid()) @db.Uuid
+  files        Json?      @default("[]")
 
   //Relations
-  assignedTo   User          @relation("AssignedEstimator", fields: [assignedToId], references: [id])
-  assignedBy   User          @relation("AssignedBy",fields: [assignedById],references: [id])
-  estimation   Estimation     @relation(fields: [estimationId], references: [id])
-  reviewedBy   User?         @relation("ReviewedBy", fields: [reviewedById], references: [id])
-  workinghours WorkingHours[] @relation("workingHourEstimationTask")
-  comment      Comment[]      @relation("estComment")
+  assignedTo    User                      @relation("AssignedEstimator", fields: [assignedToId], references: [id])
+  assignedBy    User                      @relation("AssignedBy", fields: [assignedById], references: [id])
+  estimation    Estimation                @relation(fields: [estimationId], references: [id])
+  reviewedBy    User?                     @relation("ReviewedBy", fields: [reviewedById], references: [id])
+  workinghours  WorkingHours[]            @relation("workingHourEstimationTask")
+  comment       Comment[]                 @relation("estComment")
   allocationLog EstimationTaskAllocation? @relation("allocationLog")
 
-  @@map("estimation_tasks")
   @@index([assignedById])
   @@index([assignedToId])
+  @@map("estimation_tasks")
 }
+
 model EstimationTaskAllocation {
-  id              String    @id @default(uuid()) @db.Uuid
-  EstimationtaskId          String    @unique @db.Uuid
-  allocatedHours  String
-  createdBy       String    @db.Uuid
-  createdAt       DateTime  @default(now())
+  id               String   @id @default(uuid()) @db.Uuid
+  EstimationtaskId String   @unique @db.Uuid
+  allocatedHours   String
+  createdBy        String   @db.Uuid
+  createdAt        DateTime @default(now())
 
-  task            EstimationTask?      @relation("allocationLog",fields: [EstimationtaskId], references: [id])
-
- 
+  task EstimationTask? @relation("allocationLog", fields: [EstimationtaskId], references: [id])
 }
-model EstimationLineItemGroup {
-  id           String                @id @default(uuid()) @db.Uuid
-  name         String                // e.g., "Structural", "Electrical", "Phase 1"
-  description  String?
-  estimationId String                @db.Uuid
-  estimation   Estimation            @relation(fields: [estimationId], references: [id], onDelete: Cascade)
-  divisor      Float                 @default(150.0)
-  notes        String                @default("")
 
-  lineItems    EstimationLineItem[]  // each group can have many line items
+model EstimationLineItemGroup {
+  id           String     @id @default(uuid()) @db.Uuid
+  name         String // e.g., "Structural", "Electrical", "Phase 1"
+  description  String?
+  estimationId String     @db.Uuid
+  estimation   Estimation @relation(fields: [estimationId], references: [id], onDelete: Cascade)
+  divisor      Float      @default(150.0)
+  notes        String     @default("")
+
+  lineItems EstimationLineItem[] // each group can have many line items
 }
 
 model EstimationLineItem {
-  scopeOfWork  String
-  remarks      String
-  quantity     Float?
-  type         String    @default("")    
-  hoursPerQty  Float?
-  totalHours   Float?
-  weeks        Float?
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
-  id           String     @id @default(uuid()) @db.Uuid
-  groupId      String?     @db.Uuid @default(uuid())
+  scopeOfWork String
+  remarks     String
+  quantity    Float?
+  type        String                   @default("")
+  hoursPerQty Float?
+  totalHours  Float?
+  weeks       Float?
+  createdAt   DateTime                 @default(now())
+  updatedAt   DateTime                 @updatedAt
+  id          String                   @id @default(uuid()) @db.Uuid
+  groupId     String?                  @default(uuid()) @db.Uuid
   //Relations
-  group        EstimationLineItemGroup?    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  group       EstimationLineItemGroup? @relation(fields: [groupId], references: [id], onDelete: Cascade)
 
   @@map("estimation_line_items")
 }
@@ -1429,41 +1397,42 @@ model Notification {
   payload   Json
   delivered Boolean  @default(false)
   read      Boolean  @default(false)
-  user      User    @relation("Notification", fields: [userID], references: [id], onDelete: Cascade)
+  user      User     @relation("Notification", fields: [userID], references: [id], onDelete: Cascade)
 
   @@index([userID])
   @@map("notification")
 }
 
 model RFI {
-  id            String       @id @default(uuid()) @db.Uuid
-  serialNo      String?      @unique
-  fabricator_id String       @db.Uuid
-  date          DateTime     @default(now())
-  project_id    String       @db.Uuid
-  recepient_id  String?      @db.Uuid
-  sender_id     String       @db.Uuid
-  status        Boolean      @default(false)
-  subject       String
-  description   String
-  files         Json       @default("[]")
-  isAproovedByAdmin   Boolean?   @default(false)
+  id                 String        @id @default(uuid()) @db.Uuid
+  serialNo           String?       @unique
+  fabricator_id      String        @db.Uuid
+  date               DateTime      @default(now())
+  project_id         String        @db.Uuid
+  recepient_id       String?       @db.Uuid
+  sender_id          String        @db.Uuid
+  status             Boolean       @default(false)
+  subject            String
+  description        String
+  files              Json          @default("[]")
+  isAproovedByAdmin  Boolean?      @default(false)
   //Relations
-  fabricator    Fabricator   @relation("FabricatorRFI", fields: [fabricator_id], references: [id], onDelete: Cascade)
-  project       Project      @relation("ProjectRFI", fields: [project_id], references: [id], onDelete: Cascade)
-  recepients    User?        @relation("recipientRFI", fields: [recepient_id], references: [id], onDelete: Cascade)
-  sender        User        @relation("senderRFI", fields: [sender_id], references: [id], onDelete: Cascade)
-  rfiresponse   RFIResponse[] @relation("rfiresponse")
+  fabricator         Fabricator    @relation("FabricatorRFI", fields: [fabricator_id], references: [id], onDelete: Cascade)
+  project            Project       @relation("ProjectRFI", fields: [project_id], references: [id], onDelete: Cascade)
+  recepients         User?         @relation("recipientRFI", fields: [recepient_id], references: [id], onDelete: Cascade)
+  multipleRecipients User[]        @relation("RFIMultipleRecipients")
+  sender             User          @relation("senderRFI", fields: [sender_id], references: [id], onDelete: Cascade)
+  rfiresponse        RFIResponse[] @relation("rfiresponse")
 
-  @@map("rfi")
   @@index([recepient_id])
   @@index([sender_id])
   @@index([project_id])
+  @@map("rfi")
 }
 
 model RFIResponse {
   id               String        @id @default(uuid()) @db.Uuid
-  files            Json        @default("[]")
+  files            Json          @default("[]")
   responseState    State         @default(SENT)
   wbtStatus        State         @default(RECEIVED)
   reason           String        @default("")
@@ -1475,161 +1444,156 @@ model RFIResponse {
   parentResponse   RFIResponse?  @relation("ParentChildResponse", fields: [parentResponseId], references: [id])
   childResponses   RFIResponse[] @relation("ParentChildResponse")
   rfi              RFI           @relation("rfiresponse", fields: [rfiId], references: [id], onDelete: Cascade)
-  user             User         @relation("rfiresponseBy", fields: [userId], references: [id])
+  user             User          @relation("rfiresponseBy", fields: [userId], references: [id])
 
-  @@map("rfiresponse")
   @@index([rfiId])
+  @@map("rfiresponse")
 }
 
 model Submittals {
-  id                 String   @id @default(uuid()) @db.Uuid
-  serialNo           String?  @unique
-  fabricator_id      String   @db.Uuid
-  mileStoneId        String?  @db.Uuid
-  project_id         String   @db.Uuid
-  recepient_id       String?  @db.Uuid
-  sender_id          String   @db.Uuid
-  date               DateTime @default(now())
-  stage              Stage    @default(IFA)
-  status             Boolean  @default(false)
-  subject            String
-  isAproovedByAdmin  Boolean? @default(false)
-  submittalVersion   Int      @default(1)
+  id                String   @id @default(uuid()) @db.Uuid
+  serialNo          String?  @unique
+  fabricator_id     String   @db.Uuid
+  mileStoneId       String?  @db.Uuid
+  project_id        String   @db.Uuid
+  recepient_id      String?  @db.Uuid
+  sender_id         String   @db.Uuid
+  date              DateTime @default(now())
+  stage             Stage    @default(IFA)
+  status            Boolean  @default(false)
+  subject           String
+  isAproovedByAdmin Boolean? @default(false)
+  submittalVersion  Int      @default(1)
   // 🔑 Versioning
-  currentVersionId   String?  @unique @db.Uuid
+  currentVersionId  String?  @unique @db.Uuid
 
   // Relations
-  mileStoneBelongsTo MileStone? @relation("mileStoneSubmittals",fields: [mileStoneId],references: [id],onDelete: Cascade)
-  fabricator Fabricator @relation("FabricatorSubmittals",fields: [fabricator_id],references: [id],onDelete: Cascade)
-  project Project @relation("ProjectSubmittals",fields: [project_id],references: [id],onDelete: Cascade)
-  recepients User? @relation("SubmittalsRecepient",fields: [recepient_id],references: [id],onDelete: Cascade)
-  sender User @relation("SubmittalsSender",fields: [sender_id],references: [id],onDelete: Cascade)
+  mileStoneBelongsTo MileStone?         @relation("mileStoneSubmittals", fields: [mileStoneId], references: [id], onDelete: Cascade)
+  fabricator         Fabricator         @relation("FabricatorSubmittals", fields: [fabricator_id], references: [id], onDelete: Cascade)
+  project            Project            @relation("ProjectSubmittals", fields: [project_id], references: [id], onDelete: Cascade)
+  recepients         User?              @relation("SubmittalsRecepient", fields: [recepient_id], references: [id], onDelete: Cascade)
+  multipleRecipients User[]             @relation("SubmittalMultipleRecipients")
+  sender             User               @relation("SubmittalsSender", fields: [sender_id], references: [id], onDelete: Cascade)
   // Versioning relations
-  versions       SubmittalVersion[]
-  currentVersion SubmittalVersion? @relation("CurrentSubmittalVersion",fields: [currentVersionId],references: [id])
+  versions           SubmittalVersion[]
+  currentVersion     SubmittalVersion?  @relation("CurrentSubmittalVersion", fields: [currentVersionId], references: [id])
 
   // Responses
   submittalsResponse SubmittalsResponse[] @relation("submittalsresponse")
 
-  @@map("submittals")
   @@index([project_id])
   @@index([recepient_id])
   @@index([sender_id])
+  @@map("submittals")
 }
-
 
 model SubmittalVersion {
-  id            String   @id @default(uuid()) @db.Uuid
-  submittalId   String   @db.Uuid
+  id          String @id @default(uuid()) @db.Uuid
+  submittalId String @db.Uuid
 
-  versionNumber Int      
+  versionNumber Int
   description   String
-  files         Json     @default("[]")
+  files         Json   @default("[]")
 
-  createdById   String   @db.Uuid
-  createdAt     DateTime @default(now())
+  createdById String   @db.Uuid
+  createdAt   DateTime @default(now())
 
-  isActive      Boolean  @default(true)
+  isActive Boolean @default(true)
 
   // Relations
-  submittal Submittals @relation(fields: [submittalId], references: [id],onDelete: Cascade)
-  createdBy User @relation(fields: [createdById], references: [id])
-  responses SubmittalsResponse[]
-  isCurrentFor Submittals? @relation("CurrentSubmittalVersion")
+  submittal    Submittals           @relation(fields: [submittalId], references: [id], onDelete: Cascade)
+  createdBy    User                 @relation(fields: [createdById], references: [id])
+  responses    SubmittalsResponse[]
+  isCurrentFor Submittals?          @relation("CurrentSubmittalVersion")
 
-  @@map("submittalversion")
   @@unique([submittalId, versionNumber])
   @@index([submittalId])
+  @@map("submittalversion")
 }
-
-
 
 model SubmittalsResponse {
-  id                 String        @id @default(uuid()) @db.Uuid
+  id String @id @default(uuid()) @db.Uuid
 
-  submittalsId       String        @db.Uuid
-  submittalVersionId String?       @db.Uuid
-  userId             String        @db.Uuid
+  submittalsId       String  @db.Uuid
+  submittalVersionId String? @db.Uuid
+  userId             String  @db.Uuid
 
-  description        String        @default("")
-  reason             String        @default("")
-  files              Json          @default("[]")
+  description String @default("")
+  reason      String @default("")
+  files       Json   @default("[]")
 
-  status             SubResStatus  @default(SUBMITTED_TO_EOR)
-  wbtStatus          State         @default(SENT)
+  status    SubResStatus @default(SUBMITTED_TO_EOR)
+  wbtStatus State        @default(SENT)
 
-  respondedAt        String        @default("")
-  createdAt          DateTime      @default(now())
+  respondedAt String   @default("")
+  createdAt   DateTime @default(now())
 
-  parentResponseId   String?       @db.Uuid
+  parentResponseId String? @db.Uuid
 
   // Relations
-  parentResponse SubmittalsResponse? @relation("ParentChildResponse", fields: [parentResponseId],references: [id])
-  childResponses SubmittalsResponse[] @relation("ParentChildResponse")
-  submittals Submittals @relation("submittalsresponse",fields: [submittalsId],references: [id],onDelete: Cascade)
-  submittalVersion SubmittalVersion? @relation( fields: [submittalVersionId],references: [id] )
-  user User @relation( "submittalsRespondedBy", fields: [userId], references: [id])
+  parentResponse   SubmittalsResponse?  @relation("ParentChildResponse", fields: [parentResponseId], references: [id])
+  childResponses   SubmittalsResponse[] @relation("ParentChildResponse")
+  submittals       Submittals           @relation("submittalsresponse", fields: [submittalsId], references: [id], onDelete: Cascade)
+  submittalVersion SubmittalVersion?    @relation(fields: [submittalVersionId], references: [id])
+  user             User                 @relation("submittalsRespondedBy", fields: [userId], references: [id])
 
-  @@map("submittalsresponse")
   @@index([submittalsId])
   @@index([submittalVersionId])
+  @@map("submittalsresponse")
 }
 
-
 model ChangeOrder {
-  id          String             @id @default(uuid()) @db.Uuid
-  serialNo    String?            @unique
-  project     String             @db.Uuid
-  recipients  String?            @db.Uuid
-  remarks     String             @default("")
-  changeOrderNumber String       @default("")
-  description String             @default("")
-  sender      String             @db.Uuid
-  sentOn      DateTime           @default(now())
-  files       Json               @default("[]")
-  stage       Stage              @default(IFA)
-  status      COSTATUS           @default(NOT_REPLIED)
-  reason      String             @default("")
-  createdAt   DateTime           @default(now())
-  isAproovedByAdmin   Boolean?   @default(false)
+  id                String   @id @default(uuid()) @db.Uuid
+  serialNo          String?  @unique
+  project           String   @db.Uuid
+  recipients        String?  @db.Uuid
+  remarks           String   @default("")
+  changeOrderNumber String   @default("")
+  description       String   @default("")
+  sender            String   @db.Uuid
+  sentOn            DateTime @default(now())
+  files             Json     @default("[]")
+  stage             Stage    @default(IFA)
+  status            COSTATUS @default(NOT_REPLIED)
+  reason            String   @default("")
+  createdAt         DateTime @default(now())
+  isAproovedByAdmin Boolean? @default(false)
 
   //Relations
-  coResponses COResponse[]        @relation("coResponse")
-  Project     Project            @relation("ChangeOrderProject", fields: [project], references: [id], onDelete: Cascade)
-  Recipients  User?              @relation("ChangeOrderRecipients", fields: [recipients], references: [id], onDelete: Cascade)
-  senders     User              @relation("ChangeOrderSender", fields: [sender], references: [id], onDelete: Cascade)
-  CoRefersTo  ChangeOrdertable[] @relation("CoRefersTo")
+  coResponses        COResponse[]       @relation("coResponse")
+  Project            Project            @relation("ChangeOrderProject", fields: [project], references: [id], onDelete: Cascade)
+  Recipients         User?              @relation("ChangeOrderRecipients", fields: [recipients], references: [id], onDelete: Cascade)
+  multipleRecipients User[]             @relation("ChangeOrderMultipleRecipients")
+  senders            User               @relation("ChangeOrderSender", fields: [sender], references: [id], onDelete: Cascade)
+  CoRefersTo         ChangeOrdertable[] @relation("CoRefersTo")
 
-
-  @@map("changeorder")
   @@index([recipients])
   @@index([sender])
   @@index([project])
+  @@map("changeorder")
 }
 
 model ChangeOrdertable {
-  id             String      @id @default(uuid()) @db.Uuid
-  description    String      @default("")
-  referenceDoc   String      @default("")
-  elements       String      @default("")
-  QtyNo          Int         @default(0)
-  remarks        String?     @default("")
-  hours          Float       @default(0.0)
-  cost           Float       @default(0.0)
-  CoId           String      @db.Uuid
-  costUpdatedBy  String      @default("") // userId or role of the person who updated
-  costUpdatedAt  DateTime?   // timestamp of last cost update
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
+  id            String    @id @default(uuid()) @db.Uuid
+  description   String    @default("")
+  referenceDoc  String    @default("")
+  elements      String    @default("")
+  QtyNo         Int       @default(0)
+  remarks       String?   @default("")
+  hours         Float     @default(0.0)
+  cost          Float     @default(0.0)
+  CoId          String    @db.Uuid
+  costUpdatedBy String    @default("") // userId or role of the person who updated
+  costUpdatedAt DateTime? // timestamp of last cost update
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   //Relations
-  CoRefersTo     ChangeOrder @relation("CoRefersTo", fields: [CoId], references: [id])
- 
+  CoRefersTo ChangeOrder @relation("CoRefersTo", fields: [CoId], references: [id])
 
-  @@map("changeordertable")
   @@index([CoId])
+  @@map("changeordertable")
 }
-
 
 model COResponse {
   id               String       @id @default(uuid()) @db.Uuid
@@ -1638,100 +1602,101 @@ model COResponse {
   CoId             String?      @db.Uuid
   userId           String       @db.Uuid
   parentResponseId String?      @db.Uuid
-  files       Json               @default("[]")
+  files            Json         @default("[]")
   createdAt        DateTime     @default(now())
-  InvoiceAlerted  Boolean      @default(false)
+  InvoiceAlerted   Boolean      @default(false)
   //Relations
-  coResponse       ChangeOrder?  @relation("coResponse", fields: [CoId], references: [id])
+  coResponse       ChangeOrder? @relation("coResponse", fields: [CoId], references: [id])
   parentResponse   COResponse?  @relation("ParentChildResponse", fields: [parentResponseId], references: [id])
   childResponses   COResponse[] @relation("ParentChildResponse")
-  user             User        @relation("COrespondedby", fields: [userId], references: [id])
+  user             User         @relation("COrespondedby", fields: [userId], references: [id])
+
   @@map("coresponse")
 }
 
 model Meeting {
-  id          String            @id @default(uuid()) @db.Uuid
-  title       String
-  agenda      String
-  description String?
-  link        String
-  startTime   DateTime
-  endTime     DateTime?
-  files       Json         @default("[]")
-  status      MeetingStatus            @default(SCHEDULED) // optional
-  reminderSent Boolean @default(false)
-  createdById String            @db.Uuid
+  id           String        @id @default(uuid()) @db.Uuid
+  title        String
+  agenda       String
+  description  String?
+  link         String
+  startTime    DateTime
+  endTime      DateTime?
+  files        Json          @default("[]")
+  status       MeetingStatus @default(SCHEDULED) // optional
+  reminderSent Boolean       @default(false)
+  createdById  String        @db.Uuid
 
   // relation to who created the meeting
-  
-  createdBy   User             @relation("MeetingCreatedBy", fields: [createdById], references: [id])
 
-  participants MeetingAttendee[]
+  createdBy User @relation("MeetingCreatedBy", fields: [createdById], references: [id])
+
+  participants     MeetingAttendee[]
   teamMeetingNotes TeamMeetingNotes[] @relation("MeetingTeamMeetingNotes")
 
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  @@map("meetings")
   @@index([createdById])
+  @@map("meetings")
 }
 
 model MeetingAttendee {
-  id        String   @id @default(uuid())
-  meetingId String   @db.Uuid
-  userId    String?  @db.Uuid // nullable in case external emails are invited
+  id        String      @id @default(uuid())
+  meetingId String      @db.Uuid
+  userId    String?     @db.Uuid // nullable in case external emails are invited
   email     String
-  rsvp      RSVPStatus  
+  rsvp      RSVPStatus
   joined    Boolean     @default(false) // true if they actually attended
   role      MeetingRole @default(ATTENDEE) // role in the meeting
- //Relations
-  meeting   Meeting  @relation(fields: [meetingId], references: [id], onDelete: Cascade)
-  user      User?   @relation("MeetingAttendeeUser", fields: [userId], references: [id])
+  //Relations
+  meeting   Meeting     @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  user      User?       @relation("MeetingAttendeeUser", fields: [userId], references: [id])
 
   @@unique([meetingId, userId])
   @@index([meetingId])
   @@index([userId])
   @@map("meeting_attendees")
 }
-model DesignDrawings{
-  id          String   @id @default(uuid()) @db.Uuid
-  serialNo    String?  @unique
-  projectId   String   @db.Uuid
-  stage       Stage    @default(RFI)
-  description String   @default("")
-  files       Json     @default("[]")
-  uploadedBy  String   @db.Uuid
-  uploadedAt  DateTime @default(now())
+
+model DesignDrawings {
+  id          String                    @id @default(uuid()) @db.Uuid
+  serialNo    String?                   @unique
+  projectId   String                    @db.Uuid
+  stage       Stage                     @default(RFI)
+  description String                    @default("")
+  files       Json                      @default("[]")
+  uploadedBy  String                    @db.Uuid
+  uploadedAt  DateTime                  @default(now())
   //Relations
-  project     Project  @relation("designdrawingsproject",fields: [projectId], references: [id], onDelete: Cascade)
-  user        User    @relation("designdrawingsuser",fields: [uploadedBy], references: [id], onDelete: Cascade)
+  project     Project                   @relation("designdrawingsproject", fields: [projectId], references: [id], onDelete: Cascade)
+  user        User                      @relation("designdrawingsuser", fields: [uploadedBy], references: [id], onDelete: Cascade)
   responses   DesignDrawingsResponses[] @relation("designDrawingsresponse")
 
-  @@map("designdrawings")
   @@index([projectId])
-  
+  @@map("designdrawings")
 }
 
-model DesignDrawingsResponses{
-  id                String          @id @default(uuid()) @db.Uuid
-  designDrawingsId String          @db.Uuid
-  files            Json            @default("[]")
-  reason           String          @default("")
-  respondedAt      DateTime        @default(now())
-  createdAt        DateTime        @default(now())
-  userId           String          @db.Uuid
-  description      String          @default("")
-  status           SubResStatus    @default(NOT_APPROVED)
-  wbtStatus        State           @default(RECEIVED)
-  parentResponseId String?         @db.Uuid
+model DesignDrawingsResponses {
+  id               String                    @id @default(uuid()) @db.Uuid
+  designDrawingsId String                    @db.Uuid
+  files            Json                      @default("[]")
+  reason           String                    @default("")
+  respondedAt      DateTime                  @default(now())
+  createdAt        DateTime                  @default(now())
+  userId           String                    @db.Uuid
+  description      String                    @default("")
+  status           SubResStatus              @default(NOT_APPROVED)
+  wbtStatus        State                     @default(RECEIVED)
+  parentResponseId String?                   @db.Uuid
   //Relations
-  parentResponse   DesignDrawingsResponses? @relation("ParentChildResponse", fields: [parentResponseId], references: [id])
+  parentResponse   DesignDrawingsResponses?  @relation("ParentChildResponse", fields: [parentResponseId], references: [id])
   childResponses   DesignDrawingsResponses[] @relation("ParentChildResponse")
-  designDrawings   DesignDrawings  @relation("designDrawingsresponse", fields: [designDrawingsId], references: [id], onDelete: Cascade)
-  user             User           @relation("designdrawingsresponseuser", fields: [userId], references: [id])
+  designDrawings   DesignDrawings            @relation("designDrawingsresponse", fields: [designDrawingsId], references: [id], onDelete: Cascade)
+  user             User                      @relation("designdrawingsresponseuser", fields: [userId], references: [id])
 
-  @@map("designdrawingsresponses")
   @@index([designDrawingsId])
+  @@map("designdrawingsresponses")
 }
 
 model Group {
@@ -1739,7 +1704,7 @@ model Group {
   name      String
   adminId   String      @db.Uuid
   createdAt DateTime    @default(now())
-  admin     User       @relation("groupAdmin", fields: [adminId], references: [id])
+  admin     User        @relation("groupAdmin", fields: [adminId], references: [id])
   members   GroupUser[] @relation("groupOfUsers")
   messages  Message[]   @relation("groupMessages")
 
@@ -1748,13 +1713,13 @@ model Group {
 
 model GroupUser {
   id       String @id @default(uuid()) @db.Uuid
-  memberId String  @db.Uuid
+  memberId String @db.Uuid
   groupId  String @db.Uuid
   group    Group  @relation("groupOfUsers", fields: [groupId], references: [id])
-  members  User  @relation("groupMembers", fields: [memberId], references: [id])
+  members  User   @relation("groupMembers", fields: [memberId], references: [id])
 
-  @@map("groupuser")
   @@index([memberId])
+  @@map("groupuser")
 }
 
 model Message {
@@ -1766,120 +1731,120 @@ model Message {
   contentCompressed Bytes?
   content           String?
   groups            Group?   @relation("groupMessages", fields: [groupId], references: [id])
-  receiver          User?   @relation("messageReceivedBy", fields: [receiverId], references: [id])
-  sender            User    @relation("messageSentBy", fields: [senderId], references: [id])
-  taggedUsers       User[]  @relation("TaggedUsers")
+  receiver          User?    @relation("messageReceivedBy", fields: [receiverId], references: [id])
+  sender            User     @relation("messageSentBy", fields: [senderId], references: [id])
+  taggedUsers       User[]   @relation("TaggedUsers")
 
-  @@map("message")
   @@index([groupId])
+  @@map("message")
 }
 
 model CronLog {
-  id           String   @id @default(uuid())
+  id           String    @id @default(uuid())
   jobName      String
-  startedAt    DateTime @default(now())
+  startedAt    DateTime  @default(now())
   completedAt  DateTime?
-  status       String   @default("RUNNING") // RUNNING | SUCCESS | FAILED
+  status       String    @default("RUNNING") // RUNNING | SUCCESS | FAILED
   errorMessage String?
   durationMs   Int?
 }
 
 model Invoice {
-  id                         String        @id @default(uuid()) @db.Uuid
-  serialNo                   String?       @unique
-  projectId                  String        @db.Uuid
-  fabricatorId               String        @db.Uuid
-  clientId                   String?        @db.Uuid @default("00000000-0000-0000-0000-000000000000")
-  customerName               String        @default("")
-  contactName                String        @default("")
-  address                    String        @default("")
-  stateCode                  String        @default("")
-  status                     InvoiceStatus        @default(PENDING) 
-  GSTIN                      String        @default("")
-  invoiceNumber              String
-  invoiceDate                DateTime      @default(now())
-  dateOfSupply               DateTime      @default(now())
-  placeOfSupply              String        @default("")
-  jobName                    String
-  signature                  Json?         @default("[]")
-  currencyType               String        @default("USD")
-  totalInvoiceValue          Float         @default(0)
-  totalInvoiceValueInWords   String        @default("")
-  createdAt                  DateTime      @default(now())
-  updatedAt                  DateTime      @updatedAt
-  paymentStatus              Boolean       @default(false)
-  createdBy                  String?        @db.Uuid
+  id                       String        @id @default(uuid()) @db.Uuid
+  serialNo                 String?       @unique
+  projectId                String        @db.Uuid
+  fabricatorId             String        @db.Uuid
+  clientId                 String?       @default("00000000-0000-0000-0000-000000000000") @db.Uuid
+  customerName             String        @default("")
+  contactName              String        @default("")
+  address                  String        @default("")
+  stateCode                String        @default("")
+  status                   InvoiceStatus @default(PENDING)
+  GSTIN                    String        @default("")
+  invoiceNumber            String
+  invoiceDate              DateTime      @default(now())
+  dateOfSupply             DateTime      @default(now())
+  placeOfSupply            String        @default("")
+  jobName                  String
+  signature                Json?         @default("[]")
+  currencyType             String        @default("USD")
+  totalInvoiceValue        Float         @default(0)
+  totalInvoiceValueInWords String        @default("")
+  createdAt                DateTime      @default(now())
+  updatedAt                DateTime      @updatedAt
+  paymentStatus            Boolean       @default(false)
+  createdBy                String?       @db.Uuid
 
   // 🔗 Relations
-  project                    Project       @relation("projectInvoice", fields: [projectId], references: [id])
-  fabricator                 Fabricator    @relation("fabricatorInvoice", fields: [fabricatorId], references: [id])
-  pointOfContact             User[]         @relation("invoicePointOfContact")
-  user                       User?         @relation("invoiceCreatedBy",fields: [createdBy],references: [id])
-  invoiceItems               InvoiceItem[]
+  project        Project       @relation("projectInvoice", fields: [projectId], references: [id])
+  fabricator     Fabricator    @relation("fabricatorInvoice", fields: [fabricatorId], references: [id])
+  pointOfContact User[]        @relation("invoicePointOfContact")
+  user           User?         @relation("invoiceCreatedBy", fields: [createdBy], references: [id])
+  invoiceItems   InvoiceItem[]
 }
 
 model InvoiceItem {
-  id             String   @id @default(uuid()) @db.Uuid
-  invoiceId      String?   @db.Uuid
-  description    String
-  sacCode        String?
-  unit           Int?
-  rateUSD        Float?
-  totalUSD       Float?
-  remarks        String?
-  createdAt      DateTime @default(now())
+  id          String   @id @default(uuid()) @db.Uuid
+  invoiceId   String?  @db.Uuid
+  description String
+  sacCode     String?
+  unit        Int?
+  rateUSD     Float?
+  totalUSD    Float?
+  remarks     String?
+  createdAt   DateTime @default(now())
 
   // 🔗 Relation
-  invoice        Invoice?  @relation(fields: [invoiceId], references: [id])
+  invoice Invoice? @relation(fields: [invoiceId], references: [id])
 }
 
 model AccountInfo {
-  id                  String   @id @default(uuid()) @db.Uuid
-  abaRoutingNumber    String
-  accountNumber       String
-  accountName         String?   @default("")
-  paymentMethod       String?   @default("")
-  institutionNumber   String?   @default("")
-  transitNumber       String?   @default("")
-  bankName            String?   @default("")
-  accountType         String
-  beneficiaryInfo     String
-  beneficiaryAddress  String
-  bankInfo            String
-  bankAddress         String
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  id                 String   @id @default(uuid()) @db.Uuid
+  abaRoutingNumber   String
+  accountNumber      String
+  accountName        String?  @default("")
+  paymentMethod      String?  @default("")
+  institutionNumber  String?  @default("")
+  transitNumber      String?  @default("")
+  bankName           String?  @default("")
+  accountType        String
+  beneficiaryInfo    String
+  beneficiaryAddress String
+  bankInfo           String
+  bankAddress        String
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 
   // 🔗 Relation
-  fabricator          Fabricator?  @relation("bankAccount")
+  fabricator Fabricator? @relation("bankAccount")
 }
 
 model ManagerEstimationScore {
-  id          String   @id @default(uuid())
-  managerId   String   @db.Uuid
-  projectId     String   @db.Uuid
-  score       Float
-  period      String   
+  id           String   @id @default(uuid())
+  managerId    String   @db.Uuid
+  projectId    String   @db.Uuid
+  score        Float
+  period       String
   calculatedAt DateTime @default(now())
 
   // Relations
-  manager     User     @relation("ManagerEstimationScore", fields: [managerId], references: [id])
-  project     Project  @relation("ManagerEstimationScore", fields: [projectId], references: [id])
+  manager User    @relation("ManagerEstimationScore", fields: [managerId], references: [id])
+  project Project @relation("ManagerEstimationScore", fields: [projectId], references: [id])
 
   @@unique([managerId, projectId, period])
   @@map("manager_estimation_score")
 }
 
 model ManagerBiasRecord {
-  id            String   @id @default(uuid())
-  managerId     String   @db.Uuid
-  projectId     String?  @db.Uuid
-  period        String   
-  biasScore     Float    
-  calculatedAt  DateTime @default(now())
+  id           String   @id @default(uuid())
+  managerId    String   @db.Uuid
+  projectId    String?  @db.Uuid
+  period       String
+  biasScore    Float
+  calculatedAt DateTime @default(now())
 
-  manager User @relation("managerbias",fields: [managerId], references: [id])
-  project Project? @relation("projectbias",fields: [projectId], references: [id])
+  manager User     @relation("managerbias", fields: [managerId], references: [id])
+  project Project? @relation("projectbias", fields: [projectId], references: [id])
 
   @@map("manager_bias_record")
 }
@@ -1887,11 +1852,11 @@ model ManagerBiasRecord {
 model EmployeePerformanceScore {
   id           String   @id @default(uuid())
   employeeId   String   @db.Uuid
-  period       String   
+  period       String
   score        Float
   calculatedAt DateTime @default(now())
 
-  employee User @relation("employeeperformance",fields: [employeeId], references: [id])
+  employee User @relation("employeeperformance", fields: [employeeId], references: [id])
 
   @@unique([employeeId, period])
   @@map("employee_performance_score")
@@ -1899,7 +1864,7 @@ model EmployeePerformanceScore {
 
 model TeamEfficiencyScore {
   id               String   @id @default(uuid()) @db.Uuid
-  teamId           String   @db.Uuid @map("team_id")
+  teamId           String   @map("team_id") @db.Uuid
   period           String
   score            Float
   avgEps           Float    @map("avg_eps")
@@ -1918,44 +1883,43 @@ model TeamEfficiencyScore {
 }
 
 model FileShareLink {
-  id           String   @id @default(uuid())
-  token        String   @unique
-  parentTable  String
-  parentId     String
-  fileId       String
+  id          String @id @default(uuid())
+  token       String @unique
+  parentTable String
+  parentId    String
+  fileId      String
 
-  expiresAt    DateTime?
-  isActive     Boolean  @default(true)
+  expiresAt DateTime?
+  isActive  Boolean   @default(true)
 
-  createdAt    DateTime @default(now())
+  createdAt    DateTime  @default(now())
   lastAccessed DateTime?
 }
 
-
 model ClientCommunication {
-  id                String   @id @default(uuid()) @db.Uuid
+  id String @id @default(uuid()) @db.Uuid
 
-  projectId         String   @db.Uuid
-  fabricatorId      String?  @db.Uuid
-  clientName        String
+  projectId    String  @db.Uuid
+  fabricatorId String? @db.Uuid
+  clientName   String
 
-  createdById       String   @db.Uuid
+  createdById String @db.Uuid
 
   communicationDate DateTime @default(now())
   followUpDate      DateTime
   isCompleted       Boolean  @default(false)
 
-  subject           String?
-  notes             String
+  subject String?
+  notes   String
 
-  reminderSent      Boolean  @default(false)
+  reminderSent Boolean @default(false)
 
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  project           Project     @relation(fields: [projectId], references: [id])
-  createdBy         User        @relation(fields: [createdById], references: [id])
-  fabricator        Fabricator? @relation(fields: [fabricatorId], references: [id])
+  project    Project     @relation(fields: [projectId], references: [id])
+  createdBy  User        @relation(fields: [createdById], references: [id])
+  fabricator Fabricator? @relation(fields: [fabricatorId], references: [id])
 
   @@index([followUpDate])
   @@index([isCompleted])
