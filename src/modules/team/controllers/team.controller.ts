@@ -80,7 +80,7 @@ export class TeamController {
 
     async delete(req: Request, res: Response) {
         const result = await teamService.delete({ id: req.params.id });
-        return res.status(204).json({
+        return res.status(200).json({
             message: "Team deleted successfully",
             data: result
         });

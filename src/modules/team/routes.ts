@@ -20,6 +20,19 @@ router.post("/addMembers/:role",
     validate({params:z.object({role:z.string()})}),
     teamController.addTeamMembers.bind(teamController));
 
+router.put("/updateRole/:id",
+    authMiddleware,
+    validate({params:z.object({id:z.string()})}),
+    teamController.updateTeamRole.bind(teamController));
+
+router.delete("/removeMembers",
+    authMiddleware,
+    validate({body:z.object({
+        teamId:z.string(),
+        userId:z.string()
+    })}),
+    teamController.removeTeamMembers.bind(teamController));
+
 router.get("/:id", 
     authMiddleware, 
     validate({params:z.object({id:z.string()})}), 
@@ -34,22 +47,9 @@ router.put("/:id",
     validate({params:z.object({id:z.string()})}), 
     teamController.update.bind(teamController));
 
-router.put("/updateRole/:id",
-    authMiddleware,
-    validate({params:z.object({id:z.string()})}),
-    teamController.updateTeamRole.bind(teamController));
-
 router.delete("/:id", 
     authMiddleware, 
     validate({params:z.object({id:z.string()})}), 
     teamController.delete.bind(teamController));
-
-router.delete("/removeMembers",
-    authMiddleware,
-    validate({body:z.object({
-        teamId:z.string(),
-        userId:z.string()
-    })}),
-    teamController.removeTeamMembers.bind(teamController));
 
 export default router;

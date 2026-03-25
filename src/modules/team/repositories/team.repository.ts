@@ -124,7 +124,7 @@ import {
                     id: data.id
                 },
                 data: {
-                    isDeleted: false
+                    isDeleted: true
                 }
             });
             return team;
