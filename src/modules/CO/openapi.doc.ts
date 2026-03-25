@@ -11,7 +11,7 @@ export const cOOpenApiDoc: ModuleOpenApiDoc = {
     "/changeOrder": {
       post: {
         tags: ["ChangeOrder"],
-        summary: "POST /changeOrder",
+        summary: "POST /changeOrder - Create Change Order (Supports multipleRecipients)",
         operationId: "post_CO_changeOrder",
         security: [{ bearerAuth: [] }],
         requestBody: zodRequestBody(CreateCoSchema),
@@ -331,7 +331,7 @@ export const cOOpenApiDoc: ModuleOpenApiDoc = {
     "/changeOrder/{id}": {
       put: {
         tags: ["ChangeOrder"],
-        summary: "PUT /changeOrder/{id}",
+        summary: "PUT /changeOrder/{id} - Update Change Order (Supports multipleRecipients)",
         operationId: "put_CO_changeOrder_id",
         security: [{ bearerAuth: [] }],
         parameters: [

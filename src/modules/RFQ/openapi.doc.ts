@@ -13,7 +13,7 @@ export const rFQOpenApiDoc: ModuleOpenApiDoc = {
     "/rfq": {
       post: {
         tags: ["RFQ"],
-        summary: "POST /rfq",
+        summary: "POST /rfq - Create RFQ (Supports multipleRecipients)",
         operationId: "post_RFQ_rfq",
         security: [{ bearerAuth: [] }],
         requestBody: zodRequestBody(CreateRfqSchema),
@@ -351,7 +351,7 @@ export const rFQOpenApiDoc: ModuleOpenApiDoc = {
     "/rfq/update/{id}": {
       put: {
         tags: ["RFQ"],
-        summary: "PUT /rfq/update/{id}",
+        summary: "PUT /rfq/update/{id} - Update RFQ (Supports multipleRecipients)",
         operationId: "put_RFQ_rfq_update_id",
         security: [{ bearerAuth: [] }],
         parameters: [

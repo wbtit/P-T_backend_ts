@@ -69,12 +69,18 @@ export class SubmittalController {
       }
     );
 
-    // 🔔 Email uses CURRENT VERSION
-    const email = submittal.recepients?.email;
-    if (email) {
+    // Gather all recipient emails (scalar + multipleRecipients)
+    const submittalAny = submittal as any;
+    const submittalEmails = [
+      ...(submittalAny.multipleRecipients?.map((r: any) => r.email).filter(Boolean) || []),
+      submittalAny.recepients?.email,
+    ].filter(Boolean) as string[];
+    const uniqueSubmittalEmails = Array.from(new Set(submittalEmails));
+
+    if (uniqueSubmittalEmails.length > 0) {
       const ccEmails = await getCCEmails();
       sendEmail({
-        to: email,
+        to: uniqueSubmittalEmails.join(","),
         cc: ccEmails,
         subject: submittal.subject,
         html: submittalhtmlContent(submittal),
@@ -163,7 +169,7 @@ export class SubmittalController {
   ) {
     const user = req.user;
     if (!user) throw new AppError("User not found", 404);
-
+    
     const { id: submittalId } = req.params;
     const existingSubmittal = await submittalService.getSubmittalById(submittalId);
     const access = await projectAssistService.assertRfiSubmittalCreateUpdateAccess(
@@ -171,6 +177,7 @@ export class SubmittalController {
       user
     );
     const { description } = req.body;
+    console.log(req.body);
 
     if (!description) {
       throw new AppError("Description is required", 400);

@@ -11,7 +11,7 @@ export const rFIOpenApiDoc: ModuleOpenApiDoc = {
     "/rfi": {
       post: {
         tags: ["RFI"],
-        summary: "POST /rfi",
+        summary: "POST /rfi - Create RFI (Supports multipleRecipients)",
         operationId: "post_RFI_rfi",
         security: [{ bearerAuth: [] }],
         requestBody: zodRequestBody(RFISchema),
@@ -227,7 +227,7 @@ export const rFIOpenApiDoc: ModuleOpenApiDoc = {
       },
       put: {
         tags: ["RFI"],
-        summary: "PUT /rfi/{id}",
+        summary: "PUT /rfi/{id} - Update RFI (Supports multipleRecipients)",
         operationId: "put_RFI_rfi_id",
         security: [{ bearerAuth: [] }],
         parameters: [

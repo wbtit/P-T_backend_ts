@@ -17,7 +17,9 @@ export const createSubmittalsDto = z.object({
   fabricator_id: z.string().uuid(),
   mileStoneId: z.string().uuid().optional(),
   project_id: z.string().uuid(),
-  recepient_id: z.string().uuid(),
+  recepient_id: z.string().optional(),
+  clientResponseStatus:z.enum(SubResStatus).optional(),
+  multipleRecipients: z.array(z.string().uuid()).optional(),
   sender_id: z.string().uuid(),
 
   stage: z.enum(Stage).optional(),

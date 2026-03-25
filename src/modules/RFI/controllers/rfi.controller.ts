@@ -60,18 +60,24 @@ export class RFIController {
       isAproovedByAdmin
     );
 
-    const email = newrfi.recepients?.email ?? null;
-    if (!email) {
-      throw new AppError("No recipient email provided", 400);
+    // Gather all recipient emails (scalar + multipleRecipients)
+    const rfiAny = newrfi as any;
+    const emails = [
+      ...(rfiAny.multipleRecipients?.map((r: any) => r.email).filter(Boolean) || []),
+      rfiAny.recepients?.email,
+    ].filter(Boolean) as string[];
+    const uniqueEmails = Array.from(new Set(emails));
+
+    if (uniqueEmails.length > 0) {
+      const ccEmails = await getCCEmails();
+      await sendEmail({
+        html: rfihtmlContent(newrfi),
+        to: uniqueEmails.join(","),
+        cc: ccEmails,
+        subject: newrfi.subject,
+        text: newrfi.description,
+      });
     }
-    const ccEmails = await getCCEmails();
-        await sendEmail({
-          html: rfihtmlContent(newrfi),
-          to: email,
-          cc: ccEmails,
-          subject: newrfi.subject,
-          text: newrfi.description,
-        });
     await notifyProjectStakeholders(newrfi.project_id, RFI_NOTIFY_ROLES, {
       type: "RFI_CREATED",
       title: "RFI Created / Sent",

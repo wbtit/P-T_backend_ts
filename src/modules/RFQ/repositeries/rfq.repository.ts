@@ -21,12 +21,19 @@ export class RFQRepository {
       data: CreateRfqPersistInput
     ) {
       const cleanedData = cleandata(data);
+      const { multipleRecipients, ...restData } = cleanedData;
 
       return await tx.rFQ.create({
-        data: cleanedData,
+        data: {
+          ...restData,
+          multipleRecipients: multipleRecipients?.length
+            ? { connect: multipleRecipients.map((id: string) => ({ id })) }
+            : undefined,
+        },
         include: {
           sender: true,
           recipient: true,
+                multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
           salesPerson: true,
           responses: true
         }
@@ -34,11 +41,14 @@ export class RFQRepository {
     }
 
     async update(id: string, data: UpdateRfqInput) {
-        const { ConnectionDesignerIds,connectionEngineerIds, ...rest } = data;
+        const { ConnectionDesignerIds,connectionEngineerIds, multipleRecipients, ...rest } = data;
         return await prisma.rFQ.update({
             where: { id },
             data: {
                 ...rest,
+                multipleRecipients: multipleRecipients?.length
+                  ? { set: [], connect: multipleRecipients.map((id: string) => ({ id })) }
+                  : undefined,
                 connectionDesignerRFQ: ConnectionDesignerIds
         ? {
              set: [],
@@ -54,6 +64,7 @@ export class RFQRepository {
             },include:{
                 sender: true,
                 recipient: true,
+                multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
                 salesPerson: true,
                 responses:true,
                 connectionDesignerRFQ:true,
@@ -67,6 +78,7 @@ export class RFQRepository {
             include:{
                 sender: true,
                 recipient: true,
+                multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
                 salesPerson: true,
                 responses:true,
                 fabricator:true,
@@ -99,6 +111,7 @@ export class RFQRepository {
                     include:{
                 sender: true,
                 recipient: true,
+                multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
                 salesPerson: true,
                 responses:true,
                 fabricator:true,
@@ -135,6 +148,7 @@ export class RFQRepository {
             include:{
                 sender: true,
                 recipient: true,
+                multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
                 salesPerson: true,
                 responses:true,
                 fabricator:true,
@@ -156,6 +170,7 @@ export class RFQRepository {
             include:{
                 sender: true,
                 recipient: true,
+                multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
                 salesPerson: true,
                 responses:true,
                 fabricator:true,
@@ -197,6 +212,7 @@ export class RFQRepository {
             include:{
                 sender: true,
                 recipient: true,
+                multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
                 salesPerson: true,
                 responses:true,
                 project: {select:{name:true}},
@@ -214,6 +230,7 @@ export class RFQRepository {
             include: {
                 sender: true,
                 recipient: true,
+                multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
                 salesPerson: true,
                 responses:true,
                 fabricator:true,
@@ -224,12 +241,16 @@ export class RFQRepository {
 
     async Inbox(recipientId:string){
         return await prisma.rFQ.findMany({
-            where:{
-                recipientId
+            where: {
+                OR: [
+                    { recipientId },
+                    { multipleRecipients: { some: { id: recipientId } } }
+                ]
             },
             include: {
                 sender: true,
                 recipient: true,
+                multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
                 salesPerson: true,
                 responses:true,
                 fabricator:true,
@@ -245,6 +266,7 @@ export class RFQRepository {
             include: {
                 sender: true,
                 recipient: true,
+                multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
                 salesPerson: true,
                 responses:true,
                 project: {select:{name:true}},
@@ -260,6 +282,7 @@ export class RFQRepository {
         include:{
             sender: true,
             recipient: true,
+                multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
             salesPerson: true,
             responses:true,
             fabricator:true,
@@ -275,6 +298,7 @@ getbyProjectNameAndLocation(projectName:string,location:string){
         },include:{
             sender: true,
             recipient: true,
+                multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
             salesPerson: true,
             responses:true,
             fabricator:true,
@@ -301,6 +325,7 @@ async getRFQOfConnectionEngineer(userId:string){
           include:{
            sender: true,
             recipient: true,
+                multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
             salesPerson: true,
             responses:true,
             fabricator:true,
@@ -322,6 +347,7 @@ async getRFQOfConnectionEngineer(userId:string){
             include: {
                 sender: true,
                 recipient: true,
+                multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
                 salesPerson: true,
                 responses: true,
                 fabricator: true,
@@ -339,6 +365,7 @@ async getRFQOfConnectionEngineer(userId:string){
             include: {
                 sender: true,
                 recipient: true,
+                multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
                 salesPerson: true,
                 responses: true,
                 fabricator: true,

@@ -17,6 +17,7 @@ export const CreateRfqSchema = z.object({
   MTOManual: zBooleanString.optional(),
   MTOStickModel: z.string().optional(),
   recipientId: z.string().optional(),
+  multipleRecipients: z.array(z.string()).optional(),
   ConnectionDesignerIds: z.array(z.string()).optional(),
   connectionEngineerIds: z.array(z.string()).optional(),
   salesPersonId: z.string().optional(),

@@ -4,6 +4,8 @@ import { AppError } from "../../../config/utils/AppError";
 import { COService } from "../services";
 import { mapUploadedFiles } from "../../uploads/fileUtil";
 import { notifyProjectStakeholders } from "../../../utils/notifyProjectStakeholders";
+import { sendEmail, getCCEmails } from "../../../services/mailServices/mailconfig";
+import { coHtmlContent } from "../../../services/mailServices/mailtemplates/coMailtemplate";
 import { UserRole } from "@prisma/client";
 
 const coService = new COService();
@@ -42,6 +44,22 @@ export class COController {
       coNum,
       id
     );
+    const coAny = co as any;
+    const coEmails = [
+      ...(coAny.multipleRecipients?.map((r: any) => r.email).filter(Boolean) || []),
+      coAny.Recipients?.email,
+    ].filter(Boolean) as string[];
+    const uniqueCoEmails = Array.from(new Set(coEmails));
+    if (uniqueCoEmails.length > 0) {
+      const ccEmails = await getCCEmails();
+      sendEmail({
+        to: uniqueCoEmails.join(","),
+        cc: ccEmails,
+        subject: `Change Order ${co.changeOrderNumber || ""} - ${co.description || ""}`.trim(),
+        html: coHtmlContent(coAny),
+      });
+    }
+
     const coNumber = co.changeOrderNumber?.trim();
     await notifyProjectStakeholders(co.project, CO_NOTIFY_ROLES, {
       type: "CO_CREATED",

@@ -1,8 +1,8 @@
-export const rfihtmlContent = (newrfi: any) => {
+export const coHtmlContent = (co: any) => {
   // Build greeting from all recipients
   const allRecipients: { firstName?: string; lastName?: string; username?: string }[] = [
-    ...(newrfi.multipleRecipients || []),
-    ...(newrfi.recepients ? [newrfi.recepients] : []),
+    ...(co.multipleRecipients || []),
+    ...(co.Recipients ? [co.Recipients] : []),
   ];
   const recipientNames = Array.from(
     new Set(allRecipients.map(r => [r.firstName, r.lastName].filter(Boolean).join(" ") || r.username || "Recipient"))
@@ -16,7 +16,7 @@ export const rfihtmlContent = (newrfi: any) => {
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Project Station - RFI Notification</title>
+  <title>Project Station - Change Order Notification</title>
   <style>
     body { font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0; }
     .email-wrapper { width: 100%; background-color: #f4f4f4; padding: 20px 0; }
@@ -47,28 +47,30 @@ export const rfihtmlContent = (newrfi: any) => {
             <img src="https://res.cloudinary.com/dp7yxzrgw/image/upload/v1753685727/logos/whiteboardtec-logo_oztrhh.png" alt="Whiteboard Logo" width="150" />
           </td>
           <td class="project-name-container">
-            ${newrfi?.project?.name?.toUpperCase() || "PROJECT NAME"}
+            ${co.Project?.name?.toUpperCase() || "PROJECT NAME"}
           </td>
         </tr>
       </table>
 
       <div class="content-body">
-        <p style="color: #888888; margin-bottom: 20px;">Date: ${newrfi?.date ? new Date(newrfi.date).toDateString() : new Date().toDateString()}</p>
+        <p style="color: #888888; margin-bottom: 20px;">Date: ${co.sentOn ? new Date(co.sentOn).toDateString() : new Date().toDateString()}</p>
 
-        <div class="subject-line">Subject: ${newrfi?.subject || "RFI Notification"}</div>
+        <div class="subject-line">Change Order: ${co.changeOrderNumber || "N/A"}</div>
 
         <p>Dear ${greeting},</p>
 
-        <p>You have been notified about a new <strong>Request for Information (RFI)</strong>. Please find the details below:</p>
+        <p>You have been notified about a <strong>Change Order</strong>. Please find the details below:</p>
 
         <table class="details-table">
-          <tr><td>Reference</td><td>${newrfi?.serialNo || "N/A"}</td></tr>
-          <tr><td>Project</td><td>${newrfi?.project?.name || "N/A"}</td></tr>
-          <tr><td>Subject</td><td>${newrfi?.subject || "N/A"}</td></tr>
-          <tr><td>Description</td><td>${newrfi?.description || "N/A"}</td></tr>
-          <tr><td>Status</td><td>${newrfi?.status ? "Open" : "Closed"}</td></tr>
-          <tr><td>Sender</td><td>${[newrfi?.sender?.firstName, newrfi?.sender?.lastName].filter(Boolean).join(" ") || newrfi?.sender?.username || "N/A"}</td></tr>
-          <tr><td>Date</td><td>${newrfi?.date ? new Date(newrfi.date).toDateString() : new Date().toDateString()}</td></tr>
+          <tr><td>CO Number</td><td>${co.changeOrderNumber || "N/A"}</td></tr>
+          <tr><td>Reference</td><td>${co.serialNo || "N/A"}</td></tr>
+          <tr><td>Project</td><td>${co.Project?.name || "N/A"}</td></tr>
+          <tr><td>Description</td><td>${co.description || "N/A"}</td></tr>
+          <tr><td>Remarks</td><td>${co.remarks || "N/A"}</td></tr>
+          <tr><td>Stage</td><td>${co.stage || "N/A"}</td></tr>
+          <tr><td>Status</td><td>${co.status || "N/A"}</td></tr>
+          <tr><td>Sender</td><td>${[co.senders?.firstName, co.senders?.lastName].filter(Boolean).join(" ") || co.senders?.username || "N/A"}</td></tr>
+          <tr><td>Sent On</td><td>${co.sentOn ? new Date(co.sentOn).toDateString() : new Date().toDateString()}</td></tr>
         </table>
 
         ${recipientNames.length > 1 ? `
@@ -78,7 +80,7 @@ export const rfihtmlContent = (newrfi: any) => {
         </div>` : ""}
 
         <div class="btn-container">
-          <a href="https://ps.whiteboardtec.com" class="btn">Login to View RFI</a>
+          <a href="https://ps.whiteboardtec.com" class="btn">Login to View Change Order</a>
         </div>
 
         <p>Thanks &amp; Regards,</p>
@@ -89,8 +91,8 @@ export const rfihtmlContent = (newrfi: any) => {
               <img src="https://res.cloudinary.com/dp7yxzrgw/image/upload/v1753685727/logos/whiteboardtec-logo_oztrhh.png" alt="Logo" width="100" />
             </td>
             <td class="signature-details">
-              <strong style="color: #333333; font-size: 16px;">${newrfi?.sender?.username || "Project Station"}</strong><br />
-              ${newrfi?.sender?.designation || "N/A"}<br />
+              <strong style="color: #333333; font-size: 16px;">${co.senders?.username || "Project Station"}</strong><br />
+              ${co.senders?.designation || "N/A"}<br />
               Whiteboard Engineering | <a href="https://whiteboardtec.com" style="color: #8cc63f; text-decoration: none;">whiteboardtec.com</a>
             </td>
           </tr>

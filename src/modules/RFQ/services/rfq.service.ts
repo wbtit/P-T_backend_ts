@@ -53,6 +53,7 @@ export class RFQService {
           400
         );
       }
+      const multipleRecipients = fabricator.wbtFabricatorPointOfContact.map(poc => poc.id);
 
       const project = await tx.project.findUnique({
         where: { projectNumber },
@@ -69,6 +70,7 @@ export class RFQService {
         ...data,
         senderId,
         recipientId,
+        multipleRecipients,
         projectNumber,
         serialNo,
       });

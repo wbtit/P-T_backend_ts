@@ -5,6 +5,7 @@ import {
 } from "../dtos";
 import { generateProjectScopedSerial, SERIAL_PREFIX } from "../../../utils/serial.util";
 import { AppError } from "../../../config/utils/AppError";
+import { includes } from "zod";
 
 export class RFIRepository{
     async create(data:CreateRFIDto,userId:string,isAproovedByAdmin:boolean){
@@ -29,6 +30,9 @@ export class RFIRepository{
               fabricator_id:data.fabricator_id,
               project_id:data.project_id,
               recepient_id: data.recepient_id,
+              multipleRecipients: data.multipleRecipients?.length
+                ? { connect: data.multipleRecipients.map((id: string) => ({ id })) }
+                : undefined,
               sender_id: userId,
               status: true,
               subject:data.subject,
@@ -37,8 +41,8 @@ export class RFIRepository{
               isAproovedByAdmin
             },
             include: {
-              
               recepients:  {select:{firstName:true,middleName:true,lastName:true,email:true,id:true}},
+              multipleRecipients: {select:{id:true,firstName:true,lastName:true,email:true}},
               project: true,
               sender :  {select:{firstName:true,middleName:true,lastName:true,email:true,id:true}},
               rfiresponse:true
@@ -146,6 +150,7 @@ export class RFIRepository{
         }},
         project: {select:{name:true}},
         sender :  {select:{firstName:true,middleName:true,lastName:true,email:true,id:true}},
+        multipleRecipients: {select:{id:true,firstName:true,lastName:true,email:true}},
         recepients: {
           include: {
             managedFabricator: {
@@ -158,13 +163,18 @@ export class RFIRepository{
         },
         rfiresponse:{
           include:{
-            childResponses:true
+            user :  {select:{firstName:true,middleName:true,lastName:true,email:true,id:true}},
+            childResponses:{
+              include:{
+                user :{select:{firstName:true,middleName:true,lastName:true,email:true,id:true}},
+            }
           }
         },
-        
       },
+    }
     });
     }
+  
 
 
     async updateRFI(id: string, data: UpdateRFIDto) {
@@ -218,12 +228,16 @@ export class RFIRepository{
     async inbox(userId:string){
         return await prisma.rFI.findMany({
       where: {
-        recepient_id: userId,
+        OR: [
+          { recepient_id: userId },
+          { multipleRecipients: { some: { id: userId } } }
+        ]
       },
       include: {
         fabricator: true,
         project: {select:{name:true}},
         recepients:  {select:{firstName:true,middleName:true,lastName:true,email:true,id:true}},
+        multipleRecipients: {select:{id:true,firstName:true,lastName:true,email:true}},
         sender :  {select:{firstName:true,middleName:true,lastName:true,email:true,id:true}},
         rfiresponse:true,
       },

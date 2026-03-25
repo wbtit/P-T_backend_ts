@@ -48,9 +48,13 @@ export class SubmitalRepository {
           sender_id: userId,
           stage: data.stage,
           isAproovedByAdmin: approval,
+          multipleRecipients: data.multipleRecipients?.length
+            ? { connect: data.multipleRecipients.map((id: string) => ({ id })) }
+            : undefined,
         },
         include: {
           recepients: true,
+          multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
         },
       });
     });
@@ -66,6 +70,7 @@ export class SubmitalRepository {
         fabricator: true,
         project: { select: { name: true } },
         recepients: true,
+        multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
         sender: true,
 
         // 🔑 Versioning
@@ -81,7 +86,13 @@ export class SubmitalRepository {
         // Responses
         submittalsResponse: {
           include: {
-            childResponses: true,
+            user: { select: { id: true, firstName: true, lastName: true, email: true } },
+            childResponses: {
+              include:{
+                user:{ select:{id:true, firstName:true, lastName:true, email:true},
+              },
+            },
+          },
             submittalVersion: true,
           },
         },
@@ -216,11 +227,18 @@ async getPendingSubmittalsForProjectManager(managerId: string) {
   // -----------------------------
   async receivedSubmittals(recipientId: string) {
     return prisma.submittals.findMany({
-      where: { recepient_id: recipientId },
+      where: {
+        OR: [
+          { recepient_id: recipientId },
+          { multipleRecipients: { some: { id: recipientId } } }
+        ]
+      },
       include: {
         project: { select: { name: true } },
         fabricator: true,
         sender: true,
+        recepients: true,
+        multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
         currentVersion: true,
       },
       orderBy: { date: "desc" },

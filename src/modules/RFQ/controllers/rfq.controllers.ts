@@ -37,15 +37,22 @@ export class RFQController {
           files: uploadedFiles,
         }, id);
         console.log("rfq created: ", result);
-        const newrfq = result.newRfq;
-        const email = newrfq.recipient?.email ?? null;
-        if (!email) {
+        const newrfq = result.newRfq as any;
+        // gather all recipient emails
+        const emails = [
+            ...(newrfq.multipleRecipients?.map((r: any) => r.email).filter(Boolean) || []),
+            newrfq.recipient?.email
+        ].filter(Boolean) as string[];
+
+        const uniqueEmails = Array.from(new Set(emails));
+
+        if (uniqueEmails.length === 0) {
           throw new AppError("No recipient email provided", 400);
         }
         const ccEmails = await getCCEmails();
                 await sendEmail({
               html: rfqhtmlContent(newrfq),
-              to: email,
+              to: uniqueEmails.join(","),
               cc: ccEmails,
               subject: newrfq.subject,
               text: newrfq.description,

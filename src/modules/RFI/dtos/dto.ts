@@ -9,7 +9,8 @@ const zBooleanString = z
 export const RFISchema = z.object({
   fabricator_id: z.string(),
   project_id: z.string(),
-  recepient_id: z.string(),
+  recepient_id: z.string().optional(),
+  multipleRecipients: z.array(z.string()).optional(),
   sender_id: z.string(),
   status: zBooleanString,
   subject: z.string(),

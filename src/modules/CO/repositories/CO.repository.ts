@@ -35,24 +35,41 @@ export class CORepository {
               sentOn:data.sentOn|| new Date(),
               isAproovedByAdmin:approval,
               sender: userId,
+              multipleRecipients: data.multipleRecipients?.length
+                ? { connect: data.multipleRecipients.map((id: string) => ({ id })) }
+                : undefined,
             },
+            include: {
+              Recipients: true,
+              multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
+              senders: true,
+            }
           });
         });
     }
     async update(id:string,data:UpdateCoInput){
+        const { multipleRecipients, ...rest } = data;
         return await prisma.changeOrder.update({
       where: { id },
       data: {
-        project: data.project,
-        recipients: data.recipients,
-        remarks: data.remarks,
-        changeOrderNumber: data.changeOrderNumber,
-        description: data.description,
-        sender: data.sender,
-        stage: data.stage,
-        status: data.status,
-        reason: data.reason,
-        isAproovedByAdmin: data.isAproovedByAdmin
+        project: rest.project,
+        recipients: rest.recipients,
+        remarks: rest.remarks,
+        changeOrderNumber: rest.changeOrderNumber,
+        description: rest.description,
+        sender: rest.sender,
+        stage: rest.stage,
+        status: rest.status,
+        reason: rest.reason,
+        isAproovedByAdmin: rest.isAproovedByAdmin,
+        multipleRecipients: multipleRecipients?.length
+          ? { set: [], connect: multipleRecipients.map((id: string) => ({ id })) }
+          : undefined,
+      },
+      include: {
+        Recipients: true,
+        multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
+        senders: true,
       }
     });
     }
@@ -110,19 +127,17 @@ export class CORepository {
     async recivedCos(userId:string){
         return await prisma.changeOrder.findMany({
             where:{
-                recipients:userId,
+                OR: [
+                    { recipients: userId },
+                    { multipleRecipients: { some: { id: userId } } }
+                ],
                 isAproovedByAdmin:true
             },
-              select:{
-                id:true,
-                remarks:true,
-                description:true,
-                changeOrderNumber:true,
-                sentOn:true,
-                files:true,
-                project:true,
-                recipients:true
-                
+            include:{
+                Recipients:true,
+                multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
+                senders:true,
+                Project:true,
             }
         })
     }
@@ -164,6 +179,7 @@ export class CORepository {
             coResponses:{include:{childResponses:true}},
             Project:true,
             Recipients:true,
+            multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
             senders:true,
             CoRefersTo:true,
           }

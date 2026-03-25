@@ -9,6 +9,7 @@ export const CreateCoSchema = z.object({
   project: z.string(),
   sender: z.string(),
   recipients: z.string(),
+  multipleRecipients: z.array(z.string()).optional(),
     remarks: z.string(),
     changeOrderNumber: z.string().optional(),
     description: z.string(),

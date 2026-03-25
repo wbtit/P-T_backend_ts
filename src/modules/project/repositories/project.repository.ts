@@ -159,10 +159,13 @@ import { generateProjectSerial } from "../../../utils/serial.util";
         
         projectbias:true,
         rfi:{include:{recepients:{select:{firstName:true,middleName:true,lastName:true,id:true}},
+                      multipleRecipients:{select:{id:true,firstName:true,lastName:true,email:true}},
                       sender:{select:{firstName:true,middleName:true,lastName:true,id:true}}}},
         submittals:{include:{recepients:{select:{firstName:true,middleName:true,lastName:true,id:true}},
+                      multipleRecipients:{select:{id:true,firstName:true,lastName:true,email:true}},
                       sender:{select:{firstName:true,middleName:true,lastName:true,id:true}}}},
         changeOrders:{include:{Recipients:{select:{firstName:true,middleName:true,lastName:true,id:true}},
+                      multipleRecipients:{select:{id:true,firstName:true,lastName:true,email:true}},
                       senders:{select:{firstName:true,middleName:true,lastName:true,id:true}}}},
         designDrawings:{include:{user:{select:{firstName:true,middleName:true,lastName:true,id:true}}}},
         mileStones:true,

@@ -68,7 +68,7 @@ export const submittalsOpenApiDoc: ModuleOpenApiDoc = {
     "/submittal": {
       post: {
         tags: ["Submittals"],
-        summary: "POST /submittal",
+        summary: "POST /submittal - Create Submittal (Supports multipleRecipients)",
         operationId: "post_submittals_submittal",
         security: [{ bearerAuth: [] }],
         requestBody: zodRequestBody(createSubmittalsDto),
