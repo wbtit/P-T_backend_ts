@@ -27,6 +27,7 @@ export const findUserById = async (id: string) => {
       profilePic: true,
       isActive: true,
       FabricatorPointOfContacts: true,
+      connectionDesignerId: true,
     },
   });
 };

@@ -33,6 +33,17 @@ export class ConnectionDesignerQuotaService {
     if (!data.rfqId) {
       throw new AppError("rfqId is required for quota serial generation", 400);
     }
+    if (!data.connectionDesignerId) {
+      throw new AppError("connectionDesignerId is required", 400);
+    }
+
+    const designerExists = await prisma.connectionDesigner.findUnique({
+      where: { id: data.connectionDesignerId },
+      select: { id: true },
+    });
+    if (!designerExists) {
+      throw new AppError("Connection Designer not found", 404);
+    }
 
     // Prevent duplicate quota for same Connection Designer & RFQ
     if (data.connectionDesignerId && data.rfqId) {
@@ -107,6 +118,16 @@ export class ConnectionDesignerQuotaService {
 
     // If updating RFQ or Designer → ensure no duplicates
     if ((data.connectionDesignerId || data.rfqId) && existing) {
+      if (data.connectionDesignerId) {
+        const designerExists = await prisma.connectionDesigner.findUnique({
+          where: { id: data.connectionDesignerId },
+          select: { id: true },
+        });
+        if (!designerExists) {
+          throw new AppError("Connection Designer not found", 404);
+        }
+      }
+
       const quotas = await quotaRepo.findByDesignerId(
         data.connectionDesignerId ?? existing.connectionDesignerId
       );
