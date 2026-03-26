@@ -270,6 +270,7 @@ enum mileStoneResponseStatus {
   ON_TIME
   NOT_STARTED
   CLARIFICATION_REQUIRED
+  APPROVED
 }
 
 // ===========================================================

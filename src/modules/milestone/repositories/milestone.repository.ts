@@ -78,10 +78,11 @@ export class MileStoneRepository{
                 currentVersion: true,
                 versions: {
                     include:{
-                        responses:{include:
-                            {
-                                childResponses:true,
-                                user:true
+                        responses:{
+                            where: { parentResponseId: null },
+                            include: {
+                                childResponses: true,
+                                user: true
                             }
                         }
                     },
