@@ -198,12 +198,13 @@ export class RFQRepository {
                     },
                     orderBy: { createdAt: "desc" }
                 },
-                CDQuotas:true,
+                CDQuotas:{
+                    include:{
+                        connectionDesigner:{select:{name:true}},
+                    }
+                },
             }
         });
-        
-
-        
     }
 
     async getByIdForConnectionDesigner(id: string, connectionDesignerId: string) {

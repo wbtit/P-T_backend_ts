@@ -85,9 +85,11 @@ export class ConnectionDesignerQuotaRepository {
         estimatedHours: safeData.estimatedHours,
         weeks: safeData.weeks,
         files: safeData.files ?? undefined,
-        approvalStatus: safeData.approvalStatus ?? false,
-        approvalDate: safeData.approvalDate ?? null,
-        rfqId: safeData.rfqId ?? null,
+        approvalStatus:
+          safeData.approvalStatus !== undefined ? safeData.approvalStatus : undefined,
+        approvalDate:
+          safeData.approvalDate !== undefined ? safeData.approvalDate : undefined,
+        rfqId: safeData.rfqId !== undefined ? safeData.rfqId : undefined,
         connectionDesignerId: safeData.connectionDesignerId ?? undefined,
       },
       include: {
