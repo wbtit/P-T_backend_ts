@@ -205,6 +205,50 @@ export class RFQRepository {
 
         
     }
+
+    async getByIdForConnectionDesigner(id: string, connectionDesignerId: string) {
+        return await prisma.rFQ.findUnique({
+            where: { id },
+            include:{
+                sender: true,
+                recipient: true,
+                multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
+                salesPerson: true,
+                responses:true,
+                fabricator:true,
+                project: {select:{name:true}},
+                connectionEngineers:{select:{firstName:true,lastName:true,id:true}},
+                connectionDesignerRFQ:{
+                    where: { id: connectionDesignerId },
+                    include:{
+                        CDEngineers: true,
+                        CDQuotations:{
+                            where: { rfqId: id }
+                        },
+                    }
+                },
+                estimations:{select:{id:true}},
+                followUps: {
+                    include: {
+                        createdBy: {
+                            select: {
+                                id: true,
+                                firstName: true,
+                                middleName: true,
+                                lastName: true,
+                                username: true,
+                                email: true,
+                            }
+                        }
+                    },
+                    orderBy: { createdAt: "desc" }
+                },
+                CDQuotas:{
+                    where: { connectionDesignerId }
+                },
+            }
+        });
+    }
     
     async getByName(id:string) {
         return await prisma.rFQ.findUnique({

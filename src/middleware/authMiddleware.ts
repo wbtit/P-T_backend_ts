@@ -3,13 +3,14 @@ import jwt from 'jsonwebtoken';
 import { AppError } from '../config/utils/AppError';
 import { JWT_SECRET } from '../config/utils/jwtutils';
 import { UserJwt } from '../shared/types';
+import prisma from '../config/database/client';
 
 export interface AuthenticateRequest extends Request {
   user?: UserJwt;
   certificates?: Express.Multer.File[];
 }
 
-const authMiddleware = (
+const authMiddleware = async (
   req: AuthenticateRequest,
   res: Response,
   next: NextFunction
@@ -24,6 +25,14 @@ const authMiddleware = (
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as UserJwt;
+    if (decoded.role === "CONNECTION_DESIGNER_ENGINEER" && !decoded.connectionDesignerId) {
+      const user = await prisma.user.findUnique({
+        where: { id: decoded.id },
+        select: { connectionDesignerId: true },
+      });
+      decoded.connectionDesignerId = user?.connectionDesignerId ?? null;
+    }
+
     req.user = decoded;
     next();
   } catch (err: any) {

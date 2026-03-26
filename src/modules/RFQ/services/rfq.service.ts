@@ -86,8 +86,26 @@ export class RFQService {
         const rfq = await rfqrepo.update(id,data);
         return rfq;
     }
-    async getRfqById(data:GetRfqInput){
+    async getRfqById(
+      data: GetRfqInput,
+      user?: { role?: string; connectionDesignerId?: string | null }
+    ){
+        console.log("[RFQ:getRfqById] user role:", user?.role, "connectionDesignerId:", user?.connectionDesignerId, "rfqId:", data.id);
+        if (user?.role === "CONNECTION_DESIGNER_ENGINEER" && user.connectionDesignerId) {
+            const filtered = await rfqrepo.getByIdForConnectionDesigner(
+              data.id,
+              user.connectionDesignerId
+            );
+            
+            if(!filtered) throw new AppError('RFQ not found', 404);
+            return filtered;
+        }
+
         const existing = await rfqrepo.getById(data);
+        console.log(
+          "[RFQ:getRfqById] unfiltered CDQuotas:",
+          Array.isArray((existing as any)?.CDQuotas) ? (existing as any).CDQuotas.length : "none"
+        );
         if(!existing) throw new AppError('RFQ not found', 404);
 
         return existing;
