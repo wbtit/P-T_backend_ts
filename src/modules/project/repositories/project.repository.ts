@@ -347,9 +347,9 @@ import { generateProjectSerial } from "../../../utils/serial.util";
      });
    }
 
-   async getForConnectionDesignerEngineer(userId: string) {
+   async getForConnectionDesignerEngineer(connectionDesignerId: string) {
       return await prisma.project.findMany({
-        where:{connectionDesignerID:userId},
+        where:{connectionDesignerID:connectionDesignerId},
         include:{
         stageHistory:true,
         fabricator:{select:{
