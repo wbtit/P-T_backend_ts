@@ -617,6 +617,7 @@ model RFQ {
   status         RFQStatus @default(SENT)
   wbtStatus      RFQStatus @default(RECEIVED)
   estimationDate DateTime?
+  CDDueDate      DateTime?
   tools          String?
 
   connectionDesign Boolean @default(false)
