@@ -16,6 +16,7 @@ export const createMileStoneSchema=z.object({
     fabricator_id:z.string(),
     project_id:z.string(),
     approvalDate:zDateString,
+    CDApprovalDate:zDateString,
     status:z.enum(Status),
     stage:z.enum(Stage),
     reason:z.string().optional(),

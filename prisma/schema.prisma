@@ -1060,6 +1060,7 @@ model MileStone {
   date                  DateTime           @default(now())
   project_id            String             @db.Uuid
   approvalDate          DateTime?
+  CDApprovalDate         DateTime?
   status                Status             @default(ACTIVE)
   stage                 Stage              @default(IFA)
   subject               String
