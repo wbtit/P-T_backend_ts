@@ -8,6 +8,72 @@ import {
 } from "./dtos";
 import z from "zod";
 
+const milestoneUpdateRequestBody = {
+  required: true,
+  content: {
+    "application/json": {
+      schema: {
+        oneOf: [
+          z.toJSONSchema(updateMileStoneSchema, {
+            io: "input",
+            unrepresentable: "any",
+          }),
+          {
+            type: "object",
+            properties: {
+              data: z.toJSONSchema(updateMileStoneSchema, {
+                io: "input",
+                unrepresentable: "any",
+              }),
+            },
+            required: ["data"],
+          },
+        ],
+      },
+    },
+  },
+};
+
+const milestoneCompletionRequestBody = {
+  required: true,
+  content: {
+    "application/json": {
+      schema: {
+        oneOf: [
+          {
+            type: "object",
+            properties: {
+              completeionPercentage: {
+                type: "number",
+                minimum: 0,
+                maximum: 100,
+              },
+            },
+            required: ["completeionPercentage"],
+          },
+          {
+            type: "object",
+            properties: {
+              data: {
+                type: "object",
+                properties: {
+                  completeionPercentage: {
+                    type: "number",
+                    minimum: 0,
+                    maximum: 100,
+                  },
+                },
+                required: ["completeionPercentage"],
+              },
+            },
+            required: ["data"],
+          },
+        ],
+      },
+    },
+  },
+};
+
 const milestoneResponseMultipartRequestBody = {
   required: true,
   content: {
@@ -161,7 +227,7 @@ export const milestoneOpenApiDoc: ModuleOpenApiDoc = {
         parameters: [
           { in: "path", name: "id", required: true, schema: { type: "string" } },
         ],
-        requestBody: zodRequestBody(updateMileStoneSchema),
+        requestBody: milestoneUpdateRequestBody,
         responses: {
           "200": { description: "Success" },
           "400": { description: "Bad Request" },
@@ -194,11 +260,7 @@ export const milestoneOpenApiDoc: ModuleOpenApiDoc = {
         parameters: [
           { in: "path", name: "id", required: true, schema: { type: "string" } },
         ],
-        requestBody: zodRequestBody(
-          z.object({
-            completeionPercentage: z.number().min(0).max(100),
-          })
-        ),
+        requestBody: milestoneCompletionRequestBody,
         responses: {
           "200": { description: "Success" },
           "400": { description: "Bad Request" },
@@ -216,7 +278,7 @@ export const milestoneOpenApiDoc: ModuleOpenApiDoc = {
         parameters: [
           { in: "path", name: "id", required: true, schema: { type: "string" } },
         ],
-        requestBody: zodRequestBody(updateMileStoneSchema),
+        requestBody: milestoneUpdateRequestBody,
         responses: {
           "200": { description: "Success" },
           "400": { description: "Bad Request" },

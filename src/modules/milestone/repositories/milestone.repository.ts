@@ -100,7 +100,13 @@ export class MileStoneRepository{
     }
     async getByProject(id:string){
         return await prisma.mileStone.findMany({
-            where:{project_id:id},
+            where:{project_id:id,
+                approvalDate:{not:null},
+                project:{
+                    isDeleted: false,
+                    status: { in: ["ACTIVE", "ONHOLD"] },
+                },
+            },
             include:{
                 project:true,
                 Tasks:true,
@@ -205,6 +211,32 @@ export class MileStoneRepository{
             },
             CDApprovalDate:{not:null},
             mileStoneSubmittals:{none:{}}
+        },
+        include:{
+            project:{select:{name:true}},
+            fabricator:{select:{fabName:true}}
+        }
+    })
+ }
+
+
+ async getByProjectIdForConnectionDesignerEngineer(projectId:string, connectionDesignerId:string){
+    return await prisma.mileStone.findMany({
+        where:{
+            project_id:projectId,
+            project:{
+                OR: [
+                    {
+                        pocOfConnectionDesigner:{
+                            some:{id:connectionDesignerId}
+                        },
+                    },
+                    { connectionDesignerID: connectionDesignerId },
+                ],
+                isDeleted: false,
+                status: { in: ["ACTIVE", "ONHOLD"] },
+            },
+            CDApprovalDate:{not:null},
         },
         include:{
             project:{select:{name:true}},

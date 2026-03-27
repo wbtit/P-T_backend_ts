@@ -160,9 +160,9 @@ export class MileStoneController {
     });
   }
 
-  async handleGetByProjectId(req: Request, res: Response) {
+  async handleGetByProjectId(req: AuthenticateRequest, res: Response) {
     const { id } = req.params;
-    const result = await mileStoneService.getByProjectId(id);
+    const result = await mileStoneService.getByProjectId(id,req.user);
 
     if (!result || result.length === 0) {
       return res.status(200).json({

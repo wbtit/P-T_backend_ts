@@ -615,10 +615,12 @@ model RFQ {
   fabricatorId   String?   @db.Uuid
   subject        String
   description    String
+  CDDescription  String?
   status         RFQStatus @default(SENT)
   wbtStatus      RFQStatus @default(RECEIVED)
   estimationDate DateTime?
   CDDueDate      DateTime?
+  CDTargetDate   DateTime?
   tools          String?
 
   connectionDesign Boolean @default(false)

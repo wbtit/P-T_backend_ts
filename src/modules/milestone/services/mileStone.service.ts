@@ -55,8 +55,12 @@ export class MileStoneService{
     async getById(id:string){
         return await mileStoneRepo.getById(id)
     }
-    async getByProjectId(id:string){
+    async getByProjectId(id:string,user:any){
+        if(user.role === "CONNECTION_DESIGNER_ENGINEER"){
+            return await mileStoneRepo.getByProjectIdForConnectionDesignerEngineer(id,user.id)
+        }
         return await mileStoneRepo.getByProject(id)
+
     }
     async delete(id:string){
         return await mileStoneRepo.delete(id)
