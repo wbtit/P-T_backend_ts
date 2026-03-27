@@ -75,7 +75,10 @@ export class MileStoneService{
         return await mileStoneRepo.getPendingSubmittalsForProjectManager(managerId)
     }
 
-    async getPendingSubmittalsByConnectionDesignerEngineer(connectionDesignerEngineerId:string){
-        return await mileStoneRepo.getPendingSubmittalsForConnectionDesignerEngineer(connectionDesignerEngineerId)
+    async getPendingSubmittalsByConnectionDesignerEngineer(params:{
+        userId:string,
+        connectionDesignerId?:string | null
+    }){
+        return await mileStoneRepo.getPendingSubmittalsForConnectionDesignerEngineer(params)
     }
 }

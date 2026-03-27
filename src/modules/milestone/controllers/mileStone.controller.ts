@@ -241,8 +241,14 @@ export class MileStoneController {
 }
 
 async handleGetPendingSubmittalsByConnectionDesignerEngineer(req:AuthenticateRequest,res:Response){
-  const id = req.user?.id;
-  const result= await mileStoneService.getPendingSubmittalsByConnectionDesignerEngineer(id!);
+  const userId = req.user?.id;
+  const connectionDesignerId = req.user?.connectionDesignerId;
+  
+
+  const result= await mileStoneService.getPendingSubmittalsByConnectionDesignerEngineer({
+    userId: userId!,
+    connectionDesignerId,
+  });
 
   return res.status(200).json({
     message: "Pending submittals for connection designer engineer fetched successfully",
