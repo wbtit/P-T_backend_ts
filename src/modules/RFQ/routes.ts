@@ -7,7 +7,7 @@ import { CreateRfqSchema,UpdateRfqSchema } from "./dtos";
 import { RfqResponseSchema} from "./RFQresponse";
 import { RfqResponseController } from "./RFQresponse";
 import {
-    rfqUploads,
+    rfqCombinedUploads,
     rfqResponseUploads,
     rfqFollowUpUploads,
 } from "../../utils/multerUploader.util";
@@ -27,7 +27,7 @@ const rfqFollowUpController = new RFQFollowUpController();
 router.post(
     "/",
     authMiddleware,
-    rfqUploads.array("files"),
+    rfqCombinedUploads,
     validate({body: CreateRfqSchema}),
     rfqController.handleCreateRfq.bind(rfqController)
 );
@@ -54,7 +54,7 @@ router.get(
 router.put(
     "/update/:id",
     authMiddleware,
-    rfqUploads.array("files"),
+    rfqCombinedUploads,
     validate({params:z.object({id:z.string()}),body:UpdateRfqSchema}),
     rfqController.handleUpdateRfq.bind(rfqController)
 );

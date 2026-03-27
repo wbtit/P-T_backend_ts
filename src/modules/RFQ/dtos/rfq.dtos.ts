@@ -23,6 +23,8 @@ export const CreateRfqSchema = z.object({
   salesPersonId: z.string().optional(),
   subject: z.string().min(2).max(100),
   description: z.string().min(2),
+  CDDescription: z.string().optional(),
+  RFQDueDate:z.date().optional(),
   status: z.enum(RFQStatus).default("SENT"),  
   tools: z.string().optional(),
   wbtStatus: z.enum(RFQStatus).default("RECEIVED"),
@@ -40,6 +42,13 @@ export const CreateRfqSchema = z.object({
 
   createdById: z.string().optional(),
   files: z
+      .union([
+        z.array(z.any()),
+        z.literal(null),
+      ])
+      .transform((val) => (val === null ? Prisma.JsonNull : val))
+      .optional(),
+  CDAttachments: z
       .union([
         z.array(z.any()),
         z.literal(null),

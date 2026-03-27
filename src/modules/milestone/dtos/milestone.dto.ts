@@ -17,6 +17,7 @@ export const createMileStoneSchema=z.object({
     project_id:z.string(),
     approvalDate:zDateString,
     CDApprovalDate:zDateString,
+    CDTargetDate:zDateString,
     status:z.enum(Status),
     stage:z.enum(Stage),
     reason:z.string().optional(),
@@ -39,7 +40,16 @@ export const createMileStoneResponseSchema = z.object({
       ])
       .transform(val => (val === null ? Prisma.JsonNull : val))
       .optional(),
+
+      CDAttachments: z
+      .union([
+        z.array(z.any()),
+        z.literal(null),
+      ])
+      .transform(val => (val === null ? Prisma.JsonNull : val))
+      .optional(),
 });
+    
 
 export const updateMileStoneResponseStatusSchema = z.object({
     status: z.enum(mileStoneResponseStatus),

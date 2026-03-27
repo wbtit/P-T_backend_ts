@@ -235,10 +235,11 @@ import { generateProjectSerial } from "../../../utils/serial.util";
         IFCompletionPercentage: IFCCompletionNumber
       }
      });
-     return project;
+     const { mileStones, ...projectWithoutMilestones } = project;
+     return projectWithoutMilestones;
      
    
-   }
+   }  
 
    async getByProjectNumber(projectNumber: string) {
      const project = await prisma.project.findUnique({

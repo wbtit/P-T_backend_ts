@@ -3,6 +3,62 @@ import { zodRequestBody } from "../../openapi/zod";
 import { CreateRfqSchema, UpdateRfqSchema } from "./dtos";
 import { RfqResponseSchema } from "./RFQresponse";
 import { CreateRFQFollowUpSchema, UpdateRFQFollowUpSchema } from "./followUps";
+import z from "zod";
+
+const rfqMultipartRequestBody = (schema: typeof CreateRfqSchema | typeof UpdateRfqSchema) => ({
+  required: true,
+  content: {
+    "multipart/form-data": {
+      schema: {
+        type: "object",
+        properties: {
+          projectNumber: { type: "string" },
+          projectName: { type: "string" },
+          location: { type: "string" },
+          bidPrice: { type: "string" },
+          fabricatorId: { type: "string" },
+          senderId: { type: "string" },
+          MTOManual: { oneOf: [{ type: "boolean" }, { type: "string" }] },
+          MTOStickModel: { type: "string" },
+          recipientId: { type: "string" },
+          multipleRecipients: { type: "array", items: { type: "string" } },
+          ConnectionDesignerIds: { type: "array", items: { type: "string" } },
+          connectionEngineerIds: { type: "array", items: { type: "string" } },
+          salesPersonId: { type: "string" },
+          subject: { type: "string" },
+          description: { type: "string" },
+          CDDescription: { type: "string" },
+          RFQDueDate: { type: "string", format: "date-time" },
+          status: { type: "string" },
+          tools: { type: "string" },
+          wbtStatus: { type: "string" },
+          estimationDate: { type: "string", format: "date-time" },
+          connectionDesign: { oneOf: [{ type: "boolean" }, { type: "string" }] },
+          customerDesign: { oneOf: [{ type: "boolean" }, { type: "string" }] },
+          miscDesign: { oneOf: [{ type: "boolean" }, { type: "string" }] },
+          detailingMain: { oneOf: [{ type: "boolean" }, { type: "string" }] },
+          detailingMisc: { oneOf: [{ type: "boolean" }, { type: "string" }] },
+          createdById: { type: "string" },
+          link: { type: "string", nullable: true },
+          files: {
+            type: "array",
+            items: { type: "string", format: "binary" },
+          },
+          CDAttachments: {
+            type: "array",
+            items: { type: "string", format: "binary" },
+          },
+        },
+      },
+    },
+    "application/json": {
+      schema: z.toJSONSchema(schema, {
+        io: "input",
+        unrepresentable: "any",
+      }),
+    },
+  },
+});
 
 export const rFQOpenApiDoc: ModuleOpenApiDoc = {
   tag: {
@@ -16,9 +72,9 @@ export const rFQOpenApiDoc: ModuleOpenApiDoc = {
         summary: "POST /rfq - Create RFQ (Supports multipleRecipients)",
         operationId: "post_RFQ_rfq",
         security: [{ bearerAuth: [] }],
-        requestBody: zodRequestBody(CreateRfqSchema),
+        requestBody: rfqMultipartRequestBody(CreateRfqSchema),
         responses: {
-          "200": { description: "Success" },
+          "201": { description: "Created" },
           "400": { description: "Bad Request" },
           "401": { description: "Unauthorized" },
           "500": { description: "Internal Server Error" }
@@ -357,7 +413,7 @@ export const rFQOpenApiDoc: ModuleOpenApiDoc = {
         parameters: [
           { in: "path", name: "id", required: true, schema: { type: "string" } },
         ],
-        requestBody: zodRequestBody(UpdateRfqSchema),
+        requestBody: rfqMultipartRequestBody(UpdateRfqSchema),
         responses: {
           "200": { description: "Success" },
           "400": { description: "Bad Request" },

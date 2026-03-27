@@ -619,8 +619,7 @@ model RFQ {
   status         RFQStatus @default(SENT)
   wbtStatus      RFQStatus @default(RECEIVED)
   estimationDate DateTime?
-  CDDueDate      DateTime?
-  CDTargetDate   DateTime?
+  RFQDueDate     DateTime?
   tools          String?
 
   connectionDesign Boolean @default(false)
@@ -629,6 +628,7 @@ model RFQ {
   detailingMain    Boolean @default(false)
   detailingMisc    Boolean @default(false)
   files            Json?   @default("[]")
+  CDAttachments    Json?   @default("[]")
   link             String? @default("")
 
   createdAt   DateTime  @default(now())
@@ -1064,6 +1064,7 @@ model MileStone {
   project_id            String             @db.Uuid
   approvalDate          DateTime?
   CDApprovalDate         DateTime?
+  CDTargetDate          DateTime?
   status                Status             @default(ACTIVE)
   stage                 Stage              @default(IFA)
   subject               String

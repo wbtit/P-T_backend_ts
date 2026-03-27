@@ -28,13 +28,19 @@ export class RFQController {
     const { id } = req.user;
 
     if(!id) throw new AppError('User not found', 404);
-    const uploadedFiles = mapUploadedFiles(
-      (req.files as Express.Multer.File[]) || [],
-      "rfq"
-    );  console.log("req.body of rfq: ", req.body);
+    const uploadedFileMap = (req.files as
+      | { [fieldname: string]: Express.Multer.File[] }
+      | undefined) ?? {};
+    const uploadedFiles = mapUploadedFiles(uploadedFileMap.files || [], "rfq");
+    const uploadedCDAttachments = mapUploadedFiles(
+      uploadedFileMap.CDAttachments || [],
+      "rfqCDAttachments"
+    );
+    console.log("req.body of rfq: ", req.body);
         const result = await rfqService.createRfq({
           ...req.body,
           files: uploadedFiles,
+          CDAttachments: uploadedCDAttachments,
         }, id);
         console.log("rfq created: ", result);
         const newrfq = result.newRfq as any;
@@ -74,14 +80,21 @@ export class RFQController {
             throw new AppError('User not found', 404);
         }
         const {id}=req.params;
-        
-        const uploadedFiles = mapUploadedFiles(
-      (req.files as Express.Multer.File[]) || [],
-      "rfq"
-    );
+
+        const uploadedFileMap = (req.files as
+          | { [fieldname: string]: Express.Multer.File[] }
+          | undefined) ?? {};
+        const uploadedFiles = mapUploadedFiles(uploadedFileMap.files || [], "rfq");
+        const uploadedCDAttachments = mapUploadedFiles(
+          uploadedFileMap.CDAttachments || [],
+          "rfqCDAttachments"
+        );
         const rfq = await rfqService.updateRfq(id, {
           ...req.body,
-          files: uploadedFiles
+          files: uploadedFiles.length ? uploadedFiles : req.body.files,
+          CDAttachments: uploadedCDAttachments.length
+            ? uploadedCDAttachments
+            : req.body.CDAttachments,
         });
         await notifyRfqStakeholders(rfq.id, RFQ_NOTIFY_ROLES, {
           type: "RFQ_UPDATED",

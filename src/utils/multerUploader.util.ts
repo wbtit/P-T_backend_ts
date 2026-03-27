@@ -109,6 +109,35 @@ export const fabricatorsUploads = createMulterUploader("public/fabricators", fab
 export const rfqDataMap = {};
 export const rfqUploads = createMulterUploader("public/rfq", rfqDataMap);
 
+export const rfqCDAttachmentsMap = {};
+
+export const rfqCombinedUploads = multer({
+  storage: multer.diskStorage({
+    destination: (_req, _file, cb) => {
+      const dir = _file.fieldname === "CDAttachments" ? "public/rfqCDAttachments" : "public/rfq";
+      if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+      cb(null, dir);
+    },
+    filename: (_req, file, cb) => {
+      const id = uuidv4();
+      const ext = path.extname(file.originalname);
+      const newName = `${id}${ext}`;
+      const map = file.fieldname === "CDAttachments" ? rfqCDAttachmentsMap : rfqDataMap;
+      map[newName] = {
+        originalName: file.originalname,
+        uuid: id,
+        mimetype: file.mimetype,
+      };
+      cb(null, newName);
+    },
+  }),
+  limits: { fileSize: 3000 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => validateFile(req, file, cb),
+}).fields([
+  { name: "files", maxCount: 50 },
+  { name: "CDAttachments", maxCount: 50 },
+]);
+
 export const rfqResponseMap = {};
 export const rfqResponseUploads = createMulterUploader("public/rfqresponse", rfqResponseMap);
 
