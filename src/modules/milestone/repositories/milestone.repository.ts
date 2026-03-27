@@ -181,4 +181,24 @@ export class MileStoneRepository{
         }
     })
  }
+
+ async getPendingSubmittalsForConnectionDesignerEngineer(connectionDesignerEngineerId:string){
+    return await prisma.mileStone.findMany({
+        where:{
+            project:{
+                pocOfConnectionDesigner:{
+                    some:{id:connectionDesignerEngineerId}
+                },
+                isDeleted: false,
+                status: { in: ["ACTIVE", "ONHOLD"] },
+            },
+            CDApprovalDate:{not:null},
+            mileStoneSubmittals:{none:{}}
+        },
+        include:{
+            project:{select:{name:true}},
+            fabricator:{select:{fabName:true}}
+        }
+    })
+ }
 }

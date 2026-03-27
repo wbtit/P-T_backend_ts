@@ -50,7 +50,8 @@ export const CreateProjectSchema = z.object({
   managerID: z.string().min(1),
   rfqId: z.string().min(1).optional(),
   clientProjectManagers: zStringArray.optional(),
-  // Deprecated single field (kept for backward compatibility)
+  pocOfConnectionDesigner: zStringArray.optional(),
+  
   clientProjectManager: z.string().min(1).optional(),
   status: z.enum(Status),
   stage: z.enum(Stage),

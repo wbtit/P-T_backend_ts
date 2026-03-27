@@ -8,6 +8,38 @@ import {
 } from "./dtos";
 import z from "zod";
 
+const milestoneResponseMultipartRequestBody = {
+  required: true,
+  content: {
+    "multipart/form-data": {
+      schema: {
+        type: "object",
+        properties: {
+          mileStoneId: { type: "string" },
+          mileStoneVersionId: { type: "string", format: "uuid" },
+          parentResponseId: { type: "string", format: "uuid" },
+          description: { type: "string" },
+          status: {
+            type: "string",
+            enum: ["PENDING", "APPROVED", "REJECTED", "DELAYED"],
+          },
+          files: {
+            type: "array",
+            items: { type: "string", format: "binary" },
+          },
+        },
+        required: ["mileStoneId", "mileStoneVersionId"],
+      },
+    },
+    "application/json": {
+      schema: z.toJSONSchema(createMileStoneResponseSchema, {
+        io: "input",
+        unrepresentable: "any",
+      }),
+    },
+  },
+};
+
 export const milestoneOpenApiDoc: ModuleOpenApiDoc = {
   tag: {
     name: "Milestone",
@@ -33,7 +65,7 @@ export const milestoneOpenApiDoc: ModuleOpenApiDoc = {
         security: [{ bearerAuth: [] }],
         requestBody: zodRequestBody(createMileStoneSchema),
         responses: {
-          "200": { description: "Success" },
+          "201": { description: "Created" },
           "400": { description: "Bad Request" },
           "401": { description: "Unauthorized" },
           "500": { description: "Internal Server Error" }
@@ -84,6 +116,19 @@ export const milestoneOpenApiDoc: ModuleOpenApiDoc = {
         tags: ["Milestone"],
         summary: "Get pending submittals for project manager",
         operationId: "get_milestone_pending_submittals_project_manager",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": { description: "Success" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
+    "/mileStone/pendingSubmittals/connectionDesignerEngineer": {
+      get: {
+        tags: ["Milestone"],
+        summary: "Get pending submittals for connection designer engineer",
+        operationId: "get_milestone_pending_submittals_connection_designer_engineer",
         security: [{ bearerAuth: [] }],
         responses: {
           "200": { description: "Success" },
@@ -203,9 +248,10 @@ export const milestoneOpenApiDoc: ModuleOpenApiDoc = {
         summary: "Create milestone response (version-aware)",
         operationId: "post_milestone_responses",
         security: [{ bearerAuth: [] }],
-        requestBody: zodRequestBody(createMileStoneResponseSchema),
+        requestBody: milestoneResponseMultipartRequestBody,
         responses: {
           "201": { description: "Created" },
+          "404": { description: "Milestone or version not found" },
           "400": { description: "Bad Request" },
           "401": { description: "Unauthorized" },
           "500": { description: "Internal Server Error" }
@@ -226,6 +272,7 @@ export const milestoneOpenApiDoc: ModuleOpenApiDoc = {
           "200": { description: "Success" },
           "400": { description: "Bad Request" },
           "401": { description: "Unauthorized" },
+          "404": { description: "Milestone response not found" },
           "500": { description: "Internal Server Error" }
         }
       },
@@ -243,6 +290,7 @@ export const milestoneOpenApiDoc: ModuleOpenApiDoc = {
           "200": { description: "Success" },
           "400": { description: "Bad Request" },
           "401": { description: "Unauthorized" },
+          "404": { description: "Milestone response not found" },
           "500": { description: "Internal Server Error" }
         }
       },
@@ -261,6 +309,7 @@ export const milestoneOpenApiDoc: ModuleOpenApiDoc = {
           "200": { description: "Success" },
           "400": { description: "Bad Request" },
           "401": { description: "Unauthorized" },
+          "404": { description: "Response or file not found" },
           "500": { description: "Internal Server Error" }
         }
       },

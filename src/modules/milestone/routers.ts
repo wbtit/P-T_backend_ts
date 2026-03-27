@@ -49,6 +49,8 @@ router.get("/pendingSubmittals/projectManager", authMiddleware, mileStoneCtrlr.h
 
 router.get("/pendingSubmittals/client",authMiddleware,mileStoneCtrlr.handleGetPendingSubmittalsByClient.bind(mileStoneCtrlr))
 
+router.get("/pendingSubmittals/connectionDesignerEngineer",authMiddleware,mileStoneCtrlr.handleGetPendingSubmittalsByConnectionDesignerEngineer.bind(mileStoneCtrlr))
+
 router.post(
     "/responses",
     authMiddleware,

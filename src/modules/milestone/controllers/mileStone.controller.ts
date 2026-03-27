@@ -239,4 +239,16 @@ export class MileStoneController {
       data: result,
     });
 }
+
+async handleGetPendingSubmittalsByConnectionDesignerEngineer(req:AuthenticateRequest,res:Response){
+  const id = req.user?.id;
+  const result= await mileStoneService.getPendingSubmittalsByConnectionDesignerEngineer(id!);
+
+  return res.status(200).json({
+    message: "Pending submittals for connection designer engineer fetched successfully",
+    success: true,
+    data: result,
+  });
+}
+
 }

@@ -41,6 +41,9 @@ import { generateProjectSerial } from "../../../utils/serial.util";
               },
             }
           : {}),
+          pocOfConnectionDesigner: data.pocOfConnectionDesigner ? {
+            connect: data.pocOfConnectionDesigner.map((id) => ({ id })),
+          } : undefined,
       },
       include: {
         stageHistory: true,
@@ -115,6 +118,9 @@ import { generateProjectSerial } from "../../../utils/serial.util";
             },
           }
         : {}),
+        pocOfConnectionDesigner: data.pocOfConnectionDesigner ? {
+          set: data.pocOfConnectionDesigner.map((id) => ({ id })),
+        } : undefined,
     },
     include: {
       stageHistory: true,
@@ -173,6 +179,13 @@ import { generateProjectSerial } from "../../../utils/serial.util";
         fabricator:{select:{
           files:true,
           fabName:true,
+          id:true
+        }},
+        pocOfConnectionDesigner:{select:{
+          firstName:true,
+          middleName:true,
+          lastName:true,
+          username:true,
           id:true
         }},
         manager:{select:{

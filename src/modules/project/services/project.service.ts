@@ -284,7 +284,7 @@ async expandProjectWbs(
      }
      if(user.role==="CONNECTION_DESIGNER_ENGINEER"){
       //only his assigned projects
-      projects = await projectRepository.getForConnectionDesignerEngineer(user.id);
+      projects = await projectRepository.getForConnectionDesignerEngineer(user.connectionDesignerId!);
      }
      if(user.role==="CLIENT_ADMIN"){
       //acts as fab represnentative
@@ -297,12 +297,6 @@ async expandProjectWbs(
      if(user.role==="STAFF"){
       //only his assigned projects
       projects = await projectRepository.getForStaff(user.id);
-     }
-     if(user.role ==="CONNECTION_DESIGNER_ENGINEER"){
-      if(!user.connectionDesignerId){
-        throw new AppError("Connection Designer Engineer profile not found", 404);
-      }
-      projects = await projectRepository.getForConnectionDesignerEngineer(user.connectionDesignerId);
      }
      return projects;
    }
