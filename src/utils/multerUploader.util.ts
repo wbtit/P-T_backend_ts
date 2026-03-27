@@ -103,13 +103,13 @@ export function createMulterUploader(uploadDir: string, fileMap: Record<string, 
 // -----------------------------------------------------------------------------
 // Uploaders for each module
 // -----------------------------------------------------------------------------
-export const fabricatorDataMap = {};
+export const fabricatorDataMap: Record<string, FileMeta> = {};
 export const fabricatorsUploads = createMulterUploader("public/fabricators", fabricatorDataMap);
 
-export const rfqDataMap = {};
+export const rfqDataMap: Record<string, FileMeta> = {};
 export const rfqUploads = createMulterUploader("public/rfq", rfqDataMap);
 
-export const rfqCDAttachmentsMap = {};
+export const rfqCDAttachmentsMap: Record<string, FileMeta> = {};
 
 export const rfqCombinedUploads = multer({
   storage: multer.diskStorage({
@@ -138,50 +138,50 @@ export const rfqCombinedUploads = multer({
   { name: "CDAttachments", maxCount: 50 },
 ]);
 
-export const rfqResponseMap = {};
+export const rfqResponseMap: Record<string, FileMeta> = {};
 export const rfqResponseUploads = createMulterUploader("public/rfqresponse", rfqResponseMap);
 
-export const rfqFollowUpMap = {};
+export const rfqFollowUpMap: Record<string, FileMeta> = {};
 export const rfqFollowUpUploads = createMulterUploader("public/rfqfollowup", rfqFollowUpMap);
 
-export const projectDataMap = {};
+export const projectDataMap: Record<string, FileMeta> = {};
 export const projectUploads = createMulterUploader("public/project", projectDataMap);
 
-export const estimationDataMap = {};
+export const estimationDataMap: Record<string, FileMeta> = {};
 export const estimationUploads = createMulterUploader("public/estimations", estimationDataMap);
 
-export const estimationTaskMap={}
+export const estimationTaskMap: Record<string, FileMeta> = {}
 export const estimationTaskUploads = createMulterUploader("public/estimationtasks", estimationTaskMap);
 
-export const estimationResponseMap = {};
+export const estimationResponseMap: Record<string, FileMeta> = {};
 export const estimationResponseUploads = createMulterUploader("public/estimationresponse", estimationResponseMap);
 
 
-export const rfiDataMap = {};
+export const rfiDataMap: Record<string, FileMeta> = {};
 export const rfiUploads = createMulterUploader("public/rfi", rfiDataMap);
 
-export const rfiResponseDataMap = {};
+export const rfiResponseDataMap: Record<string, FileMeta> = {};
 export const rfiResponseUploads = createMulterUploader("public/rfiresponse", rfiResponseDataMap);
 
-export const submittalsDataMap = {};
+export const submittalsDataMap: Record<string, FileMeta> = {};
 export const submittalUploads = createMulterUploader("public/submittals", submittalsDataMap);
 
-export const submittalsResDataMap = {};
+export const submittalsResDataMap: Record<string, FileMeta> = {};
 export const submittalResponseUploads = createMulterUploader("public/submittalsresponse", submittalsResDataMap);
 
-export const mileStoneResponseDataMap = {};
+export const mileStoneResponseDataMap: Record<string, FileMeta> = {};
 export const mileStoneResponseUploads = createMulterUploader("public/milestoneresponse", mileStoneResponseDataMap);
 
-export const coDataMap = {};
+export const coDataMap: Record<string, FileMeta> = {};
 export const coUploads = createMulterUploader("public/changeorder", coDataMap);
 
-export const coResponseDataMap = {};
+export const coResponseDataMap: Record<string, FileMeta> = {};
 export const coResponseUploads = createMulterUploader("public/coresponse", coResponseDataMap);
 
-export const designDrawingsDataMap = {};
+export const designDrawingsDataMap: Record<string, FileMeta> = {};
 export const designUploads = createMulterUploader("public/designdrawings", designDrawingsDataMap);
 
-export const designDrawingResponseDataMap = {};
+export const designDrawingResponseDataMap: Record<string, FileMeta> = {};
 export const designResponseUploads = createMulterUploader("public/designdrawingresponse", designDrawingResponseDataMap);
 
 export const connectionDesignerDataMap: Record<string, FileMeta> = {}
@@ -256,20 +256,20 @@ export const vendorCombinedUploads = multer({
   { name: 'certificates', maxCount: 50 }
 ]);
 
-export const notesDataMap={}
+export const notesDataMap: Record<string, FileMeta> = {}
 export const notesUploads = createMulterUploader("public/notes", notesDataMap);
 
-export const teamMeetingNotesDataMap = {};
+export const teamMeetingNotesDataMap: Record<string, FileMeta> = {};
 export const teamMeetingNotesUploads = createMulterUploader(
   "public/team-meeting-notes",
   teamMeetingNotesDataMap
 );
 
-export const teamMeetingNotesResponsesDataMap = {};
+export const teamMeetingNotesResponsesDataMap: Record<string, FileMeta> = {};
 export const teamMeetingNotesResponsesUploads = createMulterUploader(
   "public/team-meeting-notes-responses",
   teamMeetingNotesResponsesDataMap
 );
 
-export const userProfilePicMap = {};
+export const userProfilePicMap: Record<string, FileMeta> = {};
 export const userProfilePicUploads = createMulterUploader("public/userprofiles", userProfilePicMap);
