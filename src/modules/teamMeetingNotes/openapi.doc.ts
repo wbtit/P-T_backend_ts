@@ -12,7 +12,7 @@ const teamMeetingNotesFormBody = {
           content: { type: "string" },
           meetingId: { type: "string", format: "uuid" },
           projectId: { type: "string", format: "uuid" },
-          visibility: { type: "string", enum: ["INTERNAL", "EXTERNAL"] },
+          taggedUserIds: { type: "array", items: { type: "string", format: "uuid" } },
           files: { type: "array", items: { type: "string", format: "binary" } },
         },
       },
@@ -29,7 +29,7 @@ const teamMeetingNotesUpdateFormBody = {
         properties: {
           title: { type: "string" },
           content: { type: "string" },
-          visibility: { type: "string", enum: ["INTERNAL", "EXTERNAL"] },
+          taggedUserIds: { type: "array", items: { type: "string", format: "uuid" } },
           files: { type: "array", items: { type: "string", format: "binary" } },
         },
       },

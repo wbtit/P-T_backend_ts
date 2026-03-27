@@ -373,6 +373,7 @@ model User {
   projectAssistMemberships        ProjectAssist[]            @relation("ProjectAssistUser")
   assignedProjectAssists          ProjectAssist[]            @relation("ProjectAssistAssignedBy")
   teamMeetingNotesCreated         TeamMeetingNotes[]         @relation("TeamMeetingNotesCreatedBy")
+  teamMeetingNotesTagged          TeamMeetingNotes[]         @relation("TeamMeetingNotesTaggedUsers")
   teamMeetingNoteResponsesCreated TeamMeetingNoteResponse[]  @relation("TeamMeetingNoteResponseCreatedBy")
   clientProjectManagers           Project[]                  @relation("clientProjectManagerProjects")
 
@@ -847,6 +848,7 @@ model TeamMeetingNotes {
   meeting   Meeting?                  @relation("MeetingTeamMeetingNotes", fields: [meetingId], references: [id], onDelete: Cascade)
   project   Project                   @relation("ProjectTeamMeetingNotes", fields: [projectId], references: [id], onDelete: Cascade)
   createdBy User                      @relation("TeamMeetingNotesCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
+  taggedUsers User[]                  @relation("TeamMeetingNotesTaggedUsers")
   responses TeamMeetingNoteResponse[] @relation("TeamMeetingNoteResponses")
 
   @@index([projectId])

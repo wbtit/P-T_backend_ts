@@ -6,8 +6,9 @@ import { CreateTeamMeetingNoteInput, UpdateTeamMeetingNoteInput } from "../dtos"
 export class TeamMeetingNotesRepository {
   async create(data: CreateTeamMeetingNoteInput) {
     return prisma.$transaction(async (tx) => {
+      const { taggedUserIds, ...restData } = data;
       const project = await tx.project.findUnique({
-        where: { id: data.projectId },
+        where: { id: restData.projectId },
         select: { projectCode: true, projectNumber: true },
       });
       if (!project) {
@@ -16,23 +17,60 @@ export class TeamMeetingNotesRepository {
 
       const serialNo = await generateProjectScopedSerial(tx, {
         prefix: SERIAL_PREFIX.TEAM_MEETING_NOTES,
-        projectScopeId: data.projectId,
+        projectScopeId: restData.projectId,
         projectToken: project.projectCode ?? project.projectNumber,
       });
 
       return tx.teamMeetingNotes.create({
         data: {
-          ...data,
+          ...restData,
           serialNo,
+          taggedUsers: taggedUserIds?.length
+            ? {
+                connect: taggedUserIds.map((id) => ({ id })),
+              }
+            : undefined,
+        },
+        include: {
+          taggedUsers: {
+            select: {
+              id: true,
+              firstName: true,
+              middleName: true,
+              lastName: true,
+              email: true,
+            },
+          },
         },
       });
     });
   }
 
   async update(id: string, data: UpdateTeamMeetingNoteInput) {
+    const { taggedUserIds, ...restData } = data;
     return prisma.teamMeetingNotes.update({
       where: { id },
-      data,
+      data: {
+        ...restData,
+        ...(taggedUserIds
+          ? {
+              taggedUsers: {
+                set: taggedUserIds.map((taggedUserId) => ({ id: taggedUserId })),
+              },
+            }
+          : {}),
+      },
+      include: {
+        taggedUsers: {
+          select: {
+            id: true,
+            firstName: true,
+            middleName: true,
+            lastName: true,
+            email: true,
+          },
+        },
+      },
     });
   }
 
@@ -53,8 +91,17 @@ export class TeamMeetingNotesRepository {
             middleName:true,
             lastName:true
           }
-      }
-    }
+      },
+      taggedUsers: {
+        select: {
+          id: true,
+          firstName: true,
+          middleName: true,
+          lastName: true,
+          email: true,
+        },
+      },
+    },
     });
   }
 
@@ -69,7 +116,16 @@ export class TeamMeetingNotesRepository {
             middleName:true,
             lastName:true
           }
-      }
+      },
+      taggedUsers: {
+        select: {
+          id: true,
+          firstName: true,
+          middleName: true,
+          lastName: true,
+          email: true,
+        },
+      },
     },
       orderBy: { createdAt: "desc" },
     });
@@ -86,7 +142,16 @@ export class TeamMeetingNotesRepository {
             middleName:true,
             lastName:true
           }
-      }
+      },
+      taggedUsers: {
+        select: {
+          id: true,
+          firstName: true,
+          middleName: true,
+          lastName: true,
+          email: true,
+        },
+      },
     },
       orderBy: { createdAt: "desc" },
     });
@@ -103,7 +168,16 @@ export class TeamMeetingNotesRepository {
             middleName:true,
             lastName:true
           }
-      }
+      },
+      taggedUsers: {
+        select: {
+          id: true,
+          firstName: true,
+          middleName: true,
+          lastName: true,
+          email: true,
+        },
+      },
     }
     });
   }

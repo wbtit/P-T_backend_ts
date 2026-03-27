@@ -4,6 +4,7 @@ import { mapUploadedFiles } from "../../uploads/fileUtil";
 import { TeamMeetingNotesService } from "../services/teamMeetingNotes.service";
 import { AppError } from "../../../config/utils/AppError";
 import { notifyProjectStakeholders } from "../../../utils/notifyProjectStakeholders";
+import { notifyUsers } from "../../../utils/notifyByRole";
 import { UserRole, Prisma } from "@prisma/client";
 import prisma from "../../../config/database/client";
 
@@ -39,10 +40,25 @@ export class TeamMeetingNotesController {
       });
     }
 
+    const taggedUserIds = Array.isArray((note as any)?.taggedUsers)
+      ? (note as any).taggedUsers
+          .map((user: { id?: string }) => user.id)
+          .filter((userId: string | undefined): userId is string => Boolean(userId) && userId !== createdById)
+      : [];
+
+    await notifyUsers(taggedUserIds, {
+      type: "TEAM_MEETING_NOTE_TAGGED",
+      title: "You were tagged in a team meeting note",
+      message: `You were tagged in '${note.title}'.`,
+      noteId: note.id,
+      projectId: note.projectId,
+      timestamp: new Date(),
+    });
+
     return res.status(201).json(note);
   }
 
-  async update(req: Request, res: Response) {
+  async update(req: AuthenticateRequest, res: Response) {
     const { id } = req.params;
     const data = req.body;
     const files = mapUploadedFiles((req.files as Express.Multer.File[]) || [], "team-meeting-notes");
@@ -68,6 +84,24 @@ export class TeamMeetingNotesController {
         timestamp: new Date(),
       });
     }
+
+    const taggedUserIds = Array.isArray((note as any)?.taggedUsers)
+      ? (note as any).taggedUsers
+          .map((user: { id?: string }) => user.id)
+          .filter(
+            (userId: string | undefined): userId is string =>
+              Boolean(userId) && userId !== req.user?.id
+          )
+      : [];
+
+    await notifyUsers(taggedUserIds, {
+      type: "TEAM_MEETING_NOTE_TAGGED",
+      title: "You were tagged in a team meeting note",
+      message: `You were tagged in '${note.title}'.`,
+      noteId: note.id,
+      projectId: note.projectId,
+      timestamp: new Date(),
+    });
 
     return res.status(200).json(note);
   }

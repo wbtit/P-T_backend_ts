@@ -1,4 +1,4 @@
-import { Prisma, TeamMeetingNoteVisibility } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import z from "zod";
 
 export const TeamMeetingNoteSchema = z.object({
@@ -6,7 +6,7 @@ export const TeamMeetingNoteSchema = z.object({
   content: z.string().min(1),
   meetingId: z.string().uuid().optional(),
   projectId: z.string().uuid(),
-  visibility: z.nativeEnum(TeamMeetingNoteVisibility).optional(),
+  taggedUserIds: z.array(z.string().uuid()).optional(),
   files: z
     .union([z.array(z.any()), z.literal(null)])
     .transform((val) => (val === null ? Prisma.JsonNull : val))
@@ -16,7 +16,7 @@ export const TeamMeetingNoteSchema = z.object({
 export const TeamMeetingNoteUpdateSchema = z.object({
   title: z.string().min(1).optional(),
   content: z.string().min(1).optional(),
-  visibility: z.nativeEnum(TeamMeetingNoteVisibility).optional(),
+  taggedUserIds: z.array(z.string().uuid()).optional(),
   files: z
     .union([z.array(z.any()), z.literal(null)])
     .transform((val) => (val === null ? Prisma.JsonNull : val))

@@ -14,7 +14,7 @@ export class TeamMeetingNoteResponseService {
   async create(noteId: string, userId: string, data: CreateTeamMeetingNoteResponseInput) {
     const note = await prisma.teamMeetingNotes.findUnique({
       where: { id: noteId },
-      select: { id: true, projectId: true, visibility: true },
+      select: { id: true, projectId: true },
     });
     if (!note) throw new AppError("Team meeting note not found", 404);
 
