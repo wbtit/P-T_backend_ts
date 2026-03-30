@@ -209,9 +209,12 @@ async getPendingSubmittalsForProjectManager(managerId: string) {
   // -----------------------------
   // SENT SUBMITTALS
   // -----------------------------
-  async sentSubmittals(senderId: string) {
+  async sentSubmittals(senderId: string, projectId?: string) {
     return prisma.submittals.findMany({
-      where: { sender_id: senderId },
+      where: {
+        sender_id: senderId,
+        ...(projectId ? { project_id: projectId } : {}),
+      },
       include: {
         project: { select: { name: true } },
         fabricator: true,

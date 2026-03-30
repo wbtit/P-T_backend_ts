@@ -214,6 +214,23 @@ export const submittalsOpenApiDoc: ModuleOpenApiDoc = {
         }
       },
     },
+    "/submittal/sent/{projectId}": {
+      get: {
+        tags: ["Submittals"],
+        summary: "GET /submittal/sent/{projectId}",
+        operationId: "get_submittals_submittal_sent_projectId",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { in: "path", name: "projectId", required: true, schema: { type: "string" } },
+        ],
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
     "/submittal/{id}": {
       get: {
         tags: ["Submittals"],

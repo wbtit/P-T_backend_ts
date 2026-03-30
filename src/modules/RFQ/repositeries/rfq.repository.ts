@@ -267,10 +267,11 @@ export class RFQRepository {
         });
 
     }
-    async sentTouser(senderId:string){
+    async sentTouser(senderId:string, projectId?: string){
         return await prisma.rFQ.findMany({
             where:{
-                senderId
+                senderId,
+                ...(projectId ? { project: { id: projectId } } : {}),
             },
             include: {
                 sender: true,

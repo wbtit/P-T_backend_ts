@@ -55,6 +55,12 @@ router.get(
   authMiddleware,
   submittalController.handleSent.bind(submittalController)
 );
+router.get(
+  "/sent/:projectId",
+  authMiddleware,
+  validate({ params: z.object({ projectId: z.string() }) }),
+  submittalController.handleSent.bind(submittalController)
+);
 
 router.get(
   "/pending/clientAdmin",

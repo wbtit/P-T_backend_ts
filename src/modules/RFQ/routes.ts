@@ -82,6 +82,12 @@ router.get(
     authMiddleware,
     rfqController.handleSents.bind(rfqController)
 );
+router.get(
+    "/sents/:projectId",
+    authMiddleware,
+    validate({params:z.object({projectId:z.string()})}),
+    rfqController.handleSents.bind(rfqController)
+);
 
 
 

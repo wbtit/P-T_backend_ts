@@ -207,6 +207,23 @@ export const cOOpenApiDoc: ModuleOpenApiDoc = {
         }
       },
     },
+    "/changeOrder/sent/{projectId}": {
+      get: {
+        tags: ["ChangeOrder"],
+        summary: "GET /changeOrder/sent/{projectId}",
+        operationId: "get_CO_changeOrder_sent_projectId",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { in: "path", name: "projectId", required: true, schema: { type: "string" } },
+        ],
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
     "/changeOrder/table/{id}": {
       put: {
         tags: ["ChangeOrder"],

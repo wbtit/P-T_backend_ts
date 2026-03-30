@@ -143,8 +143,9 @@ async handlePendingCOsForClient(req: AuthenticateRequest, res: Response) {
   async handleSentCos(req: AuthenticateRequest, res: Response) {
     if (!req.user) throw new AppError("User not found", 404);
     const { id } = req.user;
+    const { projectId } = req.params;
 
-    const cos = await coService.sentCos(id);
+    const cos = await coService.sentCos(id, projectId);
     res.status(200).json({
       status: "success",
       data: cos,

@@ -64,6 +64,12 @@ router.get(
   authMiddleware,
   coController.handleSentCos.bind(coController)
 );
+router.get(
+  "/sent/:projectId",
+  authMiddleware,
+  validate({ params: z.object({ projectId: z.string() }) }),
+  coController.handleSentCos.bind(coController)
+);
 
 router.get(
   "/pending/clientAdmin",

@@ -50,8 +50,8 @@ export class COService {
     return await corepo.findPendingCOsForClient(userId);
   }
   // Get all COs sent by a user
-  async sentCos(userId: string) {
-    return await corepo.sentCos(userId);
+  async sentCos(userId: string, projectId?: string) {
+    return await corepo.sentCos(userId, projectId);
   }
 
   // Get all COs received by a user (approved ones)

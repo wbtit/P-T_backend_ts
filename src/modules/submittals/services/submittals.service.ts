@@ -104,8 +104,8 @@ export class SubmittalService {
   // ----------------------------------
   // LISTS
   // ----------------------------------
-  async sent(userId: string) {
-    return submittalRepo.sentSubmittals(userId);
+  async sent(userId: string, projectId?: string) {
+    return submittalRepo.sentSubmittals(userId, projectId);
   }
 
   async received(userId: string, projectId?: string) {

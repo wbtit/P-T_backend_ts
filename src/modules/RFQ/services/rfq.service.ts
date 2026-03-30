@@ -116,8 +116,8 @@ export class RFQService {
     async getAllRFQ(){
         return await rfqrepo.getAllRFQ();
     }
-    async sents(senderId:string){
-        return await rfqrepo.sentTouser(senderId);
+    async sents(senderId:string, projectId?: string){
+        return await rfqrepo.sentTouser(senderId, projectId);
     }
     async received(recipientId:string, projectId?: string){
         return await rfqrepo.Inbox(recipientId, projectId);

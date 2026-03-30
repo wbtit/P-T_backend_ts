@@ -251,7 +251,8 @@ export class SubmittalController {
   ) {
     if (!req.user) throw new AppError("User not found", 404);
 
-    const sent = await submittalService.sent(req.user.id);
+    const { projectId } = req.params;
+    const sent = await submittalService.sent(req.user.id, projectId);
 
     res.status(200).json({
       status: "success",
