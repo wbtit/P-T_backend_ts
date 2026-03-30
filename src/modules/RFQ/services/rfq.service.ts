@@ -23,9 +23,8 @@ export class RFQService {
   async createRfq(data: CreateRfqInput, createdById: string) {
     const senderId = data.senderId ?? createdById;
     const projectNumber = data.projectNumber?.trim();
-    if (!projectNumber) {
-      throw new AppError("projectNumber is required for RFQ serial generation", 400);
-    }
+    const projectName = data.projectName?.trim();
+    const location = data.location?.trim() || "GENERAL";
 
     const duplicateRfq = await rfqrepo.getbyProjectNameAndLocation(
       data.projectName,
@@ -55,15 +54,19 @@ export class RFQService {
       }
       const multipleRecipients = fabricator.wbtFabricatorPointOfContact.map(poc => poc.id);
 
-      const project = await tx.project.findUnique({
-        where: { projectNumber },
-        select: { id: true, projectCode: true },
-      });
+      const project = projectNumber
+        ? await tx.project.findUnique({
+            where: { projectNumber },
+            select: { id: true, projectCode: true },
+          })
+        : null;
 
       const serialNo = await generateProjectScopedSerial(tx, {
         prefix: SERIAL_PREFIX.RFQ,
-        projectScopeId: project?.id ?? `PROJECT_NUMBER:${projectNumber.toUpperCase()}`,
-        projectToken: project?.projectCode ?? projectNumber,
+        projectScopeId:
+          project?.id ??
+          `RFQ_ENTRY:${(projectName || "RFQ").toUpperCase()}:${location.toUpperCase()}`,
+        projectToken: project?.projectCode ?? projectNumber ?? projectName ?? "RFQ",
       });
 
       return rfqrepo.createWithTx(tx, {
