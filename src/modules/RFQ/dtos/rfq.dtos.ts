@@ -6,6 +6,27 @@ const zBooleanString = z
   .union([z.boolean(), z.string()])
   .transform(val => val === true || val === "true");
 
+const zStringArrayFromFormData = z.preprocess((val) => {
+  if (val === undefined || val === null || val === "") return undefined;
+  if (Array.isArray(val)) return val;
+  if (typeof val === "string") {
+    try {
+      const parsed = JSON.parse(val);
+      if (Array.isArray(parsed)) return parsed;
+    } catch {
+      return [val];
+    }
+  }
+  return val;
+}, z.array(z.string()).optional());
+
+const zDateString = z.preprocess(
+  (val) => {
+    if (val === undefined || val === null || val === "") return undefined;
+    return typeof val === "string" ? new Date(val) : val;
+  },
+  z.date().optional()
+);
 
 export const CreateRfqSchema = z.object({
   projectNumber: z.string().max(100).optional(),
@@ -17,14 +38,14 @@ export const CreateRfqSchema = z.object({
   MTOManual: zBooleanString.optional(),
   MTOStickModel: z.string().optional(),
   recipientId: z.string().optional(),
-  multipleRecipients: z.array(z.string()).optional(),
-  ConnectionDesignerIds: z.array(z.string()).optional(),
-  connectionEngineerIds: z.array(z.string()).optional(),
+  multipleRecipients: zStringArrayFromFormData,
+  ConnectionDesignerIds: zStringArrayFromFormData,
+  connectionEngineerIds: zStringArrayFromFormData,
   salesPersonId: z.string().optional(),
   subject: z.string().min(2).max(100),
   description: z.string().min(2),
   CDDescription: z.string().optional(),
-  RFQDueDate:z.date().optional(),
+  RFQDueDate: zDateString,
   status: z.enum(RFQStatus).default("SENT"),  
   tools: z.string().optional(),
   wbtStatus: z.enum(RFQStatus).default("RECEIVED"),
