@@ -284,9 +284,10 @@ export class RFQRepository {
         })
     }
 
-    async Inbox(recipientId:string){
+    async Inbox(recipientId:string, projectId?: string){
         return await prisma.rFQ.findMany({
             where: {
+                ...(projectId ? { project: { id: projectId } } : {}),
                 OR: [
                     { recipientId },
                     { multipleRecipients: { some: { id: recipientId } } }

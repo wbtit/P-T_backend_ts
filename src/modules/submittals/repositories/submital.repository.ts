@@ -225,9 +225,10 @@ async getPendingSubmittalsForProjectManager(managerId: string) {
   // -----------------------------
   // RECEIVED SUBMITTALS
   // -----------------------------
-  async receivedSubmittals(recipientId: string) {
+  async receivedSubmittals(recipientId: string, projectId?: string) {
     return prisma.submittals.findMany({
       where: {
+        ...(projectId ? { project_id: projectId } : {}),
         OR: [
           { recepient_id: recipientId },
           { multipleRecipients: { some: { id: recipientId } } }

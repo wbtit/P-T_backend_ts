@@ -225,9 +225,10 @@ export class RFIRepository{
     });
     }
 
-    async inbox(userId:string){
+    async inbox(userId:string,projectId:string){
         return await prisma.rFI.findMany({
       where: {
+        project_id: projectId,
         OR: [
           { recepient_id: userId },
           { multipleRecipients: { some: { id: userId } } }

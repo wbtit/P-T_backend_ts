@@ -78,6 +78,12 @@ router.get(
   authMiddleware,
   submittalController.handleReceived.bind(submittalController)
 );
+router.get(
+  "/received/:projectId",
+  authMiddleware,
+  validate({ params: z.object({ projectId: z.string() }) }),
+  submittalController.handleReceived.bind(submittalController)
+);
 
 // LIST SUBMITTALS BY PROJECT
 router.get(

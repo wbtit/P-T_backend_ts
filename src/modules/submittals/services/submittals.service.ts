@@ -108,8 +108,8 @@ export class SubmittalService {
     return submittalRepo.sentSubmittals(userId);
   }
 
-  async received(userId: string) {
-    return submittalRepo.receivedSubmittals(userId);
+  async received(userId: string, projectId?: string) {
+    return submittalRepo.receivedSubmittals(userId, projectId);
   }
 
   async findByProject(projectId: string) {

@@ -91,6 +91,12 @@ router.get(
   authMiddleware,
   coController.handleReceivedCos.bind(coController)
 );
+router.get(
+  "/received/:projectId",
+  authMiddleware,
+  validate({ params: z.object({ projectId: z.string() }) }),
+  coController.handleReceivedCos.bind(coController)
+);
 
 router.get(
   "/pendingCOs",

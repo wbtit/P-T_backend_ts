@@ -124,9 +124,10 @@ export class CORepository {
       })
     }
         
-    async recivedCos(userId:string){
+    async recivedCos(userId:string, projectId?: string){
         return await prisma.changeOrder.findMany({
             where:{
+                ...(projectId ? { project: projectId } : {}),
                 OR: [
                     { recipients: userId },
                     { multipleRecipients: { some: { id: userId } } }

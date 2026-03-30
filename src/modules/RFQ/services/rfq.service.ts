@@ -119,8 +119,8 @@ export class RFQService {
     async sents(senderId:string){
         return await rfqrepo.sentTouser(senderId);
     }
-    async received(recipientId:string){
-        return await rfqrepo.Inbox(recipientId);
+    async received(recipientId:string, projectId?: string){
+        return await rfqrepo.Inbox(recipientId, projectId);
     }
 
     async getPendingForClientAdmin(userId:string){

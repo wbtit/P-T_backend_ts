@@ -55,8 +55,8 @@ export class COService {
   }
 
   // Get all COs received by a user (approved ones)
-  async receivedCos(userId: string) {
-    return await corepo.recivedCos(userId);
+  async receivedCos(userId: string, projectId?: string) {
+    return await corepo.recivedCos(userId, projectId);
   }
 
   // Get all COs for a project

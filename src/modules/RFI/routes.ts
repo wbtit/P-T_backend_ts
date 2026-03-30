@@ -87,7 +87,7 @@ router.get(
 )
 
 router.get(
-  "/received",
+  "/received/:projectId",
   authMiddleware,
   rfiController.handleReceived.bind(rfiController)
 );

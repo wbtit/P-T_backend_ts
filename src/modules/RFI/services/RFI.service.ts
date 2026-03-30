@@ -44,8 +44,8 @@ export class RFIService {
     return await rfiRepo.senderRFI(userId);
   }
 
-  async received(userId: string) {
-    return await rfiRepo.inbox(userId);
+  async received(userId: string, projectId: string) {
+    return await rfiRepo.inbox(userId, projectId);
   }
 
   async getPendingForClientAdmin(userId: string) {

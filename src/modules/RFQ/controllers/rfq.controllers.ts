@@ -181,7 +181,8 @@ export class RFQController {
             throw new AppError('User not found', 404);
         }
         const { id } = req.user;
-        const rfq = await rfqService.received(id);
+        const { projectId } = req.params;
+        const rfq = await rfqService.received(id, projectId);
         res.status(200).json({
             status: 'success',
             data: rfq,
