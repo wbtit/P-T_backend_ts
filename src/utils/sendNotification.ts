@@ -1,5 +1,6 @@
 import redis from "../redis/redisClient";
 import prisma from "../config/database/client";
+import { enrichNotificationPayloadWithProject } from "./projectNotificationPayload";
 
 /**
  * Send notification to a user using the new socket architecture.
@@ -9,6 +10,7 @@ import prisma from "../config/database/client";
 export const sendNotification = async (userId:string, payload:any) => {
   try {
     console.log(` Attempting to send notification to user ${userId}`);
+    const enrichedPayload = await enrichNotificationPayloadWithProject(payload);
 
     // Get all active socket connections for the user
     const socketIds = await redis.sMembers(`socket:${userId}`);
@@ -22,7 +24,7 @@ export const sendNotification = async (userId:string, payload:any) => {
       );
 
       // Emit to all sockets belonging to this user
-      (globalThis as any).io.to(`user:${userId}`).emit("customNotification", payload);
+      (globalThis as any).io.to(`user:${userId}`).emit("customNotification", enrichedPayload);
       delivered = true;
     } else {
       console.warn(` User ${userId} OFFLINE → will store undelivered notification`);
@@ -33,7 +35,7 @@ export const sendNotification = async (userId:string, payload:any) => {
     await prisma.notification.create({
       data: {
         userID: userId,
-        payload,
+        payload: enrichedPayload,
         delivered, // dynamically set
       },
     });

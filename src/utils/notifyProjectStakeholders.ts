@@ -1,6 +1,7 @@
 import { UserRole } from "@prisma/client";
 import prisma from "../config/database/client";
 import { notifyUsers } from "./notifyByRole";
+import { enrichNotificationPayloadWithProject } from "./projectNotificationPayload";
 
 export async function notifyProjectStakeholders(projectId: string, roles: UserRole[], payload: any): Promise<void> {
   if (!roles.length) return;
@@ -125,5 +126,11 @@ export async function notifyProjectStakeholders(projectId: string, roles: UserRo
     }
   });
 
-  await notifyUsers(Array.from(recipientIds), payload);
+  const enrichedPayload = await enrichNotificationPayloadWithProject({
+    ...payload,
+    projectId,
+    projectName: project.name,
+  });
+
+  await notifyUsers(Array.from(recipientIds), enrichedPayload);
 }
