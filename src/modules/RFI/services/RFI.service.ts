@@ -40,8 +40,8 @@ export class RFIService {
     return filtered;
   }
 
-  async sent(userId: string) {
-    return await rfiRepo.senderRFI(userId);
+  async sent(userId: string, projectId?: string) {
+    return await rfiRepo.senderRFI(userId, projectId);
   }
 
   async received(userId: string, projectId: string) {

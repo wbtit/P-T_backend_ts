@@ -14,10 +14,14 @@ const rfiRepo= new RFIRepository();
 export class RFIResponseService{
     async create(rfiId:string,userId:string,data:CreateRfiResDto){
         await rfiRepo.updateStatus(rfiId)
-        if(data.parentResponseId!=undefined){
-            await rfiResRepo.updateWithParentId(data)
+        const responseData = {
+            ...data,
+            rfiId,
+        };
+        if(responseData.parentResponseId!=undefined){
+            await rfiResRepo.updateWithParentId(responseData)
     }
-        return await rfiResRepo.create(data,userId)
+        return await rfiResRepo.create(responseData,userId)
     }
 
     async getById(id:string){

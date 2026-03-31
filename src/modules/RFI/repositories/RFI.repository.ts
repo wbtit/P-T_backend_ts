@@ -210,10 +210,11 @@ export class RFIRepository{
     }
     
     
-    async senderRFI(userId:string){
+    async senderRFI(userId:string, projectId?: string){
         return await prisma.rFI.findMany({
       where: {
         sender_id: userId,
+        ...(projectId ? { project_id: projectId } : {}),
       },
       include: {
         fabricator: true,
@@ -231,7 +232,17 @@ export class RFIRepository{
         project_id: projectId,
         OR: [
           { recepient_id: userId },
-          { multipleRecipients: { some: { id: userId } } }
+          { multipleRecipients: { some: { id: userId } } },
+          {
+            rfiresponse: {
+              some: {
+                OR: [
+                  { userId },
+                  { childResponses: { some: { userId } } },
+                ],
+              },
+            },
+          },
         ]
       },
       include: {

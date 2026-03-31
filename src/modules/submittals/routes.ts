@@ -56,7 +56,7 @@ router.get(
   submittalController.handleSent.bind(submittalController)
 );
 router.get(
-  "/sent/:projectId",
+  "/sents/:projectId",
   authMiddleware,
   validate({ params: z.object({ projectId: z.string() }) }),
   submittalController.handleSent.bind(submittalController)

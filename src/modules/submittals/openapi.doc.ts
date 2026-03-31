@@ -214,7 +214,7 @@ export const submittalsOpenApiDoc: ModuleOpenApiDoc = {
         }
       },
     },
-    "/submittal/sent/{projectId}": {
+    "/submittal/sents/{projectId}": {
       get: {
         tags: ["Submittals"],
         summary: "GET /submittal/sent/{projectId}",

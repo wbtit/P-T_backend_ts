@@ -234,7 +234,17 @@ async getPendingSubmittalsForProjectManager(managerId: string) {
         ...(projectId ? { project_id: projectId } : {}),
         OR: [
           { recepient_id: recipientId },
-          { multipleRecipients: { some: { id: recipientId } } }
+          { multipleRecipients: { some: { id: recipientId } } },
+          {
+            submittalsResponse: {
+              some: {
+                OR: [
+                  { userId: recipientId },
+                  { childResponses: { some: { userId: recipientId } } },
+                ],
+              },
+            },
+          },
         ]
       },
       include: {

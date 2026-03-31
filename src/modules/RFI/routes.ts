@@ -63,6 +63,12 @@ router.get(
   authMiddleware,
   rfiController.handleSent.bind(rfiController)
 );
+router.get(
+  "/sents/:projectId",
+  authMiddleware,
+  validate({ params: z.object({ projectId: z.string() }) }),
+  rfiController.handleSent.bind(rfiController)
+);
 
 router.get(
   "/pending/clientAdmin",

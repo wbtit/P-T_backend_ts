@@ -128,20 +128,6 @@ export const rFIOpenApiDoc: ModuleOpenApiDoc = {
         }
       },
     },
-    "/rfi/received": {
-      get: {
-        tags: ["RFI"],
-        summary: "GET /rfi/received",
-        operationId: "get_RFI_rfi_received",
-        security: [{ bearerAuth: [] }],
-        responses: {
-          "200": { description: "Success" },
-          "400": { description: "Bad Request" },
-          "401": { description: "Unauthorized" },
-          "500": { description: "Internal Server Error" }
-        }
-      },
-    },
     "/rfi/received/{projectId}": {
       get: {
         tags: ["RFI"],
@@ -235,6 +221,23 @@ export const rFIOpenApiDoc: ModuleOpenApiDoc = {
         summary: "GET /rfi/sents",
         operationId: "get_RFI_rfi_sents",
         security: [{ bearerAuth: [] }],
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
+    "/rfi/sents/{projectId}": {
+      get: {
+        tags: ["RFI"],
+        summary: "GET /rfi/sents/{projectId}",
+        operationId: "get_RFI_rfi_sents_projectId",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { in: "path", name: "projectId", required: true, schema: { type: "string" } },
+        ],
         responses: {
           "200": { description: "Success" },
           "400": { description: "Bad Request" },

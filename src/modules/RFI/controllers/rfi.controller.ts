@@ -193,8 +193,9 @@ export class RFIController {
   async handleSent(req: AuthenticateRequest, res: Response) {
     if (!req.user) throw new AppError("User not found", 404);
     const { id: userId } = req.user;
+    const { projectId } = req.params;
 
-    const sentRfis = await rfiService.sent(userId);
+    const sentRfis = await rfiService.sent(userId, projectId);
 
     res.status(200).json({
       status: "success",
