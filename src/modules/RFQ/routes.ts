@@ -103,6 +103,12 @@ router.get(
     rfqController.handleReceived.bind(rfqController)
 );
 router.get(
+    "/project/:projectId",
+    authMiddleware,
+    validate({params:z.object({projectId:z.string()})}),
+    rfqController.handleFindByProject.bind(rfqController)
+);
+router.get(
     "/:rfqId/files/:fileId",
     authMiddleware,
     validate({params:z.object({rfqId:z.string(),fileId:z.string()})}),

@@ -86,10 +86,19 @@ router.get(
   rfiController.handleNewForProjectManager.bind(rfiController)
 )
 
+
+
 router.get(
   "/received/:projectId",
   authMiddleware,
   rfiController.handleReceived.bind(rfiController)
+);
+
+router.get(
+  "/project/:projectId",
+  authMiddleware,
+  validate({ params: z.object({ projectId: z.string() }) }),
+  rfiController.handleFindByProject.bind(rfiController)
 );
 
 router.get(

@@ -189,6 +189,15 @@ export class RFQController {
             data: rfq,
         });
     }
+    async handleFindByProject(req: Request, res: Response) {
+        const { projectId } = req.params;
+        const rfqs = await rfqService.findByProject(projectId);
+
+        res.status(200).json({
+            status: 'success',
+            data: rfqs,
+        });
+    }
     async handleCloseRfq(req:AuthenticateRequest,res:Response){
         const {id}=req.params
         const rfq = await rfqService.closeRfq(id);

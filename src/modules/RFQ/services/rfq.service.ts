@@ -123,6 +123,10 @@ export class RFQService {
         return await rfqrepo.Inbox(recipientId, projectId);
     }
 
+    async findByProject(projectId: string) {
+        return await rfqrepo.findByProject(projectId);
+    }
+
     async getPendingForClientAdmin(userId:string){
         return await rfqrepo.findPendingRFQsForClientAdmin(userId);
     }

@@ -159,6 +159,23 @@ export const rFIOpenApiDoc: ModuleOpenApiDoc = {
         }
       },
     },
+    "/rfi/project/{projectId}": {
+      get: {
+        tags: ["RFI"],
+        summary: "GET /rfi/project/{projectId}",
+        operationId: "get_RFI_rfi_project_projectId",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { in: "path", name: "projectId", required: true, schema: { type: "string" } },
+        ],
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
     "/rfi/response/viewFile/{rfiResId}/{fileId}": {
       get: {
         tags: ["RFI"],

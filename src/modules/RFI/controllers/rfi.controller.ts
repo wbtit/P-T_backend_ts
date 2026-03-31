@@ -216,6 +216,16 @@ export class RFIController {
     });
   }
 
+  async handleFindByProject(req: Request, res: Response) {
+    const { projectId } = req.params;
+    const rfis = await rfiService.findByProject(projectId);
+
+    res.status(200).json({
+      status: "success",
+      data: rfis,
+    });
+  }
+
   // CLOSE RFI
   async handleCloseRfi(req: Request, res: Response) {
     const { id } = req.params;

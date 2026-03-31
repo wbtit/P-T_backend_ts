@@ -306,6 +306,35 @@ export class RFQRepository {
         })
     }
 
+    async findByProject(projectId: string) {
+        return await prisma.rFQ.findMany({
+            where: {
+                project: { id: projectId },
+            },
+            include: {
+                sender: true,
+                recipient: true,
+                multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
+                salesPerson: true,
+                responses: true,
+                fabricator: true,
+                project: { select: { name: true } },
+                connectionEngineers: { select: { firstName: true, lastName: true, id: true } },
+                connectionDesignerRFQ: {
+                    include: {
+                        CDEngineers: true,
+                        CDQuotations: true,
+                    }
+                },
+                CDQuotas: {
+                    include: {
+                        connectionDesigner: { select: { name: true } },
+                    }
+                },
+            }
+        });
+    }
+
     async closeRfq(id: string) {
         return await prisma.rFQ.update({
             where: { id },

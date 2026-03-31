@@ -245,6 +245,22 @@ export class RFIRepository{
     });
     }
 
+    async findByProject(projectId: string) {
+        return await prisma.rFI.findMany({
+      where: {
+        project_id: projectId,
+      },
+      include: {
+        fabricator: true,
+        project: {select:{name:true}},
+        recepients:  {select:{firstName:true,middleName:true,lastName:true,email:true,id:true}},
+        multipleRecipients: {select:{id:true,firstName:true,lastName:true,email:true}},
+        sender :  {select:{firstName:true,middleName:true,lastName:true,email:true,id:true}},
+        rfiresponse:true,
+      },
+    });
+    }
+
     async updateStatus(id:string){
         return await prisma.rFI.update({
       where: {

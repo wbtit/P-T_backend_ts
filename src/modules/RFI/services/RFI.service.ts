@@ -48,6 +48,10 @@ export class RFIService {
     return await rfiRepo.inbox(userId, projectId);
   }
 
+  async findByProject(projectId: string) {
+    return await rfiRepo.findByProject(projectId);
+  }
+
   async getPendingForClientAdmin(userId: string) {
     return await rfiRepo.findPendingRFIsForClientAdmin(userId);
   }
