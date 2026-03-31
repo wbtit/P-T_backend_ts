@@ -91,6 +91,10 @@ export const permissions: PermissionsConfig = {
     ...createDefaultRolePermissions(),
     // CEO can mark specific permissions here
   },
+  'CONNECTION_DESIGNER_ADMIN': {
+    ...createDefaultRolePermissions(),
+    // CEO can mark specific permissions here
+  },
   'CONNECTION_DESIGNER_ENGINEER': {
     ...createDefaultRolePermissions(),
     // CEO can mark specific permissions here

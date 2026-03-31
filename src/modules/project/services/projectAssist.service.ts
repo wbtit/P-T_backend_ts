@@ -14,6 +14,8 @@ const ELEVATED_ROLES = new Set<UserJwt["role"]>([
   "SYSTEM_ADMIN",
   "DEPT_MANAGER",
   "PROJECT_MANAGER_OFFICER",
+  "CONNECTION_DESIGNER_ADMIN",
+  "CONNECTION_DESIGNER_ENGINEER",
 ]);
 
 const prismaWithAssists = prisma as typeof prisma & {

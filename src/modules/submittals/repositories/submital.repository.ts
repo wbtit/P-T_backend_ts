@@ -261,6 +261,7 @@ async getPendingSubmittalsForProjectManager(managerId: string) {
         sender: true,
         recepients: true,
         currentVersion: true,
+        multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
       },
       orderBy: { date: "desc" },
     });
