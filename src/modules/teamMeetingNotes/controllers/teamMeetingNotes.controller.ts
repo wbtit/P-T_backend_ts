@@ -3,10 +3,12 @@ import { AuthenticateRequest } from "../../../middleware/authMiddleware";
 import { mapUploadedFiles } from "../../uploads/fileUtil";
 import { TeamMeetingNotesService } from "../services/teamMeetingNotes.service";
 import { AppError } from "../../../config/utils/AppError";
-import { notifyProjectStakeholders } from "../../../utils/notifyProjectStakeholders";
+import { notifyProjectStakeholdersByRole } from "../../../utils/notifyProjectStakeholders";
 import { notifyUsers } from "../../../utils/notifyByRole";
 import { UserRole, Prisma } from "@prisma/client";
 import prisma from "../../../config/database/client";
+import { sendNotification } from "../../../utils/sendNotification";
+import { buildCreatorNotification, buildRoleScopedNotification } from "../../../utils/stakeholderNotificationMessages";
 
 const TEAM_MEETING_NOTE_ROLES: UserRole[] = [
   "ADMIN",
@@ -30,14 +32,28 @@ export class TeamMeetingNotesController {
     const note = await service.create({ ...data, files, createdById });
 
     if (note && note.projectId) {
-      await notifyProjectStakeholders(note.projectId, TEAM_MEETING_NOTE_ROLES, {
-        type: "PROJECT_NOTE_CREATED",
+      await sendNotification(createdById, buildCreatorNotification("PROJECT_NOTE_CREATED", {
         title: "Project Note Created",
-        message: `A new project note '${note.title}' was created.`,
+        message: `You created project note '${note.title}'.`,
+      }, {
         noteId: note.id,
         projectId: note.projectId,
         timestamp: new Date(),
-      });
+      }));
+      await notifyProjectStakeholdersByRole(note.projectId, TEAM_MEETING_NOTE_ROLES, (role) =>
+        buildRoleScopedNotification(role, {
+          type: "PROJECT_NOTE_CREATED",
+          basePayload: { noteId: note.id, projectId: note.projectId, timestamp: new Date() },
+          templates: {
+            creator: { title: "", message: "" },
+            external: { title: "Project Note Received", message: `Project note '${note.title}' was shared with you.` },
+            oversight: { title: "Project Note Created", message: `Project note '${note.title}' was created and is available for monitoring.` },
+            internal: { title: "Project Note Created", message: `A new project note '${note.title}' was created.` },
+            default: { title: "Project Note Created", message: `A new project note '${note.title}' was created.` },
+          },
+        }),
+        { excludeUserIds: [createdById] }
+      );
     }
 
     const taggedUserIds = Array.isArray((note as any)?.taggedUsers)
@@ -75,14 +91,20 @@ export class TeamMeetingNotesController {
     const note = await service.update(id, { ...data, files: parsedFiles });
 
     if (note && note.projectId) {
-      await notifyProjectStakeholders(note.projectId, TEAM_MEETING_NOTE_ROLES, {
-        type: "PROJECT_NOTE_UPDATED",
-        title: "Project Note Updated",
-        message: `Project note '${note.title}' was updated.`,
-        noteId: note.id,
-        projectId: note.projectId,
-        timestamp: new Date(),
-      });
+      await notifyProjectStakeholdersByRole(note.projectId, TEAM_MEETING_NOTE_ROLES, (role) =>
+        buildRoleScopedNotification(role, {
+          type: "PROJECT_NOTE_UPDATED",
+          basePayload: { noteId: note.id, projectId: note.projectId, timestamp: new Date() },
+          templates: {
+            creator: { title: "", message: "" },
+            external: { title: "Project Note Updated", message: `Updated project note '${note.title}' was shared with you.` },
+            oversight: { title: "Project Note Updated", message: `Project note '${note.title}' was updated.` },
+            internal: { title: "Project Note Updated", message: `Project note '${note.title}' was updated.` },
+            default: { title: "Project Note Updated", message: `Project note '${note.title}' was updated.` },
+          },
+        }),
+        { excludeUserIds: req.user?.id ? [req.user.id] : [] }
+      );
     }
 
     const taggedUserIds = Array.isArray((note as any)?.taggedUsers)

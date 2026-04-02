@@ -3,9 +3,11 @@ import { AuthenticateRequest } from "../../../middleware/authMiddleware";
 import { AppError } from "../../../config/utils/AppError";
 import { DesignDrawingsService } from "../services";
 import { mapUploadedFiles } from "../../uploads/fileUtil";
-import { notifyProjectStakeholders } from "../../../utils/notifyProjectStakeholders";
+import { notifyProjectStakeholdersByRole } from "../../../utils/notifyProjectStakeholders";
 import prisma from "../../../config/database/client";
 import { UserRole } from "@prisma/client";
+import { sendNotification } from "../../../utils/sendNotification";
+import { buildCreatorNotification, buildRoleScopedNotification } from "../../../utils/stakeholderNotificationMessages";
 
 const designService = new DesignDrawingsService();
 const DESIGN_DRAWING_NOTIFY_ROLES: UserRole[] = [
@@ -41,13 +43,27 @@ export class DesignDrawingsController {
     };
 
     const drawing = await designService.create(data, userId);
-    await notifyProjectStakeholders(drawing.projectId, DESIGN_DRAWING_NOTIFY_ROLES, {
-      type: "DESIGN_DRAWING_UPLOADED",
+    await sendNotification(userId, buildCreatorNotification("DESIGN_DRAWING_UPLOADED", {
       title: "Design Drawing Uploaded",
-      message: "A design drawing was uploaded.",
+      message: "You uploaded a design drawing.",
+    }, {
       designDrawingId: drawing.id,
       timestamp: new Date(),
-    });
+    }));
+    await notifyProjectStakeholdersByRole(drawing.projectId, DESIGN_DRAWING_NOTIFY_ROLES, (role) =>
+      buildRoleScopedNotification(role, {
+        type: "DESIGN_DRAWING_UPLOADED",
+        basePayload: { designDrawingId: drawing.id, timestamp: new Date() },
+        templates: {
+          creator: { title: "", message: "" },
+          external: { title: "Design Drawing Received", message: "A design drawing was received for your action." },
+          oversight: { title: "Design Drawing Uploaded", message: "A design drawing was uploaded and is available for monitoring." },
+          internal: { title: "New Design Drawing Uploaded", message: "A new design drawing was uploaded in the project." },
+          default: { title: "Design Drawing Uploaded", message: "A design drawing was uploaded." },
+        },
+      }),
+      { excludeUserIds: [userId] }
+    );
 
     res.status(201).json({
       message: "Design Drawing created successfully",
@@ -86,16 +102,23 @@ export class DesignDrawingsController {
   }
 
   // ✅ UPDATE DESIGN DRAWING (Stage / Description)
-  async handleUpdateStage(req: Request, res: Response) {
+  async handleUpdateStage(req: AuthenticateRequest, res: Response) {
     const { id } = req.params;
     const updated = await designService.updateStage(id, req.body);
-    await notifyProjectStakeholders(updated.projectId, DESIGN_DRAWING_NOTIFY_ROLES, {
-      type: "DESIGN_DRAWING_UPDATED",
-      title: "Design Drawing Updated",
-      message: "A design drawing was updated.",
-      designDrawingId: updated.id,
-      timestamp: new Date(),
-    });
+    await notifyProjectStakeholdersByRole(updated.projectId, DESIGN_DRAWING_NOTIFY_ROLES, (role) =>
+      buildRoleScopedNotification(role, {
+        type: "DESIGN_DRAWING_UPDATED",
+        basePayload: { designDrawingId: updated.id, timestamp: new Date() },
+        templates: {
+          creator: { title: "", message: "" },
+          external: { title: "Design Drawing Updated", message: "An updated design drawing was shared with you." },
+          oversight: { title: "Design Drawing Updated", message: "A design drawing was updated." },
+          internal: { title: "Design Drawing Updated", message: "A design drawing was updated in the project." },
+          default: { title: "Design Drawing Updated", message: "A design drawing was updated." },
+        },
+      }),
+      { excludeUserIds: req.user?.id ? [req.user.id] : [] }
+    );
     res.status(200).json({
       message: "Design Drawing updated successfully",
       status: "success",
@@ -130,16 +153,28 @@ export class DesignDrawingsController {
     );
     const design = await prisma.designDrawings.findUnique({ where: { id: req.body?.designDrawingsId } });
     if (design) {
-      await notifyProjectStakeholders(design.projectId, DESIGN_DRAWING_NOTIFY_ROLES, {
-        type: "DESIGN_DRAWING_RESPONSE_RECEIVED",
-        title: "Design Drawing Response Received",
-        message: "A design drawing response was submitted.",
+      await sendNotification(userId, buildCreatorNotification("DESIGN_DRAWING_RESPONSE_RECEIVED", {
+        title: "Design Drawing Response Submitted",
+        message: "You submitted a design drawing response.",
+      }, {
         designDrawingId: req.body?.designDrawingsId,
         designDrawingResponseId: response.id,
         timestamp: new Date(),
-      }, {
-        excludeUserIds: [userId],
-      });
+      }));
+      await notifyProjectStakeholdersByRole(design.projectId, DESIGN_DRAWING_NOTIFY_ROLES, (role) =>
+        buildRoleScopedNotification(role, {
+          type: "DESIGN_DRAWING_RESPONSE_RECEIVED",
+          basePayload: { designDrawingId: req.body?.designDrawingsId, designDrawingResponseId: response.id, timestamp: new Date() },
+          templates: {
+            creator: { title: "", message: "" },
+            external: { title: "Design Drawing Response Received", message: "A design drawing response was received for your action." },
+            oversight: { title: "Design Drawing Response Received", message: "A design drawing response was submitted and is available for review." },
+            internal: { title: "Design Drawing Response Received", message: "A design drawing response was submitted in the project." },
+            default: { title: "Design Drawing Response Received", message: "A design drawing response was submitted." },
+          },
+        }),
+        { excludeUserIds: [userId] }
+      );
     }
 
     res.status(201).json({

@@ -1,7 +1,9 @@
 import { AuthenticateRequest } from "../../../middleware/authMiddleware";
 import {Request,Response} from "express"
 import { ClientCommunicationService } from "../services";
-import { notifyProjectStakeholders } from "../../../utils/notifyProjectStakeholders";
+import { notifyProjectStakeholdersByRole } from "../../../utils/notifyProjectStakeholders";
+import { sendNotification } from "../../../utils/sendNotification";
+import { buildCreatorNotification, buildRoleScopedNotification } from "../../../utils/stakeholderNotificationMessages";
 
 
 const communicationService = new ClientCommunicationService();
@@ -12,13 +14,26 @@ export class ClientCommunicationController {
       req.body,
       req.user!.id
     );
-    await notifyProjectStakeholders(data.projectId, ["DEPUTY_MANAGER", "OPERATION_EXECUTIVE"], {
-      type: "CLIENT_COMM_LOG_CREATED",
+    await sendNotification(req.user!.id, buildCreatorNotification("CLIENT_COMM_LOG_CREATED", {
       title: "Client Communication Log Created",
-      message: "A new client communication log was created.",
+      message: "You created a client communication log.",
+    }, {
       communicationId: data.id,
       timestamp: new Date(),
-    });
+    }));
+    await notifyProjectStakeholdersByRole(data.projectId, ["DEPUTY_MANAGER", "OPERATION_EXECUTIVE"], (role) =>
+      buildRoleScopedNotification(role, {
+        type: "CLIENT_COMM_LOG_CREATED",
+        basePayload: { communicationId: data.id, timestamp: new Date() },
+        templates: {
+          creator: { title: "", message: "" },
+          external: { title: "Client Communication Log Created", message: "A new client communication log was created." },
+          oversight: { title: "Client Communication Log Created", message: "A new client communication log was created and is available for monitoring." },
+          internal: { title: "Client Communication Log Created", message: "A new client communication log was created." },
+        },
+      }),
+      { excludeUserIds: [req.user!.id] }
+    );
     res.status(201).json({ status: "success", data });
   }
 

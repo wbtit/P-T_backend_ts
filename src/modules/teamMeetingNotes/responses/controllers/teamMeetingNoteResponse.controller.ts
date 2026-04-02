@@ -3,9 +3,11 @@ import { AuthenticateRequest } from "../../../../middleware/authMiddleware";
 import { AppError } from "../../../../config/utils/AppError";
 import { mapUploadedFiles } from "../../../uploads/fileUtil";
 import { TeamMeetingNoteResponseService } from "../services/teamMeetingNoteResponse.service";
-import { notifyProjectStakeholders } from "../../../../utils/notifyProjectStakeholders";
+import { notifyProjectStakeholdersByRole } from "../../../../utils/notifyProjectStakeholders";
 import { UserRole } from "@prisma/client";
 import prisma from "../../../../config/database/client";
+import { sendNotification } from "../../../../utils/sendNotification";
+import { buildCreatorNotification, buildRoleScopedNotification } from "../../../../utils/stakeholderNotificationMessages";
 
 const service = new TeamMeetingNoteResponseService();
 const NOTE_RESPONSE_NOTIFY_ROLES: UserRole[] = [
@@ -46,17 +48,30 @@ export class TeamMeetingNoteResponseController {
     });
 
     if (note && note.projectId) {
-      await notifyProjectStakeholders(note.projectId, NOTE_RESPONSE_NOTIFY_ROLES, {
-        type: req.body?.parentResponseId ? "PROJECT_NOTE_REPLY" : "PROJECT_NOTE_RESPONSE",
-        title: req.body?.parentResponseId ? "Project Note Reply" : "Project Note Response",
-        message: "A new project note response was submitted.",
+      const type = req.body?.parentResponseId ? "PROJECT_NOTE_REPLY" : "PROJECT_NOTE_RESPONSE";
+      await sendNotification(userId, buildCreatorNotification(type, {
+        title: req.body?.parentResponseId ? "Project Note Reply Added" : "Project Note Response Submitted",
+        message: req.body?.parentResponseId ? "You added a reply to the project note thread." : "You submitted a project note response.",
+      }, {
         noteId,
         noteResponseId: response.id,
         projectId: note.projectId,
         timestamp: new Date(),
-      }, {
-        excludeUserIds: [userId],
-      });
+      }));
+      await notifyProjectStakeholdersByRole(note.projectId, NOTE_RESPONSE_NOTIFY_ROLES, (role) =>
+        buildRoleScopedNotification(role, {
+          type,
+          basePayload: { noteId, noteResponseId: response.id, projectId: note.projectId, timestamp: new Date() },
+          templates: {
+            creator: { title: "", message: "" },
+            external: { title: req.body?.parentResponseId ? "Project Note Reply Received" : "Project Note Response Received", message: "A new project note response was received for your action." },
+            oversight: { title: req.body?.parentResponseId ? "Project Note Reply" : "Project Note Response", message: "A new project note response was submitted and is available for review." },
+            internal: { title: req.body?.parentResponseId ? "Project Note Reply" : "Project Note Response", message: "A new project note response was submitted in the project." },
+            default: { title: req.body?.parentResponseId ? "Project Note Reply" : "Project Note Response", message: "A new project note response was submitted." },
+          },
+        }),
+        { excludeUserIds: [userId] }
+      );
     }
 
     return res.status(201).json({

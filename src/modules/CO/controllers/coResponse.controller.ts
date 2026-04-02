@@ -3,9 +3,11 @@ import { AuthenticateRequest } from "../../../middleware/authMiddleware";
 import { AppError } from "../../../config/utils/AppError";
 import { CoResponseService } from "../services";
 import { mapUploadedFiles } from "../../uploads/fileUtil";
-import { notifyProjectStakeholders } from "../../../utils/notifyProjectStakeholders";
+import { notifyProjectStakeholdersByRole } from "../../../utils/notifyProjectStakeholders";
 import prisma from "../../../config/database/client";
 import { UserRole } from "@prisma/client";
+import { sendNotification } from "../../../utils/sendNotification";
+import { buildCreatorNotification, buildRoleScopedNotification } from "../../../utils/stakeholderNotificationMessages";
 
 const coResponseService = new CoResponseService();
 const CO_NOTIFY_ROLES: UserRole[] = [
@@ -46,27 +48,35 @@ export class CoResponseController {
     const status = (response as any)?.Status;
     const co = await prisma.changeOrder.findUnique({ where: { id: coId } });
     if (co) {
-      await notifyProjectStakeholders(co.project, CO_NOTIFY_ROLES, {
-        type:
-          status === "ACCEPT"
-            ? "CO_ACCEPTED_BY_FABRICATOR"
-            : status === "REJECT"
-            ? "CO_REJECTED_BY_FABRICATOR"
-            : "CO_RESPONSE_RECEIVED",
-        title:
-          status === "ACCEPT"
-            ? "Change Order Accepted by Fabricator"
-            : status === "REJECT"
-            ? "Change Order Rejected by Fabricator"
-            : "CO Response / Reply Received",
-        message: "A change-order response was submitted.",
+      const type =
+        status === "ACCEPT"
+          ? "CO_ACCEPTED_BY_FABRICATOR"
+          : status === "REJECT"
+          ? "CO_REJECTED_BY_FABRICATOR"
+          : "CO_RESPONSE_RECEIVED";
+      await sendNotification(userId, buildCreatorNotification(type, {
+        title: "Change Order Response Submitted",
+        message: "You submitted a change-order response.",
+      }, {
         coId,
         coResponseId: response.id,
         status,
         timestamp: new Date(),
-      }, {
-        excludeUserIds: [userId],
-      });
+      }));
+      await notifyProjectStakeholdersByRole(co.project, CO_NOTIFY_ROLES, (role) =>
+        buildRoleScopedNotification(role, {
+          type,
+          basePayload: { coId, coResponseId: response.id, status, timestamp: new Date() },
+          templates: {
+            creator: { title: "", message: "" },
+            external: { title: "Change Order Response Received", message: "A change-order response was received for your action." },
+            oversight: { title: "Change Order Response Received", message: "A change-order response was submitted and is available for review." },
+            internal: { title: "Change Order Response Received", message: "A change-order response was submitted in the project." },
+            default: { title: "CO Response / Reply Received", message: "A change-order response was submitted." },
+          },
+        }),
+        { excludeUserIds: [userId] }
+      );
     }
 
     res.status(201).json({

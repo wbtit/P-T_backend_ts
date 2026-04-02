@@ -5,9 +5,11 @@ import { RFQService } from "../services/rfq.service";
 import { mapUploadedFiles } from "../../uploads/fileUtil";
 import { sendEmail, getCCEmails } from "../../../services/mailServices/mailconfig";
 import { rfqhtmlContent } from "../../../services/mailServices/mailtemplates/rfqMailtemplate";
-import { notifyRfqStakeholders } from "../../../utils/notifyRfqStakeholders";
+import { notifyRfqStakeholdersByRole } from "../../../utils/notifyRfqStakeholders";
 import { UserRole } from "@prisma/client";
 import prisma from "../../../config/database/client";
+import { sendNotification } from "../../../utils/sendNotification";
+import { buildCreatorNotification, buildRoleScopedNotification } from "../../../utils/stakeholderNotificationMessages";
 
 const rfqService = new RFQService();
 const RFQ_NOTIFY_ROLES: UserRole[] = [
@@ -99,13 +101,27 @@ export class RFQController {
               subject: newrfq.subject,
               text: newrfq.description,
             });
-                await notifyRfqStakeholders(newrfq.id, RFQ_NOTIFY_ROLES, {
-                  type: "RFQ_CREATED",
+                await sendNotification(id, buildCreatorNotification("RFQ_CREATED", {
                   title: "RFQ Created / Sent",
-                  message: `RFQ '${newrfq.subject}' was created and sent.`,
+                  message: `You created and sent RFQ '${newrfq.subject}'.`,
+                }, {
                   rfqId: newrfq.id,
                   timestamp: new Date(),
-                });
+                }));
+                await notifyRfqStakeholdersByRole(newrfq.id, RFQ_NOTIFY_ROLES, (role) =>
+                  buildRoleScopedNotification(role, {
+                    type: "RFQ_CREATED",
+                    basePayload: { rfqId: newrfq.id, timestamp: new Date() },
+                    templates: {
+                      creator: { title: "", message: "" },
+                      external: { title: "RFQ Received", message: `RFQ '${newrfq.subject}' was received for your response.` },
+                      oversight: { title: "RFQ Created / Sent", message: `RFQ '${newrfq.subject}' was created and sent for monitoring.` },
+                      internal: { title: "New RFQ Created", message: `A new RFQ '${newrfq.subject}' was created.` },
+                      default: { title: "RFQ Created / Sent", message: `RFQ '${newrfq.subject}' was created and sent.` },
+                    },
+                  }),
+                  { excludeUserIds: [id] }
+                );
                 res.status(201).json({
                     status: 'success',
                     data: result,
@@ -132,14 +148,24 @@ export class RFQController {
             ? uploadedCDAttachments
             : req.body.CDAttachments,
         });
-        await notifyRfqStakeholders(rfq.id, RFQ_NOTIFY_ROLES, {
-          type: "RFQ_UPDATED",
-          title: "RFQ Updated",
-          message: `RFQ '${rfq.subject}' was updated.`,
-          rfqId: rfq.id,
-          status: (rfq as any).status ?? req.body?.status ?? null,
-          timestamp: new Date(),
-        });
+        await notifyRfqStakeholdersByRole(rfq.id, RFQ_NOTIFY_ROLES, (role) =>
+          buildRoleScopedNotification(role, {
+            type: "RFQ_UPDATED",
+            basePayload: {
+              rfqId: rfq.id,
+              status: (rfq as any).status ?? req.body?.status ?? null,
+              timestamp: new Date(),
+            },
+            templates: {
+              creator: { title: "", message: "" },
+              external: { title: "RFQ Updated", message: `Updated RFQ '${rfq.subject}' was shared with you.` },
+              oversight: { title: "RFQ Updated", message: `RFQ '${rfq.subject}' was updated.` },
+              internal: { title: "RFQ Updated", message: `RFQ '${rfq.subject}' was updated.` },
+              default: { title: "RFQ Updated", message: `RFQ '${rfq.subject}' was updated.` },
+            },
+          }),
+          { excludeUserIds: [req.user.id] }
+        );
         res.status(200).json({
             status: 'success',
             data: rfq,

@@ -5,11 +5,12 @@ import { SubmittalService } from "../services";
 import { mapUploadedFiles } from "../../uploads/fileUtil";
 import { sendEmail, getCCEmails } from "../../../services/mailServices/mailconfig";
 import { submittalhtmlContent } from "../../../services/mailServices/mailtemplates/submittalMailtemplate";
-import { notifyProjectStakeholders } from "../../../utils/notifyProjectStakeholders";
+import { notifyProjectStakeholdersByRole } from "../../../utils/notifyProjectStakeholders";
 import { UserRole } from "@prisma/client";
 import { ProjectAssistService } from "../../project/services/projectAssist.service";
 import { sendNotification } from "../../../utils/sendNotification";
 import prisma from "../../../config/database/client";
+import { buildCreatorNotification, buildRoleScopedNotification } from "../../../utils/stakeholderNotificationMessages";
 
 const submittalService = new SubmittalService();
 const projectAssistService = new ProjectAssistService();
@@ -122,13 +123,27 @@ export class SubmittalController {
         html: submittalhtmlContent(submittal),
       });
     }
-    await notifyProjectStakeholders(submittal.project_id, SUBMITTAL_NOTIFY_ROLES, {
-      type: "SUBMITTAL_CREATED",
+    await sendNotification(userId, buildCreatorNotification("SUBMITTAL_CREATED", {
       title: "Submittal Created / Sent",
-      message: `Submittal '${submittal.subject}' was created and sent.`,
+      message: `You created and sent submittal '${submittal.subject}'.`,
+    }, {
       submittalId: submittal.id,
       timestamp: new Date(),
-    });
+    }));
+    await notifyProjectStakeholdersByRole(submittal.project_id, SUBMITTAL_NOTIFY_ROLES, (role) =>
+      buildRoleScopedNotification(role, {
+        type: "SUBMITTAL_CREATED",
+        basePayload: { submittalId: submittal.id, timestamp: new Date() },
+        templates: {
+          creator: { title: "", message: "" },
+          external: { title: "Submittal Received", message: `Submittal '${submittal.subject}' was received for your response.` },
+          oversight: { title: "Submittal Created / Sent", message: `Submittal '${submittal.subject}' was created and sent for monitoring.` },
+          internal: { title: "New Submittal Created", message: `A new submittal '${submittal.subject}' was created in the project.` },
+          default: { title: "Submittal Created / Sent", message: `Submittal '${submittal.subject}' was created and sent.` },
+        },
+      }),
+      { excludeUserIds: [userId] }
+    );
     if (access.isAssist) {
       await sendNotification(access.projectManagerId, {
         type: "PM_ASSIST_SUBMITTAL_CREATED",
@@ -312,14 +327,28 @@ export class SubmittalController {
       },
       user.id
     );
-    await notifyProjectStakeholders(existingSubmittal.project_id, SUBMITTAL_NOTIFY_ROLES, {
-      type: "SUBMITTAL_NEW_VERSION",
+    await sendNotification(user.id, buildCreatorNotification("SUBMITTAL_NEW_VERSION", {
       title: "New Submittal Version Uploaded",
-      message: "A new submittal version has been uploaded.",
+      message: `You uploaded a new version for submittal '${existingSubmittal.subject ?? "this submittal"}'.`,
+    }, {
       submittalId,
       versionId: version.id,
       timestamp: new Date(),
-    });
+    }));
+    await notifyProjectStakeholdersByRole(existingSubmittal.project_id, SUBMITTAL_NOTIFY_ROLES, (role) =>
+      buildRoleScopedNotification(role, {
+        type: "SUBMITTAL_NEW_VERSION",
+        basePayload: { submittalId, versionId: version.id, timestamp: new Date() },
+        templates: {
+          creator: { title: "", message: "" },
+          external: { title: "Updated Submittal Received", message: `A new version of submittal '${existingSubmittal.subject ?? "this submittal"}' was shared with you.` },
+          oversight: { title: "New Submittal Version Uploaded", message: `A new version of submittal '${existingSubmittal.subject ?? "this submittal"}' was uploaded.` },
+          internal: { title: "Submittal Version Updated", message: `A new version of submittal '${existingSubmittal.subject ?? "this submittal"}' was uploaded in the project.` },
+          default: { title: "New Submittal Version Uploaded", message: "A new submittal version has been uploaded." },
+        },
+      }),
+      { excludeUserIds: [user.id] }
+    );
     if (access.isAssist) {
       await sendNotification(access.projectManagerId, {
         type: "PM_ASSIST_SUBMITTAL_UPDATED",

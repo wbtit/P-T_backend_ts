@@ -3,8 +3,10 @@ import { MileStoneService } from "../services";
 import { AppError } from "../../../config/utils/AppError";
 import { AuthenticateRequest } from "../../../middleware/authMiddleware";
 import prisma from "../../../config/database/client";
-import { notifyProjectStakeholders } from "../../../utils/notifyProjectStakeholders";
+import { notifyProjectStakeholders, notifyProjectStakeholdersByRole } from "../../../utils/notifyProjectStakeholders";
 import { UserRole } from "@prisma/client";
+import { sendNotification } from "../../../utils/sendNotification";
+import { buildRoleScopedNotification } from "../../../utils/stakeholderNotificationMessages";
 
 const mileStoneService = new MileStoneService();
 const MILESTONE_NOTIFY_ROLES: UserRole[] = [
@@ -33,22 +35,70 @@ const milestoneReference = (milestone?: { subject?: string | null; serialNo?: st
 };
 
 export class MileStoneController {
-  async handleCreate(req: Request, res: Response) {
+  async handleCreate(req: AuthenticateRequest, res: Response) {
     console.log("[Milestone][Create] Incoming request", {
       params: req.params,
       query: req.query,
       body: req.body,
     });
+    if (!req.user) throw new AppError("User not found", 404);
 
     const result = await mileStoneService.create(req.body);
     if (result && result.project_id) {
-      await notifyProjectStakeholders(result.project_id, MILESTONE_NOTIFY_ROLES, {
+      const reference = milestoneReference(result ?? undefined);
+
+      await sendNotification(req.user.id, {
         type: "MILESTONE_CREATED",
         title: "Milestone Created",
-        message: `Milestone ${milestoneReference(result ?? undefined)} created.`,
+        message: `You created milestone ${reference}.`,
         milestoneId: result.id,
         timestamp: new Date(),
       });
+
+      await notifyProjectStakeholdersByRole(
+        result.project_id,
+        MILESTONE_NOTIFY_ROLES,
+        (role) => {
+          const basePayload = {
+            type: "MILESTONE_CREATED",
+            milestoneId: result.id,
+            timestamp: new Date(),
+          };
+
+          if (["CLIENT", "CLIENT_ADMIN", "CLIENT_PROJECT_COORDINATOR", "VENDOR", "VENDOR_ADMIN"].includes(role)) {
+            return {
+              ...basePayload,
+              title: "Milestone Received",
+              message: `Milestone ${reference} was received for your action.`,
+            };
+          }
+
+          if (["ADMIN", "DEPT_MANAGER", "PROJECT_MANAGER_OFFICER", "OPERATION_EXECUTIVE"].includes(role)) {
+            return {
+              ...basePayload,
+              title: "Milestone Created in Project",
+              message: `Milestone ${reference} was created and is available for monitoring.`,
+            };
+          }
+
+          if (["PROJECT_MANAGER", "TEAM_LEAD", "CONNECTION_DESIGNER_ENGINEER"].includes(role)) {
+            return {
+              ...basePayload,
+              title: "New Milestone Created",
+              message: `A new milestone ${reference} was created in the project.`,
+            };
+          }
+
+          return {
+            ...basePayload,
+            title: "Milestone Created",
+            message: `Milestone ${reference} was created.`,
+          };
+        },
+        {
+          excludeUserIds: [req.user.id],
+        }
+      );
     }
 
     return res.status(201).json({
@@ -58,7 +108,7 @@ export class MileStoneController {
     });
   }
 
-  async handleUpdate(req: Request, res: Response) {
+  async handleUpdate(req: AuthenticateRequest, res: Response) {
     console.log("[Milestone][Update] Incoming request", {
       params: req.params,
       query: req.query,
@@ -70,13 +120,19 @@ export class MileStoneController {
     if (result) {
       const milestone = await prisma.mileStone.findUnique({ where: { id: result.mileStoneId || id } });
       if (milestone) {
-        await notifyProjectStakeholders(milestone.project_id, MILESTONE_NOTIFY_ROLES, {
-          type: "MILESTONE_NEW_VERSION",
-          title: "New Milestone Version Created",
-          message: `A new version (v${result.versionNumber}) was created for milestone ${milestoneReference(result as any)}.`,
-          milestoneId: id,
-          timestamp: new Date(),
-        });
+        await notifyProjectStakeholdersByRole(milestone.project_id, MILESTONE_NOTIFY_ROLES, (role) =>
+          buildRoleScopedNotification(role, {
+            type: "MILESTONE_NEW_VERSION",
+            basePayload: { milestoneId: id, timestamp: new Date() },
+            templates: {
+              creator: { title: "", message: "" },
+              external: { title: "Milestone Version Updated", message: `A new version (v${result.versionNumber}) of milestone ${milestoneReference(result as any)} was shared with you.` },
+              oversight: { title: "New Milestone Version Created", message: `A new version (v${result.versionNumber}) was created for milestone ${milestoneReference(result as any)}.` },
+              internal: { title: "Milestone Version Updated", message: `A new version (v${result.versionNumber}) was created for milestone ${milestoneReference(result as any)}.` },
+            },
+          }),
+          { excludeUserIds: req.user?.id ? [req.user.id] : [] }
+        );
       }
     }
 
@@ -89,7 +145,7 @@ export class MileStoneController {
     });
   }
 
-  async handleUpdateExisting(req: Request, res: Response) {
+  async handleUpdateExisting(req: AuthenticateRequest, res: Response) {
     console.log("[Milestone][UpdateExisting] Incoming request", {
       params: req.params,
       query: req.query,
@@ -101,13 +157,19 @@ export class MileStoneController {
     if (result) {
       const milestone = await prisma.mileStone.findUnique({ where: { id: (result as any).mileStoneId || id } });
       if (milestone) {
-        await notifyProjectStakeholders(milestone.project_id, MILESTONE_NOTIFY_ROLES, {
-          type: "MILESTONE_UPDATED",
-          title: "Milestone Updated",
-          message: `Milestone ${milestoneReference(result as any)} was updated.`,
-          milestoneId: id,
-          timestamp: new Date(),
-        });
+        await notifyProjectStakeholdersByRole(milestone.project_id, MILESTONE_NOTIFY_ROLES, (role) =>
+          buildRoleScopedNotification(role, {
+            type: "MILESTONE_UPDATED",
+            basePayload: { milestoneId: id, timestamp: new Date() },
+            templates: {
+              creator: { title: "", message: "" },
+              external: { title: "Milestone Updated", message: `Updated milestone ${milestoneReference(result as any)} was shared with you.` },
+              oversight: { title: "Milestone Updated", message: `Milestone ${milestoneReference(result as any)} was updated.` },
+              internal: { title: "Milestone Updated", message: `Milestone ${milestoneReference(result as any)} was updated.` },
+            },
+          }),
+          { excludeUserIds: req.user?.id ? [req.user.id] : [] }
+        );
       }
     }
 

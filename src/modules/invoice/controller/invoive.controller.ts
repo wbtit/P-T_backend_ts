@@ -3,8 +3,10 @@ import { InvoiceService } from "../services";
 import { AppError } from "../../../config/utils/AppError";
 import { AuthenticateRequest } from "../../../middleware/authMiddleware";
 import prisma from "../../../config/database/client";
-import { notifyProjectStakeholders } from "../../../utils/notifyProjectStakeholders";
+import { notifyProjectStakeholdersByRole } from "../../../utils/notifyProjectStakeholders";
 import { UserRole } from "@prisma/client";
+import { sendNotification } from "../../../utils/sendNotification";
+import { buildCreatorNotification, buildRoleScopedNotification } from "../../../utils/stakeholderNotificationMessages";
 
 const invoiceService = new InvoiceService();
 const INVOICE_NOTIFY_ROLES: UserRole[] = [
@@ -33,15 +35,23 @@ export class InvoiceController {
 
       const result = await invoiceService.createInvoice(data, user.id);
       const invoiceNumber = result.invoiceNumber?.trim();
-      await notifyProjectStakeholders(result.projectId, INVOICE_NOTIFY_ROLES, {
-        type: "INVOICE_CREATED",
+      await sendNotification(user.id, buildCreatorNotification("INVOICE_CREATED", {
         title: "Invoice Created",
-        message: invoiceNumber
-          ? `Invoice '${invoiceNumber}' has been created.`
-          : "A new invoice has been created.",
-        invoiceId: result.id,
-        timestamp: new Date(),
-      });
+        message: invoiceNumber ? `You created invoice '${invoiceNumber}'.` : "You created a new invoice.",
+      }, { invoiceId: result.id, timestamp: new Date() }));
+      await notifyProjectStakeholdersByRole(result.projectId, INVOICE_NOTIFY_ROLES, (role) =>
+        buildRoleScopedNotification(role, {
+          type: "INVOICE_CREATED",
+          basePayload: { invoiceId: result.id, timestamp: new Date() },
+          templates: {
+            creator: { title: "", message: "" },
+            external: { title: "Invoice Received", message: invoiceNumber ? `Invoice '${invoiceNumber}' was shared with you.` : "A new invoice was shared with you." },
+            oversight: { title: "Invoice Created", message: invoiceNumber ? `Invoice '${invoiceNumber}' has been created.` : "A new invoice has been created." },
+            internal: { title: "Invoice Created", message: invoiceNumber ? `Invoice '${invoiceNumber}' has been created.` : "A new invoice has been created." },
+          },
+        }),
+        { excludeUserIds: [user.id] }
+      );
 
       return res.status(201).json({
         message: "Invoice created successfully",
@@ -139,16 +149,19 @@ export class InvoiceController {
       const updatedInvoice = await invoiceService.updateInvoice(id, data);
       if (data?.status) {
         const updatedInvoiceNumber = updatedInvoice.invoiceNumber?.trim();
-        await notifyProjectStakeholders(updatedInvoice.projectId, INVOICE_NOTIFY_ROLES, {
-          type: "INVOICE_STATUS_UPDATED",
-          title: "Invoice Status Updated",
-          message: updatedInvoiceNumber
-            ? `Invoice '${updatedInvoiceNumber}' status changed to '${data.status}'.`
-            : `An invoice status changed to '${data.status}'.`,
-          invoiceId: updatedInvoice.id,
-          status: data.status,
-          timestamp: new Date(),
-        });
+        await notifyProjectStakeholdersByRole(updatedInvoice.projectId, INVOICE_NOTIFY_ROLES, (role) =>
+          buildRoleScopedNotification(role, {
+            type: "INVOICE_STATUS_UPDATED",
+            basePayload: { invoiceId: updatedInvoice.id, status: data.status, timestamp: new Date() },
+            templates: {
+              creator: { title: "", message: "" },
+              external: { title: "Invoice Status Updated", message: updatedInvoiceNumber ? `Invoice '${updatedInvoiceNumber}' status changed to '${data.status}'.` : `An invoice status changed to '${data.status}'.` },
+              oversight: { title: "Invoice Status Updated", message: updatedInvoiceNumber ? `Invoice '${updatedInvoiceNumber}' status changed to '${data.status}'.` : `An invoice status changed to '${data.status}'.` },
+              internal: { title: "Invoice Status Updated", message: updatedInvoiceNumber ? `Invoice '${updatedInvoiceNumber}' status changed to '${data.status}'.` : `An invoice status changed to '${data.status}'.` },
+            },
+          }),
+          { excludeUserIds: (req as AuthenticateRequest).user?.id ? [(req as AuthenticateRequest).user!.id] : [] }
+        );
       }
 
       return res.status(200).json({

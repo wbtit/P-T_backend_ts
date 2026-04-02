@@ -1,6 +1,4 @@
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import prisma from "../config/database/client";
 
 async function main() {
   console.log('Starting migration of recipient data...');

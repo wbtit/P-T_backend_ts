@@ -4,9 +4,11 @@ import { SubmittalResponseService } from "../services";
 import { AppError } from "../../../config/utils/AppError";
 import { mapUploadedFiles } from "../../uploads/fileUtil";
 import { State } from "@prisma/client";
-import { notifyProjectStakeholders } from "../../../utils/notifyProjectStakeholders";
+import { notifyProjectStakeholdersByRole } from "../../../utils/notifyProjectStakeholders";
 import prisma from "../../../config/database/client";
 import { UserRole } from "@prisma/client";
+import { sendNotification } from "../../../utils/sendNotification";
+import { buildCreatorNotification, buildRoleScopedNotification } from "../../../utils/stakeholderNotificationMessages";
 
 const submittalResponseService = new SubmittalResponseService();
 const SUBMITTAL_NOTIFY_ROLES: UserRole[] = [
@@ -76,16 +78,28 @@ export class SubmittalResponseController {
     );
     const submittal = await prisma.submittals.findUnique({ where: { id: submittalsId } });
     if (submittal) {
-      await notifyProjectStakeholders(submittal.project_id, SUBMITTAL_NOTIFY_ROLES, {
-        type: "SUBMITTAL_RESPONSE_RECEIVED",
-        title: "Submittal Response Received",
-        message: "A new submittal response has been submitted.",
+      await sendNotification(userId, buildCreatorNotification("SUBMITTAL_RESPONSE_RECEIVED", {
+        title: "Submittal Response Submitted",
+        message: "You submitted a submittal response.",
+      }, {
         submittalsId,
         submittalResponseId: response.id,
         timestamp: new Date(),
-      }, {
-        excludeUserIds: [userId],
-      });
+      }));
+      await notifyProjectStakeholdersByRole(submittal.project_id, SUBMITTAL_NOTIFY_ROLES, (role) =>
+        buildRoleScopedNotification(role, {
+          type: "SUBMITTAL_RESPONSE_RECEIVED",
+          basePayload: { submittalsId, submittalResponseId: response.id, timestamp: new Date() },
+          templates: {
+            creator: { title: "", message: "" },
+            external: { title: "Submittal Response Received", message: "A new submittal response was received for your action." },
+            oversight: { title: "Submittal Response Received", message: "A new submittal response was submitted and is available for review." },
+            internal: { title: "Submittal Response Received", message: "A new submittal response was submitted in the project." },
+            default: { title: "Submittal Response Received", message: "A new submittal response has been submitted." },
+          },
+        }),
+        { excludeUserIds: [userId] }
+      );
     }
 
     res.status(201).json({
@@ -99,7 +113,7 @@ export class SubmittalResponseController {
   // UPDATE WORKFLOW STATUS (THREAD)
   // --------------------------------------------------
   async handleUpdateStatus(
-    req: Request,
+    req: AuthenticateRequest,
     res: Response
   ) {
     const { parentResponseId } = req.params;
@@ -119,14 +133,20 @@ export class SubmittalResponseController {
     );
     const submittal = await prisma.submittals.findUnique({ where: { id: (updated as any).submittalsId } });
     if (submittal) {
-      await notifyProjectStakeholders(submittal.project_id, SUBMITTAL_NOTIFY_ROLES, {
-        type: "SUBMITTAL_STATUS_UPDATED",
-        title: "Submittal Status Updated",
-        message: `Submittal workflow status updated to '${status}'.`,
-        parentResponseId,
-        status,
-        timestamp: new Date(),
-      });
+      await notifyProjectStakeholdersByRole(submittal.project_id, SUBMITTAL_NOTIFY_ROLES, (role) =>
+        buildRoleScopedNotification(role, {
+          type: "SUBMITTAL_STATUS_UPDATED",
+          basePayload: { parentResponseId, status, timestamp: new Date() },
+          templates: {
+            creator: { title: "", message: "" },
+            external: { title: "Submittal Status Updated", message: `Submittal workflow status changed to '${status}'.` },
+            oversight: { title: "Submittal Status Updated", message: `Submittal workflow status changed to '${status}'.` },
+            internal: { title: "Submittal Status Updated", message: `Submittal workflow status changed to '${status}'.` },
+            default: { title: "Submittal Status Updated", message: `Submittal workflow status updated to '${status}'.` },
+          },
+        }),
+        { excludeUserIds: req.user?.id ? [req.user.id] : [] }
+      );
     }
 
     res.status(200).json({

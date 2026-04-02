@@ -3,11 +3,13 @@ import { AuthenticateRequest } from "../../../middleware/authMiddleware";
 import { AppError } from "../../../config/utils/AppError";
 import { COService } from "../services";
 import { mapUploadedFiles } from "../../uploads/fileUtil";
-import { notifyProjectStakeholders } from "../../../utils/notifyProjectStakeholders";
+import { notifyProjectStakeholdersByRole } from "../../../utils/notifyProjectStakeholders";
 import { sendEmail, getCCEmails } from "../../../services/mailServices/mailconfig";
 import { coHtmlContent } from "../../../services/mailServices/mailtemplates/coMailtemplate";
 import { UserRole } from "@prisma/client";
 import prisma from "../../../config/database/client";
+import { sendNotification } from "../../../utils/sendNotification";
+import { buildCreatorNotification, buildRoleScopedNotification } from "../../../utils/stakeholderNotificationMessages";
 
 const coService = new COService();
 const CO_NOTIFY_ROLES: UserRole[] = [
@@ -97,15 +99,27 @@ export class COController {
     }
 
     const coNumber = co.changeOrderNumber?.trim();
-    await notifyProjectStakeholders(co.project, CO_NOTIFY_ROLES, {
-      type: "CO_CREATED",
+    await sendNotification(id, buildCreatorNotification("CO_CREATED", {
       title: "Change Order Created / Sent",
-      message: coNumber
-        ? `Change Order '${coNumber}' was created.`
-        : "A new Change Order was created.",
+      message: coNumber ? `You created change order '${coNumber}'.` : "You created a new change order.",
+    }, {
       coId: co.id,
       timestamp: new Date(),
-    });
+    }));
+    await notifyProjectStakeholdersByRole(co.project, CO_NOTIFY_ROLES, (role) =>
+      buildRoleScopedNotification(role, {
+        type: "CO_CREATED",
+        basePayload: { coId: co.id, timestamp: new Date() },
+        templates: {
+          creator: { title: "", message: "" },
+          external: { title: "Change Order Received", message: coNumber ? `Change order '${coNumber}' was received for your action.` : "A change order was received for your action." },
+          oversight: { title: "Change Order Created / Sent", message: coNumber ? `Change order '${coNumber}' was created for monitoring.` : "A change order was created for monitoring." },
+          internal: { title: "New Change Order Created", message: coNumber ? `A new change order '${coNumber}' was created.` : "A new change order was created." },
+          default: { title: "Change Order Created / Sent", message: coNumber ? `Change order '${coNumber}' was created.` : "A new Change Order was created." },
+        },
+      }),
+      { excludeUserIds: [id] }
+    );
 
     res.status(201).json({
       status: "success",
@@ -148,16 +162,20 @@ async handlePendingCOsForClient(req: AuthenticateRequest, res: Response) {
       files: uploadedFiles,
     });
     const updatedCoNumber = updatedCo.changeOrderNumber?.trim();
-    await notifyProjectStakeholders(updatedCo.project, CO_NOTIFY_ROLES, {
-      type: "CO_UPDATED",
-      title: "Change Order Updated",
-      message: updatedCoNumber
-        ? `Change Order '${updatedCoNumber}' was updated.`
-        : "A Change Order was updated.",
-      coId: updatedCo.id,
-      status: (updatedCo as any).status ?? req.body?.status ?? null,
-      timestamp: new Date(),
-    });
+    await notifyProjectStakeholdersByRole(updatedCo.project, CO_NOTIFY_ROLES, (role) =>
+      buildRoleScopedNotification(role, {
+        type: "CO_UPDATED",
+        basePayload: { coId: updatedCo.id, status: (updatedCo as any).status ?? req.body?.status ?? null, timestamp: new Date() },
+        templates: {
+          creator: { title: "", message: "" },
+          external: { title: "Change Order Updated", message: updatedCoNumber ? `Updated change order '${updatedCoNumber}' was shared with you.` : "An updated change order was shared with you." },
+          oversight: { title: "Change Order Updated", message: updatedCoNumber ? `Change order '${updatedCoNumber}' was updated.` : "A change order was updated." },
+          internal: { title: "Change Order Updated", message: updatedCoNumber ? `Change order '${updatedCoNumber}' was updated.` : "A change order was updated." },
+          default: { title: "Change Order Updated", message: updatedCoNumber ? `Change order '${updatedCoNumber}' was updated.` : "A Change Order was updated." },
+        },
+      }),
+      { excludeUserIds: req.user?.id ? [req.user.id] : [] }
+    );
 
     res.status(200).json({
       status: "success",

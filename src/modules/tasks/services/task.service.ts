@@ -2,8 +2,9 @@ import { AppError } from "../../../config/utils/AppError";
 import { TaskRepository } from "../repositories/task.repository";
 import { createTaskInput, updateTaskInput } from "../dtos";
 import { sendNotification } from "../../../utils/sendNotification";
-import { notifyProjectStakeholders } from "../../../utils/notifyProjectStakeholders";
+import { notifyProjectStakeholdersByRole } from "../../../utils/notifyProjectStakeholders";
 import { UserRole } from "@prisma/client";
+import { buildRoleScopedNotification } from "../../../utils/stakeholderNotificationMessages";
 
 export class TaskService {
   private taskRepository: TaskRepository;
@@ -112,14 +113,18 @@ export class TaskService {
     const updatedTask = await this.taskRepository.update(id, data);
     if (data.status) {
       if (data.status !== "COMPLETED") {
-        await notifyProjectStakeholders(updatedTask.project_id, this.taskNotifyRoles, {
-          type: "TASK_STATUS_CHANGED",
-          title: "Task Status Changed",
-          message: `Task '${updatedTask.name}' status changed to '${data.status}'.`,
-          taskId: updatedTask.id,
-          status: data.status,
-          timestamp: new Date(),
-        });
+        await notifyProjectStakeholdersByRole(updatedTask.project_id, this.taskNotifyRoles, (role) =>
+          buildRoleScopedNotification(role, {
+            type: "TASK_STATUS_CHANGED",
+            basePayload: { taskId: updatedTask.id, status: data.status, timestamp: new Date() },
+            templates: {
+              creator: { title: "", message: "" },
+              external: { title: "Task Status Changed", message: `Task '${updatedTask.name}' status changed to '${data.status}'.` },
+              oversight: { title: role === "PROJECT_MANAGER" ? "Project Task Status Changed" : "Department Task Status Changed", message: `Task '${updatedTask.name}' status changed to '${data.status}'.` },
+              internal: { title: "Task Status Changed", message: `Task '${updatedTask.name}' status changed to '${data.status}'.` },
+            },
+          })
+        );
       }
       if (updatedTask.user_id) {
         await sendNotification(updatedTask.user_id, {

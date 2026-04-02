@@ -837,6 +837,10 @@ model Notes {
 model TeamMeetingNotes {
   id          String                    @id @default(uuid()) @db.Uuid
   serialNo    String?                   @unique
+  flags       Json?                      @default("[]")
+  colorCode  String?                   @default("")
+  priority   Int?                      @default(0)
+
   title       String
   content     String
   visibility  TeamMeetingNoteVisibility @default(INTERNAL)

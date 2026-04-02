@@ -3,9 +3,11 @@ import { AuthenticateRequest } from "../../../middleware/authMiddleware";
 import { AppError } from "../../../config/utils/AppError";
 import { RFIResponseService } from "../services";
 import { mapUploadedFiles } from "../../uploads/fileUtil";
-import { notifyProjectStakeholders } from "../../../utils/notifyProjectStakeholders";
+import { notifyProjectStakeholdersByRole } from "../../../utils/notifyProjectStakeholders";
 import prisma from "../../../config/database/client";
 import { UserRole } from "@prisma/client";
+import { sendNotification } from "../../../utils/sendNotification";
+import { buildCreatorNotification, buildRoleScopedNotification } from "../../../utils/stakeholderNotificationMessages";
 
 const rfiResponseService = new RFIResponseService();
 const RFI_NOTIFY_ROLES: UserRole[] = [
@@ -43,16 +45,29 @@ export class RFIResponseController {
     });
     const rfi = await prisma.rFI.findUnique({ where: { id: rfiId } });
     if (rfi) {
-      await notifyProjectStakeholders(rfi.project_id, RFI_NOTIFY_ROLES, {
-        type: req.body?.parentResponseId ? "RFI_REPLY_ADDED" : "RFI_RESPONSE_RECEIVED",
-        title: req.body?.parentResponseId ? "RFI Reply Thread Added" : "RFI Response Received",
-        message: "A new RFI response has been submitted.",
+      const eventType = req.body?.parentResponseId ? "RFI_REPLY_ADDED" : "RFI_RESPONSE_RECEIVED";
+      await sendNotification(userId, buildCreatorNotification(eventType, {
+        title: req.body?.parentResponseId ? "RFI Reply Added" : "RFI Response Submitted",
+        message: req.body?.parentResponseId ? "You added a reply to the RFI thread." : "You submitted an RFI response.",
+      }, {
         rfiId,
         rfiResponseId: response.id,
         timestamp: new Date(),
-      }, {
-        excludeUserIds: [userId],
-      });
+      }));
+      await notifyProjectStakeholdersByRole(rfi.project_id, RFI_NOTIFY_ROLES, (role) =>
+        buildRoleScopedNotification(role, {
+          type: eventType,
+          basePayload: { rfiId, rfiResponseId: response.id, timestamp: new Date() },
+          templates: {
+            creator: { title: "", message: "" },
+            external: { title: req.body?.parentResponseId ? "RFI Reply Received" : "RFI Response Received", message: "A new RFI response was received for your action." },
+            oversight: { title: req.body?.parentResponseId ? "RFI Reply Added" : "RFI Response Received", message: "A new RFI response was submitted and is available for review." },
+            internal: { title: req.body?.parentResponseId ? "RFI Reply Added" : "RFI Response Received", message: "A new RFI response was submitted in the project." },
+            default: { title: req.body?.parentResponseId ? "RFI Reply Added" : "RFI Response Received", message: "A new RFI response was submitted." },
+          },
+        }),
+        { excludeUserIds: [userId] }
+      );
     }
 
     res.status(201).json({

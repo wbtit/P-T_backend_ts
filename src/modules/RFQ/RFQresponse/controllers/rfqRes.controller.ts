@@ -1,9 +1,11 @@
 import { Request,Response } from "express";
 import { RfqResponseService } from "../services/rfqRes.service";
 import { mapUploadedFiles } from "../../../uploads/fileUtil";
-import { notifyRfqStakeholders } from "../../../../utils/notifyRfqStakeholders";
+import { notifyRfqStakeholdersByRole } from "../../../../utils/notifyRfqStakeholders";
 import { UserRole } from "@prisma/client";
 import { AuthenticateRequest } from "../../../../middleware/authMiddleware";
+import { sendNotification } from "../../../../utils/sendNotification";
+import { buildCreatorNotification, buildRoleScopedNotification } from "../../../../utils/stakeholderNotificationMessages";
 
 
 const rfqResponseService = new RfqResponseService();
@@ -29,14 +31,29 @@ export class RfqResponseController {
       files: uploadedFiles,
     };
         const result = await rfqResponseService.create(payload);
-        await notifyRfqStakeholders(result.rfqId, RFQ_NOTIFY_ROLES, {
-            type: "RFQ_RESPONSE_RECEIVED",
-            title: "RFQ Response Received",
-            message: "A new RFQ response has been submitted.",
-            rfqId: result.rfqId,
-            rfqResponseId: result.id,
-            timestamp: new Date(),
-        }, {
+        if (userId) {
+            await sendNotification(userId, buildCreatorNotification("RFQ_RESPONSE_RECEIVED", {
+                title: "RFQ Response Submitted",
+                message: "You submitted an RFQ response.",
+            }, {
+                rfqId: result.rfqId,
+                rfqResponseId: result.id,
+                timestamp: new Date(),
+            }));
+        }
+        await notifyRfqStakeholdersByRole(result.rfqId, RFQ_NOTIFY_ROLES, (role) =>
+            buildRoleScopedNotification(role, {
+                type: "RFQ_RESPONSE_RECEIVED",
+                basePayload: { rfqId: result.rfqId, rfqResponseId: result.id, timestamp: new Date() },
+                templates: {
+                    creator: { title: "", message: "" },
+                    external: { title: "RFQ Response Received", message: "A new RFQ response was received for your action." },
+                    oversight: { title: "RFQ Response Received", message: "A new RFQ response was submitted and is available for review." },
+                    internal: { title: "RFQ Response Received", message: "A new RFQ response was submitted." },
+                    default: { title: "RFQ Response Received", message: "A new RFQ response has been submitted." },
+                },
+            }),
+        {
             excludeUserIds: userId ? [userId] : [],
         });
         return res.status(201).json({
