@@ -7,8 +7,7 @@ import { State } from "@prisma/client";
 import { notifyProjectStakeholdersByRole } from "../../../utils/notifyProjectStakeholders";
 import prisma from "../../../config/database/client";
 import { UserRole } from "@prisma/client";
-import { sendNotification } from "../../../utils/sendNotification";
-import { buildCreatorNotification, buildRoleScopedNotification } from "../../../utils/stakeholderNotificationMessages";
+import { buildRoleScopedNotification } from "../../../utils/stakeholderNotificationMessages";
 
 const submittalResponseService = new SubmittalResponseService();
 const SUBMITTAL_NOTIFY_ROLES: UserRole[] = [
@@ -78,14 +77,6 @@ export class SubmittalResponseController {
     );
     const submittal = await prisma.submittals.findUnique({ where: { id: submittalsId } });
     if (submittal) {
-      await sendNotification(userId, buildCreatorNotification("SUBMITTAL_RESPONSE_RECEIVED", {
-        title: "Submittal Response Submitted",
-        message: "You submitted a submittal response.",
-      }, {
-        submittalsId,
-        submittalResponseId: response.id,
-        timestamp: new Date(),
-      }));
       await notifyProjectStakeholdersByRole(submittal.project_id, SUBMITTAL_NOTIFY_ROLES, (role) =>
         buildRoleScopedNotification(role, {
           type: "SUBMITTAL_RESPONSE_RECEIVED",

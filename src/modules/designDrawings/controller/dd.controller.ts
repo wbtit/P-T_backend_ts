@@ -6,8 +6,7 @@ import { mapUploadedFiles } from "../../uploads/fileUtil";
 import { notifyProjectStakeholdersByRole } from "../../../utils/notifyProjectStakeholders";
 import prisma from "../../../config/database/client";
 import { UserRole } from "@prisma/client";
-import { sendNotification } from "../../../utils/sendNotification";
-import { buildCreatorNotification, buildRoleScopedNotification } from "../../../utils/stakeholderNotificationMessages";
+import { buildRoleScopedNotification } from "../../../utils/stakeholderNotificationMessages";
 
 const designService = new DesignDrawingsService();
 const DESIGN_DRAWING_NOTIFY_ROLES: UserRole[] = [
@@ -43,13 +42,6 @@ export class DesignDrawingsController {
     };
 
     const drawing = await designService.create(data, userId);
-    await sendNotification(userId, buildCreatorNotification("DESIGN_DRAWING_UPLOADED", {
-      title: "Design Drawing Uploaded",
-      message: "You uploaded a design drawing.",
-    }, {
-      designDrawingId: drawing.id,
-      timestamp: new Date(),
-    }));
     await notifyProjectStakeholdersByRole(drawing.projectId, DESIGN_DRAWING_NOTIFY_ROLES, (role) =>
       buildRoleScopedNotification(role, {
         type: "DESIGN_DRAWING_UPLOADED",
@@ -153,14 +145,6 @@ export class DesignDrawingsController {
     );
     const design = await prisma.designDrawings.findUnique({ where: { id: req.body?.designDrawingsId } });
     if (design) {
-      await sendNotification(userId, buildCreatorNotification("DESIGN_DRAWING_RESPONSE_RECEIVED", {
-        title: "Design Drawing Response Submitted",
-        message: "You submitted a design drawing response.",
-      }, {
-        designDrawingId: req.body?.designDrawingsId,
-        designDrawingResponseId: response.id,
-        timestamp: new Date(),
-      }));
       await notifyProjectStakeholdersByRole(design.projectId, DESIGN_DRAWING_NOTIFY_ROLES, (role) =>
         buildRoleScopedNotification(role, {
           type: "DESIGN_DRAWING_RESPONSE_RECEIVED",

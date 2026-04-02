@@ -7,8 +7,7 @@ import { notifyProjectStakeholdersByRole } from "../../../utils/notifyProjectSta
 import { notifyUsers } from "../../../utils/notifyByRole";
 import { UserRole, Prisma } from "@prisma/client";
 import prisma from "../../../config/database/client";
-import { sendNotification } from "../../../utils/sendNotification";
-import { buildCreatorNotification, buildRoleScopedNotification } from "../../../utils/stakeholderNotificationMessages";
+import { buildRoleScopedNotification } from "../../../utils/stakeholderNotificationMessages";
 
 const TEAM_MEETING_NOTE_ROLES: UserRole[] = [
   "ADMIN",
@@ -32,14 +31,6 @@ export class TeamMeetingNotesController {
     const note = await service.create({ ...data, files, createdById });
 
     if (note && note.projectId) {
-      await sendNotification(createdById, buildCreatorNotification("PROJECT_NOTE_CREATED", {
-        title: "Project Note Created",
-        message: `You created project note '${note.title}'.`,
-      }, {
-        noteId: note.id,
-        projectId: note.projectId,
-        timestamp: new Date(),
-      }));
       await notifyProjectStakeholdersByRole(note.projectId, TEAM_MEETING_NOTE_ROLES, (role) =>
         buildRoleScopedNotification(role, {
           type: "PROJECT_NOTE_CREATED",

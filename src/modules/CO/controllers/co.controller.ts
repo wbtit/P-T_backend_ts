@@ -8,8 +8,7 @@ import { sendEmail, getCCEmails } from "../../../services/mailServices/mailconfi
 import { coHtmlContent } from "../../../services/mailServices/mailtemplates/coMailtemplate";
 import { UserRole } from "@prisma/client";
 import prisma from "../../../config/database/client";
-import { sendNotification } from "../../../utils/sendNotification";
-import { buildCreatorNotification, buildRoleScopedNotification } from "../../../utils/stakeholderNotificationMessages";
+import { buildRoleScopedNotification } from "../../../utils/stakeholderNotificationMessages";
 
 const coService = new COService();
 const CO_NOTIFY_ROLES: UserRole[] = [
@@ -99,13 +98,6 @@ export class COController {
     }
 
     const coNumber = co.changeOrderNumber?.trim();
-    await sendNotification(id, buildCreatorNotification("CO_CREATED", {
-      title: "Change Order Created / Sent",
-      message: coNumber ? `You created change order '${coNumber}'.` : "You created a new change order.",
-    }, {
-      coId: co.id,
-      timestamp: new Date(),
-    }));
     await notifyProjectStakeholdersByRole(co.project, CO_NOTIFY_ROLES, (role) =>
       buildRoleScopedNotification(role, {
         type: "CO_CREATED",

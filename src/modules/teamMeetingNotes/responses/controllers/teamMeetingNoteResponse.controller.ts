@@ -6,8 +6,7 @@ import { TeamMeetingNoteResponseService } from "../services/teamMeetingNoteRespo
 import { notifyProjectStakeholdersByRole } from "../../../../utils/notifyProjectStakeholders";
 import { UserRole } from "@prisma/client";
 import prisma from "../../../../config/database/client";
-import { sendNotification } from "../../../../utils/sendNotification";
-import { buildCreatorNotification, buildRoleScopedNotification } from "../../../../utils/stakeholderNotificationMessages";
+import { buildRoleScopedNotification } from "../../../../utils/stakeholderNotificationMessages";
 
 const service = new TeamMeetingNoteResponseService();
 const NOTE_RESPONSE_NOTIFY_ROLES: UserRole[] = [
@@ -49,15 +48,6 @@ export class TeamMeetingNoteResponseController {
 
     if (note && note.projectId) {
       const type = req.body?.parentResponseId ? "PROJECT_NOTE_REPLY" : "PROJECT_NOTE_RESPONSE";
-      await sendNotification(userId, buildCreatorNotification(type, {
-        title: req.body?.parentResponseId ? "Project Note Reply Added" : "Project Note Response Submitted",
-        message: req.body?.parentResponseId ? "You added a reply to the project note thread." : "You submitted a project note response.",
-      }, {
-        noteId,
-        noteResponseId: response.id,
-        projectId: note.projectId,
-        timestamp: new Date(),
-      }));
       await notifyProjectStakeholdersByRole(note.projectId, NOTE_RESPONSE_NOTIFY_ROLES, (role) =>
         buildRoleScopedNotification(role, {
           type,

@@ -5,8 +5,7 @@ import { AuthenticateRequest } from "../../../middleware/authMiddleware";
 import prisma from "../../../config/database/client";
 import { notifyProjectStakeholdersByRole } from "../../../utils/notifyProjectStakeholders";
 import { UserRole } from "@prisma/client";
-import { sendNotification } from "../../../utils/sendNotification";
-import { buildCreatorNotification, buildRoleScopedNotification } from "../../../utils/stakeholderNotificationMessages";
+import { buildRoleScopedNotification } from "../../../utils/stakeholderNotificationMessages";
 
 const invoiceService = new InvoiceService();
 const INVOICE_NOTIFY_ROLES: UserRole[] = [
@@ -35,10 +34,6 @@ export class InvoiceController {
 
       const result = await invoiceService.createInvoice(data, user.id);
       const invoiceNumber = result.invoiceNumber?.trim();
-      await sendNotification(user.id, buildCreatorNotification("INVOICE_CREATED", {
-        title: "Invoice Created",
-        message: invoiceNumber ? `You created invoice '${invoiceNumber}'.` : "You created a new invoice.",
-      }, { invoiceId: result.id, timestamp: new Date() }));
       await notifyProjectStakeholdersByRole(result.projectId, INVOICE_NOTIFY_ROLES, (role) =>
         buildRoleScopedNotification(role, {
           type: "INVOICE_CREATED",

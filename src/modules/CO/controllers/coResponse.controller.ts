@@ -6,8 +6,7 @@ import { mapUploadedFiles } from "../../uploads/fileUtil";
 import { notifyProjectStakeholdersByRole } from "../../../utils/notifyProjectStakeholders";
 import prisma from "../../../config/database/client";
 import { UserRole } from "@prisma/client";
-import { sendNotification } from "../../../utils/sendNotification";
-import { buildCreatorNotification, buildRoleScopedNotification } from "../../../utils/stakeholderNotificationMessages";
+import { buildRoleScopedNotification } from "../../../utils/stakeholderNotificationMessages";
 
 const coResponseService = new CoResponseService();
 const CO_NOTIFY_ROLES: UserRole[] = [
@@ -54,15 +53,6 @@ export class CoResponseController {
           : status === "REJECT"
           ? "CO_REJECTED_BY_FABRICATOR"
           : "CO_RESPONSE_RECEIVED";
-      await sendNotification(userId, buildCreatorNotification(type, {
-        title: "Change Order Response Submitted",
-        message: "You submitted a change-order response.",
-      }, {
-        coId,
-        coResponseId: response.id,
-        status,
-        timestamp: new Date(),
-      }));
       await notifyProjectStakeholdersByRole(co.project, CO_NOTIFY_ROLES, (role) =>
         buildRoleScopedNotification(role, {
           type,

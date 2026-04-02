@@ -5,7 +5,6 @@ import { AuthenticateRequest } from "../../../middleware/authMiddleware";
 import prisma from "../../../config/database/client";
 import { notifyProjectStakeholders, notifyProjectStakeholdersByRole } from "../../../utils/notifyProjectStakeholders";
 import { UserRole } from "@prisma/client";
-import { sendNotification } from "../../../utils/sendNotification";
 import { buildRoleScopedNotification } from "../../../utils/stakeholderNotificationMessages";
 
 const mileStoneService = new MileStoneService();
@@ -46,14 +45,6 @@ export class MileStoneController {
     const result = await mileStoneService.create(req.body);
     if (result && result.project_id) {
       const reference = milestoneReference(result ?? undefined);
-
-      await sendNotification(req.user.id, {
-        type: "MILESTONE_CREATED",
-        title: "Milestone Created",
-        message: `You created milestone ${reference}.`,
-        milestoneId: result.id,
-        timestamp: new Date(),
-      });
 
       await notifyProjectStakeholdersByRole(
         result.project_id,

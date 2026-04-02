@@ -9,7 +9,7 @@ import { notifyProjectStakeholdersByRole } from "../../../utils/notifyProjectSta
 import { UserRole } from "@prisma/client";
 import { ProjectAssistService } from "../../project/services/projectAssist.service";
 import { sendNotification } from "../../../utils/sendNotification";
-import { buildCreatorNotification, buildRoleScopedNotification } from "../../../utils/stakeholderNotificationMessages";
+import { buildRoleScopedNotification } from "../../../utils/stakeholderNotificationMessages";
 import prisma from "../../../config/database/client";
 
 const rfiService = new RFIService();
@@ -115,13 +115,6 @@ export class RFIController {
         text: newrfi.description,
       });
     }
-    await sendNotification(userId, buildCreatorNotification("RFI_CREATED", {
-      title: "RFI Created / Sent",
-      message: `You created and sent RFI '${newrfi.subject}'.`,
-    }, {
-      rfiId: newrfi.id,
-      timestamp: new Date(),
-    }));
     await notifyProjectStakeholdersByRole(newrfi.project_id, RFI_NOTIFY_ROLES, (role) =>
       buildRoleScopedNotification(role, {
         type: "RFI_CREATED",

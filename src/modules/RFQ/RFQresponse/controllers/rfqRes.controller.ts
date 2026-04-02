@@ -4,8 +4,7 @@ import { mapUploadedFiles } from "../../../uploads/fileUtil";
 import { notifyRfqStakeholdersByRole } from "../../../../utils/notifyRfqStakeholders";
 import { UserRole } from "@prisma/client";
 import { AuthenticateRequest } from "../../../../middleware/authMiddleware";
-import { sendNotification } from "../../../../utils/sendNotification";
-import { buildCreatorNotification, buildRoleScopedNotification } from "../../../../utils/stakeholderNotificationMessages";
+import { buildRoleScopedNotification } from "../../../../utils/stakeholderNotificationMessages";
 
 
 const rfqResponseService = new RfqResponseService();
@@ -31,16 +30,6 @@ export class RfqResponseController {
       files: uploadedFiles,
     };
         const result = await rfqResponseService.create(payload);
-        if (userId) {
-            await sendNotification(userId, buildCreatorNotification("RFQ_RESPONSE_RECEIVED", {
-                title: "RFQ Response Submitted",
-                message: "You submitted an RFQ response.",
-            }, {
-                rfqId: result.rfqId,
-                rfqResponseId: result.id,
-                timestamp: new Date(),
-            }));
-        }
         await notifyRfqStakeholdersByRole(result.rfqId, RFQ_NOTIFY_ROLES, (role) =>
             buildRoleScopedNotification(role, {
                 type: "RFQ_RESPONSE_RECEIVED",

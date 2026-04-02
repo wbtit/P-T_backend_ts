@@ -8,8 +8,7 @@ import { rfqhtmlContent } from "../../../services/mailServices/mailtemplates/rfq
 import { notifyRfqStakeholdersByRole } from "../../../utils/notifyRfqStakeholders";
 import { UserRole } from "@prisma/client";
 import prisma from "../../../config/database/client";
-import { sendNotification } from "../../../utils/sendNotification";
-import { buildCreatorNotification, buildRoleScopedNotification } from "../../../utils/stakeholderNotificationMessages";
+import { buildRoleScopedNotification } from "../../../utils/stakeholderNotificationMessages";
 
 const rfqService = new RFQService();
 const RFQ_NOTIFY_ROLES: UserRole[] = [
@@ -101,13 +100,6 @@ export class RFQController {
               subject: newrfq.subject,
               text: newrfq.description,
             });
-                await sendNotification(id, buildCreatorNotification("RFQ_CREATED", {
-                  title: "RFQ Created / Sent",
-                  message: `You created and sent RFQ '${newrfq.subject}'.`,
-                }, {
-                  rfqId: newrfq.id,
-                  timestamp: new Date(),
-                }));
                 await notifyRfqStakeholdersByRole(newrfq.id, RFQ_NOTIFY_ROLES, (role) =>
                   buildRoleScopedNotification(role, {
                     type: "RFQ_CREATED",

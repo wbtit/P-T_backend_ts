@@ -5,8 +5,7 @@ import { mapUploadedFiles } from "../../uploads/fileUtil";
 import { AuthenticateRequest } from "../../../middleware/authMiddleware";
 import { notifyProjectStakeholdersByRole } from "../../../utils/notifyProjectStakeholders";
 import { UserRole } from "@prisma/client";
-import { sendNotification } from "../../../utils/sendNotification";
-import { buildCreatorNotification, buildRoleScopedNotification } from "../../../utils/stakeholderNotificationMessages";
+import { buildRoleScopedNotification } from "../../../utils/stakeholderNotificationMessages";
 
 const projectService = new ProjectService();
 const projectAssistService = new ProjectAssistService();
@@ -46,12 +45,6 @@ export class ProjectController {
           ...req.body,
           files: uploadedFiles
         }, req.user?.id || "");
-        if (req.user?.id) {
-          await sendNotification(req.user.id, buildCreatorNotification("PROJECT_CREATED", {
-            title: "Project Created",
-            message: `You created project '${project.name}'.`,
-          }, { projectId: project.id, timestamp: new Date() }));
-        }
         await notifyProjectStakeholdersByRole(project.id, PROJECT_CREATED_ROLES, (role) =>
           buildRoleScopedNotification(role, {
             type: "PROJECT_CREATED",

@@ -7,8 +7,7 @@ import { mileStoneResponseStatus } from "@prisma/client";
 import { notifyProjectStakeholdersByRole } from "../../../utils/notifyProjectStakeholders";
 import prisma from "../../../config/database/client";
 import { UserRole } from "@prisma/client";
-import { sendNotification } from "../../../utils/sendNotification";
-import { buildCreatorNotification, buildRoleScopedNotification } from "../../../utils/stakeholderNotificationMessages";
+import { buildRoleScopedNotification } from "../../../utils/stakeholderNotificationMessages";
 
 const mileStoneResponseService = new MileStoneResponseService();
 const MILESTONE_NOTIFY_ROLES: UserRole[] = [
@@ -48,14 +47,6 @@ export class MileStoneResponseController {
     const version = await prisma.mileStoneVersion.findUnique({where: {id: req.body?.mileStoneVersionId || (response as any).mileStoneVersionId}});
     const milestone = version ? await prisma.mileStone.findUnique({where: {id: version.mileStoneId}}) : null;
     if (milestone) {
-      await sendNotification(userId, buildCreatorNotification("MILESTONE_RESPONSE_RECEIVED", {
-        title: "Milestone Response Submitted",
-        message: "You submitted a milestone response.",
-      }, {
-        milestoneId: milestone.id,
-        milestoneResponseId: response.id,
-        timestamp: new Date(),
-      }));
       await notifyProjectStakeholdersByRole(milestone.project_id, MILESTONE_NOTIFY_ROLES, (role) =>
         buildRoleScopedNotification(role, {
           type: "MILESTONE_RESPONSE_RECEIVED",

@@ -10,7 +10,7 @@ import { UserRole } from "@prisma/client";
 import { ProjectAssistService } from "../../project/services/projectAssist.service";
 import { sendNotification } from "../../../utils/sendNotification";
 import prisma from "../../../config/database/client";
-import { buildCreatorNotification, buildRoleScopedNotification } from "../../../utils/stakeholderNotificationMessages";
+import { buildRoleScopedNotification } from "../../../utils/stakeholderNotificationMessages";
 
 const submittalService = new SubmittalService();
 const projectAssistService = new ProjectAssistService();
@@ -123,13 +123,6 @@ export class SubmittalController {
         html: submittalhtmlContent(submittal),
       });
     }
-    await sendNotification(userId, buildCreatorNotification("SUBMITTAL_CREATED", {
-      title: "Submittal Created / Sent",
-      message: `You created and sent submittal '${submittal.subject}'.`,
-    }, {
-      submittalId: submittal.id,
-      timestamp: new Date(),
-    }));
     await notifyProjectStakeholdersByRole(submittal.project_id, SUBMITTAL_NOTIFY_ROLES, (role) =>
       buildRoleScopedNotification(role, {
         type: "SUBMITTAL_CREATED",
@@ -327,14 +320,6 @@ export class SubmittalController {
       },
       user.id
     );
-    await sendNotification(user.id, buildCreatorNotification("SUBMITTAL_NEW_VERSION", {
-      title: "New Submittal Version Uploaded",
-      message: `You uploaded a new version for submittal '${existingSubmittal.subject ?? "this submittal"}'.`,
-    }, {
-      submittalId,
-      versionId: version.id,
-      timestamp: new Date(),
-    }));
     await notifyProjectStakeholdersByRole(existingSubmittal.project_id, SUBMITTAL_NOTIFY_ROLES, (role) =>
       buildRoleScopedNotification(role, {
         type: "SUBMITTAL_NEW_VERSION",

@@ -6,8 +6,7 @@ import { mapUploadedFiles } from "../../uploads/fileUtil";
 import { notifyProjectStakeholdersByRole } from "../../../utils/notifyProjectStakeholders";
 import prisma from "../../../config/database/client";
 import { UserRole } from "@prisma/client";
-import { sendNotification } from "../../../utils/sendNotification";
-import { buildCreatorNotification, buildRoleScopedNotification } from "../../../utils/stakeholderNotificationMessages";
+import { buildRoleScopedNotification } from "../../../utils/stakeholderNotificationMessages";
 
 const rfiResponseService = new RFIResponseService();
 const RFI_NOTIFY_ROLES: UserRole[] = [
@@ -46,14 +45,6 @@ export class RFIResponseController {
     const rfi = await prisma.rFI.findUnique({ where: { id: rfiId } });
     if (rfi) {
       const eventType = req.body?.parentResponseId ? "RFI_REPLY_ADDED" : "RFI_RESPONSE_RECEIVED";
-      await sendNotification(userId, buildCreatorNotification(eventType, {
-        title: req.body?.parentResponseId ? "RFI Reply Added" : "RFI Response Submitted",
-        message: req.body?.parentResponseId ? "You added a reply to the RFI thread." : "You submitted an RFI response.",
-      }, {
-        rfiId,
-        rfiResponseId: response.id,
-        timestamp: new Date(),
-      }));
       await notifyProjectStakeholdersByRole(rfi.project_id, RFI_NOTIFY_ROLES, (role) =>
         buildRoleScopedNotification(role, {
           type: eventType,

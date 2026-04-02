@@ -2,8 +2,7 @@ import { AuthenticateRequest } from "../../../middleware/authMiddleware";
 import {Request,Response} from "express"
 import { ClientCommunicationService } from "../services";
 import { notifyProjectStakeholdersByRole } from "../../../utils/notifyProjectStakeholders";
-import { sendNotification } from "../../../utils/sendNotification";
-import { buildCreatorNotification, buildRoleScopedNotification } from "../../../utils/stakeholderNotificationMessages";
+import { buildRoleScopedNotification } from "../../../utils/stakeholderNotificationMessages";
 
 
 const communicationService = new ClientCommunicationService();
@@ -14,13 +13,6 @@ export class ClientCommunicationController {
       req.body,
       req.user!.id
     );
-    await sendNotification(req.user!.id, buildCreatorNotification("CLIENT_COMM_LOG_CREATED", {
-      title: "Client Communication Log Created",
-      message: "You created a client communication log.",
-    }, {
-      communicationId: data.id,
-      timestamp: new Date(),
-    }));
     await notifyProjectStakeholdersByRole(data.projectId, ["DEPUTY_MANAGER", "OPERATION_EXECUTIVE"], (role) =>
       buildRoleScopedNotification(role, {
         type: "CLIENT_COMM_LOG_CREATED",
