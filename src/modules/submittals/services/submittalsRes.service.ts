@@ -1,14 +1,11 @@
-import { UPLOAD_BASE_DIR } from "../../../utils/fileUtil";
 import { SubmittalResponseRepository } from "../repositories";
 import { SubmitalRepository } from "../repositories";
 import { CreateSubmittalsResponseDto } from "../dtos";
 import { AppError } from "../../../config/utils/AppError";
 import { FileObject } from "../../../shared/fileType";
-import path from "path";
 import { Response } from "express";
-import { streamFile } from "../../../utils/fileUtil";
+import { resolveUploadFilePath, streamFile } from "../../../utils/fileUtil";
 import { State } from "@prisma/client";
-import fs from "fs";
 
 const responseRepo = new SubmittalResponseRepository();
 const submittalRepo = new SubmitalRepository();
@@ -116,10 +113,8 @@ export class SubmittalResponseService {
       throw new AppError("File not found", 404);
     }
 
-    const __dirname = path.resolve();
-    const filePath = path.join(UPLOAD_BASE_DIR, fileObject.path);
-
-    if (!fs.existsSync(filePath)) {
+    const filePath = resolveUploadFilePath(fileObject);
+    if (!filePath) {
       throw new AppError("File not found on server", 404);
     }
 

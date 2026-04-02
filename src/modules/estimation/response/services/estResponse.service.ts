@@ -1,10 +1,7 @@
-import { UPLOAD_BASE_DIR } from "../../../../utils/fileUtil";
-import fs from "fs";
-import path from "path";
 import { Response } from "express";
 import { AppError } from "../../../../config/utils/AppError";
 import { FileObject } from "../../../../shared/fileType";
-import { streamFile } from "../../../../utils/fileUtil";
+import { resolveUploadFilePath, streamFile } from "../../../../utils/fileUtil";
 import {
   CreateEstimationResponseInput,
   GetEstimationResponseByIdInput,
@@ -63,10 +60,8 @@ export class EstimationResponseService {
     const fileObject = files.find((file: FileObject) => file.id === cleanFileId);
     if (!fileObject) throw new AppError("File not found", 404);
 
-    const rootPath = path.resolve();
-    const filePath = path.join(rootPath, "public", fileObject.path);
-
-    if (!fs.existsSync(filePath)) {
+    const filePath = resolveUploadFilePath(fileObject);
+    if (!filePath) {
       throw new AppError("File not found on server", 404);
     }
 

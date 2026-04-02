@@ -1,10 +1,8 @@
-import { UPLOAD_BASE_DIR } from "../../../utils/fileUtil";
 import { CreateCoResponseDto } from "../dtos";
 import { CoResponseRepository } from "../repositories";
 import { AppError } from "../../../config/utils/AppError";
 import { FileObject } from "../../../shared/fileType";
-import path from "path";
-import { streamFile } from "../../../utils/fileUtil";
+import { resolveUploadFilePath, streamFile } from "../../../utils/fileUtil";
 import { Response } from "express";
 import prisma from "../../../config/database/client";
 import changeOrderInvoiceRequestTemplate from "../../../services/mailServices/mailtemplates/changeOrderApprovedInvoice";
@@ -91,8 +89,8 @@ export class CoResponseService {
   async viewFile(coResponseId: string, fileId: string, res: Response) {
     const fileObject = await this.getFile(coResponseId, fileId);
 
-    const __dirname = path.resolve();
-    const filePath = path.join(UPLOAD_BASE_DIR, fileObject.filename);
+    const filePath = resolveUploadFilePath(fileObject);
+    if (!filePath) throw new AppError("File not found on server", 404);
 
     return streamFile(res, filePath, fileObject.originalName);
   }

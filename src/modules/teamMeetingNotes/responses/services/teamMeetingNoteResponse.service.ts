@@ -1,9 +1,8 @@
 import { Response } from "express";
-import path from "path";
 import { AppError } from "../../../../config/utils/AppError";
 import prisma from "../../../../config/database/client";
 import { FileObject } from "../../../../shared/fileType";
-import { streamFile, UPLOAD_BASE_DIR } from "../../../../utils/fileUtil";
+import { resolveUploadFilePath, streamFile } from "../../../../utils/fileUtil";
 import { CreateTeamMeetingNoteResponseInput, UpdateTeamMeetingNoteResponseInput } from "../dtos";
 import { TeamMeetingNoteResponseRepository } from "../repositories/teamMeetingNoteResponse.repository";
 
@@ -67,7 +66,8 @@ export class TeamMeetingNoteResponseService {
     const fileObject = files.find((file) => file.id === cleanFileId);
     if (!fileObject) throw new AppError("File not found", 404);
 
-    const filePath = path.join(UPLOAD_BASE_DIR, fileObject.path);
+    const filePath = resolveUploadFilePath(fileObject);
+    if (!filePath) throw new AppError("File not found on server", 404);
     return streamFile(res, filePath, fileObject.originalName);
   }
 }

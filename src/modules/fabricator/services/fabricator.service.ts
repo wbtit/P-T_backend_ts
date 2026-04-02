@@ -1,12 +1,9 @@
-import { UPLOAD_BASE_DIR } from "../../../utils/fileUtil";
-import path from "path";
 import { AppError } from "../../../config/utils/AppError";
 import { FileObject } from "../../../shared/fileType";
 import { CreateFabricatorInput, FabricatorClientAdminHandoverInput, UpdateFabricatorInput } from "../dtos";
 import { FabricatorRepository } from "../repositories";
-import { streamFile } from "../../../utils/fileUtil";
+import { resolveUploadFilePath, streamFile } from "../../../utils/fileUtil";
 import { Response } from "express";
-import fs from "fs";
 import prisma from "../../../config/database/client";
 
 const fabRepo = new FabricatorRepository();
@@ -79,10 +76,8 @@ export class FabricatorService {
     const fileObject = files.find((file: FileObject) => file.id === cleanFileId);
     if (!fileObject) throw new AppError("File not found", 404);
 
-    const __dirname = path.resolve();
-    const filePath = path.join(UPLOAD_BASE_DIR, fileObject.filename);
-
-    if (!fs.existsSync(filePath)) {
+    const filePath = resolveUploadFilePath(fileObject);
+    if (!filePath) {
       throw new AppError("File not found on server", 404);
     }
 

@@ -1,10 +1,7 @@
-import { UPLOAD_BASE_DIR } from "../../../utils/fileUtil";
 import { AppError } from "../../../config/utils/AppError";
 import { FileObject } from "../../../shared/fileType";
 import { Response } from "express";
-import path from "path";
-import fs from "fs";
-import { streamFile } from "../../../utils/fileUtil";
+import { resolveUploadFilePath, streamFile } from "../../../utils/fileUtil";
 import prisma from "../../../config/database/client";
 import {
   generateParentScopedSerial,
@@ -208,10 +205,8 @@ export class ConnectionDesignerQuotaService {
       throw new AppError("File not found", 404);
     }
 
-    const __dirname = path.resolve();
-    const filePath = path.join(UPLOAD_BASE_DIR, fileObject.path);
-
-    if (!fs.existsSync(filePath)) {
+    const filePath = resolveUploadFilePath(fileObject);
+    if (!filePath) {
       throw new AppError("File not found on server", 404);
     }
 

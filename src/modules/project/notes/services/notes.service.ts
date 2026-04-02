@@ -1,13 +1,10 @@
-import { UPLOAD_BASE_DIR } from "../../../../utils/fileUtil";
 import { CreateNoteInput, UpdateNoteInput } from "../dtos";
 import { NotesRepository } from "../Repositories";
 import { FileObject } from "../../../../shared/fileType";
-import { streamFile } from "../../../../utils/fileUtil";
-import path from "path";
+import { resolveUploadFilePath, streamFile } from "../../../../utils/fileUtil";
 import { Response } from "express";
 import { AppError } from "../../../../config/utils/AppError";
 import { getActiveUserIdsByRoles, notifyUsers } from "../../../../utils/notifyByRole";
-import fs from 'fs'
 
 
 
@@ -105,9 +102,8 @@ export class NotesService {
                 throw new AppError("File not found", 404);
               }
           
-              const __dirname = path.resolve();
-              const filePath = path.join(UPLOAD_BASE_DIR, fileObject.path);
-              if (!fs.existsSync(filePath)) {
+              const filePath = resolveUploadFilePath(fileObject);
+              if (!filePath) {
                   console.error("🚨 [viewFile] File does not exist on disk:", filePath);
                   throw new AppError("File not found on server", 404);
                 }

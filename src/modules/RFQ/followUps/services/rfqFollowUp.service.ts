@@ -1,9 +1,6 @@
-import { UPLOAD_BASE_DIR } from "../../../../utils/fileUtil";
 import { Response } from "express";
-import fs from "fs";
-import path from "path";
 import { AppError } from "../../../../config/utils/AppError";
-import { streamFile } from "../../../../utils/fileUtil";
+import { resolveUploadFilePath, streamFile } from "../../../../utils/fileUtil";
 import { FileObject } from "../../../../shared/fileType";
 import { RFQRepository } from "../../repositeries";
 import {
@@ -67,15 +64,8 @@ export class RFQFollowUpService {
     const fileObject = files.find((file: FileObject) => file.id === cleanFileId);
     if (!fileObject) throw new AppError("File not found", 404);
 
-    const baseDir = path.resolve();
-    let relativePath = fileObject.path || "";
-    if (relativePath.startsWith("/public/")) {
-      relativePath = relativePath.slice("/public/".length);
-    } else if (relativePath.startsWith("public/")) {
-      relativePath = relativePath.slice("public/".length);
-    }
-    const filePath = path.join(baseDir, "public", relativePath);
-    if (!fs.existsSync(filePath)) {
+    const filePath = resolveUploadFilePath(fileObject);
+    if (!filePath) {
       throw new AppError("File not found on server", 404);
     }
     return streamFile(res, filePath, fileObject.originalName);

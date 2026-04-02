@@ -2,9 +2,8 @@ import crypto from "crypto";
 import prisma from "../config/database/client";
 import mime from "mime";
 import fs from "fs";
-import path from "path";
 import { Request, Response } from "express";
-import { UPLOAD_BASE_DIR } from "./fileUtil";
+import { resolveUploadFilePath, UPLOAD_BASE_DIR } from "./fileUtil";
 
 
 
@@ -15,40 +14,6 @@ interface FileObj {
   filename?: string;
   originalName: string;
 }
-
-const resolveSharedFilePath = (file: FileObj) => {
-  const baseDir = path.resolve(UPLOAD_BASE_DIR);
-  const rawValues = [file.path, file.filename].filter(
-    (value): value is string => Boolean(value)
-  );
-
-  const candidates = new Set<string>();
-
-  for (const rawValue of rawValues) {
-    const normalizedValue = rawValue.replace(/\\/g, "/");
-
-    candidates.add(path.resolve(baseDir, normalizedValue));
-
-    if (path.isAbsolute(normalizedValue)) {
-      candidates.add(path.resolve(normalizedValue));
-    }
-
-    const trimmedValue = normalizedValue
-      .replace(/^\/?public\//, "")
-      .replace(/^\/?uploads\//, "")
-      .replace(/^\/+/, "");
-
-    candidates.add(path.resolve(baseDir, trimmedValue));
-  }
-
-  for (const candidate of candidates) {
-    if (candidate.startsWith(baseDir) && fs.existsSync(candidate)) {
-      return candidate;
-    }
-  }
-
-  return null;
-};
 
 // maps API table names to prisma model names
 const MODEL_MAP: Record<string, string> = {
@@ -104,6 +69,46 @@ const createShareLink = async (req: Request, res: Response) => {
       return res.status(404).json({ message: "File not found in JSON" });
     }
 
+    const resolvedFilePath = resolveUploadFilePath(fileObj);
+    if (!resolvedFilePath) {
+      if (table === "designDrawings" || table === "designDrawingsResponses") {
+        console.error("[createShareLink][designDrawings] File could not be resolved", {
+          table,
+          parentId,
+          fileId,
+          uploadBaseDir: UPLOAD_BASE_DIR,
+          fileObj,
+        });
+      }
+
+      return res.status(404).json({
+        message: "File missing on server",
+        details:
+          table === "designDrawings" || table === "designDrawingsResponses"
+            ? {
+                table,
+                parentId,
+                fileId,
+                uploadBaseDir: UPLOAD_BASE_DIR,
+                storedPath: fileObj.path,
+                storedFilename: fileObj.filename,
+              }
+            : undefined,
+      });
+    }
+
+    if (table === "designDrawings" || table === "designDrawingsResponses") {
+      console.error("[createShareLink][designDrawings] File resolved successfully", {
+        table,
+        parentId,
+        fileId,
+        uploadBaseDir: UPLOAD_BASE_DIR,
+        storedPath: fileObj.path,
+        storedFilename: fileObj.filename,
+        resolvedFilePath,
+      });
+    }
+
     const token = crypto.randomBytes(32).toString("hex");
 
     await prisma.fileShareLink.create({
@@ -133,10 +138,12 @@ const createShareLink = async (req: Request, res: Response) => {
 const downloadShare = async (req: Request, res: Response) => {
   try {
     const { token } = req.params;
+    console.error("[downloadShare] Incoming token:", token);
 
     const share = await prisma.fileShareLink.findUnique({
       where: { token },
     });
+    console.error("[downloadShare] Share row:", share);
 
     if (!share) return res.status(404).json({ message: "Invalid link" });
 
@@ -152,20 +159,44 @@ const downloadShare = async (req: Request, res: Response) => {
     const row = await model.findUnique({
       where: { id: share.parentId },
     });
+    console.error("[downloadShare] Parent row found:", {
+      parentTable: share.parentTable,
+      parentId: share.parentId,
+      hasFiles: Array.isArray(row?.files),
+      filesCount: Array.isArray(row?.files) ? row.files.length : 0,
+    });
 
     if (!row) return res.status(404).json({ message: "Parent record not found" });
 
     const file = (row.files || []).find((f: FileObj) => f.id === share.fileId);
+    console.error("[downloadShare] Matched file object:", file);
     if (!file) return res.status(404).json({ message: "File not found in record" });
 
-    const filePath = resolveSharedFilePath(file);
+    const filePath = resolveUploadFilePath(file);
+    console.error("[downloadShare] Resolved file path:", {
+      uploadBaseDir: UPLOAD_BASE_DIR,
+      requestedFileId: share.fileId,
+      storedPath: file.path,
+      storedFilename: file.filename,
+      resolvedPath: filePath,
+    });
 
     if (!filePath) {
+      console.error("[downloadShare] File missing on server after resolution:", {
+        uploadBaseDir: UPLOAD_BASE_DIR,
+        file,
+      });
       return res.status(404).json({ message: "File missing on server" });
     }
 
     const stat = fs.statSync(filePath);
     const mimeType = mime.getType(filePath) || "application/octet-stream";
+    console.error("[downloadShare] Streaming file:", {
+      filePath,
+      size: stat.size,
+      mimeType,
+      originalName: file.originalName,
+    });
 
     // IMPORTANT HEADERS
     res.setHeader("Content-Type", mimeType);

@@ -1,12 +1,9 @@
-import { UPLOAD_BASE_DIR } from "../../../utils/fileUtil";
 import { SubmitalRepository,SubmittalVersionRepository } from "../repositories";
 import { CreateSubmittalsDto, UpdateSubmittalsDto } from "../dtos";
 import { AppError } from "../../../config/utils/AppError";
 import { FileObject } from "../../../shared/fileType";
-import path from "path";
 import { Response } from "express";
-import { streamFile } from "../../../utils/fileUtil";
-import fs from "fs";
+import { resolveUploadFilePath, streamFile } from "../../../utils/fileUtil";
 
 const submittalRepo = new SubmitalRepository();
 const versionRepo = new SubmittalVersionRepository();
@@ -156,11 +153,10 @@ export class SubmittalService {
       throw new AppError("File not found", 404);
     }
 
-    const __dirname = path.resolve();
-    const filePath = path.join(UPLOAD_BASE_DIR, fileObject.path);
+    const filePath = resolveUploadFilePath(fileObject);
     console.log("📁 [viewFile] Resolved file path:", filePath);
 
-    if (!fs.existsSync(filePath)) {
+    if (!filePath) {
       throw new AppError("File not found on server", 404);
     }
 

@@ -1,5 +1,3 @@
-import path from "path";
-import fs from "fs";
 import { Response } from "express";
 
 import { AppError } from "../../../config/utils/AppError";
@@ -11,7 +9,7 @@ import {
 } from "../dto";
 
 import { VendorRepository } from "../repository";
-import { streamFile } from "../../../utils/fileUtil";
+import { resolveUploadFilePath, streamFile } from "../../../utils/fileUtil";
 
 const vendorRepo = new VendorRepository();
 
@@ -140,10 +138,9 @@ export class VendorService {
       throw new AppError("File not found", 404);
     }
 
-    const __dirname = path.resolve();
-    const filePath = path.join(__dirname, fileObject.path);
+    const filePath = resolveUploadFilePath(fileObject);
 
-    if (!fs.existsSync(filePath)) {
+    if (!filePath) {
       throw new AppError("File not found on server", 404);
     }
 

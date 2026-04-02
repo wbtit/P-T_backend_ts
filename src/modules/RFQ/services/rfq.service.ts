@@ -1,4 +1,3 @@
-import { UPLOAD_BASE_DIR } from "../../../utils/fileUtil";
 import { RFQRepository } from "../repositeries";
 import { CreateRfqInput,
     GetRfqInput,
@@ -7,10 +6,8 @@ import { CreateRfqInput,
 import { AppError } from "../../../config/utils/AppError";
 import { FileObject } from "../../../shared/fileType";
 
-import path from "path";
-import { streamFile } from "../../../utils/fileUtil";
+import { resolveUploadFilePath, streamFile } from "../../../utils/fileUtil";
 import { Response } from "express";
-import fs from "fs";
 import prisma from "../../../config/database/client";
 import {
   generateProjectScopedSerial,
@@ -175,11 +172,10 @@ export class RFQService {
     throw new AppError("File not found", 404);
   }
 
-        const __dirname=path.resolve();
-        const filePath = path.join(__dirname, fileObject.path); // ✅ use path, not filename
+        const filePath = resolveUploadFilePath(fileObject);
         console.log("📁 [viewFile] Resolved file path:", filePath);
 
-        if (!fs.existsSync(filePath)) {
+        if (!filePath) {
             console.error("🚨 [viewFile] File does not exist on disk:", filePath);
             throw new AppError("File not found on server", 404);
               }

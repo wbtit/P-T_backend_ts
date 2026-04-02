@@ -1,13 +1,10 @@
-import { UPLOAD_BASE_DIR } from "../../../utils/fileUtil";
 import { RFIResponseRepository } from "../repositories";
 import { AppError } from "../../../config/utils/AppError";
 import { CreateRfiResDto,UpdateRFIResponseDto } from "../dtos";
 import { RFIRepository } from "../repositories";
 import { FileObject } from "../../../shared/fileType";
-import path from "path";
-import { streamFile } from "../../../utils/fileUtil";
+import { resolveUploadFilePath, streamFile } from "../../../utils/fileUtil";
 import { Response } from "express";
-import fs  from "fs";
 
 const rfiResRepo= new RFIResponseRepository();
 const rfiRepo= new RFIRepository();
@@ -70,10 +67,8 @@ export class RFIResponseService{
             throw new AppError("File not found", 404);
           }
         
-            const __dirname = path.resolve();
-            const filePath = path.join(UPLOAD_BASE_DIR, fileObject.path);
-        
-            if (!fs.existsSync(filePath)) {
+            const filePath = resolveUploadFilePath(fileObject);
+            if (!filePath) {
                 console.error("🚨 [viewFile] File does not exist on disk:", filePath);
                 throw new AppError("File not found on server", 404);
               }

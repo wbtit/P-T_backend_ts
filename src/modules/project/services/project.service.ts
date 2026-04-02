@@ -1,4 +1,3 @@
-import { UPLOAD_BASE_DIR } from "../../../utils/fileUtil";
 import { Stage } from "@prisma/client";
 import prisma from "../../../config/database/client";
 import { AppError } from "../../../config/utils/AppError";
@@ -11,8 +10,7 @@ import { ProjectRepository } from "../repositories";
 import { createWBSAndProjectLineItems } from "../WBS/utils/wbs.util";
 import { Prisma } from "@prisma/client";
 import { FileObject } from "../../../shared/fileType";
-import { streamFile } from "../../../utils/fileUtil";
-import path from "path";
+import { resolveUploadFilePath, streamFile } from "../../../utils/fileUtil";
 import { Response } from "express";
 import { UserJwt } from "../../../shared/types";
 import { updateProjectStage } from "../utils/updateProjectStage";
@@ -20,7 +18,6 @@ import { handleStageChange } from "../utils/handleStageChange";
 import { handleEndDateChange } from "../utils/handleEndDateChange";
 import { recomputeProjectBundleTotals } from "../WBS/utils/recomputeBundleTotals";
 import { ensureCheckingWbsForBundle } from "../WBS/utils/ensureCheckingWbs";
-import fs from 'fs'
 
 
  const projectRepository = new ProjectRepository();
@@ -328,9 +325,8 @@ async expandProjectWbs(
          throw new AppError("File not found", 404);
        }
    
-       const __dirname = path.resolve();
-       const filePath = path.join(UPLOAD_BASE_DIR, fileObject.path);
-       if (!fs.existsSync(filePath)) {
+       const filePath = resolveUploadFilePath(fileObject);
+       if (!filePath) {
            throw new AppError("File not found on server", 404);
          }
    

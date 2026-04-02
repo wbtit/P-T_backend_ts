@@ -1,11 +1,9 @@
-import { UPLOAD_BASE_DIR } from "../../../../utils/fileUtil";
 import { EstManagementRepository } from "../repositories";
 import { AppError } from "../../../../config/utils/AppError";
 import { CreateEstimationDtoType,UpdateEstimationDtoType } from "../dtos";
 import { FileObject } from "../../../../shared/fileType";
 import { EstimationStatus } from "@prisma/client";
-import { streamFile } from "../../../../utils/fileUtil";
-import path from "path";
+import { resolveUploadFilePath, streamFile } from "../../../../utils/fileUtil";
 import { Response } from "express";
 import prisma from "../../../../config/database/client";
 import {
@@ -105,8 +103,10 @@ export class EstimationManageService{
        if (!file) {
          throw new AppError("File not found", 404);
        }
-        const __dirname=path.resolve();
-        const filePath = path.join(UPLOAD_BASE_DIR, file.filename);
+        const filePath = resolveUploadFilePath(file);
+        if (!filePath) {
+          throw new AppError("File not found on server", 404);
+        }
         return streamFile(res, filePath, file.originalName);
        
      }

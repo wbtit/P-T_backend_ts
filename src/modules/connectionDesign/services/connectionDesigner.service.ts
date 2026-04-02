@@ -1,6 +1,3 @@
-import { UPLOAD_BASE_DIR } from "../../../utils/fileUtil";
-import path from "path";
-import fs from "fs";
 import { Response } from "express";
 
 import { AppError } from "../../../config/utils/AppError";
@@ -12,7 +9,7 @@ import {
 } from "../dtos";
 
 import { ConnectionDesignerRepository } from "../repositories";
-import { streamFile } from "../../../utils/fileUtil";
+import { resolveUploadFilePath, streamFile } from "../../../utils/fileUtil";
 
 const cdRepo = new ConnectionDesignerRepository();
 
@@ -113,10 +110,8 @@ export class ConnectionDesignerService {
       throw new AppError("File not found", 404);
     }
 
-    const __dirname = path.resolve();
-   const filePath = path.join(UPLOAD_BASE_DIR, fileObject.filename);
-
-    if (!fs.existsSync(filePath)) {
+    const filePath = resolveUploadFilePath(fileObject);
+    if (!filePath) {
       throw new AppError("File not found on server", 404);
     }
 

@@ -1,6 +1,5 @@
 import { DesignDrawingsRepository } from "../repositories";
 import { AppError } from "../../../config/utils/AppError";
-import fs from 'fs'
 import {
   CreateDesignDrawingsInput,
   UpdateDesignDrawingsInput,
@@ -8,8 +7,7 @@ import {
 } from "../dtos";
 import { FileObject } from "../../../shared/fileType";
 import { Response } from "express";
-import path from "path";
-import { streamFile, UPLOAD_BASE_DIR } from "../../../utils/fileUtil";
+import { resolveUploadFilePath, streamFile } from "../../../utils/fileUtil";
 
 const designRepo = new DesignDrawingsRepository();
 
@@ -116,8 +114,8 @@ export class DesignDrawingsService {
       throw new AppError("File not found", 404);
     }
 
-    const filePath = path.join(UPLOAD_BASE_DIR, fileObject.path);
-    if (!fs.existsSync(filePath)) {
+    const filePath = resolveUploadFilePath(fileObject);
+    if (!filePath) {
         console.error("🚨 [viewFile] File does not exist on disk:", filePath);
         throw new AppError("File not found on server", 404);
       }
@@ -141,10 +139,8 @@ export class DesignDrawingsService {
        throw new AppError("File not found", 404);
      }
 
-     const filePath = path.join(UPLOAD_BASE_DIR, fileObject.path);
-
-
-       if (!fs.existsSync(filePath)) {
+     const filePath = resolveUploadFilePath(fileObject);
+       if (!filePath) {
          console.error("🚨 [viewFile] File does not exist on disk:", filePath);
          throw new AppError("File not found on server", 404);
        }
