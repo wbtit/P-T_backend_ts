@@ -9,7 +9,7 @@ import {
 import { FileObject } from "../../../shared/fileType";
 import { Response } from "express";
 import path from "path";
-import { streamFile } from "../../../utils/fileUtil";
+import { streamFile, UPLOAD_BASE_DIR } from "../../../utils/fileUtil";
 
 const designRepo = new DesignDrawingsRepository();
 
@@ -116,8 +116,7 @@ export class DesignDrawingsService {
       throw new AppError("File not found", 404);
     }
 
-    const __dirname = path.resolve();
-    const filePath = path.join(__dirname, "public", fileObject.path);
+    const filePath = path.join(UPLOAD_BASE_DIR, fileObject.path);
     if (!fs.existsSync(filePath)) {
         console.error("🚨 [viewFile] File does not exist on disk:", filePath);
         throw new AppError("File not found on server", 404);
@@ -142,8 +141,7 @@ export class DesignDrawingsService {
        throw new AppError("File not found", 404);
      }
 
-     const __dirname = path.resolve();
-     const filePath = path.join(__dirname, "public", fileObject.path);
+     const filePath = path.join(UPLOAD_BASE_DIR, fileObject.path);
 
 
        if (!fs.existsSync(filePath)) {
