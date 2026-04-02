@@ -69,6 +69,6 @@ routes.use("/vendorQuota",vendorQuotaRoute)
 routes.use("/share",shareLinkRouter)
 routes.use("/design-drawings", designDrawingsRoutes);
 routes.use("/meetings", meetingRoutes);
-routes.use("/team-meeting-notes", teamMeetingNotesRoutes);
+routes.use("/teamMeetingNotes", teamMeetingNotesRoutes);
 
 export default routes

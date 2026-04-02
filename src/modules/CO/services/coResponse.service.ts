@@ -1,3 +1,4 @@
+import { UPLOAD_BASE_DIR } from "../../../utils/fileUtil";
 import { CreateCoResponseDto } from "../dtos";
 import { CoResponseRepository } from "../repositories";
 import { AppError } from "../../../config/utils/AppError";
@@ -91,7 +92,7 @@ export class CoResponseService {
     const fileObject = await this.getFile(coResponseId, fileId);
 
     const __dirname = path.resolve();
-    const filePath = path.join(__dirname,"public", fileObject.filename);
+    const filePath = path.join(UPLOAD_BASE_DIR, fileObject.filename);
 
     return streamFile(res, filePath, fileObject.originalName);
   }

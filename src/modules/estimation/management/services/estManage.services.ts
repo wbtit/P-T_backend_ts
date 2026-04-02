@@ -1,3 +1,4 @@
+import { UPLOAD_BASE_DIR } from "../../../../utils/fileUtil";
 import { EstManagementRepository } from "../repositories";
 import { AppError } from "../../../../config/utils/AppError";
 import { CreateEstimationDtoType,UpdateEstimationDtoType } from "../dtos";
@@ -105,7 +106,7 @@ export class EstimationManageService{
          throw new AppError("File not found", 404);
        }
         const __dirname=path.resolve();
-        const filePath = path.join(__dirname,"public", file.filename);
+        const filePath = path.join(UPLOAD_BASE_DIR, file.filename);
         return streamFile(res, filePath, file.originalName);
        
      }

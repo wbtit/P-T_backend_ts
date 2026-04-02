@@ -78,6 +78,11 @@ router.get(
   authMiddleware,
   submittalController.handlePendingForProjectManager.bind(submittalController)
 )
+router.get(
+  "/pending/CDAdmin",
+  authMiddleware,
+  submittalController.handlePendingForCDAdmin.bind(submittalController)
+)
 // LIST RECEIVED SUBMITTALS
 router.get(
   "/received",

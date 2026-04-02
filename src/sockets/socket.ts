@@ -2,8 +2,11 @@
 import { Server, Socket } from "socket.io";
 import { createAdapter } from "@socket.io/redis-adapter";
 import { createClient } from "redis";
+import jwt from "jsonwebtoken";
 import prisma from "../config/database/client";
 import { Compression, decompression } from "../utils/Zstd";
+import { JWT_SECRET } from "../config/utils/jwtutils";
+import { UserJwt } from "../shared/types";
 
 /** ----------------------- Types ----------------------- **/
 
@@ -77,16 +80,28 @@ for (const client of [pubClient, subClient, redis]) {
   console.log("✅ Redis adapter successfully attached to Socket.IO");
 
   /** ----------------------- Middleware Auth ----------------------- **/
-  io.use((socket, next) => {
+  io.use(async (socket, next) => {
     console.log("🔐 Incoming socket connection attempt...");
-    const userId = socket.handshake.auth?.userId as string | undefined;
-    if (!userId) {
-      console.warn("⚠️ Connection rejected: Missing userId in handshake.auth");
-      return next(new Error("Unauthorized: No userId"));
+    const authToken =
+      (socket.handshake.auth?.token as string | undefined) ||
+      (socket.handshake.headers.authorization?.startsWith("Bearer ")
+        ? socket.handshake.headers.authorization.slice("Bearer ".length)
+        : undefined);
+
+    if (authToken) {
+      try {
+        const decoded = jwt.verify(authToken, JWT_SECRET) as UserJwt;
+        console.log(`✅ Authenticated socket via JWT for userId: ${decoded.id}`);
+        socket.data.userId = decoded.id;
+        return next();
+      } catch (err) {
+        console.warn("⚠️ Socket JWT authentication failed");
+        return next(new Error("Unauthorized: Invalid token"));
+      }
     }
-    console.log(`✅ Authenticated socket for userId: ${userId}`);
-    socket.data.userId = userId;
-    next();
+
+    console.warn("⚠️ Connection rejected: Missing auth token in socket handshake");
+    return next(new Error("Unauthorized: Missing token"));
   });
 
   /** ----------------------- Connection ----------------------- **/

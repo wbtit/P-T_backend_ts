@@ -137,6 +137,8 @@ export class DesignDrawingsController {
         designDrawingId: req.body?.designDrawingsId,
         designDrawingResponseId: response.id,
         timestamp: new Date(),
+      }, {
+        excludeUserIds: [userId],
       });
     }
 

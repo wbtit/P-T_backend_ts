@@ -68,6 +68,20 @@ export const rFIOpenApiDoc: ModuleOpenApiDoc = {
         }
       },
     },
+    "/rfi/pending/CDAdmin": {
+      get: {
+        tags: ["RFI"],
+        summary: "GET /rfi/pending/CDAdmin",
+        operationId: "get_RFI_rfi_pending_CDAdmin",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
     "/rfi/pending/client": {
       get: {
         tags: ["RFI"],

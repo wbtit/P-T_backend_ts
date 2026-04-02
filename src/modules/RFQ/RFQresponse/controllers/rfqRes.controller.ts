@@ -3,6 +3,7 @@ import { RfqResponseService } from "../services/rfqRes.service";
 import { mapUploadedFiles } from "../../../uploads/fileUtil";
 import { notifyRfqStakeholders } from "../../../../utils/notifyRfqStakeholders";
 import { UserRole } from "@prisma/client";
+import { AuthenticateRequest } from "../../../../middleware/authMiddleware";
 
 
 const rfqResponseService = new RfqResponseService();
@@ -17,7 +18,8 @@ const RFQ_NOTIFY_ROLES: UserRole[] = [
     "VENDOR_ADMIN",
 ];
 export class RfqResponseController {
-    async handleCreate(req: Request, res: Response) {
+    async handleCreate(req: AuthenticateRequest, res: Response) {
+        const userId = req.user?.id;
         const uploadedFiles = mapUploadedFiles(
               (req.files as Express.Multer.File[]) || [],
               "rfqresponse"
@@ -34,6 +36,8 @@ export class RfqResponseController {
             rfqId: result.rfqId,
             rfqResponseId: result.id,
             timestamp: new Date(),
+        }, {
+            excludeUserIds: userId ? [userId] : [],
         });
         return res.status(201).json({
             success:true,

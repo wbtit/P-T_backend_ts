@@ -1,3 +1,4 @@
+import { UPLOAD_BASE_DIR } from "../../../utils/fileUtil";
 import { CORepository } from "../repositories";
 import {
   CreateCoInput,
@@ -130,7 +131,7 @@ export class COService {
     } else if (relativePath.startsWith("public/")) {
       relativePath = relativePath.slice("public/".length);
     }
-    const filePath = path.join(__dirname, "public", relativePath);
+    const filePath = path.join(UPLOAD_BASE_DIR, relativePath);
     return streamFile(res, filePath, fileObject.originalName);
   }
 

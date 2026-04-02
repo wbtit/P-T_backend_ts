@@ -1,3 +1,4 @@
+import { UPLOAD_BASE_DIR } from "../../../utils/fileUtil";
 import { SubmitalRepository,SubmittalVersionRepository } from "../repositories";
 import { CreateSubmittalsDto, UpdateSubmittalsDto } from "../dtos";
 import { AppError } from "../../../config/utils/AppError";
@@ -156,7 +157,7 @@ export class SubmittalService {
     }
 
     const __dirname = path.resolve();
-    const filePath = path.join(__dirname, "public", fileObject.path);
+    const filePath = path.join(UPLOAD_BASE_DIR, fileObject.path);
     console.log("📁 [viewFile] Resolved file path:", filePath);
 
     if (!fs.existsSync(filePath)) {

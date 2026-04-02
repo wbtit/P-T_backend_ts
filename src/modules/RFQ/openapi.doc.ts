@@ -185,6 +185,20 @@ export const rFQOpenApiDoc: ModuleOpenApiDoc = {
         }
       },
     },
+    "/rfq/pending/CDAdmin": {
+      get: {
+        tags: ["RFQ"],
+        summary: "GET /rfq/pending/CDAdmin",
+        operationId: "get_RFQ_rfq_pending_CDAdmin",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
     "/rfq/new/projectManager": {
       get: {
         tags: ["RFQ"],

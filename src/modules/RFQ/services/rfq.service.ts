@@ -1,3 +1,4 @@
+import { UPLOAD_BASE_DIR } from "../../../utils/fileUtil";
 import { RFQRepository } from "../repositeries";
 import { CreateRfqInput,
     GetRfqInput,

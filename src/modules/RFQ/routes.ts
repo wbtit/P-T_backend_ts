@@ -47,6 +47,11 @@ router.get(
     rfqController.handlePendingForProjectManager.bind(rfqController)
 )
 router.get(
+    "/pending/CDAdmin",
+    authMiddleware,
+    rfqController.handlePendingForCDAdmin.bind(rfqController)
+)
+router.get(
     "/new/projectManager",
     authMiddleware,
     rfqController.handleNewForProjectManager.bind(rfqController)

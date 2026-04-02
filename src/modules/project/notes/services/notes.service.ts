@@ -1,3 +1,4 @@
+import { UPLOAD_BASE_DIR } from "../../../../utils/fileUtil";
 import { CreateNoteInput, UpdateNoteInput } from "../dtos";
 import { NotesRepository } from "../Repositories";
 import { FileObject } from "../../../../shared/fileType";
@@ -105,7 +106,7 @@ export class NotesService {
               }
           
               const __dirname = path.resolve();
-              const filePath = path.join(__dirname, "public", fileObject.path);
+              const filePath = path.join(UPLOAD_BASE_DIR, fileObject.path);
               if (!fs.existsSync(filePath)) {
                   console.error("🚨 [viewFile] File does not exist on disk:", filePath);
                   throw new AppError("File not found on server", 404);

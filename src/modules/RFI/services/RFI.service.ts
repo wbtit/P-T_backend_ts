@@ -1,3 +1,4 @@
+import { UPLOAD_BASE_DIR } from "../../../utils/fileUtil";
 import { RFIRepository } from "../repositories";
 import {
   CreateRfiResDto,
@@ -104,7 +105,7 @@ export class RFIService {
 
     const __dirname = path.resolve();
     // Files are stored in public/rfi/ subdirectory
-    const filePath = path.join(__dirname, "public", fileObject.path);
+    const filePath = path.join(UPLOAD_BASE_DIR, fileObject.path);
 
     if (!fs.existsSync(filePath)) {
       console.error("🚨 [viewFile] File does not exist on disk:", filePath);

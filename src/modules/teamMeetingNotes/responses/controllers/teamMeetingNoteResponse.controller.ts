@@ -54,6 +54,8 @@ export class TeamMeetingNoteResponseController {
         noteResponseId: response.id,
         projectId: note.projectId,
         timestamp: new Date(),
+      }, {
+        excludeUserIds: [userId],
       });
     }
 

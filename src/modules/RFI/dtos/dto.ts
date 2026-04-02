@@ -11,7 +11,6 @@ export const RFISchema = z.object({
   project_id: z.string(),
   recepient_id: z.string().optional(),
   multipleRecipients: z.array(z.string()).optional(),
-  sender_id: z.string(),
   status: zBooleanString,
   subject: z.string(),
   description: z.string(),

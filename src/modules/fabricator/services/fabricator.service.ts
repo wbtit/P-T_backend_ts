@@ -1,3 +1,4 @@
+import { UPLOAD_BASE_DIR } from "../../../utils/fileUtil";
 import path from "path";
 import { AppError } from "../../../config/utils/AppError";
 import { FileObject } from "../../../shared/fileType";
@@ -79,7 +80,7 @@ export class FabricatorService {
     if (!fileObject) throw new AppError("File not found", 404);
 
     const __dirname = path.resolve();
-    const filePath = path.join(__dirname, "public", fileObject.filename);
+    const filePath = path.join(UPLOAD_BASE_DIR, fileObject.filename);
 
     if (!fs.existsSync(filePath)) {
       throw new AppError("File not found on server", 404);

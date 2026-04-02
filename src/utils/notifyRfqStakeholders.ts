@@ -2,7 +2,16 @@ import { UserRole } from "@prisma/client";
 import prisma from "../config/database/client";
 import { notifyUsers } from "./notifyByRole";
 
-export async function notifyRfqStakeholders(rfqId: string, roles: UserRole[], payload: any): Promise<void> {
+type NotifyRfqStakeholdersOptions = {
+  excludeUserIds?: string[];
+};
+
+export async function notifyRfqStakeholders(
+  rfqId: string,
+  roles: UserRole[],
+  payload: any,
+  options: NotifyRfqStakeholdersOptions = {}
+): Promise<void> {
   if (!roles.length) return;
 
   const rfq = await prisma.rFQ.findUnique({
@@ -74,5 +83,8 @@ export async function notifyRfqStakeholders(rfqId: string, roles: UserRole[], pa
     }
   });
 
-  await notifyUsers(Array.from(recipientIds), payload);
+  const excludedUserIds = new Set((options.excludeUserIds || []).filter(Boolean));
+  const filteredRecipientIds = Array.from(recipientIds).filter((id) => !excludedUserIds.has(id));
+
+  await notifyUsers(filteredRecipientIds, payload);
 }

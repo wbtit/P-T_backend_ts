@@ -83,6 +83,8 @@ export class SubmittalResponseController {
         submittalsId,
         submittalResponseId: response.id,
         timestamp: new Date(),
+      }, {
+        excludeUserIds: [userId],
       });
     }
 

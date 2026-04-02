@@ -104,6 +104,21 @@ export const dashboradDataOpenApiDoc: ModuleOpenApiDoc = {
         }
       },
     },
+    "/dashBoardData/connectionDesignerAdmin": {
+      get: {
+        tags: ["DashboardData"],
+        summary: "GET /dashBoardData/connectionDesignerAdmin",
+        operationId: "get_dashboradData_dashBoardData_connectionDesignerAdmin",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "403": { description: "Access denied" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
     "/dashBoardData/operationExecutive": {
       get: {
         tags: ["DashboardData"],

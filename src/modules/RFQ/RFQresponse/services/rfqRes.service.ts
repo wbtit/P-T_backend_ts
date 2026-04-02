@@ -1,3 +1,4 @@
+import { UPLOAD_BASE_DIR } from "../../../../utils/fileUtil";
 import { RfqResponseRepository } from "../repositories";
 import { CreateRFQResponseInput,GetRFQResponseInput } from "../dtos";
 import { RFQRepository } from "../../repositeries";
@@ -62,7 +63,7 @@ export class RfqResponseService {
     throw new AppError("File not found", 404);
   }
         const __dirname=path.resolve();
-        const filePath = path.join(__dirname, "public", fileObject.filename);
+        const filePath = path.join(UPLOAD_BASE_DIR, fileObject.filename);
                 console.log("📁 [viewFile] Resolved file path:", filePath);
         
                 if (!fs.existsSync(filePath)) {

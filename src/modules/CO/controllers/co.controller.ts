@@ -7,6 +7,7 @@ import { notifyProjectStakeholders } from "../../../utils/notifyProjectStakehold
 import { sendEmail, getCCEmails } from "../../../services/mailServices/mailconfig";
 import { coHtmlContent } from "../../../services/mailServices/mailtemplates/coMailtemplate";
 import { UserRole } from "@prisma/client";
+import prisma from "../../../config/database/client";
 
 const coService = new COService();
 const CO_NOTIFY_ROLES: UserRole[] = [
@@ -22,6 +23,41 @@ const CO_NOTIFY_ROLES: UserRole[] = [
   "VENDOR",
   "VENDOR_ADMIN",
 ];
+
+type ThreadResponseNode = {
+  createdAt: Date;
+  user?: {
+    connectionDesignerId: string | null;
+  } | null;
+  childResponses?: ThreadResponseNode[];
+};
+
+const flattenThreadResponses = (responses: ThreadResponseNode[]): ThreadResponseNode[] => {
+  const flattened: ThreadResponseNode[] = [];
+
+  responses.forEach((response) => {
+    flattened.push(response);
+    if (response.childResponses?.length) {
+      flattened.push(...flattenThreadResponses(response.childResponses));
+    }
+  });
+
+  return flattened;
+};
+
+const needsCompanyAttention = (
+  responses: ThreadResponseNode[],
+  connectionDesignerId: string
+) => {
+  const flattened = flattenThreadResponses(responses);
+  if (flattened.length === 0) return true;
+
+  const latestResponse = flattened.sort(
+    (a, b) => b.createdAt.getTime() - a.createdAt.getTime()
+  )[0];
+
+  return latestResponse.user?.connectionDesignerId !== connectionDesignerId;
+};
 
 export class COController {
   // ------------------- CO CREATION & UPDATE -------------------
@@ -248,6 +284,81 @@ async handlePendingCOsForClient(req: AuthenticateRequest, res: Response) {
     res.status(200).json({
       status: "success",
       data: cos,
+    });
+  }
+
+  async handlePendingCOsForCDAdmin(req: AuthenticateRequest, res: Response) {
+    if (!req.user) throw new AppError("User not found", 404);
+
+    const connectionDesignerId = req.user.connectionDesignerId;
+    if (!connectionDesignerId) {
+      throw new AppError("Connection designer is not assigned for this user", 400);
+    }
+
+    const cos = await prisma.changeOrder.findMany({
+      where: {
+        Project: {
+          connectionDesignerID: connectionDesignerId,
+          isDeleted: false,
+          status: { in: ["ACTIVE", "ONHOLD"] },
+        },
+        OR: [
+          { Recipients: { connectionDesignerId } },
+          { multipleRecipients: { some: { connectionDesignerId } } },
+        ],
+      },
+      include: {
+        coResponses: {
+          where: { parentResponseId: null },
+          include: {
+            user: {
+              select: {
+                id: true,
+                firstName: true,
+                middleName: true,
+                lastName: true,
+                email: true,
+                connectionDesignerId: true,
+              },
+            },
+            childResponses: {
+              include: {
+                user: {
+                  select: {
+                    id: true,
+                    firstName: true,
+                    middleName: true,
+                    lastName: true,
+                    email: true,
+                    connectionDesignerId: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        Project: { select: { id: true, name: true, status: true } },
+        Recipients: {
+          select: { id: true, firstName: true, middleName: true, lastName: true, email: true },
+        },
+        multipleRecipients: {
+          select: { id: true, firstName: true, lastName: true, email: true },
+        },
+        senders: {
+          select: { id: true, firstName: true, middleName: true, lastName: true, email: true },
+        },
+        CoRefersTo: true,
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    const pendingCOs = cos.filter((co) =>
+      needsCompanyAttention(co.coResponses as unknown as ThreadResponseNode[], connectionDesignerId)
+    );
+
+    res.status(200).json({
+      status: "success",
+      data: pendingCOs,
     });
   }
 }

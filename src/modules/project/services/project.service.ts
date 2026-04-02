@@ -1,3 +1,4 @@
+import { UPLOAD_BASE_DIR } from "../../../utils/fileUtil";
 import { Stage } from "@prisma/client";
 import prisma from "../../../config/database/client";
 import { AppError } from "../../../config/utils/AppError";
@@ -328,7 +329,7 @@ async expandProjectWbs(
        }
    
        const __dirname = path.resolve();
-       const filePath = path.join(__dirname, "public", fileObject.path);
+       const filePath = path.join(UPLOAD_BASE_DIR, fileObject.path);
        if (!fs.existsSync(filePath)) {
            throw new AppError("File not found on server", 404);
          }

@@ -64,6 +64,8 @@ export class CoResponseController {
         coResponseId: response.id,
         status,
         timestamp: new Date(),
+      }, {
+        excludeUserIds: [userId],
       });
     }
 

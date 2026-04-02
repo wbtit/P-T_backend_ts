@@ -1,9 +1,8 @@
 import { Response } from "express";
 import path from "path";
-import fs from "fs";
 import { AppError } from "../../../config/utils/AppError";
 import { FileObject } from "../../../shared/fileType";
-import { streamFile } from "../../../utils/fileUtil";
+import { streamFile, UPLOAD_BASE_DIR } from "../../../utils/fileUtil";
 import { CreateTeamMeetingNoteInput, UpdateTeamMeetingNoteInput } from "../dtos";
 import { TeamMeetingNotesRepository } from "../repositories/teamMeetingNotes.repository";
 
@@ -58,12 +57,7 @@ export class TeamMeetingNotesService {
     const fileObject = files.find((file) => file.id === cleanFileId);
     if (!fileObject) throw new AppError("File not found", 404);
 
-    const __dirname = path.resolve();
-    const filePath = path.join(__dirname, "public", fileObject.path);
-    if (!fs.existsSync(filePath)) {
-      throw new AppError("File not found on server", 404);
-    }
-
+    const filePath = path.join(UPLOAD_BASE_DIR, fileObject.path);
     return streamFile(res, filePath, fileObject.originalName);
   }
 }

@@ -3,7 +3,16 @@ import prisma from "../config/database/client";
 import { notifyUsers } from "./notifyByRole";
 import { enrichNotificationPayloadWithProject } from "./projectNotificationPayload";
 
-export async function notifyProjectStakeholders(projectId: string, roles: UserRole[], payload: any): Promise<void> {
+type NotifyProjectStakeholdersOptions = {
+  excludeUserIds?: string[];
+};
+
+export async function notifyProjectStakeholders(
+  projectId: string,
+  roles: UserRole[],
+  payload: any,
+  options: NotifyProjectStakeholdersOptions = {}
+): Promise<void> {
   if (!roles.length) return;
 
   const project = await prisma.project.findUnique({
@@ -132,5 +141,8 @@ export async function notifyProjectStakeholders(projectId: string, roles: UserRo
     projectName: project.name,
   });
 
-  await notifyUsers(Array.from(recipientIds), enrichedPayload);
+  const excludedUserIds = new Set((options.excludeUserIds || []).filter(Boolean));
+  const filteredRecipientIds = Array.from(recipientIds).filter((id) => !excludedUserIds.has(id));
+
+  await notifyUsers(filteredRecipientIds, enrichedPayload);
 }

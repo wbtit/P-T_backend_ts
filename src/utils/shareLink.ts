@@ -4,6 +4,7 @@ import mime from "mime";
 import fs from "fs";
 import path from "path";
 import { Request, Response } from "express";
+import { UPLOAD_BASE_DIR } from "./fileUtil";
 
 
 
@@ -11,8 +12,29 @@ import { Request, Response } from "express";
 interface FileObj {
   id: string;
   path: string;
+  filename?: string;
   originalName: string;
 }
+
+const resolveSharedFilePath = (file: FileObj) => {
+  const candidates = [file.path, file.filename]
+    .filter((value): value is string => Boolean(value))
+    .map((value) =>
+      value
+        .replace(/^\/?public\//, "")
+        .replace(/^\/?uploads\//, "")
+        .replace(/^\/+/, "")
+    );
+
+  for (const relativePath of candidates) {
+    const absolutePath = path.resolve(UPLOAD_BASE_DIR, relativePath);
+    if (absolutePath.startsWith(path.resolve(UPLOAD_BASE_DIR)) && fs.existsSync(absolutePath)) {
+      return absolutePath;
+    }
+  }
+
+  return null;
+};
 
 // maps API table names to prisma model names
 const MODEL_MAP: Record<string, string> = {
@@ -122,18 +144,9 @@ const downloadShare = async (req: Request, res: Response) => {
     const file = (row.files || []).find((f: FileObj) => f.id === share.fileId);
     if (!file) return res.status(404).json({ message: "File not found in record" });
 
-    const root =
-      process.env.PUBLIC_DIR || path.join(__dirname, "..", "..", "public");
+    const filePath = resolveSharedFilePath(file);
 
-    // Handle both old format (/public/...) and new format (rfq/...)
-    let relativePath = file.path;
-    if (file.path.startsWith('/public/')) {
-      relativePath = file.path.substring('/public/'.length);
-    }
-
-    const filePath = path.join(root, relativePath);
-
-    if (!fs.existsSync(filePath)) {
+    if (!filePath) {
       return res.status(404).json({ message: "File missing on server" });
     }
 

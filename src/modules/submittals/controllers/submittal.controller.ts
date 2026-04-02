@@ -9,6 +9,7 @@ import { notifyProjectStakeholders } from "../../../utils/notifyProjectStakehold
 import { UserRole } from "@prisma/client";
 import { ProjectAssistService } from "../../project/services/projectAssist.service";
 import { sendNotification } from "../../../utils/sendNotification";
+import prisma from "../../../config/database/client";
 
 const submittalService = new SubmittalService();
 const projectAssistService = new ProjectAssistService();
@@ -26,6 +27,41 @@ const SUBMITTAL_NOTIFY_ROLES: UserRole[] = [
   "VENDOR",
   "VENDOR_ADMIN",
 ];
+
+type ThreadResponseNode = {
+  createdAt: Date;
+  user?: {
+    connectionDesignerId: string | null;
+  } | null;
+  childResponses?: ThreadResponseNode[];
+};
+
+const flattenThreadResponses = (responses: ThreadResponseNode[]): ThreadResponseNode[] => {
+  const flattened: ThreadResponseNode[] = [];
+
+  responses.forEach((response) => {
+    flattened.push(response);
+    if (response.childResponses?.length) {
+      flattened.push(...flattenThreadResponses(response.childResponses));
+    }
+  });
+
+  return flattened;
+};
+
+const needsCompanyAttention = (
+  responses: ThreadResponseNode[],
+  connectionDesignerId: string
+) => {
+  const flattened = flattenThreadResponses(responses);
+  if (flattened.length === 0) return true;
+
+  const latestResponse = flattened.sort(
+    (a, b) => b.createdAt.getTime() - a.createdAt.getTime()
+  )[0];
+
+  return latestResponse.user?.connectionDesignerId !== connectionDesignerId;
+};
 
 export class SubmittalController {
 
@@ -140,6 +176,86 @@ export class SubmittalController {
     const { id } = req.user;
 
     const pendingSubmittals = await submittalService.getPendingSubmittalsForProjectManager(id);
+    res.status(200).json({
+      status: "success",
+      data: pendingSubmittals,
+    });
+  }
+
+  async handlePendingForCDAdmin(req: AuthenticateRequest, res: Response) {
+    if (!req.user) throw new AppError("User not found", 404);
+
+    const connectionDesignerId = req.user.connectionDesignerId;
+    if (!connectionDesignerId) {
+      throw new AppError("Connection designer is not assigned for this user", 400);
+    }
+
+    const submittals = await prisma.submittals.findMany({
+      where: {
+        project: {
+          connectionDesignerID: connectionDesignerId,
+          isDeleted: false,
+          status: { in: ["ACTIVE", "ONHOLD"] },
+        },
+        currentVersionId: { not: null },
+        OR: [
+          { recepients: { connectionDesignerId } },
+          { multipleRecipients: { some: { connectionDesignerId } } },
+        ],
+      },
+      include: {
+        project: { select: { id: true, name: true, status: true } },
+        fabricator: true,
+        recepients: true,
+        multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
+        sender: true,
+        versions: {
+          orderBy: { versionNumber: "desc" },
+        },
+        currentVersion: {
+          include: {
+            responses: {
+              where: { parentResponseId: null },
+              include: {
+                user: {
+                  select: {
+                    id: true,
+                    firstName: true,
+                    middleName: true,
+                    lastName: true,
+                    email: true,
+                    connectionDesignerId: true,
+                  },
+                },
+                childResponses: {
+                  include: {
+                    user: {
+                      select: {
+                        id: true,
+                        firstName: true,
+                        middleName: true,
+                        lastName: true,
+                        email: true,
+                        connectionDesignerId: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      orderBy: { date: "desc" },
+    });
+
+    const pendingSubmittals = submittals.filter((submittal) =>
+      needsCompanyAttention(
+        (submittal.currentVersion?.responses ?? []) as unknown as ThreadResponseNode[],
+        connectionDesignerId
+      )
+    );
+
     res.status(200).json({
       status: "success",
       data: pendingSubmittals,

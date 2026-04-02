@@ -1,3 +1,4 @@
+import { UPLOAD_BASE_DIR } from "../../../utils/fileUtil";
 import { RFIResponseRepository } from "../repositories";
 import { AppError } from "../../../config/utils/AppError";
 import { CreateRfiResDto,UpdateRFIResponseDto } from "../dtos";
@@ -70,7 +71,7 @@ export class RFIResponseService{
           }
         
             const __dirname = path.resolve();
-            const filePath = path.join(__dirname, "public", fileObject.path);
+            const filePath = path.join(UPLOAD_BASE_DIR, fileObject.path);
         
             if (!fs.existsSync(filePath)) {
                 console.error("🚨 [viewFile] File does not exist on disk:", filePath);

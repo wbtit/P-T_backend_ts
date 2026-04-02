@@ -29,6 +29,7 @@ export class MileStoneResponseController {
     if (!req.user) {
       throw new AppError("User not found", 404);
     }
+    const { id: userId } = req.user;
 
     const uploadedFiles = mapUploadedFiles(
       (req.files as Express.Multer.File[]) || [],
@@ -52,6 +53,8 @@ export class MileStoneResponseController {
         milestoneId: milestone.id,
         milestoneResponseId: response.id,
         timestamp: new Date(),
+      }, {
+        excludeUserIds: [userId],
       });
     }
 

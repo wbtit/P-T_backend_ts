@@ -1,3 +1,4 @@
+import { UPLOAD_BASE_DIR } from "../../../../utils/fileUtil";
 import fs from "fs";
 import path from "path";
 import { Response } from "express";

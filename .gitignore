@@ -16,6 +16,7 @@ pids
 *.pid.lock
 
 public/
+uploads/
 docker-cmds.txt
 build
 

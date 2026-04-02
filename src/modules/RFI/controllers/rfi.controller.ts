@@ -9,6 +9,7 @@ import { notifyProjectStakeholders } from "../../../utils/notifyProjectStakehold
 import { UserRole } from "@prisma/client";
 import { ProjectAssistService } from "../../project/services/projectAssist.service";
 import { sendNotification } from "../../../utils/sendNotification";
+import prisma from "../../../config/database/client";
 
 const rfiService = new RFIService();
 const projectAssistService = new ProjectAssistService();
@@ -27,6 +28,41 @@ const RFI_NOTIFY_ROLES: UserRole[] = [
   "VENDOR",
   "VENDOR_ADMIN",
 ];
+
+type ThreadResponseNode = {
+  createdAt: Date;
+  user?: {
+    connectionDesignerId: string | null;
+  } | null;
+  childResponses?: ThreadResponseNode[];
+};
+
+const flattenThreadResponses = (responses: ThreadResponseNode[]): ThreadResponseNode[] => {
+  const flattened: ThreadResponseNode[] = [];
+
+  responses.forEach((response) => {
+    flattened.push(response);
+    if (response.childResponses?.length) {
+      flattened.push(...flattenThreadResponses(response.childResponses));
+    }
+  });
+
+  return flattened;
+};
+
+const needsCompanyAttention = (
+  responses: ThreadResponseNode[],
+  connectionDesignerId: string
+) => {
+  const flattened = flattenThreadResponses(responses);
+  if (flattened.length === 0) return true;
+
+  const latestResponse = flattened.sort(
+    (a, b) => b.createdAt.getTime() - a.createdAt.getTime()
+  )[0];
+
+  return latestResponse.user?.connectionDesignerId !== connectionDesignerId;
+};
 
 export class RFIController {
   // CREATE RFI
@@ -308,6 +344,81 @@ export class RFIController {
     res.status(200).json({
       status: "success",
       data: newRFIs,
+    });
+  }
+
+  async handlePendingForCDAdmin(req: AuthenticateRequest, res: Response) {
+    if (!req.user) throw new AppError("User not found", 404);
+
+    const connectionDesignerId = req.user.connectionDesignerId;
+    if (!connectionDesignerId) {
+      throw new AppError("Connection designer is not assigned for this user", 400);
+    }
+
+    const rfis = await prisma.rFI.findMany({
+      where: {
+        project: {
+          connectionDesignerID: connectionDesignerId,
+          isDeleted: false,
+          status: { in: ["ACTIVE", "ONHOLD"] },
+        },
+        OR: [
+          { recepients: { connectionDesignerId } },
+          { multipleRecipients: { some: { connectionDesignerId } } },
+        ],
+      },
+      include: {
+        fabricator: { select: { id: true, fabName: true } },
+        project: { select: { id: true, name: true, status: true } },
+        sender: {
+          select: { id: true, firstName: true, middleName: true, lastName: true, email: true },
+        },
+        recepients: {
+          select: { id: true, firstName: true, middleName: true, lastName: true, email: true },
+        },
+        multipleRecipients: {
+          select: { id: true, firstName: true, lastName: true, email: true },
+        },
+        rfiresponse: {
+          where: { parentResponseId: null },
+          include: {
+            user: {
+              select: {
+                id: true,
+                firstName: true,
+                middleName: true,
+                lastName: true,
+                email: true,
+                connectionDesignerId: true,
+              },
+            },
+            childResponses: {
+              include: {
+                user: {
+                  select: {
+                    id: true,
+                    firstName: true,
+                    middleName: true,
+                    lastName: true,
+                    email: true,
+                    connectionDesignerId: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      orderBy: { date: "desc" },
+    });
+
+    const pendingRFIs = rfis.filter((rfi) =>
+      needsCompanyAttention(rfi.rfiresponse as unknown as ThreadResponseNode[], connectionDesignerId)
+    );
+
+    res.status(200).json({
+      status: "success",
+      data: pendingRFIs,
     });
   }
 }

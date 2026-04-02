@@ -50,6 +50,8 @@ export class RFIResponseController {
         rfiId,
         rfiResponseId: response.id,
         timestamp: new Date(),
+      }, {
+        excludeUserIds: [userId],
       });
     }
 

@@ -1,3 +1,4 @@
+import { UPLOAD_BASE_DIR } from "../../../utils/fileUtil";
 import path from "path";
 import fs from "fs";
 import { Response } from "express";
@@ -113,7 +114,7 @@ export class ConnectionDesignerService {
     }
 
     const __dirname = path.resolve();
-   const filePath = path.join(__dirname,"public", fileObject.filename);
+   const filePath = path.join(UPLOAD_BASE_DIR, fileObject.filename);
 
     if (!fs.existsSync(filePath)) {
       throw new AppError("File not found on server", 404);

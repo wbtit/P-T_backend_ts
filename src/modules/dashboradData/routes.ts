@@ -9,6 +9,7 @@ import { departmentManagerDashBoard } from "./departmentManagerDashBoard";
 import { projectManagerDashBoard } from "./projectManagerDashBoard";
 import { salesDashBoard } from "./salesDashBoard";
 import { operationExecutiveDashBoard } from "./operationExecutiveDashBoard";
+import { connectionDesignerAdminDashBoard } from "./connectionDesignerAdminDashBoard";
 
 const router = Router();
 
@@ -32,6 +33,11 @@ router.get(
   asyncHandler(projectManagerDashBoard)
 );
 router.get("/sales", authMiddleware, asyncHandler(salesDashBoard));
+router.get(
+  "/connectionDesignerAdmin",
+  authMiddleware,
+  asyncHandler(connectionDesignerAdminDashBoard)
+);
 router.get(
   "/operationExecutive",
   authMiddleware,

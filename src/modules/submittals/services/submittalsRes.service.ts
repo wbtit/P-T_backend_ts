@@ -1,3 +1,4 @@
+import { UPLOAD_BASE_DIR } from "../../../utils/fileUtil";
 import { SubmittalResponseRepository } from "../repositories";
 import { SubmitalRepository } from "../repositories";
 import { CreateSubmittalsResponseDto } from "../dtos";
@@ -116,7 +117,7 @@ export class SubmittalResponseService {
     }
 
     const __dirname = path.resolve();
-    const filePath = path.join(__dirname, "public", fileObject.path);
+    const filePath = path.join(UPLOAD_BASE_DIR, fileObject.path);
 
     if (!fs.existsSync(filePath)) {
       throw new AppError("File not found on server", 404);

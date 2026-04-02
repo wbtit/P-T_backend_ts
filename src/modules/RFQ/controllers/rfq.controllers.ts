@@ -7,6 +7,7 @@ import { sendEmail, getCCEmails } from "../../../services/mailServices/mailconfi
 import { rfqhtmlContent } from "../../../services/mailServices/mailtemplates/rfqMailtemplate";
 import { notifyRfqStakeholders } from "../../../utils/notifyRfqStakeholders";
 import { UserRole } from "@prisma/client";
+import prisma from "../../../config/database/client";
 
 const rfqService = new RFQService();
 const RFQ_NOTIFY_ROLES: UserRole[] = [
@@ -19,6 +20,41 @@ const RFQ_NOTIFY_ROLES: UserRole[] = [
   "VENDOR",
   "VENDOR_ADMIN",
 ];
+
+type ThreadResponseNode = {
+    createdAt: Date;
+    user?: {
+        connectionDesignerId: string | null;
+    } | null;
+    childResponses?: ThreadResponseNode[];
+};
+
+const flattenThreadResponses = (responses: ThreadResponseNode[]): ThreadResponseNode[] => {
+    const flattened: ThreadResponseNode[] = [];
+
+    responses.forEach((response) => {
+        flattened.push(response);
+        if (response.childResponses?.length) {
+            flattened.push(...flattenThreadResponses(response.childResponses));
+        }
+    });
+
+    return flattened;
+};
+
+const needsCompanyAttention = (
+    responses: ThreadResponseNode[],
+    connectionDesignerId: string
+) => {
+    const flattened = flattenThreadResponses(responses);
+    if (flattened.length === 0) return true;
+
+    const latestResponse = flattened.sort(
+        (a, b) => b.createdAt.getTime() - a.createdAt.getTime()
+    )[0];
+
+    return latestResponse.user?.connectionDesignerId !== connectionDesignerId;
+};
 
 export class RFQController {
     async handleCreateRfq(req:AuthenticateRequest,res:Response){
@@ -251,6 +287,97 @@ export class RFQController {
         res.status(200).json({
             status: 'success',
             data: newRFQs,
+        });
+    }
+
+    async handlePendingForCDAdmin(req: AuthenticateRequest, res: Response) {
+        if (!req.user) throw new AppError('User not found', 404);
+
+        const connectionDesignerId = req.user.connectionDesignerId;
+        if (!connectionDesignerId) {
+            throw new AppError("Connection designer is not assigned for this user", 400);
+        }
+
+        const rfqs = await prisma.rFQ.findMany({
+            where: {
+                connectionDesignerRFQ: {
+                    some: { id: connectionDesignerId },
+                },
+                isDeleted: false,
+                status: {
+                    notIn: ["AWARDED", "REJECTED"],
+                },
+            },
+            include: {
+                sender: true,
+                recipient: true,
+                multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
+                salesPerson: true,
+                responses: {
+                    where: { parentResponseId: null },
+                    include: {
+                        user: {
+                            select: {
+                                id: true,
+                                firstName: true,
+                                middleName: true,
+                                lastName: true,
+                                email: true,
+                                connectionDesignerId: true,
+                            },
+                        },
+                        childResponses: {
+                            include: {
+                                user: {
+                                    select: {
+                                        id: true,
+                                        firstName: true,
+                                        middleName: true,
+                                        lastName: true,
+                                        email: true,
+                                        connectionDesignerId: true,
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+                fabricator: true,
+                project: { select: { name: true } },
+                connectionEngineers: { select: { firstName: true, lastName: true, id: true } },
+                connectionDesignerRFQ: {
+                    include: {
+                        CDEngineers: true,
+                        CDQuotations: true,
+                    },
+                },
+                CDQuotas: {
+                    where: {
+                        connectionDesignerId,
+                        isDeleted: false,
+                    },
+                    include: {
+                        connectionDesigner: { select: { name: true } },
+                    },
+                },
+            },
+            orderBy: { createdAt: "desc" },
+        });
+
+        const pendingRFQs = rfqs.filter((rfq) => {
+            if (rfq.responses.length === 0) {
+                return rfq.CDQuotas.length === 0;
+            }
+
+            return needsCompanyAttention(
+                rfq.responses as unknown as ThreadResponseNode[],
+                connectionDesignerId
+            );
+        });
+
+        res.status(200).json({
+            status: 'success',
+            data: pendingRFQs,
         });
     }
 }
