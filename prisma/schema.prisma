@@ -840,7 +840,7 @@ model TeamMeetingNotes {
   flags       Json?                      @default("[]")
   colorCode  String?                   @default("")
   priority   Int?                      @default(0)
-
+  read       Boolean?                   @default(false)
   title       String
   content     String
   visibility  TeamMeetingNoteVisibility @default(INTERNAL)
