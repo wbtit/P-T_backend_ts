@@ -17,19 +17,33 @@ interface FileObj {
 }
 
 const resolveSharedFilePath = (file: FileObj) => {
-  const candidates = [file.path, file.filename]
-    .filter((value): value is string => Boolean(value))
-    .map((value) =>
-      value
-        .replace(/^\/?public\//, "")
-        .replace(/^\/?uploads\//, "")
-        .replace(/^\/+/, "")
-    );
+  const baseDir = path.resolve(UPLOAD_BASE_DIR);
+  const rawValues = [file.path, file.filename].filter(
+    (value): value is string => Boolean(value)
+  );
 
-  for (const relativePath of candidates) {
-    const absolutePath = path.resolve(UPLOAD_BASE_DIR, relativePath);
-    if (absolutePath.startsWith(path.resolve(UPLOAD_BASE_DIR)) && fs.existsSync(absolutePath)) {
-      return absolutePath;
+  const candidates = new Set<string>();
+
+  for (const rawValue of rawValues) {
+    const normalizedValue = rawValue.replace(/\\/g, "/");
+
+    candidates.add(path.resolve(baseDir, normalizedValue));
+
+    if (path.isAbsolute(normalizedValue)) {
+      candidates.add(path.resolve(normalizedValue));
+    }
+
+    const trimmedValue = normalizedValue
+      .replace(/^\/?public\//, "")
+      .replace(/^\/?uploads\//, "")
+      .replace(/^\/+/, "");
+
+    candidates.add(path.resolve(baseDir, trimmedValue));
+  }
+
+  for (const candidate of candidates) {
+    if (candidate.startsWith(baseDir) && fs.existsSync(candidate)) {
+      return candidate;
     }
   }
 
