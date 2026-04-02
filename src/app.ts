@@ -67,7 +67,7 @@ routes.use("/wbsTemplates",WbsTemplatesRouter)
 routes.use("/vendors",verndorRoute)
 routes.use("/vendorQuota",vendorQuotaRoute)
 routes.use("/share",shareLinkRouter)
-routes.use("/design-drawings", designDrawingsRoutes);
+routes.use("/designDrawings", designDrawingsRoutes);
 routes.use("/meetings", meetingRoutes);
 routes.use("/teamMeetingNotes", teamMeetingNotesRoutes);
 
