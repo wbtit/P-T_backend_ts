@@ -280,6 +280,12 @@ async expandProjectWbs(
       //only of his department
       projects = await projectRepository.getForDepartmentManager(user.departmentId!);
      }
+     if(user.role==="CONNECTION_DESIGNER_ADMIN"){
+      if (!user.connectionDesignerId) {
+        throw new AppError("Connection designer not found for this user", 400);
+      }
+      projects = await projectRepository.getForConnectionDesignerAdmin(user.connectionDesignerId);
+     }
      if(user.role==="CONNECTION_DESIGNER_ENGINEER"){
       //only his assigned projects
       projects = await projectRepository.getForConnectionDesignerEngineer(user.connectionDesignerId!);

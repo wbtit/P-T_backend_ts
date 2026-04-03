@@ -776,4 +776,42 @@ async getAllDocuments(id:string){
       })),
     };
   }
+
+
+  async getForConnectionDesignerAdmin(connectionDesignerId: string) {
+    return await prisma.project.findMany({
+      where:{
+        isDeleted: false,
+        status: { not: "INACTIVE" },
+        connectionDesignerID: connectionDesignerId,
+      },
+      include:{
+        stageHistory:true,
+        fabricator:{select:{
+          files:true,
+          fabName:true,
+          id:true
+        }},
+        manager:{select:{
+          firstName:true,
+          middleName:true,
+          lastName:true,
+          username:true,
+          id:true
+        }},
+        clientProjectManagers:{select:{
+          firstName:true,
+          middleName:true,
+          lastName:true,
+          username:true,
+          id:true
+        }},
+        team:true,
+        department:{select:{
+          name:true,
+          id:true
+        }}
+       }
+    })    
 }
+ }
