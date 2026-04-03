@@ -62,6 +62,14 @@ const createDefaultRolePermissions = (): RolePermissions => {
   return rolePerms;
 };
 
+const createFullRolePermissions = (): RolePermissions => {
+  const rolePerms = createDefaultRolePermissions();
+  entities.forEach(entity => {
+    rolePerms[entity] = { create: true, read: true, update: true, delete: true };
+  });
+  return rolePerms;
+};
+
 // Initialize permissions for all roles with defaults
 export const permissions: PermissionsConfig = {
   'STAFF': {
@@ -81,11 +89,7 @@ export const permissions: PermissionsConfig = {
     // CEO can mark specific permissions here, e.g., set some to true
   },
   'SYSTEM_ADMIN': (() => {
-    const perms = createDefaultRolePermissions();
-    entities.forEach(entity => {
-      perms[entity] = { create: true, read: true, update: true, delete: true };
-    });
-    return perms;
+    return createFullRolePermissions();
   })(),
   'CLIENT_ADMIN': {
     ...createDefaultRolePermissions(),
@@ -136,8 +140,7 @@ export const permissions: PermissionsConfig = {
     // CEO can mark specific permissions here
   },
   'OPERATION_EXECUTIVE': {
-    ...createDefaultRolePermissions(),
-    // CEO can mark specific permissions here
+    ...createFullRolePermissions(),
   },
   'HUMAN_RESOURCE': {
     ...createDefaultRolePermissions(),
