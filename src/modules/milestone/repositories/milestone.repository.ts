@@ -101,7 +101,6 @@ export class MileStoneRepository{
     async getByProject(id:string){
         return await prisma.mileStone.findMany({
             where:{project_id:id,
-                approvalDate:{not:null},
                 project:{
                     isDeleted: false,
                     status: { in: ["ACTIVE", "ONHOLD"] },
