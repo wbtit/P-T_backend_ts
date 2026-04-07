@@ -41,10 +41,10 @@ export class RFIRepository{
               isAproovedByAdmin
             },
             include: {
-              recepients:  {select:{firstName:true,middleName:true,lastName:true,email:true,id:true}},
-              multipleRecipients: {select:{id:true,firstName:true,lastName:true,email:true}},
+              recepients:  {select:{firstName:true,middleName:true,lastName:true,username:true,designation:true,email:true,id:true}},
+              multipleRecipients: {select:{id:true,firstName:true,lastName:true,username:true,designation:true,email:true}},
               project: true,
-              sender :  {select:{firstName:true,middleName:true,lastName:true,email:true,id:true}},
+              sender :  {select:{firstName:true,middleName:true,lastName:true,username:true,designation:true,email:true,id:true}},
               rfiresponse:true
             },
           });

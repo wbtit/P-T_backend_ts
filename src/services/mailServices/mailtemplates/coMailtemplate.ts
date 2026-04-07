@@ -1,4 +1,9 @@
 export const coHtmlContent = (co: any) => {
+  const senderDisplayName =
+    [co?.senders?.firstName, co?.senders?.lastName].filter(Boolean).join(" ") ||
+    co?.senders?.username ||
+    "Project Station";
+  const senderDesignation = co?.senders?.designation || "N/A";
   // Build greeting from all recipients
   const allRecipients: { firstName?: string; lastName?: string; username?: string }[] = [
     ...(co.multipleRecipients || []),
@@ -11,99 +16,163 @@ export const coHtmlContent = (co: any) => {
     ? recipientNames.join(", ")
     : recipientNames[0] || "Recipient";
 
-  return `<!DOCTYPE html>
-<html lang="en">
+  return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
 <head>
-  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Project Station - Change Order Notification</title>
-  <style>
-    body { font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0; }
-    .email-wrapper { width: 100%; background-color: #f4f4f4; padding: 20px 0; }
-    .email-container { max-width: 600px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e0e0e0; }
-    .header-table { width: 100%; border-collapse: collapse; }
-    .logo-container { padding: 20px; width: 40%; }
-    .project-name-container { background-color: #8cc63f; padding: 20px; color: #ffffff; text-align: left; width: 60%; font-weight: bold; font-size: 18px; }
-    .content-body { padding: 40px 30px; color: #333333; line-height: 1.6; }
-    .subject-line { font-size: 18px; font-weight: bold; margin-bottom: 20px; }
-    .details-table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14px; }
-    .details-table td { padding: 8px 12px; border-bottom: 1px solid #f0f0f0; }
-    .details-table td:first-child { color: #888888; width: 140px; font-weight: bold; }
-    .recipients-list { background-color: #f9f9f9; border-left: 3px solid #8cc63f; padding: 10px 15px; margin: 15px 0; font-size: 14px; }
-    .btn-container { text-align: center; margin: 30px 0; }
-    .btn { background-color: #8cc63f; color: #ffffff; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block; }
-    .signature-table { width: 100%; margin-top: 30px; }
-    .signature-logo { width: 120px; padding-right: 20px; }
-    .signature-details { border-left: 1px solid #e0e0e0; padding-left: 20px; color: #777777; font-size: 14px; }
-    .footer { padding: 20px; text-align: center; font-size: 12px; color: #999999; }
+  <!--[if gte mso 9]>
+  <xml>
+    <o:OfficeDocumentSettings>
+      <o:AllowPNG/>
+      <o:PixelsPerInch>96</o:PixelsPerInch>
+    </o:OfficeDocumentSettings>
+  </xml>
+  <![endif]-->
+  <style type="text/css">
+    body { margin: 0; padding: 0; min-width: 100% !important; background-color: #f4f4f4; font-family: Arial, sans-serif; }
+    img { border: 0; outline: none; text-decoration: none; -ms-interpolation-mode: bicubic; }
+    table { border-collapse: collapse !important; mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+    td { font-family: Arial, sans-serif; }
+    .ExternalClass { width: 100%; }
+    .ExternalClass, .ExternalClass p, .ExternalClass span, .ExternalClass font, .ExternalClass td, .ExternalClass div { line-height: 100%; }
+    @media only screen and (max-width: 600px) {
+      .email-container { width: 100% !important; }
+      .logo-container, .project-name-container { width: 100% !important; display: block !important; text-align: center !important; }
+      .project-name-container { padding: 15px !important; }
+      .content-body { padding: 20px !important; }
+      .signature-logo, .signature-details { width: 100% !important; display: block !important; border-left: none !important; padding: 10px 0 !important; text-align: center !important; }
+      .signature-logo img { margin: 0 auto !important; }
+    }
   </style>
 </head>
-<body>
-  <div class="email-wrapper">
-    <div class="email-container">
-      <table class="header-table">
+<body style="margin: 0; padding: 0; background-color: #f4f4f4;">
+  <table border="0" cellpadding="0" cellspacing="0" width="100%" bgcolor="#f4f4f4">
+    <tr>
+      <td align="center" style="padding: 20px 0;">
+        <!--[if gte mso 9]>
+        <table align="center" border="0" cellspacing="0" cellpadding="0" width="600">
         <tr>
-          <td class="logo-container">
-            <img src="https://res.cloudinary.com/dp7yxzrgw/image/upload/v1753685727/logos/whiteboardtec-logo_oztrhh.png" alt="Whiteboard Logo" width="150" />
-          </td>
-          <td class="project-name-container">
-            ${co.Project?.name?.toUpperCase() || "PROJECT NAME"}
-          </td>
-        </tr>
-      </table>
-
-      <div class="content-body">
-        <p style="color: #888888; margin-bottom: 20px;">Date: ${co.sentOn ? new Date(co.sentOn).toDateString() : new Date().toDateString()}</p>
-
-        <div class="subject-line">Change Order: ${co.changeOrderNumber || "N/A"}</div>
-
-        <p>Dear ${greeting},</p>
-
-        <p>You have been notified about a <strong>Change Order</strong>. Please find the details below:</p>
-
-        <table class="details-table">
-          <tr><td>CO Number</td><td>${co.changeOrderNumber || "N/A"}</td></tr>
-          <tr><td>Reference</td><td>${co.serialNo || "N/A"}</td></tr>
-          <tr><td>Project</td><td>${co.Project?.name || "N/A"}</td></tr>
-          <tr><td>Description</td><td>${co.description || "N/A"}</td></tr>
-          <tr><td>Remarks</td><td>${co.remarks || "N/A"}</td></tr>
-          <tr><td>Stage</td><td>${co.stage || "N/A"}</td></tr>
-          <tr><td>Status</td><td>${co.status || "N/A"}</td></tr>
-          <tr><td>Sender</td><td>${[co.senders?.firstName, co.senders?.lastName].filter(Boolean).join(" ") || co.senders?.username || "N/A"}</td></tr>
-          <tr><td>Sent On</td><td>${co.sentOn ? new Date(co.sentOn).toDateString() : new Date().toDateString()}</td></tr>
-        </table>
-
-        ${recipientNames.length > 1 ? `
-        <div class="recipients-list">
-          <strong>All Recipients:</strong><br/>
-          ${recipientNames.join(" &nbsp;|&nbsp; ")}
-        </div>` : ""}
-
-        <div class="btn-container">
-          <a href="https://ps.whiteboardtec.com" class="btn">Login to View Change Order</a>
-        </div>
-
-        <p>Thanks &amp; Regards,</p>
-
-        <table class="signature-table">
+        <td align="center" valign="top" width="600">
+        <![endif]-->
+        <table border="0" cellpadding="0" cellspacing="0" width="100%" class="email-container" style="max-width: 600px; background-color: #ffffff; border: 1px solid #e0e0e0;">
+          <!-- Header -->
           <tr>
-            <td class="signature-logo">
-              <img src="https://res.cloudinary.com/dp7yxzrgw/image/upload/v1753685727/logos/whiteboardtec-logo_oztrhh.png" alt="Logo" width="100" />
+            <td bgcolor="#ffffff">
+              <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                <tr>
+                  <td class="logo-container" width="40%" style="padding: 20px;">
+                    <img src="https://res.cloudinary.com/dp7yxzrgw/image/upload/v1753685727/logos/whiteboardtec-logo_oztrhh.png" alt="Whiteboard Logo" width="150" border="0" style="display: block; width: 150px; max-width: 150px;" />
+                  </td>
+                  <td class="project-name-container" width="60%" bgcolor="#8cc63f" style="padding: 20px; color: #ffffff; font-weight: bold; font-size: 18px; text-align: left;">
+                    ${co.Project?.name?.toUpperCase() || "PROJECT NAME"}
+                  </td>
+                </tr>
+              </table>
             </td>
-            <td class="signature-details">
-              <strong style="color: #333333; font-size: 16px;">${co.senders?.username || "Project Station"}</strong><br />
-              ${co.senders?.designation || "N/A"}<br />
-              Whiteboard Engineering | <a href="https://whiteboardtec.com" style="color: #8cc63f; text-decoration: none;">whiteboardtec.com</a>
+          </tr>
+          <!-- Body Content -->
+          <tr>
+            <td class="content-body" style="padding: 40px 30px; color: #333333; line-height: 1.6;">
+              <p style="color: #888888; margin: 0 0 20px 0;">Date: ${co.sentOn ? new Date(co.sentOn).toDateString() : new Date().toDateString()}</p>
+              <div style="font-size: 18px; font-weight: bold; margin: 0 0 20px 0;">Change Order: ${co.changeOrderNumber || "N/A"}</div>
+              <p style="margin: 0 0 15px 0;">Dear ${greeting},</p>
+              <p style="margin: 0 0 20px 0;">You have been notified about a <strong>Change Order</strong>. Please find the details below:</p>
+
+              <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 20px;">
+                <tr>
+                  <td width="140" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #888888; font-weight: bold; font-size: 14px;">CO Number</td>
+                  <td valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333;">${co.changeOrderNumber || "N/A"}</td>
+                </tr>
+                <tr>
+                  <td width="140" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #888888; font-weight: bold; font-size: 14px;">Reference</td>
+                  <td valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333;">${co.serialNo || "N/A"}</td>
+                </tr>
+                <tr>
+                  <td width="140" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #888888; font-weight: bold; font-size: 14px;">Project</td>
+                  <td valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333;">${co.Project?.name || "N/A"}</td>
+                </tr>
+                <tr>
+                  <td width="140" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #888888; font-weight: bold; font-size: 14px;">Description</td>
+                  <td valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333;">${co.description || "N/A"}</td>
+                </tr>
+                <tr>
+                  <td width="140" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #888888; font-weight: bold; font-size: 14px;">Remarks</td>
+                  <td valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333;">${co.remarks || "N/A"}</td>
+                </tr>
+                <tr>
+                  <td width="140" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #888888; font-weight: bold; font-size: 14px;">Stage</td>
+                  <td valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333;">${co.stage || "N/A"}</td>
+                </tr>
+                <tr>
+                  <td width="140" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #888888; font-weight: bold; font-size: 14px;">Status</td>
+                  <td valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333;">${co.status || "N/A"}</td>
+                </tr>
+                <tr>
+                  <td width="140" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #888888; font-weight: bold; font-size: 14px;">Sender</td>
+                  <td valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333;">${[co.senders?.firstName, co.senders?.lastName].filter(Boolean).join(" ") || co.senders?.username || "N/A"}</td>
+                </tr>
+                <tr>
+                  <td width="140" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #888888; font-weight: bold; font-size: 14px;">Sent On</td>
+                  <td valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333;">${co.sentOn ? new Date(co.sentOn).toDateString() : new Date().toDateString()}</td>
+                </tr>
+              </table>
+
+              ${recipientNames.length > 1 ? `
+              <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f9f9f9; border-left: 3px solid #8cc63f; margin-bottom: 25px;">
+                <tr>
+                  <td style="padding: 10px 15px; font-size: 14px;">
+                    <strong>All Recipients:</strong><br/>
+                    ${recipientNames.join(" &nbsp;|&nbsp; ")}
+                  </td>
+                </tr>
+              </table>` : ""}
+
+              <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin: 30px 0;">
+                <tr>
+                  <td align="center">
+                    <!--[if mso]>
+                    <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="https://ps.whiteboardtec.com" style="height:50px;v-text-anchor:middle;width:240px;" arcsize="10%" stroke="f" fillcolor="#8cc63f">
+                      <center style="color:#ffffff;font-family:Arial,sans-serif;font-size:16px;font-weight:bold;">Login to View Change Order</center>
+                    </v:roundrect>
+                    <![endif]-->
+                    <a href="https://ps.whiteboardtec.com" style="background-color: #8cc63f; color: #ffffff; display: inline-block; font-family: Arial, sans-serif; font-size: 16px; font-weight: bold; line-height: 50px; text-align: center; text-decoration: none; width: 240px; -webkit-text-size-adjust: none; border-radius: 5px; mso-hide: all;">Login to View Change Order</a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 0 0 15px 0;">Thanks &amp; Regards,</p>
+
+              <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-top: 30px;">
+                <tr>
+                  <td class="signature-logo" width="120" valign="top" style="padding-right: 20px;">
+                    <img src="https://res.cloudinary.com/dp7yxzrgw/image/upload/v1753685727/logos/whiteboardtec-logo_oztrhh.png" alt="Logo" width="100" border="0" style="display: block; width: 100px;" />
+                  </td>
+                  <td class="signature-details" valign="top" style="border-left: 1px solid #e0e0e0; padding-left: 20px; color: #777777; font-size: 14px;">
+                    <strong style="color: #333333; font-size: 16px;">${senderDisplayName}</strong><br />
+                    ${senderDesignation}<br />
+                    Whiteboard Engineering | <a href="https://whiteboardtec.com" style="color: #8cc63f; text-decoration: none;">whiteboardtec.com</a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <!-- Footer -->
+          <tr>
+            <td bgcolor="#f4f4f4" style="padding: 20px; text-align: center; font-size: 12px; color: #999999;">
+              © ${new Date().getFullYear()} Whiteboard Engineering. All Rights Reserved.
             </td>
           </tr>
         </table>
-      </div>
-
-      <div class="footer">
-        © ${new Date().getFullYear()} Whiteboard Engineering. All Rights Reserved.
-      </div>
-    </div>
-  </div>
+        <!--[if gte mso 9]>
+        </td>
+        </tr>
+        </table>
+        <![endif]-->
+      </td>
+    </tr>
+  </table>
 </body>
 </html>`;
 };

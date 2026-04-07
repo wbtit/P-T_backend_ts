@@ -42,6 +42,7 @@ export class CORepository {
             include: {
               Recipients: true,
               multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
+              Project: true,
               senders: true,
             }
           });
@@ -69,6 +70,7 @@ export class CORepository {
       include: {
         Recipients: true,
         multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
+        Project: true,
         senders: true,
       }
     });

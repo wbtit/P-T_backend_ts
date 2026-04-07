@@ -53,8 +53,10 @@ export class SubmitalRepository {
             : undefined,
         },
         include: {
-          recepients: true,
-          multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
+          recepients: { select: { id: true, firstName: true, lastName: true, username: true, designation: true, email: true } },
+          multipleRecipients: { select: { id: true, firstName: true, lastName: true, username: true, designation: true, email: true } },
+          project: { select: { name: true } },
+          sender: { select: { id: true, firstName: true, lastName: true, username: true, designation: true, email: true } },
         },
       });
     });

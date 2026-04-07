@@ -33,7 +33,8 @@ export class RFQRepository {
         include: {
           sender: true,
           recipient: true,
-                multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
+          multipleRecipients: { select: { id: true, firstName: true, lastName: true, username: true, designation: true, email: true } },
+          project: { select: { name: true } },
           salesPerson: true,
           responses: true
         }
