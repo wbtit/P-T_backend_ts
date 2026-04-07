@@ -8,6 +8,11 @@ import { notifyProjectStakeholdersByRole } from "../../../utils/notifyProjectSta
 import prisma from "../../../config/database/client";
 import { UserRole } from "@prisma/client";
 import { buildRoleScopedNotification } from "../../../utils/stakeholderNotificationMessages";
+import { responseMailTemplate } from "../../../services/mailServices/mailtemplates/responseMailTemplate";
+import {
+  formatParticipantName,
+  sendResponseParticipantMail,
+} from "../../../services/mailServices/responseMailUtils";
 
 const submittalResponseService = new SubmittalResponseService();
 const SUBMITTAL_NOTIFY_ROLES: UserRole[] = [
@@ -75,6 +80,100 @@ export class SubmittalResponseController {
       },
       userId
     );
+    const [submittalMailContext, responder] = await Promise.all([
+      prisma.submittals.findUnique({
+        where: { id: submittalsId },
+        include: {
+          project: { select: { name: true } },
+          currentVersion: { select: { versionNumber: true } },
+          recepients: {
+            select: {
+              id: true,
+              email: true,
+              firstName: true,
+              middleName: true,
+              lastName: true,
+              username: true,
+              designation: true,
+            },
+          },
+          multipleRecipients: {
+            select: {
+              id: true,
+              email: true,
+              firstName: true,
+              middleName: true,
+              lastName: true,
+              username: true,
+              designation: true,
+            },
+          },
+          sender: {
+            select: {
+              id: true,
+              email: true,
+              firstName: true,
+              middleName: true,
+              lastName: true,
+              username: true,
+              designation: true,
+            },
+          },
+        },
+      }),
+      prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          email: true,
+          firstName: true,
+          middleName: true,
+          lastName: true,
+          username: true,
+          designation: true,
+        },
+      }),
+    ]);
+
+    if (submittalMailContext && responder) {
+      const responseLabel = parentResponseId ? "Submittal Reply" : "Submittal Response";
+      const responderName = formatParticipantName(responder);
+
+      await sendResponseParticipantMail({
+        sender: submittalMailContext.sender,
+        primaryRecipient: submittalMailContext.recepients,
+        multipleRecipients: submittalMailContext.multipleRecipients,
+        responder,
+        subject: `${responseLabel}: ${submittalMailContext.subject}`,
+        text: description || reason || `${responseLabel} received for ${submittalMailContext.subject}`,
+        buildHtml: ({ greeting, involvedNames }) =>
+          responseMailTemplate({
+            title: "Project Station - Submittal Response",
+            projectName: submittalMailContext.project?.name,
+            subjectLine: `${responseLabel} - ${submittalMailContext.subject}`,
+            greeting,
+            intro: `A new ${parentResponseId ? "reply" : "response"} has been added to the submittal thread in Project Station. Please review the latest update below:`,
+            details: [
+              { label: "Reference", value: submittalMailContext.serialNo || "N/A" },
+              { label: "Project", value: submittalMailContext.project?.name || "N/A" },
+              { label: "Subject", value: submittalMailContext.subject || "N/A" },
+              { label: "Stage", value: submittalMailContext.stage },
+              { label: "Version", value: `v${submittalMailContext.currentVersion?.versionNumber || 1}` },
+              { label: "Response By", value: responderName },
+              { label: "Status", value: response.status },
+              { label: "WBT Status", value: response.wbtStatus },
+              { label: "Description", value: response.description || "N/A" },
+              { label: "Reason", value: response.reason || "N/A" },
+              { label: "Response Date", value: new Date(response.createdAt).toDateString() },
+            ],
+            involvedRecipients: involvedNames,
+            responderName,
+            responderDesignation: responder.designation,
+            ctaLabel: "Login to View Submittal",
+          }),
+      });
+    }
+
     const submittal = await prisma.submittals.findUnique({ where: { id: submittalsId } });
     if (submittal) {
       await notifyProjectStakeholdersByRole(submittal.project_id, SUBMITTAL_NOTIFY_ROLES, (role) =>

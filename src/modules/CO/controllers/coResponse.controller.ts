@@ -7,6 +7,11 @@ import { notifyProjectStakeholdersByRole } from "../../../utils/notifyProjectSta
 import prisma from "../../../config/database/client";
 import { UserRole } from "@prisma/client";
 import { buildRoleScopedNotification } from "../../../utils/stakeholderNotificationMessages";
+import { responseMailTemplate } from "../../../services/mailServices/mailtemplates/responseMailTemplate";
+import {
+  formatParticipantName,
+  sendResponseParticipantMail,
+} from "../../../services/mailServices/responseMailUtils";
 
 const coResponseService = new CoResponseService();
 const CO_NOTIFY_ROLES: UserRole[] = [
@@ -44,6 +49,96 @@ export class CoResponseController {
       coId,
       userId
     );
+    const [coMailContext, responder] = await Promise.all([
+      prisma.changeOrder.findUnique({
+        where: { id: coId },
+        include: {
+          Project: { select: { name: true } },
+          Recipients: {
+            select: {
+              id: true,
+              email: true,
+              firstName: true,
+              middleName: true,
+              lastName: true,
+              username: true,
+              designation: true,
+            },
+          },
+          multipleRecipients: {
+            select: {
+              id: true,
+              email: true,
+              firstName: true,
+              middleName: true,
+              lastName: true,
+              username: true,
+              designation: true,
+            },
+          },
+          senders: {
+            select: {
+              id: true,
+              email: true,
+              firstName: true,
+              middleName: true,
+              lastName: true,
+              username: true,
+              designation: true,
+            },
+          },
+        },
+      }),
+      prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          email: true,
+          firstName: true,
+          middleName: true,
+          lastName: true,
+          username: true,
+          designation: true,
+        },
+      }),
+    ]);
+
+    if (coMailContext && responder) {
+      const responseLabel = req.body?.parentResponseId ? "Change Order Reply" : "Change Order Response";
+      const responderName = formatParticipantName(responder);
+
+      await sendResponseParticipantMail({
+        sender: coMailContext.senders,
+        primaryRecipient: coMailContext.Recipients,
+        multipleRecipients: coMailContext.multipleRecipients,
+        responder,
+        subject: `${responseLabel}: ${coMailContext.changeOrderNumber || coMailContext.serialNo || "Change Order"}`,
+        text: response.description || `${responseLabel} received for ${coMailContext.changeOrderNumber || "Change Order"}`,
+        buildHtml: ({ greeting, involvedNames }) =>
+          responseMailTemplate({
+            title: "Project Station - Change Order Response",
+            projectName: coMailContext.Project?.name,
+            subjectLine: `${responseLabel} - ${coMailContext.changeOrderNumber || "Change Order"}`,
+            greeting,
+            intro: `A new ${req.body?.parentResponseId ? "reply" : "response"} has been added to the Change Order thread in Project Station. Please review the latest update below:`,
+            details: [
+              { label: "CO Number", value: coMailContext.changeOrderNumber || "N/A" },
+              { label: "Reference", value: coMailContext.serialNo || "N/A" },
+              { label: "Project", value: coMailContext.Project?.name || "N/A" },
+              { label: "Stage", value: coMailContext.stage },
+              { label: "Response By", value: responderName },
+              { label: "Status", value: response.Status },
+              { label: "Description", value: response.description || "N/A" },
+              { label: "Response Date", value: new Date(response.createdAt).toDateString() },
+            ],
+            involvedRecipients: involvedNames,
+            responderName,
+            responderDesignation: responder.designation,
+            ctaLabel: "Login to View Change Order",
+          }),
+      });
+    }
+
     const status = (response as any)?.Status;
     const co = await prisma.changeOrder.findUnique({ where: { id: coId } });
     if (co) {
