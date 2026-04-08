@@ -33,13 +33,24 @@ export class TaskService {
       data
     );
     const task = await this.taskRepository.create(data, managerId);
-    await sendNotification(task.user_id, {
-      type: "TASK_ASSIGNED",
-      title: "Task Assigned",
-      message: `You were assigned task '${task.name}'.`,
-      taskId: task.id,
-      timestamp: new Date(),
-    });
+    const taskIdForBg = task.id;
+    const userIdForBg = task.user_id;
+    const taskNameForBg = task.name;
+
+    // Background task assignment notification
+    (async () => {
+      try {
+        await sendNotification(userIdForBg, {
+          type: "TASK_ASSIGNED",
+          title: "Task Assigned",
+          message: `You were assigned task '${taskNameForBg}'.`,
+          taskId: taskIdForBg,
+          timestamp: new Date(),
+        });
+      } catch (error) {
+        console.error("Error in createTask notification:", error);
+      }
+    })();
 
     if (duplicateTask) {
       const manager = await this.taskRepository.findUserNameById(managerId);
@@ -74,11 +85,21 @@ export class TaskService {
         timestamp: new Date(),
       };
 
-      await Promise.all(
-        duplicateRecipients.map((recipientUser) =>
-          sendNotification(recipientUser.id, payload)
-        )
-      );
+      const dupPayload = { ...payload };
+      const dupRecipients = [...duplicateRecipients];
+      
+      // Background duplicate detection notifications
+      (async () => {
+        try {
+          await Promise.all(
+            dupRecipients.map((recipientUser) =>
+              sendNotification(recipientUser.id, dupPayload)
+            )
+          );
+        } catch (error) {
+          console.error("Error in duplicate task notifications:", error);
+        }
+      })();
     }
 
     return task;
@@ -112,30 +133,44 @@ export class TaskService {
     }
     const updatedTask = await this.taskRepository.update(id, data);
     if (data.status) {
-      if (data.status !== "COMPLETED") {
-        await notifyProjectStakeholdersByRole(updatedTask.project_id, this.taskNotifyRoles, (role) =>
-          buildRoleScopedNotification(role, {
-            type: "TASK_STATUS_CHANGED",
-            basePayload: { taskId: updatedTask.id, status: data.status, timestamp: new Date() },
-            templates: {
-              creator: { title: "", message: "" },
-              external: { title: "Task Status Changed", message: `Task '${updatedTask.name}' status changed to '${data.status}'.` },
-              oversight: { title: role === "PROJECT_MANAGER" ? "Project Task Status Changed" : "Department Task Status Changed", message: `Task '${updatedTask.name}' status changed to '${data.status}'.` },
-              internal: { title: "Task Status Changed", message: `Task '${updatedTask.name}' status changed to '${data.status}'.` },
-            },
-          })
-        );
+    const updStatus = data.status;
+    const updTaskId = updatedTask.id;
+    const updTaskName = updatedTask.name;
+    const updProjectId = updatedTask.project_id;
+    const updUserId = updatedTask.user_id;
+    const notifyRoles = [...this.taskNotifyRoles];
+
+    // Background status update notifications
+    (async () => {
+      try {
+        if (updStatus !== "COMPLETED") {
+          await notifyProjectStakeholdersByRole(updProjectId, notifyRoles, (role) =>
+            buildRoleScopedNotification(role, {
+              type: "TASK_STATUS_CHANGED",
+              basePayload: { taskId: updTaskId, status: updStatus, timestamp: new Date() },
+              templates: {
+                creator: { title: "", message: "" },
+                external: { title: "Task Status Changed", message: `Task '${updTaskName}' status changed to '${updStatus}'.` },
+                oversight: { title: role === "PROJECT_MANAGER" ? "Project Task Status Changed" : "Department Task Status Changed", message: `Task '${updTaskName}' status changed to '${updStatus}'.` },
+                internal: { title: "Task Status Changed", message: `Task '${updTaskName}' status changed to '${updStatus}'.` },
+              },
+            })
+          );
+        }
+        if (updUserId) {
+          await sendNotification(updUserId, {
+            type: updStatus === "COMPLETED" ? "TASK_COMPLETED" : "TASK_STATUS_CHANGED",
+            title: updStatus === "COMPLETED" ? "Task Completed" : "Task Status Changed",
+            message: `Your task '${updTaskName}' status changed to '${updStatus}'.`,
+            taskId: updTaskId,
+            status: updStatus,
+            timestamp: new Date(),
+          });
+        }
+      } catch (error) {
+        console.error("Error in updateTask notifications:", error);
       }
-      if (updatedTask.user_id) {
-        await sendNotification(updatedTask.user_id, {
-          type: data.status === "COMPLETED" ? "TASK_COMPLETED" : "TASK_STATUS_CHANGED",
-          title: data.status === "COMPLETED" ? "Task Completed" : "Task Status Changed",
-          message: `Your task '${updatedTask.name}' status changed to '${data.status}'.`,
-          taskId: updatedTask.id,
-          status: data.status,
-          timestamp: new Date(),
-        });
-      }
+    })();
     }
     return updatedTask;
   }

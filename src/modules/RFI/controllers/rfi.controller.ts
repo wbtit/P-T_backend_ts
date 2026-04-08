@@ -22,6 +22,7 @@ const RFI_NOTIFY_ROLES: UserRole[] = [
   "DEPUTY_MANAGER",
   "OPERATION_EXECUTIVE",
   "CONNECTION_DESIGNER_ENGINEER",
+  "CONNECTION_DESIGNER_ADMIN",
   "STAFF",
   "CLIENT",
   "CLIENT_ADMIN",
@@ -105,58 +106,69 @@ export class RFIController {
     ].filter(Boolean) as string[];
     const uniqueEmails = Array.from(new Set(emails));
 
-    if (uniqueEmails.length > 0) {
-      const ccEmails = await getCCEmails();
-      await sendEmail({
-        html: rfihtmlContent(newrfi),
-        to: uniqueEmails.join(","),
-        cc: ccEmails,
-        subject: newrfi.subject,
-        text: newrfi.description,
-      });
-    }
-    await notifyProjectStakeholdersByRole(newrfi.project_id, RFI_NOTIFY_ROLES, (role) =>
-      buildRoleScopedNotification(role, {
-        type: "RFI_CREATED",
-        basePayload: { rfiId: newrfi.id, timestamp: new Date() },
-        templates: {
-          creator: { title: "", message: "" },
-          external: { title: "RFI Received", message: `RFI '${newrfi.subject}' was received for your response.` },
-          oversight: { title: "RFI Created / Sent", message: `RFI '${newrfi.subject}' was created and sent for project monitoring.` },
-          internal: { title: "New RFI Created", message: `A new RFI '${newrfi.subject}' was created in the project.` },
-          default: { title: "RFI Created / Sent", message: `RFI '${newrfi.subject}' was created and sent.` },
-        },
-      }),
-      { excludeUserIds: [userId] }
-    );
-    if (isAproovedByAdmin) {
-      await notifyProjectStakeholdersByRole(newrfi.project_id, RFI_NOTIFY_ROLES, (role) =>
-        buildRoleScopedNotification(role, {
-          type: "RFI_APPROVED_BY_ADMIN",
-          basePayload: { rfiId: newrfi.id, timestamp: new Date() },
-          templates: {
-            creator: { title: "", message: "" },
-            external: { title: "RFI Approved", message: `RFI '${newrfi.subject}' was approved and is ready for your action.` },
-            oversight: { title: "RFI Approved by Admin", message: `RFI '${newrfi.subject}' was approved by admin.` },
-            internal: { title: "RFI Approved", message: `RFI '${newrfi.subject}' was approved in the project.` },
-            default: { title: "RFI Approved by Admin", message: `RFI '${newrfi.subject}' was approved by admin.` },
-          },
-        }),
-        { excludeUserIds: [userId] }
-      );
-    }
-    if (access.isAssist) {
-      await sendNotification(access.projectManagerId, {
-        type: "PM_ASSIST_RFI_CREATED",
-        title: "Assist Created RFI",
-        message: `Assist '${req.user.username}' created RFI '${newrfi.subject}'.`,
-        actorUserId: req.user.id,
-        actorUsername: req.user.username,
-        projectId: req.body.project_id,
-        rfiId: newrfi.id,
-        timestamp: new Date(),
-      });
-    }
+    const creatorId = userId;
+    const actorRole = user?.role;
+    const actorUsername = user?.username;
+
+    // Background non-blocking tasks
+    (async () => {
+      try {
+        if (uniqueEmails.length > 0) {
+          const ccEmails = await getCCEmails();
+          await sendEmail({
+            html: rfihtmlContent(newrfi),
+            to: uniqueEmails.join(","),
+            cc: ccEmails,
+            subject: newrfi.subject,
+            text: newrfi.description,
+          });
+        }
+        await notifyProjectStakeholdersByRole(newrfi.project_id, RFI_NOTIFY_ROLES, (role) =>
+          buildRoleScopedNotification(role, {
+            type: "RFI_CREATED",
+            basePayload: { rfiId: newrfi.id, timestamp: new Date() },
+            templates: {
+              creator: { title: "", message: "" },
+              external: { title: "RFI Received", message: `RFI '${newrfi.subject}' was received for your response.` },
+              oversight: { title: "RFI Created / Sent", message: `RFI '${newrfi.subject}' was created and sent for project monitoring.` },
+              internal: { title: "New RFI Created", message: `A new RFI '${newrfi.subject}' was created in the project.` },
+              default: { title: "RFI Created / Sent", message: `RFI '${newrfi.subject}' was created and sent.` },
+            },
+          }),
+          { excludeUserIds: [creatorId] }
+        );
+        if (isAproovedByAdmin) {
+          await notifyProjectStakeholdersByRole(newrfi.project_id, RFI_NOTIFY_ROLES, (role) =>
+            buildRoleScopedNotification(role, {
+              type: "RFI_APPROVED_BY_ADMIN",
+              basePayload: { rfiId: newrfi.id, timestamp: new Date() },
+              templates: {
+                creator: { title: "", message: "" },
+                external: { title: "RFI Approved", message: `RFI '${newrfi.subject}' was approved and is ready for your action.` },
+                oversight: { title: "RFI Approved by Admin", message: `RFI '${newrfi.subject}' was approved by admin.` },
+                internal: { title: "RFI Approved", message: `RFI '${newrfi.subject}' was approved in the project.` },
+                default: { title: "RFI Approved by Admin", message: `RFI '${newrfi.subject}' was approved by admin.` },
+              },
+            }),
+            { excludeUserIds: [creatorId] }
+          );
+        }
+        if (access.isAssist) {
+          await sendNotification(access.projectManagerId, {
+            type: "PM_ASSIST_RFI_CREATED",
+            title: "Assist Created RFI",
+            message: `Assist '${actorUsername}' created RFI '${newrfi.subject}'.`,
+            actorUserId: creatorId,
+            actorUsername: actorUsername,
+            projectId: req.body.project_id,
+            rfiId: newrfi.id,
+            timestamp: new Date(),
+          });
+        }
+      } catch (error) {
+        console.error("Error in handleCreateRfi background tasks:", error);
+      }
+    })();
 
     res.status(201).json({
       message:"RFI created",
@@ -189,52 +201,62 @@ export class RFIController {
     const approvalWasGranted =
       !existingRfi.isAproovedByAdmin &&
       (updatedRfi as any)?.isAproovedByAdmin === true;
-    await notifyProjectStakeholdersByRole(existingRfi.project_id, RFI_NOTIFY_ROLES, (role) =>
-      buildRoleScopedNotification(role, {
-        type: "RFI_UPDATED",
-        basePayload: {
-          rfiId,
-          isAproovedByAdmin: (updatedRfi as any)?.isAproovedByAdmin ?? req.body?.isAproovedByAdmin ?? null,
-          timestamp: new Date(),
-        },
-        templates: {
-          creator: { title: "", message: "" },
-          external: { title: "RFI Updated", message: updatedRfiSubject ? `Updated RFI '${updatedRfiSubject}' was shared with you.` : "An updated RFI was shared with you." },
-          oversight: { title: "RFI Updated", message: updatedRfiSubject ? `RFI '${updatedRfiSubject}' was updated.` : "An RFI was updated." },
-          internal: { title: "RFI Updated", message: updatedRfiSubject ? `RFI '${updatedRfiSubject}' was updated in the project.` : "An RFI was updated in the project." },
-          default: { title: "RFI Updated", message: updatedRfiSubject ? `RFI '${updatedRfiSubject}' was updated.` : "An RFI was updated." },
-        },
-      }),
-      { excludeUserIds: [req.user.id] }
-    );
-    if (approvalWasGranted) {
-      await notifyProjectStakeholdersByRole(existingRfi.project_id, RFI_NOTIFY_ROLES, (role) =>
-        buildRoleScopedNotification(role, {
-          type: "RFI_APPROVED_BY_ADMIN",
-          basePayload: { rfiId, timestamp: new Date() },
-          templates: {
-            creator: { title: "", message: "" },
-            external: { title: "RFI Approved", message: updatedRfiSubject ? `RFI '${updatedRfiSubject}' was approved and is ready for your action.` : "An RFI was approved and is ready for your action." },
-            oversight: { title: "RFI Approved by Admin", message: updatedRfiSubject ? `RFI '${updatedRfiSubject}' was approved by admin.` : "An RFI was approved by admin." },
-            internal: { title: "RFI Approved", message: updatedRfiSubject ? `RFI '${updatedRfiSubject}' was approved in the project.` : "An RFI was approved in the project." },
-            default: { title: "RFI Approved by Admin", message: updatedRfiSubject ? `RFI '${updatedRfiSubject}' was approved by admin.` : "An RFI was approved by admin." },
-          },
-        }),
-        { excludeUserIds: [req.user.id] }
-      );
-    }
-    if (access.isAssist) {
-      await sendNotification(access.projectManagerId, {
-        type: "PM_ASSIST_RFI_UPDATED",
-        title: "Assist Updated RFI",
-        message: `Assist '${req.user.username}' updated RFI '${updatedRfiSubject ?? existingRfi.subject ?? "this RFI"}'.`,
-        actorUserId: req.user.id,
-        actorUsername: req.user.username,
-        projectId: existingRfi.project_id,
-        rfiId,
-        timestamp: new Date(),
-      });
-    }
+    const updaterId = req.user.id;
+    const updaterUsername = req.user.username;
+
+    // Background non-blocking tasks
+    (async () => {
+      try {
+        await notifyProjectStakeholdersByRole(existingRfi.project_id, RFI_NOTIFY_ROLES, (role) =>
+          buildRoleScopedNotification(role, {
+            type: "RFI_UPDATED",
+            basePayload: {
+              rfiId,
+              isAproovedByAdmin: (updatedRfi as any)?.isAproovedByAdmin ?? req.body?.isAproovedByAdmin ?? null,
+              timestamp: new Date(),
+            },
+            templates: {
+              creator: { title: "", message: "" },
+              external: { title: "RFI Updated", message: updatedRfiSubject ? `Updated RFI '${updatedRfiSubject}' was shared with you.` : "An updated RFI was shared with you." },
+              oversight: { title: "RFI Updated", message: updatedRfiSubject ? `RFI '${updatedRfiSubject}' was updated.` : "An RFI was updated." },
+              internal: { title: "RFI Updated", message: updatedRfiSubject ? `RFI '${updatedRfiSubject}' was updated in the project.` : "An RFI was updated in the project." },
+              default: { title: "RFI Updated", message: updatedRfiSubject ? `RFI '${updatedRfiSubject}' was updated.` : "An RFI was updated." },
+            },
+          }),
+          { excludeUserIds: [updaterId] }
+        );
+        if (approvalWasGranted) {
+          await notifyProjectStakeholdersByRole(existingRfi.project_id, RFI_NOTIFY_ROLES, (role) =>
+            buildRoleScopedNotification(role, {
+              type: "RFI_APPROVED_BY_ADMIN",
+              basePayload: { rfiId, timestamp: new Date() },
+              templates: {
+                creator: { title: "", message: "" },
+                external: { title: "RFI Approved", message: updatedRfiSubject ? `RFI '${updatedRfiSubject}' was approved and is ready for your action.` : "An RFI was approved and is ready for your action." },
+                oversight: { title: "RFI Approved by Admin", message: updatedRfiSubject ? `RFI '${updatedRfiSubject}' was approved by admin.` : "An RFI was approved by admin." },
+                internal: { title: "RFI Approved", message: updatedRfiSubject ? `RFI '${updatedRfiSubject}' was approved in the project.` : "An RFI was approved in the project." },
+                default: { title: "RFI Approved by Admin", message: updatedRfiSubject ? `RFI '${updatedRfiSubject}' was approved by admin.` : "An RFI was approved by admin." },
+              },
+            }),
+            { excludeUserIds: [updaterId] }
+          );
+        }
+        if (access.isAssist) {
+          await sendNotification(access.projectManagerId, {
+            type: "PM_ASSIST_RFI_UPDATED",
+            title: "Assist Updated RFI",
+            message: `Assist '${updaterUsername}' updated RFI '${updatedRfiSubject ?? existingRfi.subject ?? "this RFI"}'.`,
+            actorUserId: updaterId,
+            actorUsername: updaterUsername,
+            projectId: existingRfi.project_id,
+            rfiId,
+            timestamp: new Date(),
+          });
+        }
+      } catch (error) {
+        console.error("Error in handleUpdateRfi background tasks:", error);
+      }
+    })();
 
     res.status(200).json({
       status: "success",

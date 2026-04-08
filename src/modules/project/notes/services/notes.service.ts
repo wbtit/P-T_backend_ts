@@ -4,7 +4,7 @@ import { FileObject } from "../../../../shared/fileType";
 import { resolveUploadFilePath, streamFile } from "../../../../utils/fileUtil";
 import { Response } from "express";
 import { AppError } from "../../../../config/utils/AppError";
-import { getActiveUserIdsByRoles, notifyUsers } from "../../../../utils/notifyByRole";
+import { notifyProjectStakeholdersByRole } from "../../../../utils/notifyProjectStakeholders";
 
 
 
@@ -13,46 +13,31 @@ export class NotesService {
     async create(data: CreateNoteInput) {
         const newNotes = notesRepository.create(data);
         const project = (await newNotes).project;
-        const payload = {
-            title: "New Note Created",
-            message: `A new note has been added to the project: ${project?.name}`,
-            projectName: project?.name,
-        };
+        const projectId = (project as any)?.id ?? data.projectId;
 
-        const recipientIds = new Set<string>();
-
-        // Notification matrix (1.10): ADM, DM, PM
-
-        // PM
-        if (project && project.managerID) {
-            recipientIds.add(project.managerID);
+        if (projectId) {
+            await notifyProjectStakeholdersByRole(
+                projectId,
+                [
+                    "ADMIN",
+                    "PROJECT_MANAGER",
+                    "DEPT_MANAGER",
+                    "TEAM_LEAD",
+                    "DEPUTY_MANAGER",
+                    "OPERATION_EXECUTIVE",
+                    "CONNECTION_DESIGNER_ENGINEER",
+                    "STAFF",
+                ],
+                (role) => ({
+                    type: "NOTE_CREATED",
+                    title: "New Note Created",
+                    message: `A new note has been added to the project: ${project?.name}`,
+                    projectId,
+                    timestamp: new Date(),
+                }),
+                { excludeUserIds: [(data as any).createdById as string | undefined].filter(Boolean) as string[] } // exclude the note creator
+            );
         }
-
-        // DM
-        if (project && project.department && project.department.managerIds) {
-            for (const managerId of project.department.managerIds.map(m => m.id)) {
-                recipientIds.add(managerId);
-            }
-        }
-
-        // STF
-        if (project && project.tasks) {
-            for (const task of project.tasks) {
-                if (task.user_id) recipientIds.add(task.user_id);
-            }
-        }
-
-        // ADM + TL + DGM + OE + CDE
-        const roleBasedRecipientIds = await getActiveUserIdsByRoles([
-            "ADMIN",
-            "TEAM_LEAD",
-            "DEPUTY_MANAGER",
-            "OPERATION_EXECUTIVE",
-            "CONNECTION_DESIGNER_ENGINEER",
-        ]);
-        roleBasedRecipientIds.forEach((id) => recipientIds.add(id));
-
-        await notifyUsers(Array.from(recipientIds), payload);
 
         return newNotes;
     }

@@ -73,13 +73,11 @@ export class RFQController {
       uploadedFileMap.CDAttachments || [],
       "rfqCDAttachments"
     );
-    console.log("req.body of rfq: ", req.body);
         const result = await rfqService.createRfq({
           ...req.body,
           files: uploadedFiles,
           CDAttachments: uploadedCDAttachments,
         }, id);
-        console.log("rfq created: ", result);
         const newrfq = result.newRfq as any;
         // gather all recipient emails
         const emails = [
@@ -92,29 +90,38 @@ export class RFQController {
         if (uniqueEmails.length === 0) {
           throw new AppError("No recipient email provided", 400);
         }
-        const ccEmails = await getCCEmails();
-                await sendEmail({
+        const creatorId = id;
+        // Background non-blocking tasks
+        (async () => {
+          try {
+            const ccEmails = await getCCEmails();
+            await sendEmail({
               html: rfqhtmlContent(newrfq),
               to: uniqueEmails.join(","),
               cc: ccEmails,
               subject: newrfq.subject,
               text: newrfq.description,
             });
-                await notifyRfqStakeholdersByRole(newrfq.id, RFQ_NOTIFY_ROLES, (role) =>
-                  buildRoleScopedNotification(role, {
-                    type: "RFQ_CREATED",
-                    basePayload: { rfqId: newrfq.id, timestamp: new Date() },
-                    templates: {
-                      creator: { title: "", message: "" },
-                      external: { title: "RFQ Received", message: `RFQ '${newrfq.subject}' was received for your response.` },
-                      oversight: { title: "RFQ Created / Sent", message: `RFQ '${newrfq.subject}' was created and sent for monitoring.` },
-                      internal: { title: "New RFQ Created", message: `A new RFQ '${newrfq.subject}' was created.` },
-                      default: { title: "RFQ Created / Sent", message: `RFQ '${newrfq.subject}' was created and sent.` },
-                    },
-                  }),
-                  { excludeUserIds: [id] }
-                );
-                res.status(201).json({
+            await notifyRfqStakeholdersByRole(newrfq.id, RFQ_NOTIFY_ROLES, (role) =>
+              buildRoleScopedNotification(role, {
+                type: "RFQ_CREATED",
+                basePayload: { rfqId: newrfq.id, timestamp: new Date() },
+                templates: {
+                  creator: { title: "", message: "" },
+                  external: { title: "RFQ Received", message: `RFQ '${newrfq.subject}' was received for your response.` },
+                  oversight: { title: "RFQ Created / Sent", message: `RFQ '${newrfq.subject}' was created and sent for monitoring.` },
+                  internal: { title: "New RFQ Created", message: `A new RFQ '${newrfq.subject}' was created.` },
+                  default: { title: "RFQ Created / Sent", message: `RFQ '${newrfq.subject}' was created and sent.` },
+                },
+              }),
+              { excludeUserIds: [creatorId] }
+            );
+          } catch (error) {
+            console.error("Error in handleCreateRfq background tasks:", error);
+          }
+        })();
+
+        res.status(201).json({
                     status: 'success',
                     data: result,
                 });
@@ -140,24 +147,40 @@ export class RFQController {
             ? uploadedCDAttachments
             : req.body.CDAttachments,
         });
-        await notifyRfqStakeholdersByRole(rfq.id, RFQ_NOTIFY_ROLES, (role) =>
-          buildRoleScopedNotification(role, {
-            type: "RFQ_UPDATED",
-            basePayload: {
-              rfqId: rfq.id,
-              status: (rfq as any).status ?? req.body?.status ?? null,
-              timestamp: new Date(),
+        const updaterId = req.user.id;
+        const bodyStatus = req.body?.status;
+
+        // Background non-blocking tasks
+        (async () => {
+          try {
+            await notifyRfqStakeholdersByRole(rfq.id, RFQ_NOTIFY_ROLES, (role) => {
+              const currentStatus = (rfq as any).status ?? bodyStatus;
+              if (currentStatus === "APPROVED" && ["CLIENT", "CLIENT_ADMIN", "CLIENT_PROJECT_COORDINATOR"].includes(role)) {
+                return null;
+              }
+              return buildRoleScopedNotification(role, {
+                type: "RFQ_UPDATED",
+                basePayload: {
+                  rfqId: rfq.id,
+                  status: (rfq as any).status ?? bodyStatus ?? null,
+                  timestamp: new Date(),
+                },
+                templates: {
+                  creator: { title: "", message: "" },
+                  external: { title: "RFQ Updated", message: `Updated RFQ '${rfq.subject}' was shared with you.` },
+                  oversight: { title: "RFQ Updated", message: `RFQ '${rfq.subject}' was updated.` },
+                  internal: { title: "RFQ Updated", message: `RFQ '${rfq.subject}' was updated.` },
+                  default: { title: "RFQ Updated", message: `RFQ '${rfq.subject}' was updated.` },
+                },
+              });
             },
-            templates: {
-              creator: { title: "", message: "" },
-              external: { title: "RFQ Updated", message: `Updated RFQ '${rfq.subject}' was shared with you.` },
-              oversight: { title: "RFQ Updated", message: `RFQ '${rfq.subject}' was updated.` },
-              internal: { title: "RFQ Updated", message: `RFQ '${rfq.subject}' was updated.` },
-              default: { title: "RFQ Updated", message: `RFQ '${rfq.subject}' was updated.` },
-            },
-          }),
-          { excludeUserIds: [req.user.id] }
-        );
+            { excludeUserIds: [updaterId] }
+            );
+          } catch (error) {
+            console.error("Error in handleUpdateRfq background tasks:", error);
+          }
+        })();
+
         res.status(200).json({
             status: 'success',
             data: rfq,

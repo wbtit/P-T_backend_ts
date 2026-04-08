@@ -41,6 +41,32 @@ interface GroupMessagePayload {
   taggedUserIds?: string[];
 }
 
+const getSocketUserLabel = async (userId: string): Promise<string> => {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      firstName: true,
+      middleName: true,
+      lastName: true,
+      username: true,
+      role: true,
+    },
+  });
+
+  if (!user) {
+    return userId;
+  }
+
+  const fullName = [user.firstName, user.middleName, user.lastName]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
+
+  const displayName = fullName || user.username || userId;
+
+  return `${displayName} [${user.role}] (${userId})`;
+};
+
 /** ----------------------- Init Socket ----------------------- **/
 
 export const initSocket = async (
@@ -81,7 +107,6 @@ for (const client of [pubClient, subClient, redis]) {
 
   /** ----------------------- Middleware Auth ----------------------- **/
   io.use(async (socket, next) => {
-    console.log("🔐 Incoming socket connection attempt...");
     const authToken =
       (socket.handshake.auth?.token as string | undefined) ||
       (socket.handshake.headers.authorization?.startsWith("Bearer ")
@@ -91,7 +116,8 @@ for (const client of [pubClient, subClient, redis]) {
     if (authToken) {
       try {
         const decoded = jwt.verify(authToken, JWT_SECRET) as UserJwt;
-        console.log(`✅ Authenticated socket via JWT for userId: ${decoded.id}`);
+        const userLabel = await getSocketUserLabel(decoded.id);
+        console.log(`✅ Authenticated socket via JWT for user: ${userLabel}`);
         socket.data.userId = decoded.id;
         return next();
       } catch (err) {
@@ -108,33 +134,30 @@ for (const client of [pubClient, subClient, redis]) {
   io.on(
     "connection",
     async (socket: Socket<ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData>) => {
-      console.log(`🆕 New socket connection established: ${socket.id} (Instance: ${process.env.PORT || 3000})`);
-
       try {
         const userId = socket.data.userId!;
-        console.log(`👤 Handling connection for userId: ${userId} (Instance: ${process.env.PORT || 3000})`);
+        const userLabel = await getSocketUserLabel(userId);
+        console.log(`🔌 Socket connected for ${userLabel}`);
 
         const userKey = `socket:${userId}`;
         const reverseKey = `socketid:${socket.id}`;
 
         await redis.sAdd(userKey, socket.id);
-        console.log(`📦 Added socket ${socket.id} to Redis set for user ${userId}`);
 
         await redis.set(reverseKey, userId);
-        console.log(`🔁 Reverse mapping created (${reverseKey} → ${userId})`);
 
         socket.join(`user:${userId}`);
-        console.log(`🏠 Joined room user:${userId}`);
 
         /** ✅ Pending Notifications **/
-        console.log(`📬 Checking pending notifications for user ${userId}`);
         const pendingNotifications = await prisma.notification.findMany({
           where: { userID: userId, delivered: false },
         });
-        console.log(`🧾 Found ${pendingNotifications.length} pending notifications`);
+
+        if (pendingNotifications.length > 0) {
+          console.log(`📬 Delivering ${pendingNotifications.length} pending notifications to ${userLabel}`);
+        }
 
         for (const notification of pendingNotifications) {
-          console.log(`📤 Sending pending notification ID ${notification.id} to user ${userId}`);
           socket.emit("customNotification", notification.payload);
         }
 
@@ -286,16 +309,16 @@ for (const client of [pubClient, subClient, redis]) {
 
         /** ----------------------- Disconnect ----------------------- **/
         socket.on("disconnect", async (reason) => {
-          console.log(`🔌 Socket ${socket.id} disconnected | reason: ${reason}`);
           try {
             const reverseKey = `socketid:${socket.id}`;
             const userId = await redis.get(reverseKey);
 
             if (userId) {
+              const userLabel = await getSocketUserLabel(userId);
               const userKey = `socket:${userId}`;
               await redis.sRem(userKey, socket.id);
               await redis.del(reverseKey);
-              console.log(`🧹 Cleaned socket ${socket.id} for user ${userId}`);
+              console.log(`🔌 Socket disconnected for ${userLabel} | reason: ${reason}`);
             } else {
               console.warn(`⚠️ No reverse mapping found for socket ${socket.id}`);
             }

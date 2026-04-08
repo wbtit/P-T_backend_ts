@@ -30,7 +30,9 @@ async function getRfqStakeholderContext(rfqId: string) {
       },
       connectionDesignerRFQ: {
         include: { CDEngineers: true }
-      }
+      },
+      salesPerson: true,
+      sender: true,
     }
   });
 }
@@ -57,23 +59,30 @@ export async function getRfqStakeholderRecipients(
     recipientsByRole.get(role)!.add(userId);
   };
 
-  const globalRoles: UserRole[] = [
-    "SYSTEM_ADMIN", "ADMIN", "DEPUTY_MANAGER", "PROJECT_MANAGER_OFFICER",
-    "ESTIMATION_HEAD", "OPERATION_EXECUTIVE", "HUMAN_RESOURCE",
-    "SALES_MANAGER", "SALES_PERSON"
-  ];
+  // Truly global roles — org-wide
+  const trulyGlobalRoles: UserRole[] = ["SYSTEM_ADMIN", "ADMIN"];
+  const rolesToFetchGlobally = roles.filter((r) => trulyGlobalRoles.includes(r));
 
-  const rolesToFetchGlobally = roles.filter((r) => globalRoles.includes(r));
   if (rolesToFetchGlobally.length > 0) {
     const globalUsers = await prisma.user.findMany({
       where: { role: { in: rolesToFetchGlobally }, isActive: true },
-      select: { id: true, role: true }
+      select: { id: true, role: true },
     });
     globalUsers.forEach((u) => addRecipient(u.role, u.id));
   }
 
+  // NOTE: DEPUTY_MANAGER, OPERATION_EXECUTIVE, ESTIMATION_HEAD,
+  // SALES_MANAGER, HUMAN_RESOURCE have no direct RFQ relation in schema.
+  // They are intentionally NOT fetched globally.
+  // Extend getRfqStakeholderContext() when schema relations are added.
+
   roles.forEach((role) => {
     switch (role) {
+      case "SALES_PERSON":
+        if (rfq.salesPerson?.isActive) {
+          addRecipient(role, rfq.salesPerson.id);
+        }
+        break;
       case "CONNECTION_DESIGNER_ENGINEER":
         rfq.connectionDesignerRFQ?.forEach((cd) => {
           cd.CDEngineers?.forEach((c) => {

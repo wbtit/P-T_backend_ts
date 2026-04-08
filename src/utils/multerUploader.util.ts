@@ -323,10 +323,20 @@ function compose(middlewares: any[]) {
       if (i <= index) return Promise.reject(new Error('next() called multiple times'));
       index = i;
       let fn = middlewares[i];
-      if (i === middlewares.length) return Promise.resolve();
-      if (!fn) return Promise.resolve();
+      if (i === middlewares.length) {
+        next();
+        return Promise.resolve();
+      }
+      if (!fn) {
+        next();
+        return Promise.resolve();
+      }
+      const boundNext = (err?: any) => {
+        if (err) return Promise.reject(err);
+        return dispatch(i + 1);
+      };
       try {
-        return Promise.resolve(fn(req, res, dispatch.bind(null, i + 1)));
+        return Promise.resolve(fn(req, res, boundNext));
       } catch (err) {
         return Promise.reject(err);
       }

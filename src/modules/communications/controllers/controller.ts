@@ -13,19 +13,30 @@ export class ClientCommunicationController {
       req.body,
       req.user!.id
     );
-    await notifyProjectStakeholdersByRole(data.projectId, ["DEPUTY_MANAGER", "OPERATION_EXECUTIVE"], (role) =>
-      buildRoleScopedNotification(role, {
-        type: "CLIENT_COMM_LOG_CREATED",
-        basePayload: { communicationId: data.id, timestamp: new Date() },
-        templates: {
-          creator: { title: "", message: "" },
-          external: { title: "Client Communication Log Created", message: "A new client communication log was created." },
-          oversight: { title: "Client Communication Log Created", message: "A new client communication log was created and is available for monitoring." },
-          internal: { title: "Client Communication Log Created", message: "A new client communication log was created." },
-        },
-      }),
-      { excludeUserIds: [req.user!.id] }
-    );
+    const creatorIdForBg = req.user!.id;
+    const commIdForBg = data.id;
+    const projIdForBg = data.projectId;
+
+    // Background non-blocking tasks
+    (async () => {
+      try {
+        await notifyProjectStakeholdersByRole(projIdForBg, ["DEPUTY_MANAGER", "OPERATION_EXECUTIVE"], (role) =>
+          buildRoleScopedNotification(role, {
+            type: "CLIENT_COMM_LOG_CREATED",
+            basePayload: { communicationId: commIdForBg, timestamp: new Date() },
+            templates: {
+              creator: { title: "", message: "" },
+              external: { title: "Client Communication Log Created", message: "A new client communication log was created." },
+              oversight: { title: "Client Communication Log Created", message: "A new client communication log was created and is available for monitoring." },
+              internal: { title: "Client Communication Log Created", message: "A new client communication log was created." },
+            },
+          }),
+          { excludeUserIds: [creatorIdForBg] }
+        );
+      } catch (error) {
+        console.error("Error in ClientCommunication create background tasks:", error);
+      }
+    })();
     res.status(201).json({ status: "success", data });
   }
 

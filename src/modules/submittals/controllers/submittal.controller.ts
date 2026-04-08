@@ -22,6 +22,7 @@ const SUBMITTAL_NOTIFY_ROLES: UserRole[] = [
   "PROJECT_MANAGER_OFFICER",
   "OPERATION_EXECUTIVE",
   "CONNECTION_DESIGNER_ENGINEER",
+  "CONNECTION_DESIGNER_ADMIN",
   "CLIENT",
   "CLIENT_ADMIN",
   "CLIENT_PROJECT_COORDINATOR",
@@ -114,41 +115,51 @@ export class SubmittalController {
     ].filter(Boolean) as string[];
     const uniqueSubmittalEmails = Array.from(new Set(submittalEmails));
 
-    if (uniqueSubmittalEmails.length > 0) {
-      const ccEmails = await getCCEmails();
-      sendEmail({
-        to: uniqueSubmittalEmails.join(","),
-        cc: ccEmails,
-        subject: submittal.subject,
-        html: submittalhtmlContent(submittal),
-      });
-    }
-    await notifyProjectStakeholdersByRole(submittal.project_id, SUBMITTAL_NOTIFY_ROLES, (role) =>
-      buildRoleScopedNotification(role, {
-        type: "SUBMITTAL_CREATED",
-        basePayload: { submittalId: submittal.id, timestamp: new Date() },
-        templates: {
-          creator: { title: "", message: "" },
-          external: { title: "Submittal Received", message: `Submittal '${submittal.subject}' was received for your response.` },
-          oversight: { title: "Submittal Created / Sent", message: `Submittal '${submittal.subject}' was created and sent for monitoring.` },
-          internal: { title: "New Submittal Created", message: `A new submittal '${submittal.subject}' was created in the project.` },
-          default: { title: "Submittal Created / Sent", message: `Submittal '${submittal.subject}' was created and sent.` },
-        },
-      }),
-      { excludeUserIds: [userId] }
-    );
-    if (access.isAssist) {
-      await sendNotification(access.projectManagerId, {
-        type: "PM_ASSIST_SUBMITTAL_CREATED",
-        title: "Assist Created Submittal",
-        message: `Assist '${user.username}' created submittal '${submittal.subject}'.`,
-        actorUserId: user.id,
-        actorUsername: user.username,
-        projectId: req.body.project_id,
-        submittalId: submittal.id,
-        timestamp: new Date(),
-      });
-    }
+    const creatorId = userId;
+    const actorUsername = user.username;
+
+    // Background non-blocking tasks
+    (async () => {
+      try {
+        if (uniqueSubmittalEmails.length > 0) {
+          const ccEmails = await getCCEmails();
+          await sendEmail({
+            to: uniqueSubmittalEmails.join(","),
+            cc: ccEmails,
+            subject: submittal.subject,
+            html: submittalhtmlContent(submittal),
+          });
+        }
+        await notifyProjectStakeholdersByRole(submittal.project_id, SUBMITTAL_NOTIFY_ROLES, (role) =>
+          buildRoleScopedNotification(role, {
+            type: "SUBMITTAL_CREATED",
+            basePayload: { submittalId: submittal.id, timestamp: new Date() },
+            templates: {
+              creator: { title: "", message: "" },
+              external: { title: "Submittal Received", message: `Submittal '${submittal.subject}' was received for your response.` },
+              oversight: { title: "Submittal Created / Sent", message: `Submittal '${submittal.subject}' was created and sent for monitoring.` },
+              internal: { title: "New Submittal Created", message: `A new submittal '${submittal.subject}' was created in the project.` },
+              default: { title: "Submittal Created / Sent", message: `Submittal '${submittal.subject}' was created and sent.` },
+            },
+          }),
+          { excludeUserIds: [creatorId] }
+        );
+        if (access.isAssist) {
+          await sendNotification(access.projectManagerId, {
+            type: "PM_ASSIST_SUBMITTAL_CREATED",
+            title: "Assist Created Submittal",
+            message: `Assist '${actorUsername}' created submittal '${submittal.subject}'.`,
+            actorUserId: creatorId,
+            actorUsername: actorUsername,
+            projectId: req.body.project_id,
+            submittalId: submittal.id,
+            timestamp: new Date(),
+          });
+        }
+      } catch (error) {
+        console.error("Error in handleCreateSubmittal background tasks:", error);
+      }
+    })();
 
     res.status(201).json({
       status: "success",
@@ -320,33 +331,43 @@ export class SubmittalController {
       },
       user.id
     );
-    await notifyProjectStakeholdersByRole(existingSubmittal.project_id, SUBMITTAL_NOTIFY_ROLES, (role) =>
-      buildRoleScopedNotification(role, {
-        type: "SUBMITTAL_NEW_VERSION",
-        basePayload: { submittalId, versionId: version.id, timestamp: new Date() },
-        templates: {
-          creator: { title: "", message: "" },
-          external: { title: "Updated Submittal Received", message: `A new version of submittal '${existingSubmittal.subject ?? "this submittal"}' was shared with you.` },
-          oversight: { title: "New Submittal Version Uploaded", message: `A new version of submittal '${existingSubmittal.subject ?? "this submittal"}' was uploaded.` },
-          internal: { title: "Submittal Version Updated", message: `A new version of submittal '${existingSubmittal.subject ?? "this submittal"}' was uploaded in the project.` },
-          default: { title: "New Submittal Version Uploaded", message: "A new submittal version has been uploaded." },
-        },
-      }),
-      { excludeUserIds: [user.id] }
-    );
-    if (access.isAssist) {
-      await sendNotification(access.projectManagerId, {
-        type: "PM_ASSIST_SUBMITTAL_UPDATED",
-        title: "Assist Updated Submittal",
-        message: `Assist '${user.username}' uploaded a new version for submittal '${existingSubmittal.subject ?? "this submittal"}'.`,
-        actorUserId: user.id,
-        actorUsername: user.username,
-        projectId: existingSubmittal.project_id,
-        submittalId,
-        versionId: version.id,
-        timestamp: new Date(),
-      });
-    }
+    const updaterId = user.id;
+    const updaterUsername = user.username;
+
+    // Background non-blocking tasks
+    (async () => {
+      try {
+        await notifyProjectStakeholdersByRole(existingSubmittal.project_id, SUBMITTAL_NOTIFY_ROLES, (role) =>
+          buildRoleScopedNotification(role, {
+            type: "SUBMITTAL_NEW_VERSION",
+            basePayload: { submittalId, versionId: version.id, timestamp: new Date() },
+            templates: {
+              creator: { title: "", message: "" },
+              external: { title: "Updated Submittal Received", message: `A new version of submittal '${existingSubmittal.subject ?? "this submittal"}' was shared with you.` },
+              oversight: { title: "New Submittal Version Uploaded", message: `A new version of submittal '${existingSubmittal.subject ?? "this submittal"}' was uploaded.` },
+              internal: { title: "Submittal Version Updated", message: `A new version of submittal '${existingSubmittal.subject ?? "this submittal"}' was uploaded in the project.` },
+              default: { title: "New Submittal Version Uploaded", message: "A new submittal version has been uploaded." },
+            },
+          }),
+          { excludeUserIds: [updaterId] }
+        );
+        if (access.isAssist) {
+          await sendNotification(access.projectManagerId, {
+            type: "PM_ASSIST_SUBMITTAL_UPDATED",
+            title: "Assist Updated Submittal",
+            message: `Assist '${updaterUsername}' uploaded a new version for submittal '${existingSubmittal.subject ?? "this submittal"}'.`,
+            actorUserId: updaterId,
+            actorUsername: updaterUsername,
+            projectId: existingSubmittal.project_id,
+            submittalId,
+            versionId: version.id,
+            timestamp: new Date(),
+          });
+        }
+      } catch (error) {
+        console.error("Error in handleCreateNewVersion background tasks:", error);
+      }
+    })();
 
     res.status(201).json({
       status: "success",

@@ -12,28 +12,35 @@ const projectAssistService = new ProjectAssistService();
 const PROJECT_CREATED_ROLES: UserRole[] = [
   "ADMIN", "DEPT_MANAGER", "PROJECT_MANAGER", "PROJECT_MANAGER_OFFICER",
   "DEPUTY_MANAGER", "OPERATION_EXECUTIVE", "ESTIMATION_HEAD", "CONNECTION_DESIGNER_ENGINEER",
+  "CONNECTION_DESIGNER_ADMIN",
   "CLIENT", "CLIENT_ADMIN", "CLIENT_PROJECT_COORDINATOR", "VENDOR", "VENDOR_ADMIN",
 ];
 const PROJECT_STAGE_CHANGED_ROLES: UserRole[] = [
   "ADMIN", "DEPT_MANAGER", "PROJECT_MANAGER", "PROJECT_MANAGER_OFFICER",
   "DEPUTY_MANAGER", "OPERATION_EXECUTIVE", "CONNECTION_DESIGNER_ENGINEER", "STAFF",
+  "CONNECTION_DESIGNER_ADMIN",
   "CLIENT", "CLIENT_ADMIN", "CLIENT_PROJECT_COORDINATOR", "VENDOR", "VENDOR_ADMIN",
 ];
 const PROJECT_ENDDATE_CHANGED_ROLES: UserRole[] = [
   "ADMIN", "DEPT_MANAGER", "DEPUTY_MANAGER", "OPERATION_EXECUTIVE",
-  "CONNECTION_DESIGNER_ENGINEER", "CLIENT", "CLIENT_ADMIN", "CLIENT_PROJECT_COORDINATOR", "VENDOR", "VENDOR_ADMIN",
+  "CONNECTION_DESIGNER_ENGINEER", 
+  "CONNECTION_DESIGNER_ADMIN",
+  "CLIENT", "CLIENT_ADMIN", "CLIENT_PROJECT_COORDINATOR", "VENDOR", "VENDOR_ADMIN",
 ];
 const PROJECT_STATUS_CHANGED_ROLES: UserRole[] = [
   "ADMIN", "DEPT_MANAGER", "PROJECT_MANAGER", "PROJECT_MANAGER_OFFICER",
   "DEPUTY_MANAGER", "OPERATION_EXECUTIVE", "CONNECTION_DESIGNER_ENGINEER",
+  "CONNECTION_DESIGNER_ADMIN",
   "CLIENT", "CLIENT_ADMIN", "CLIENT_PROJECT_COORDINATOR", "VENDOR", "VENDOR_ADMIN",
 ];
 const PROJECT_APPROVAL_FAB_DATE_ROLES: UserRole[] = [
   "ADMIN", "DEPT_MANAGER", "PROJECT_MANAGER", "PROJECT_MANAGER_OFFICER",
-  "OPERATION_EXECUTIVE", "CONNECTION_DESIGNER_ENGINEER", "CLIENT", "CLIENT_ADMIN",
+  "OPERATION_EXECUTIVE", "CONNECTION_DESIGNER_ENGINEER", 
+  "CONNECTION_DESIGNER_ADMIN",
+  "CLIENT", "CLIENT_ADMIN",
   "CLIENT_PROJECT_COORDINATOR", "VENDOR", "VENDOR_ADMIN",
 ];
-const PROJECT_DELETED_ROLES: UserRole[] = ["ADMIN", "PROJECT_MANAGER_OFFICER", "DEPUTY_MANAGER"];
+const PROJECT_DELETED_ROLES: UserRole[] = ["ADMIN", "PROJECT_MANAGER_OFFICER", "DEPUTY_MANAGER", "CONNECTION_DESIGNER_ADMIN"];
 
 export class ProjectController {
     async handleCreateProject(req:AuthenticateRequest,res:Response){
@@ -45,20 +52,28 @@ export class ProjectController {
           ...req.body,
           files: uploadedFiles
         }, req.user?.id || "");
-        await notifyProjectStakeholdersByRole(project.id, PROJECT_CREATED_ROLES, (role) =>
-          buildRoleScopedNotification(role, {
-            type: "PROJECT_CREATED",
-            basePayload: { projectId: project.id, timestamp: new Date() },
-            templates: {
-              creator: { title: "", message: "" },
-              external: { title: "Project Received", message: `Project '${project.name}' was assigned and shared with you.` },
-              oversight: { title: "Project Created", message: `Project '${project.name}' was created and is available for monitoring.` },
-              internal: { title: "New Project Created", message: `Project '${project.name}' was created.` },
-              default: { title: "Project Created", message: `Project '${project.name}' was created.` },
-            },
-          }),
-          { excludeUserIds: req.user?.id ? [req.user.id] : [] }
-        );
+        const creatorId = req.user?.id;
+        // Background non-blocking tasks
+        (async () => {
+          try {
+            await notifyProjectStakeholdersByRole(project.id, PROJECT_CREATED_ROLES, (role) =>
+              buildRoleScopedNotification(role, {
+                type: "PROJECT_CREATED",
+                basePayload: { projectId: project.id, timestamp: new Date() },
+                templates: {
+                  creator: { title: "", message: "" },
+                  external: { title: "Project Received", message: `Project '${project.name}' was assigned and shared with you.` },
+                  oversight: { title: "Project Created", message: `Project '${project.name}' was created and is available for monitoring.` },
+                  internal: { title: "New Project Created", message: `Project '${project.name}' was created.` },
+                  default: { title: "Project Created", message: `Project '${project.name}' was created.` },
+                },
+              }),
+              { excludeUserIds: creatorId ? [creatorId] : [] }
+            );
+          } catch (error) {
+            console.error("Error in handleCreateProject background tasks:", error);
+          }
+        })();
         res.status(201).json({
           status: 'success',
           data: project
@@ -75,71 +90,81 @@ export class ProjectController {
           files: uploadedFiles
         }, id);
         const updates = req.body ?? {};
-        if ("stage" in updates) {
-          await notifyProjectStakeholdersByRole(project.id, PROJECT_STAGE_CHANGED_ROLES, (role) =>
-            buildRoleScopedNotification(role, {
-            type: "PROJECT_STAGE_CHANGED",
-            basePayload: { projectId: project.id, stage: updates.stage, timestamp: new Date() },
-            templates: {
-              creator: { title: "", message: "" },
-              external: { title: "Project Stage Updated", message: `Project '${project.name}' stage changed to '${updates.stage}'.` },
-              oversight: { title: "Project Stage Changed", message: `Project '${project.name}' stage changed to '${updates.stage}'.` },
-              internal: { title: "Project Stage Changed", message: `Project '${project.name}' stage changed to '${updates.stage}'.` },
-            },
-          }), { excludeUserIds: (req as AuthenticateRequest).user?.id ? [(req as AuthenticateRequest).user!.id] : [] });
-        }
-        if ("endDate" in updates) {
-          await notifyProjectStakeholdersByRole(project.id, PROJECT_ENDDATE_CHANGED_ROLES, (role) =>
-            buildRoleScopedNotification(role, {
-            type: "PROJECT_END_DATE_CHANGED",
-            basePayload: { projectId: project.id, endDate: updates.endDate, timestamp: new Date() },
-            templates: {
-              creator: { title: "", message: "" },
-              external: { title: "Project End Date Updated", message: `Project '${project.name}' end date was changed.` },
-              oversight: { title: "Project End Date Changed", message: `Project '${project.name}' end date was changed.` },
-              internal: { title: "Project End Date Changed", message: `Project '${project.name}' end date was changed.` },
-            },
-          }), { excludeUserIds: (req as AuthenticateRequest).user?.id ? [(req as AuthenticateRequest).user!.id] : [] });
-        }
-        if ("status" in updates) {
-          await notifyProjectStakeholdersByRole(project.id, PROJECT_STATUS_CHANGED_ROLES, (role) =>
-            buildRoleScopedNotification(role, {
-            type: "PROJECT_STATUS_CHANGED",
-            basePayload: { projectId: project.id, status: updates.status, timestamp: new Date() },
-            templates: {
-              creator: { title: "", message: "" },
-              external: { title: "Project Status Updated", message: `Project '${project.name}' status changed to '${updates.status}'.` },
-              oversight: { title: "Project Status Changed", message: `Project '${project.name}' status changed to '${updates.status}'.` },
-              internal: { title: "Project Status Changed", message: `Project '${project.name}' status changed to '${updates.status}'.` },
-            },
-          }), { excludeUserIds: (req as AuthenticateRequest).user?.id ? [(req as AuthenticateRequest).user!.id] : [] });
-        }
-        if ("approvalDate" in updates) {
-          await notifyProjectStakeholdersByRole(project.id, PROJECT_APPROVAL_FAB_DATE_ROLES, (role) =>
-            buildRoleScopedNotification(role, {
-            type: "PROJECT_APPROVAL_DATE_CHANGED",
-            basePayload: { projectId: project.id, approvalDate: updates.approvalDate, timestamp: new Date() },
-            templates: {
-              creator: { title: "", message: "" },
-              external: { title: "Project Approval Date Updated", message: `Project '${project.name}' approval date was updated.` },
-              oversight: { title: "Project Approval Date Set / Changed", message: `Project '${project.name}' approval date was updated.` },
-              internal: { title: "Project Approval Date Updated", message: `Project '${project.name}' approval date was updated.` },
-            },
-          }), { excludeUserIds: (req as AuthenticateRequest).user?.id ? [(req as AuthenticateRequest).user!.id] : [] });
-        }
-        if ("fabricationDate" in updates) {
-          await notifyProjectStakeholdersByRole(project.id, PROJECT_APPROVAL_FAB_DATE_ROLES, (role) =>
-            buildRoleScopedNotification(role, {
-            type: "PROJECT_FABRICATION_DATE_CHANGED",
-            basePayload: { projectId: project.id, fabricationDate: updates.fabricationDate, timestamp: new Date() },
-            templates: {
-              creator: { title: "", message: "" },
-              external: { title: "Project Fabrication Date Updated", message: `Project '${project.name}' fabrication date was updated.` },
-              oversight: { title: "Fabrication Date Set / Changed", message: `Project '${project.name}' fabrication date was updated.` },
-              internal: { title: "Project Fabrication Date Updated", message: `Project '${project.name}' fabrication date was updated.` },
-            },
-          }), { excludeUserIds: (req as AuthenticateRequest).user?.id ? [(req as AuthenticateRequest).user!.id] : [] });
-        }
+        const updaterId = (req as AuthenticateRequest).user?.id;
+        const updatesForMeta = { ...updates };
+
+        // Background non-blocking tasks
+        (async () => {
+          try {
+            if ("stage" in updatesForMeta) {
+              await notifyProjectStakeholdersByRole(project.id, PROJECT_STAGE_CHANGED_ROLES, (role) =>
+                buildRoleScopedNotification(role, {
+                type: "PROJECT_STAGE_CHANGED",
+                basePayload: { projectId: project.id, stage: updatesForMeta.stage, timestamp: new Date() },
+                templates: {
+                  creator: { title: "", message: "" },
+                  external: { title: "Project Stage Updated", message: `Project '${project.name}' stage changed to '${updatesForMeta.stage}'.` },
+                  oversight: { title: "Project Stage Changed", message: `Project '${project.name}' stage changed to '${updatesForMeta.stage}'.` },
+                  internal: { title: "Project Stage Changed", message: `Project '${project.name}' stage changed to '${updatesForMeta.stage}'.` },
+                },
+              }), { excludeUserIds: updaterId ? [updaterId] : [] });
+            }
+            if ("endDate" in updatesForMeta) {
+              await notifyProjectStakeholdersByRole(project.id, PROJECT_ENDDATE_CHANGED_ROLES, (role) =>
+                buildRoleScopedNotification(role, {
+                type: "PROJECT_END_DATE_CHANGED",
+                basePayload: { projectId: project.id, endDate: updatesForMeta.endDate, timestamp: new Date() },
+                templates: {
+                  creator: { title: "", message: "" },
+                  external: { title: "Project End Date Updated", message: `Project '${project.name}' end date was changed.` },
+                  oversight: { title: "Project End Date Changed", message: `Project '${project.name}' end date was changed.` },
+                  internal: { title: "Project End Date Changed", message: `Project '${project.name}' end date was changed.` },
+                },
+              }), { excludeUserIds: updaterId ? [updaterId] : [] });
+            }
+            if ("status" in updatesForMeta) {
+              await notifyProjectStakeholdersByRole(project.id, PROJECT_STATUS_CHANGED_ROLES, (role) =>
+                buildRoleScopedNotification(role, {
+                type: "PROJECT_STATUS_CHANGED",
+                basePayload: { projectId: project.id, status: updatesForMeta.status, timestamp: new Date() },
+                templates: {
+                  creator: { title: "", message: "" },
+                  external: { title: "Project Status Updated", message: `Project '${project.name}' status changed to '${updatesForMeta.status}'.` },
+                  oversight: { title: "Project Status Changed", message: `Project '${project.name}' status changed to '${updatesForMeta.status}'.` },
+                  internal: { title: "Project Status Changed", message: `Project '${project.name}' status changed to '${updatesForMeta.status}'.` },
+                },
+              }), { excludeUserIds: updaterId ? [updaterId] : [] });
+            }
+            if ("approvalDate" in updatesForMeta) {
+              await notifyProjectStakeholdersByRole(project.id, PROJECT_APPROVAL_FAB_DATE_ROLES, (role) =>
+                buildRoleScopedNotification(role, {
+                type: "PROJECT_APPROVAL_DATE_CHANGED",
+                basePayload: { projectId: project.id, approvalDate: updatesForMeta.approvalDate, timestamp: new Date() },
+                templates: {
+                  creator: { title: "", message: "" },
+                  external: { title: "Project Approval Date Updated", message: `Project '${project.name}' approval date was updated.` },
+                  oversight: { title: "Project Approval Date Set / Changed", message: `Project '${project.name}' approval date was updated.` },
+                  internal: { title: "Project Approval Date Updated", message: `Project '${project.name}' approval date was updated.` },
+                },
+              }), { excludeUserIds: updaterId ? [updaterId] : [] });
+            }
+            if ("fabricationDate" in updatesForMeta) {
+              await notifyProjectStakeholdersByRole(project.id, PROJECT_APPROVAL_FAB_DATE_ROLES, (role) =>
+                buildRoleScopedNotification(role, {
+                type: "PROJECT_FABRICATION_DATE_CHANGED",
+                basePayload: { projectId: project.id, fabricationDate: updatesForMeta.fabricationDate, timestamp: new Date() },
+                templates: {
+                  creator: { title: "", message: "" },
+                  external: { title: "Project Fabrication Date Updated", message: `Project '${project.name}' fabrication date was updated.` },
+                  oversight: { title: "Fabrication Date Set / Changed", message: `Project '${project.name}' fabrication date was updated.` },
+                  internal: { title: "Project Fabrication Date Updated", message: `Project '${project.name}' fabrication date was updated.` },
+                },
+              }), { excludeUserIds: updaterId ? [updaterId] : [] });
+            }
+          } catch (error) {
+            console.error("Error in handleUpdateProject background tasks:", error);
+          }
+        })();
         res.status(200).json({
           status: 'success',
           data: project
@@ -166,19 +191,30 @@ export class ProjectController {
             message: 'Project not found'
           });
         }
-        await notifyProjectStakeholdersByRole(req.params.id, PROJECT_DELETED_ROLES, (role) =>
-          buildRoleScopedNotification(role, {
-            type: "PROJECT_DELETED",
-            basePayload: { projectId: req.params.id, timestamp: new Date() },
-            templates: {
-              creator: { title: "", message: "" },
-              external: { title: "Project Deleted", message: project?.name?.trim() ? `Project '${project.name}' was deleted.` : "A project was deleted." },
-              oversight: { title: "Project Deleted / Soft Deleted", message: project?.name?.trim() ? `Project '${project.name}' was deleted.` : "A project was deleted." },
-              internal: { title: "Project Deleted", message: project?.name?.trim() ? `Project '${project.name}' was deleted.` : "A project was deleted." },
-            },
-          }),
-          { excludeUserIds: (req as AuthenticateRequest).user?.id ? [(req as AuthenticateRequest).user!.id] : [] }
-        );
+        const deleterProjectId = req.params.id;
+        const deleterId = (req as AuthenticateRequest).user?.id;
+        const projectNameForLog = project?.name;
+
+        // Background non-blocking tasks
+        (async () => {
+          try {
+            await notifyProjectStakeholdersByRole(deleterProjectId, PROJECT_DELETED_ROLES, (role) =>
+              buildRoleScopedNotification(role, {
+                type: "PROJECT_DELETED",
+                basePayload: { projectId: deleterProjectId, timestamp: new Date() },
+                templates: {
+                  creator: { title: "", message: "" },
+                  external: { title: "Project Deleted", message: projectNameForLog?.trim() ? `Project '${projectNameForLog}' was deleted.` : "A project was deleted." },
+                  oversight: { title: "Project Deleted / Soft Deleted", message: projectNameForLog?.trim() ? `Project '${projectNameForLog}' was deleted.` : "A project was deleted." },
+                  internal: { title: "Project Deleted", message: projectNameForLog?.trim() ? `Project '${projectNameForLog}' was deleted.` : "A project was deleted." },
+                },
+              }),
+              { excludeUserIds: deleterId ? [deleterId] : [] }
+            );
+          } catch (error) {
+            console.error("Error in handleDeleteProject background tasks:", error);
+          }
+        })();
         res.status(204).json({
           status: 'success',
           data: null

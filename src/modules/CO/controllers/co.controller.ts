@@ -18,6 +18,7 @@ const CO_NOTIFY_ROLES: UserRole[] = [
   "DEPUTY_MANAGER",
   "OPERATION_EXECUTIVE",
   "CONNECTION_DESIGNER_ENGINEER",
+  "CONNECTION_DESIGNER_ADMIN",
   "CLIENT",
   "CLIENT_ADMIN",
   "CLIENT_PROJECT_COORDINATOR",
@@ -87,31 +88,41 @@ export class COController {
       coAny.Recipients?.email,
     ].filter(Boolean) as string[];
     const uniqueCoEmails = Array.from(new Set(coEmails));
-    if (uniqueCoEmails.length > 0) {
-      const ccEmails = await getCCEmails();
-      sendEmail({
-        to: uniqueCoEmails.join(","),
-        cc: ccEmails,
-        subject: `Change Order ${co.changeOrderNumber || ""} - ${co.description || ""}`.trim(),
-        html: coHtmlContent(coAny),
-      });
-    }
+    const creatorId = id;
+    const coSubject = `Change Order ${co.changeOrderNumber || ""} - ${co.description || ""}`.trim();
+    const coHtml = coHtmlContent(coAny);
+    const coNumberForMeta = co.changeOrderNumber?.trim();
 
-    const coNumber = co.changeOrderNumber?.trim();
-    await notifyProjectStakeholdersByRole(co.project, CO_NOTIFY_ROLES, (role) =>
-      buildRoleScopedNotification(role, {
-        type: "CO_CREATED",
-        basePayload: { coId: co.id, timestamp: new Date() },
-        templates: {
-          creator: { title: "", message: "" },
-          external: { title: "Change Order Received", message: coNumber ? `Change order '${coNumber}' was received for your action.` : "A change order was received for your action." },
-          oversight: { title: "Change Order Created / Sent", message: coNumber ? `Change order '${coNumber}' was created for monitoring.` : "A change order was created for monitoring." },
-          internal: { title: "New Change Order Created", message: coNumber ? `A new change order '${coNumber}' was created.` : "A new change order was created." },
-          default: { title: "Change Order Created / Sent", message: coNumber ? `Change order '${coNumber}' was created.` : "A new Change Order was created." },
-        },
-      }),
-      { excludeUserIds: [id] }
-    );
+    // Background non-blocking tasks
+    (async () => {
+      try {
+        if (uniqueCoEmails.length > 0) {
+          const ccEmails = await getCCEmails();
+          await sendEmail({
+            to: uniqueCoEmails.join(","),
+            cc: ccEmails,
+            subject: coSubject,
+            html: coHtml,
+          });
+        }
+        await notifyProjectStakeholdersByRole(co.project, CO_NOTIFY_ROLES, (role) =>
+          buildRoleScopedNotification(role, {
+            type: "CO_CREATED",
+            basePayload: { coId: co.id, timestamp: new Date() },
+            templates: {
+              creator: { title: "", message: "" },
+              external: { title: "Change Order Received", message: coNumberForMeta ? `Change order '${coNumberForMeta}' was received for your action.` : "A change order was received for your action." },
+              oversight: { title: "Change Order Created / Sent", message: coNumberForMeta ? `Change order '${coNumberForMeta}' was created for monitoring.` : "A change order was created for monitoring." },
+              internal: { title: "New Change Order Created", message: coNumberForMeta ? `A new change order '${coNumberForMeta}' was created.` : "A new change order was created." },
+              default: { title: "Change Order Created / Sent", message: coNumberForMeta ? `Change order '${coNumberForMeta}' was created.` : "A new Change Order was created." },
+            },
+          }),
+          { excludeUserIds: [creatorId] }
+        );
+      } catch (error) {
+        console.error("Error in handleCreateCo background tasks:", error);
+      }
+    })();
 
     res.status(201).json({
       status: "success",
@@ -154,20 +165,30 @@ async handlePendingCOsForClient(req: AuthenticateRequest, res: Response) {
       files: uploadedFiles,
     });
     const updatedCoNumber = updatedCo.changeOrderNumber?.trim();
-    await notifyProjectStakeholdersByRole(updatedCo.project, CO_NOTIFY_ROLES, (role) =>
-      buildRoleScopedNotification(role, {
-        type: "CO_UPDATED",
-        basePayload: { coId: updatedCo.id, status: (updatedCo as any).status ?? req.body?.status ?? null, timestamp: new Date() },
-        templates: {
-          creator: { title: "", message: "" },
-          external: { title: "Change Order Updated", message: updatedCoNumber ? `Updated change order '${updatedCoNumber}' was shared with you.` : "An updated change order was shared with you." },
-          oversight: { title: "Change Order Updated", message: updatedCoNumber ? `Change order '${updatedCoNumber}' was updated.` : "A change order was updated." },
-          internal: { title: "Change Order Updated", message: updatedCoNumber ? `Change order '${updatedCoNumber}' was updated.` : "A change order was updated." },
-          default: { title: "Change Order Updated", message: updatedCoNumber ? `Change order '${updatedCoNumber}' was updated.` : "A Change Order was updated." },
-        },
-      }),
-      { excludeUserIds: req.user?.id ? [req.user.id] : [] }
-    );
+    const updaterId = req.user.id;
+    const bodyStatus = req.body?.status;
+
+    // Background non-blocking tasks
+    (async () => {
+      try {
+        await notifyProjectStakeholdersByRole(updatedCo.project, CO_NOTIFY_ROLES, (role) =>
+          buildRoleScopedNotification(role, {
+            type: "CO_UPDATED",
+            basePayload: { coId: updatedCo.id, status: (updatedCo as any).status ?? bodyStatus ?? null, timestamp: new Date() },
+            templates: {
+              creator: { title: "", message: "" },
+              external: { title: "Change Order Updated", message: updatedCoNumber ? `Updated change order '${updatedCoNumber}' was shared with you.` : "An updated change order was shared with you." },
+              oversight: { title: "Change Order Updated", message: updatedCoNumber ? `Change order '${updatedCoNumber}' was updated.` : "A change order was updated." },
+              internal: { title: "Change Order Updated", message: updatedCoNumber ? `Change order '${updatedCoNumber}' was updated.` : "A change order was updated." },
+              default: { title: "Change Order Updated", message: updatedCoNumber ? `Change order '${updatedCoNumber}' was updated.` : "A Change Order was updated." },
+            },
+          }),
+          { excludeUserIds: [updaterId] }
+        );
+      } catch (error) {
+        console.error("Error in handleUpdateCo background tasks:", error);
+      }
+    })();
 
     res.status(200).json({
       status: "success",

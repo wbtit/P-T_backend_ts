@@ -17,6 +17,7 @@ const DESIGN_DRAWING_NOTIFY_ROLES: UserRole[] = [
   "DEPUTY_MANAGER",
   "ESTIMATION_HEAD",
   "CONNECTION_DESIGNER_ENGINEER",
+  "CONNECTION_DESIGNER_ADMIN",
   "CLIENT",
   "CLIENT_ADMIN",
   "CLIENT_PROJECT_COORDINATOR",
@@ -42,20 +43,28 @@ export class DesignDrawingsController {
     };
 
     const drawing = await designService.create(data, userId);
-    await notifyProjectStakeholdersByRole(drawing.projectId, DESIGN_DRAWING_NOTIFY_ROLES, (role) =>
-      buildRoleScopedNotification(role, {
-        type: "DESIGN_DRAWING_UPLOADED",
-        basePayload: { designDrawingId: drawing.id, timestamp: new Date() },
-        templates: {
-          creator: { title: "", message: "" },
-          external: { title: "Design Drawing Received", message: "A design drawing was received for your action." },
-          oversight: { title: "Design Drawing Uploaded", message: "A design drawing was uploaded and is available for monitoring." },
-          internal: { title: "New Design Drawing Uploaded", message: "A new design drawing was uploaded in the project." },
-          default: { title: "Design Drawing Uploaded", message: "A design drawing was uploaded." },
-        },
-      }),
-      { excludeUserIds: [userId] }
-    );
+    const creatorId = userId;
+    // Background non-blocking tasks
+    (async () => {
+      try {
+        await notifyProjectStakeholdersByRole(drawing.projectId, DESIGN_DRAWING_NOTIFY_ROLES, (role) =>
+          buildRoleScopedNotification(role, {
+            type: "DESIGN_DRAWING_UPLOADED",
+            basePayload: { designDrawingId: drawing.id, timestamp: new Date() },
+            templates: {
+              creator: { title: "", message: "" },
+              external: { title: "Design Drawing Received", message: "A design drawing was received for your action." },
+              oversight: { title: "Design Drawing Uploaded", message: "A design drawing was uploaded and is available for monitoring." },
+              internal: { title: "New Design Drawing Uploaded", message: "A new design drawing was uploaded in the project." },
+              default: { title: "Design Drawing Uploaded", message: "A design drawing was uploaded." },
+            },
+          }),
+          { excludeUserIds: [creatorId] }
+        );
+      } catch (error) {
+        console.error("Error in handleCreateDesignDrawing background tasks:", error);
+      }
+    })();
 
     res.status(201).json({
       message: "Design Drawing created successfully",
@@ -97,20 +106,28 @@ export class DesignDrawingsController {
   async handleUpdateStage(req: AuthenticateRequest, res: Response) {
     const { id } = req.params;
     const updated = await designService.updateStage(id, req.body);
-    await notifyProjectStakeholdersByRole(updated.projectId, DESIGN_DRAWING_NOTIFY_ROLES, (role) =>
-      buildRoleScopedNotification(role, {
-        type: "DESIGN_DRAWING_UPDATED",
-        basePayload: { designDrawingId: updated.id, timestamp: new Date() },
-        templates: {
-          creator: { title: "", message: "" },
-          external: { title: "Design Drawing Updated", message: "An updated design drawing was shared with you." },
-          oversight: { title: "Design Drawing Updated", message: "A design drawing was updated." },
-          internal: { title: "Design Drawing Updated", message: "A design drawing was updated in the project." },
-          default: { title: "Design Drawing Updated", message: "A design drawing was updated." },
-        },
-      }),
-      { excludeUserIds: req.user?.id ? [req.user.id] : [] }
-    );
+    const updaterId = req.user?.id;
+    // Background non-blocking tasks
+    (async () => {
+      try {
+        await notifyProjectStakeholdersByRole(updated.projectId, DESIGN_DRAWING_NOTIFY_ROLES, (role) =>
+          buildRoleScopedNotification(role, {
+            type: "DESIGN_DRAWING_UPDATED",
+            basePayload: { designDrawingId: updated.id, timestamp: new Date() },
+            templates: {
+              creator: { title: "", message: "" },
+              external: { title: "Design Drawing Updated", message: "An updated design drawing was shared with you." },
+              oversight: { title: "Design Drawing Updated", message: "A design drawing was updated." },
+              internal: { title: "Design Drawing Updated", message: "A design drawing was updated in the project." },
+              default: { title: "Design Drawing Updated", message: "A design drawing was updated." },
+            },
+          }),
+          { excludeUserIds: updaterId ? [updaterId] : [] }
+        );
+      } catch (error) {
+        console.error("Error in handleUpdateStage design drawing background tasks:", error);
+      }
+    })();
     res.status(200).json({
       message: "Design Drawing updated successfully",
       status: "success",
@@ -145,20 +162,29 @@ export class DesignDrawingsController {
     );
     const design = await prisma.designDrawings.findUnique({ where: { id: req.body?.designDrawingsId } });
     if (design) {
-      await notifyProjectStakeholdersByRole(design.projectId, DESIGN_DRAWING_NOTIFY_ROLES, (role) =>
-        buildRoleScopedNotification(role, {
-          type: "DESIGN_DRAWING_RESPONSE_RECEIVED",
-          basePayload: { designDrawingId: req.body?.designDrawingsId, designDrawingResponseId: response.id, timestamp: new Date() },
-          templates: {
-            creator: { title: "", message: "" },
-            external: { title: "Design Drawing Response Received", message: "A design drawing response was received for your action." },
-            oversight: { title: "Design Drawing Response Received", message: "A design drawing response was submitted and is available for review." },
-            internal: { title: "Design Drawing Response Received", message: "A design drawing response was submitted in the project." },
-            default: { title: "Design Drawing Response Received", message: "A design drawing response was submitted." },
-          },
-        }),
-        { excludeUserIds: [userId] }
-      );
+      const respUserId = userId;
+      const drawingId = req.body?.designDrawingsId;
+      // Background non-blocking tasks
+      (async () => {
+        try {
+          await notifyProjectStakeholdersByRole(design.projectId, DESIGN_DRAWING_NOTIFY_ROLES, (role) =>
+            buildRoleScopedNotification(role, {
+              type: "DESIGN_DRAWING_RESPONSE_RECEIVED",
+              basePayload: { designDrawingId: drawingId, designDrawingResponseId: response.id, timestamp: new Date() },
+              templates: {
+                creator: { title: "", message: "" },
+                external: { title: "Design Drawing Response Received", message: "A design drawing response was received for your action." },
+                oversight: { title: "Design Drawing Response Received", message: "A design drawing response was submitted and is available for review." },
+                internal: { title: "Design Drawing Response Received", message: "A design drawing response was submitted in the project." },
+                default: { title: "Design Drawing Response Received", message: "A design drawing response was submitted." },
+              },
+            }),
+            { excludeUserIds: [respUserId] }
+          );
+        } catch (error) {
+          console.error("Error in handleCreateResponse design drawings background tasks:", error);
+        }
+      })();
     }
 
     res.status(201).json({

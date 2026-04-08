@@ -16,6 +16,7 @@ const MILESTONE_NOTIFY_ROLES: UserRole[] = [
   "PROJECT_MANAGER_OFFICER",
   "OPERATION_EXECUTIVE",
   "CONNECTION_DESIGNER_ENGINEER",
+  "CONNECTION_DESIGNER_ADMIN",
   "CLIENT",
   "CLIENT_ADMIN",
   "CLIENT_PROJECT_COORDINATOR",
@@ -46,50 +47,58 @@ export class MileStoneController {
     if (result && result.project_id) {
       const reference = milestoneReference(result ?? undefined);
 
-      await notifyProjectStakeholdersByRole(
-        result.project_id,
-        MILESTONE_NOTIFY_ROLES,
-        (role) => {
-          const basePayload = {
-            type: "MILESTONE_CREATED",
-            milestoneId: result.id,
-            timestamp: new Date(),
-          };
+      const creatorId = req.user.id;
+      // Background non-blocking tasks
+      (async () => {
+        try {
+          await notifyProjectStakeholdersByRole(
+            result.project_id,
+            MILESTONE_NOTIFY_ROLES,
+            (role) => {
+              const basePayload = {
+                type: "MILESTONE_CREATED",
+                milestoneId: result.id,
+                timestamp: new Date(),
+              };
 
-          if (["CLIENT", "CLIENT_ADMIN", "CLIENT_PROJECT_COORDINATOR", "VENDOR", "VENDOR_ADMIN"].includes(role)) {
-            return {
-              ...basePayload,
-              title: "Milestone Received",
-              message: `Milestone ${reference} was received for your action.`,
-            };
-          }
+              if (["CLIENT", "CLIENT_ADMIN", "CLIENT_PROJECT_COORDINATOR", "VENDOR", "VENDOR_ADMIN"].includes(role)) {
+                return {
+                  ...basePayload,
+                  title: "Milestone Received",
+                  message: `Milestone ${reference} was received for your action.`,
+                };
+              }
 
-          if (["ADMIN", "DEPT_MANAGER", "PROJECT_MANAGER_OFFICER", "OPERATION_EXECUTIVE"].includes(role)) {
-            return {
-              ...basePayload,
-              title: "Milestone Created in Project",
-              message: `Milestone ${reference} was created and is available for monitoring.`,
-            };
-          }
+              if (["ADMIN", "DEPT_MANAGER", "PROJECT_MANAGER_OFFICER", "OPERATION_EXECUTIVE"].includes(role)) {
+                return {
+                  ...basePayload,
+                  title: "Milestone Created in Project",
+                  message: `Milestone ${reference} was created and is available for monitoring.`,
+                };
+              }
 
-          if (["PROJECT_MANAGER", "TEAM_LEAD", "CONNECTION_DESIGNER_ENGINEER"].includes(role)) {
-            return {
-              ...basePayload,
-              title: "New Milestone Created",
-              message: `A new milestone ${reference} was created in the project.`,
-            };
-          }
+              if (["PROJECT_MANAGER", "TEAM_LEAD", "CONNECTION_DESIGNER_ENGINEER"].includes(role)) {
+                return {
+                  ...basePayload,
+                  title: "New Milestone Created",
+                  message: `A new milestone ${reference} was created in the project.`,
+                };
+              }
 
-          return {
-            ...basePayload,
-            title: "Milestone Created",
-            message: `Milestone ${reference} was created.`,
-          };
-        },
-        {
-          excludeUserIds: [req.user.id],
+              return {
+                ...basePayload,
+                title: "Milestone Created",
+                message: `Milestone ${reference} was created.`,
+              };
+            },
+            {
+              excludeUserIds: [creatorId],
+            }
+          );
+        } catch (error) {
+          console.error("Error in handleCreate milestone background tasks:", error);
         }
-      );
+      })();
     }
 
     return res.status(201).json({
@@ -111,19 +120,27 @@ export class MileStoneController {
     if (result) {
       const milestone = await prisma.mileStone.findUnique({ where: { id: result.mileStoneId || id } });
       if (milestone) {
-        await notifyProjectStakeholdersByRole(milestone.project_id, MILESTONE_NOTIFY_ROLES, (role) =>
-          buildRoleScopedNotification(role, {
-            type: "MILESTONE_NEW_VERSION",
-            basePayload: { milestoneId: id, timestamp: new Date() },
-            templates: {
-              creator: { title: "", message: "" },
-              external: { title: "Milestone Version Updated", message: `A new version (v${result.versionNumber}) of milestone ${milestoneReference(result as any)} was shared with you.` },
-              oversight: { title: "New Milestone Version Created", message: `A new version (v${result.versionNumber}) was created for milestone ${milestoneReference(result as any)}.` },
-              internal: { title: "Milestone Version Updated", message: `A new version (v${result.versionNumber}) was created for milestone ${milestoneReference(result as any)}.` },
-            },
-          }),
-          { excludeUserIds: req.user?.id ? [req.user.id] : [] }
-        );
+        const updaterId = req.user?.id;
+        // Background non-blocking tasks
+        (async () => {
+          try {
+            await notifyProjectStakeholdersByRole(milestone.project_id, MILESTONE_NOTIFY_ROLES, (role) =>
+              buildRoleScopedNotification(role, {
+                type: "MILESTONE_NEW_VERSION",
+                basePayload: { milestoneId: id, timestamp: new Date() },
+                templates: {
+                  creator: { title: "", message: "" },
+                  external: { title: "Milestone Version Updated", message: `A new version (v${result.versionNumber}) of milestone ${milestoneReference(result as any)} was shared with you.` },
+                  oversight: { title: "New Milestone Version Created", message: `A new version (v${result.versionNumber}) was created for milestone ${milestoneReference(result as any)}.` },
+                  internal: { title: "Milestone Version Updated", message: `A new version (v${result.versionNumber}) was created for milestone ${milestoneReference(result as any)}.` },
+                },
+              }),
+              { excludeUserIds: updaterId ? [updaterId] : [] }
+            );
+          } catch (error) {
+            console.error("Error in handleUpdate milestone background tasks:", error);
+          }
+        })();
       }
     }
 
@@ -148,19 +165,27 @@ export class MileStoneController {
     if (result) {
       const milestone = await prisma.mileStone.findUnique({ where: { id: (result as any).mileStoneId || id } });
       if (milestone) {
-        await notifyProjectStakeholdersByRole(milestone.project_id, MILESTONE_NOTIFY_ROLES, (role) =>
-          buildRoleScopedNotification(role, {
-            type: "MILESTONE_UPDATED",
-            basePayload: { milestoneId: id, timestamp: new Date() },
-            templates: {
-              creator: { title: "", message: "" },
-              external: { title: "Milestone Updated", message: `Updated milestone ${milestoneReference(result as any)} was shared with you.` },
-              oversight: { title: "Milestone Updated", message: `Milestone ${milestoneReference(result as any)} was updated.` },
-              internal: { title: "Milestone Updated", message: `Milestone ${milestoneReference(result as any)} was updated.` },
-            },
-          }),
-          { excludeUserIds: req.user?.id ? [req.user.id] : [] }
-        );
+        const updaterId = req.user?.id;
+        // Background non-blocking tasks
+        (async () => {
+          try {
+            await notifyProjectStakeholdersByRole(milestone.project_id, MILESTONE_NOTIFY_ROLES, (role) =>
+              buildRoleScopedNotification(role, {
+                type: "MILESTONE_UPDATED",
+                basePayload: { milestoneId: id, timestamp: new Date() },
+                templates: {
+                  creator: { title: "", message: "" },
+                  external: { title: "Milestone Updated", message: `Updated milestone ${milestoneReference(result as any)} was shared with you.` },
+                  oversight: { title: "Milestone Updated", message: `Milestone ${milestoneReference(result as any)} was updated.` },
+                  internal: { title: "Milestone Updated", message: `Milestone ${milestoneReference(result as any)} was updated.` },
+                },
+              }),
+              { excludeUserIds: updaterId ? [updaterId] : [] }
+            );
+          } catch (error) {
+            console.error("Error in handleUpdateExisting milestone background tasks:", error);
+          }
+        })();
       }
     }
 

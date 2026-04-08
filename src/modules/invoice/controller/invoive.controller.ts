@@ -12,6 +12,7 @@ const INVOICE_NOTIFY_ROLES: UserRole[] = [
   "ADMIN",
   "PROJECT_MANAGER_OFFICER",
   "CONNECTION_DESIGNER_ENGINEER",
+  "CONNECTION_DESIGNER_ADMIN",
   "CLIENT",
   "CLIENT_ADMIN",
   "CLIENT_PROJECT_COORDINATOR",
@@ -34,19 +35,27 @@ export class InvoiceController {
 
       const result = await invoiceService.createInvoice(data, user.id);
       const invoiceNumber = result.invoiceNumber?.trim();
-      await notifyProjectStakeholdersByRole(result.projectId, INVOICE_NOTIFY_ROLES, (role) =>
-        buildRoleScopedNotification(role, {
-          type: "INVOICE_CREATED",
-          basePayload: { invoiceId: result.id, timestamp: new Date() },
-          templates: {
-            creator: { title: "", message: "" },
-            external: { title: "Invoice Received", message: invoiceNumber ? `Invoice '${invoiceNumber}' was shared with you.` : "A new invoice was shared with you." },
-            oversight: { title: "Invoice Created", message: invoiceNumber ? `Invoice '${invoiceNumber}' has been created.` : "A new invoice has been created." },
-            internal: { title: "Invoice Created", message: invoiceNumber ? `Invoice '${invoiceNumber}' has been created.` : "A new invoice has been created." },
-          },
-        }),
-        { excludeUserIds: [user.id] }
-      );
+      const creatorId = user.id;
+      // Background non-blocking tasks
+      (async () => {
+        try {
+          await notifyProjectStakeholdersByRole(result.projectId, INVOICE_NOTIFY_ROLES, (role) =>
+            buildRoleScopedNotification(role, {
+              type: "INVOICE_CREATED",
+              basePayload: { invoiceId: result.id, timestamp: new Date() },
+              templates: {
+                creator: { title: "", message: "" },
+                external: { title: "Invoice Received", message: invoiceNumber ? `Invoice '${invoiceNumber}' was shared with you.` : "A new invoice was shared with you." },
+                oversight: { title: "Invoice Created", message: invoiceNumber ? `Invoice '${invoiceNumber}' has been created.` : "A new invoice has been created." },
+                internal: { title: "Invoice Created", message: invoiceNumber ? `Invoice '${invoiceNumber}' has been created.` : "A new invoice has been created." },
+              },
+            }),
+            { excludeUserIds: [creatorId] }
+          );
+        } catch (error) {
+          console.error("Error in handleCreateInvoice background tasks:", error);
+        }
+      })();
 
       return res.status(201).json({
         message: "Invoice created successfully",
@@ -144,19 +153,29 @@ export class InvoiceController {
       const updatedInvoice = await invoiceService.updateInvoice(id, data);
       if (data?.status) {
         const updatedInvoiceNumber = updatedInvoice.invoiceNumber?.trim();
-        await notifyProjectStakeholdersByRole(updatedInvoice.projectId, INVOICE_NOTIFY_ROLES, (role) =>
-          buildRoleScopedNotification(role, {
-            type: "INVOICE_STATUS_UPDATED",
-            basePayload: { invoiceId: updatedInvoice.id, status: data.status, timestamp: new Date() },
-            templates: {
-              creator: { title: "", message: "" },
-              external: { title: "Invoice Status Updated", message: updatedInvoiceNumber ? `Invoice '${updatedInvoiceNumber}' status changed to '${data.status}'.` : `An invoice status changed to '${data.status}'.` },
-              oversight: { title: "Invoice Status Updated", message: updatedInvoiceNumber ? `Invoice '${updatedInvoiceNumber}' status changed to '${data.status}'.` : `An invoice status changed to '${data.status}'.` },
-              internal: { title: "Invoice Status Updated", message: updatedInvoiceNumber ? `Invoice '${updatedInvoiceNumber}' status changed to '${data.status}'.` : `An invoice status changed to '${data.status}'.` },
-            },
-          }),
-          { excludeUserIds: (req as AuthenticateRequest).user?.id ? [(req as AuthenticateRequest).user!.id] : [] }
-        );
+        const updaterId = (req as AuthenticateRequest).user?.id;
+        const bodyStatus = data.status;
+
+        // Background non-blocking tasks
+        (async () => {
+          try {
+            await notifyProjectStakeholdersByRole(updatedInvoice.projectId, INVOICE_NOTIFY_ROLES, (role) =>
+              buildRoleScopedNotification(role, {
+                type: "INVOICE_STATUS_UPDATED",
+                basePayload: { invoiceId: updatedInvoice.id, status: bodyStatus, timestamp: new Date() },
+                templates: {
+                  creator: { title: "", message: "" },
+                  external: { title: "Invoice Status Updated", message: updatedInvoiceNumber ? `Invoice '${updatedInvoiceNumber}' status changed to '${bodyStatus}'.` : `An invoice status changed to '${bodyStatus}'.` },
+                  oversight: { title: "Invoice Status Updated", message: updatedInvoiceNumber ? `Invoice '${updatedInvoiceNumber}' status changed to '${bodyStatus}'.` : `An invoice status changed to '${bodyStatus}'.` },
+                  internal: { title: "Invoice Status Updated", message: updatedInvoiceNumber ? `Invoice '${updatedInvoiceNumber}' status changed to '${bodyStatus}'.` : `An invoice status changed to '${bodyStatus}'.` },
+                },
+              }),
+              { excludeUserIds: updaterId ? [updaterId] : [] }
+            );
+          } catch (error) {
+            console.error("Error in handleUpdateInvoice background tasks:", error);
+          }
+        })();
       }
 
       return res.status(200).json({

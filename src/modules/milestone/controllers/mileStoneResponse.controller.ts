@@ -18,6 +18,7 @@ const MILESTONE_NOTIFY_ROLES: UserRole[] = [
   "PROJECT_MANAGER_OFFICER",
   "OPERATION_EXECUTIVE",
   "CONNECTION_DESIGNER_ENGINEER",
+  "CONNECTION_DESIGNER_ADMIN",
   "CLIENT",
   "CLIENT_ADMIN",
   "CLIENT_PROJECT_COORDINATOR",
@@ -47,20 +48,28 @@ export class MileStoneResponseController {
     const version = await prisma.mileStoneVersion.findUnique({where: {id: req.body?.mileStoneVersionId || (response as any).mileStoneVersionId}});
     const milestone = version ? await prisma.mileStone.findUnique({where: {id: version.mileStoneId}}) : null;
     if (milestone) {
-      await notifyProjectStakeholdersByRole(milestone.project_id, MILESTONE_NOTIFY_ROLES, (role) =>
-        buildRoleScopedNotification(role, {
-          type: "MILESTONE_RESPONSE_RECEIVED",
-          basePayload: { milestoneId: milestone.id, milestoneResponseId: response.id, timestamp: new Date() },
-          templates: {
-            creator: { title: "", message: "" },
-            external: { title: "Milestone Response Received", message: "A milestone response was received for your action." },
-            oversight: { title: "Milestone Response Received", message: "A milestone response was submitted and is available for review." },
-            internal: { title: "Milestone Response Received", message: "A milestone response was submitted in the project." },
-            default: { title: "Milestone Response Received", message: "A milestone response was submitted." },
-          },
-        }),
-        { excludeUserIds: [userId] }
-      );
+      const creatorId = userId;
+      // Background non-blocking tasks
+      (async () => {
+        try {
+          await notifyProjectStakeholdersByRole(milestone.project_id, MILESTONE_NOTIFY_ROLES, (role) =>
+            buildRoleScopedNotification(role, {
+              type: "MILESTONE_RESPONSE_RECEIVED",
+              basePayload: { milestoneId: milestone.id, milestoneResponseId: response.id, timestamp: new Date() },
+              templates: {
+                creator: { title: "", message: "" },
+                external: { title: "Milestone Response Received", message: "A milestone response was received for your action." },
+                oversight: { title: "Milestone Response Received", message: "A milestone response was submitted and is available for review." },
+                internal: { title: "Milestone Response Received", message: "A milestone response was submitted in the project." },
+                default: { title: "Milestone Response Received", message: "A milestone response was submitted." },
+              },
+            }),
+            { excludeUserIds: [creatorId] }
+          );
+        } catch (error) {
+          console.error("Error in handleCreateResponse milestone background tasks:", error);
+        }
+      })();
     }
 
     res.status(201).json({
@@ -85,20 +94,30 @@ export class MileStoneResponseController {
     const version = await prisma.mileStoneVersion.findUnique({where: {id: (updated as any).mileStoneVersionId}});
     const milestone = version ? await prisma.mileStone.findUnique({where: {id: version.mileStoneId}}) : null;
     if (milestone) {
-      await notifyProjectStakeholdersByRole(milestone.project_id, MILESTONE_NOTIFY_ROLES, (role) =>
-        buildRoleScopedNotification(role, {
-          type: status === "DELAYED" ? "MILESTONE_DELAYED" : "MILESTONE_STATUS_UPDATED",
-          basePayload: { parentResponseId, status, timestamp: new Date() },
-          templates: {
-            creator: { title: "", message: "" },
-            external: { title: status === "DELAYED" ? "Milestone Delayed" : "Milestone Status Updated", message: `Milestone response status changed to '${status}'.` },
-            oversight: { title: status === "DELAYED" ? "Milestone is DELAYED" : "Milestone Status Updated", message: `Milestone response status changed to '${status}'.` },
-            internal: { title: status === "DELAYED" ? "Milestone Delayed" : "Milestone Status Updated", message: `Milestone response status changed to '${status}'.` },
-            default: { title: status === "DELAYED" ? "Milestone is DELAYED" : "Milestone Status Updated", message: `Milestone response status changed to '${status}'.` },
-          },
-        }),
-        { excludeUserIds: req.user?.id ? [req.user.id] : [] }
-      );
+      const updaterId = req.user?.id;
+      const finalStatus = status;
+
+      // Background non-blocking tasks
+      (async () => {
+        try {
+          await notifyProjectStakeholdersByRole(milestone.project_id, MILESTONE_NOTIFY_ROLES, (role) =>
+            buildRoleScopedNotification(role, {
+              type: finalStatus === "DELAYED" ? "MILESTONE_DELAYED" : "MILESTONE_STATUS_UPDATED",
+              basePayload: { parentResponseId, status: finalStatus, timestamp: new Date() },
+              templates: {
+                creator: { title: "", message: "" },
+                external: { title: finalStatus === "DELAYED" ? "Milestone Delayed" : "Milestone Status Updated", message: `Milestone response status changed to '${finalStatus}'.` },
+                oversight: { title: finalStatus === "DELAYED" ? "Milestone is DELAYED" : "Milestone Status Updated", message: `Milestone response status changed to '${finalStatus}'.` },
+                internal: { title: finalStatus === "DELAYED" ? "Milestone Delayed" : "Milestone Status Updated", message: `Milestone response status changed to '${finalStatus}'.` },
+                default: { title: finalStatus === "DELAYED" ? "Milestone is DELAYED" : "Milestone Status Updated", message: `Milestone response status changed to '${finalStatus}'.` },
+              },
+            }),
+            { excludeUserIds: updaterId ? [updaterId] : [] }
+          );
+        } catch (error) {
+          console.error("Error in handleUpdateStatus milestone background tasks:", error);
+        }
+      })();
     }
 
     res.status(200).json({

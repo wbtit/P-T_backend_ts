@@ -96,53 +96,64 @@ export class RfqResponseController {
             const responseLabel = req.body?.parentResponseId ? "RFQ Reply" : "RFQ Response";
             const responderName = formatParticipantName(responder);
 
-            await sendResponseParticipantMail({
-                sender: rfqMailContext.sender,
-                primaryRecipient: rfqMailContext.recipient,
-                multipleRecipients: rfqMailContext.multipleRecipients,
-                responder,
-                subject: `${responseLabel}: ${rfqMailContext.subject}`,
-                text: result.description || `${responseLabel} received for ${rfqMailContext.subject}`,
-                buildHtml: ({ greeting, involvedNames }) =>
-                    responseMailTemplate({
-                        title: "Project Station - RFQ Response",
-                        projectName: rfqMailContext.project?.name || rfqMailContext.projectName,
-                        subjectLine: `${responseLabel} - ${rfqMailContext.subject}`,
-                        greeting,
-                        intro: `A new ${req.body?.parentResponseId ? "reply" : "response"} has been added to the RFQ thread in Project Station. Please review the latest update below:`,
-                        details: [
-                            { label: "Reference", value: rfqMailContext.serialNo || "N/A" },
-                            { label: "Project", value: rfqMailContext.project?.name || rfqMailContext.projectName || "N/A" },
-                            { label: "Subject", value: rfqMailContext.subject || "N/A" },
-                            { label: "Response By", value: responderName },
-                            { label: "Response Status", value: result.status },
-                            { label: "WBT Status", value: result.wbtStatus },
-                            { label: "Description", value: result.description || "N/A" },
-                            { label: "Response Date", value: new Date(result.createdAt).toDateString() },
-                        ],
-                        involvedRecipients: involvedNames,
-                        responderName,
-                        responderDesignation: responder.designation,
-                        ctaLabel: "Login to View RFQ",
-                    }),
-            });
-        }
+            // Background non-blocking tasks
+            (async () => {
+                try {
+                    await sendResponseParticipantMail({
+                        sender: rfqMailContext.sender,
+                        primaryRecipient: rfqMailContext.recipient,
+                        multipleRecipients: rfqMailContext.multipleRecipients,
+                        responder,
+                        subject: `${responseLabel}: ${rfqMailContext.subject}`,
+                        text: result.description || `${responseLabel} received for ${rfqMailContext.subject}`,
+                        buildHtml: ({ greeting, involvedNames }) =>
+                            responseMailTemplate({
+                                title: "Project Station - RFQ Response",
+                                projectName: rfqMailContext.project?.name || rfqMailContext.projectName,
+                                subjectLine: `${responseLabel} - ${rfqMailContext.subject}`,
+                                greeting,
+                                intro: `A new ${req.body?.parentResponseId ? "reply" : "response"} has been added to the RFQ thread in Project Station. Please review the latest update below:`,
+                                details: [
+                                    { label: "Reference", value: rfqMailContext.serialNo || "N/A" },
+                                    { label: "Project", value: rfqMailContext.project?.name || rfqMailContext.projectName || "N/A" },
+                                    { label: "Subject", value: rfqMailContext.subject || "N/A" },
+                                    { label: "Response By", value: responderName },
+                                    { label: "Response Status", value: result.status },
+                                    { label: "WBT Status", value: result.wbtStatus },
+                                    { label: "Description", value: result.description || "N/A" },
+                                    { label: "Response Date", value: new Date(result.createdAt).toDateString() },
+                                ],
+                                involvedRecipients: involvedNames,
+                                responderName,
+                                responderDesignation: responder.designation,
+                                ctaLabel: "Login to View RFQ",
+                            }),
+                    });
 
-        await notifyRfqStakeholdersByRole(result.rfqId, RFQ_NOTIFY_ROLES, (role) =>
-            buildRoleScopedNotification(role, {
-                type: "RFQ_RESPONSE_RECEIVED",
-                basePayload: { rfqId: result.rfqId, rfqResponseId: result.id, timestamp: new Date() },
-                templates: {
-                    creator: { title: "", message: "" },
-                    external: { title: "RFQ Response Received", message: "A new RFQ response was received for your action." },
-                    oversight: { title: "RFQ Response Received", message: "A new RFQ response was submitted and is available for review." },
-                    internal: { title: "RFQ Response Received", message: "A new RFQ response was submitted." },
-                    default: { title: "RFQ Response Received", message: "A new RFQ response has been submitted." },
-                },
-            }),
-        {
-            excludeUserIds: userId ? [userId] : [],
-        });
+                    await notifyRfqStakeholdersByRole(result.rfqId, RFQ_NOTIFY_ROLES, (role) => {
+                        if (result.status === "APPROVED" && ["CLIENT", "CLIENT_ADMIN", "CLIENT_PROJECT_COORDINATOR"].includes(role)) {
+                            return null;
+                        }
+                        return buildRoleScopedNotification(role, {
+                            type: "RFQ_RESPONSE_RECEIVED",
+                            basePayload: { rfqId: result.rfqId, rfqResponseId: result.id, timestamp: new Date() },
+                            templates: {
+                                creator: { title: "", message: "" },
+                                external: { title: "RFQ Response Received", message: "A new RFQ response was received for your action." },
+                                oversight: { title: "RFQ Response Received", message: "A new RFQ response was submitted and is available for review." },
+                                internal: { title: "RFQ Response Received", message: "A new RFQ response was submitted." },
+                                default: { title: "RFQ Response Received", message: "A new RFQ response has been submitted." },
+                            },
+                        });
+                    },
+                    {
+                        excludeUserIds: userId ? [userId] : [],
+                    });
+                } catch (error) {
+                    console.error("Error in rfqResponse background tasks:", error);
+                }
+            })();
+        }
         return res.status(201).json({
             success:true,
             data:result

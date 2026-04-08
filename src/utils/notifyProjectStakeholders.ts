@@ -50,7 +50,10 @@ async function getProjectStakeholderContext(projectId: string) {
       connectionDesigner: {
         include: { CDEngineers: true }
       },
-      clientProjectManagers: true
+      pocOfConnectionDesigner: true,
+      clientProjectManagers: true,
+      // Added: scope SALES_PERSON to the project's linked RFQ
+      rfq: { include: { salesPerson: true } },
     }
   });
 }
@@ -77,25 +80,37 @@ export async function getProjectStakeholderRecipients(
     recipientsByRole.get(role)!.add(userId);
   };
 
-  const globalRoles: UserRole[] = [
-    "SYSTEM_ADMIN", "ADMIN", "DEPUTY_MANAGER", "PROJECT_MANAGER_OFFICER",
-    "ESTIMATION_HEAD", "OPERATION_EXECUTIVE", "HUMAN_RESOURCE",
-    "SALES_MANAGER", "SALES_PERSON"
-  ];
+  // Truly global roles — org-wide, not project-scoped
+  const trulyGlobalRoles: UserRole[] = ["SYSTEM_ADMIN", "ADMIN"];
+  const rolesToFetchGlobally = roles.filter((r) => trulyGlobalRoles.includes(r));
 
-  const rolesToFetchGlobally = roles.filter((r) => globalRoles.includes(r));
   if (rolesToFetchGlobally.length > 0) {
     const globalUsers = await prisma.user.findMany({
       where: { role: { in: rolesToFetchGlobally }, isActive: true },
-      select: { id: true, role: true }
+      select: { id: true, role: true },
     });
     globalUsers.forEach((u) => addRecipient(u.role, u.id));
   }
 
+  // DEPUTY_MANAGER is scoped to the project's department managers
+  if (roles.includes("DEPUTY_MANAGER")) {
+    project.department?.managerIds?.forEach((u) => {
+      if (u.isActive && u.role === "DEPUTY_MANAGER") addRecipient("DEPUTY_MANAGER", u.id);
+    });
+  }
+
+  // NOTE: PROJECT_MANAGER_OFFICER, OPERATION_EXECUTIVE, ESTIMATION_HEAD,
+  // SALES_MANAGER, HUMAN_RESOURCE have no explicit project relation in the
+  // current schema. They are intentionally NOT fetched globally to prevent
+  // wrong-user notifications. Extend getProjectStakeholderContext() and
+  // add cases below when schema relations are added for these roles.
+
   roles.forEach((role) => {
     switch (role) {
       case "PROJECT_MANAGER":
-        if (project.manager?.isActive) addRecipient(role, project.manager.id);
+        if (project.manager?.isActive && project.manager.role === "PROJECT_MANAGER") {
+          addRecipient(role, project.manager.id);
+        }
         break;
       case "DEPT_MANAGER":
         if (project.department?.managerIds) {
@@ -117,10 +132,28 @@ export async function getProjectStakeholderRecipients(
         }
         break;
       case "CONNECTION_DESIGNER_ENGINEER":
-        if (project.connectionDesigner?.CDEngineers) {
+        // Use project-specific CDE list, not all engineers in the company
+        if (project.pocOfConnectionDesigner?.length) {
+          project.pocOfConnectionDesigner.forEach((c) => {
+            if (c.isActive && c.role === "CONNECTION_DESIGNER_ENGINEER") addRecipient(role, c.id);
+          });
+        } else if (project.connectionDesigner?.CDEngineers) {
+          // Fallback: if no specific POC set, use company engineers
           project.connectionDesigner.CDEngineers.forEach((c) => {
             if (c.isActive && c.role === "CONNECTION_DESIGNER_ENGINEER") addRecipient(role, c.id);
           });
+        }
+        break;
+      case "CONNECTION_DESIGNER_ADMIN":
+        if (project.connectionDesigner?.CDEngineers) {
+          project.connectionDesigner.CDEngineers.forEach((c) => {
+            if (c.isActive && c.role === "CONNECTION_DESIGNER_ADMIN") addRecipient(role, c.id);
+          });
+        }
+        break;
+      case "SALES_PERSON":
+        if (project.rfq?.salesPerson?.isActive) {
+          addRecipient(role, project.rfq.salesPerson.id);
         }
         break;
       case "STAFF":

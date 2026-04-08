@@ -7,43 +7,38 @@ import { enrichNotificationPayloadWithProject } from "./projectNotificationPaylo
  * Works for users with multiple sockets & stores notifications if offline.
  */
 
-export const sendNotification = async (userId:string, payload:any) => {
+export const sendNotification = async (userId: string, payload: any) => {
   try {
-    console.log(` Attempting to send notification to user ${userId}`);
-    const enrichedPayload = await enrichNotificationPayloadWithProject(payload);
+    // Optimization: Skip enrichment if already enriched with project data
+    const enrichedPayload = (payload.projectName && payload.projectId) 
+      ? payload 
+      : await enrichNotificationPayloadWithProject(payload);
 
-    // Get all active socket connections for the user
+    // Get all active socket connections for the user from Redis
     const socketIds = await redis.sMembers(`socket:${userId}`);
     const userIsOnline = Array.isArray(socketIds) && socketIds.length > 0;
 
     let delivered = false;
 
     if (userIsOnline && (globalThis as any).io) {
-      console.log(
-        ` User ${userId} is ONLINE → Sending to room user:${userId} (${socketIds.length} sockets)`
-      );
-
-      // Emit to all sockets belonging to this user
+      // Emit to the user's dedicated socket room
       (globalThis as any).io.to(`user:${userId}`).emit("customNotification", enrichedPayload);
       delivered = true;
-    } else {
-      console.warn(` User ${userId} OFFLINE → will store undelivered notification`);
-      delivered = false;
     }
 
-    // Save notification record with correct delivered status
+    // Save notification record to DB
     await prisma.notification.create({
       data: {
         userID: userId,
         payload: enrichedPayload,
-        delivered, // dynamically set
+        delivered,
       },
     });
 
-    console.log(
-      `Notification stored for user ${userId} | delivered: ${delivered ? "YES" : "NO"}`
-    );
+    if (process.env.NODE_ENV !== 'production') {
+       console.log(`Notification for ${userId} | online: ${userIsOnline} | delivered: ${delivered}`);
+    }
   } catch (err) {
-    console.error(" Error in sendNotification:", err);
+    console.error("Error in sendNotification:", err);
   }
 };

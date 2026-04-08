@@ -1,16 +1,11 @@
 import prisma from "../config/database/client";
 import { secondsBetween } from "../modules/workingHours/utils/calculateSecs";
-import { notifyUsers, getActiveUserIdsByRoles } from "../utils/notifyByRole";
+import { notifyProjectStakeholdersByRole } from "../utils/notifyProjectStakeholders";
+import { sendNotification } from "../utils/sendNotification";
 import { parseHHMMToHours } from "../utils/timeFormat";
 
 export async function check75Alert() {
     const now = new Date();
-    const recipientIds = await getActiveUserIdsByRoles([
-        "ADMIN",
-        "DEPUTY_MANAGER",
-        "OPERATION_EXECUTIVE",
-        "STAFF",
-    ]);
 
     // Find active tasks where 75% alert has NOT been triggered
     const tasks = await prisma.task.findMany({
@@ -21,7 +16,13 @@ export async function check75Alert() {
         include: {
             allocationLog: true,
             workingHourTask: true,
-            project: { select: { managerID: true, name: true } }, // fetch manager info
+            project: { 
+                select: { 
+                    managerID: true, 
+                    name: true,
+                    departmentID: true,
+                } 
+            },
         },
     });
 
@@ -89,11 +90,13 @@ export async function check75Alert() {
             ).toFixed(2);
 
             // Notification matrix (2.5): notify ADM + DEP + OE
-            const payload = {
+            const notifyPayload = {
                 type: "TASK_75_PERCENT",
                 title: "Task reached 75% allocated hours",
                 message: `Task '${task.name}' has reached ${percentUsed}% of allocated hours.`,
                 taskId: task.id,
+                projectId: task.project_id,
+                projectName: task.project?.name,
                 employeeId: task.user_id,
                 allocatedHours,
                 workedHours,
@@ -101,7 +104,17 @@ export async function check75Alert() {
                 timestamp: new Date(),
             };
 
-            await notifyUsers(Array.from(new Set([...recipientIds, task.user_id])), payload);
+            // Notify project-scoped roles (ADMIN, DEPUTY_MANAGER, OE)
+            await notifyProjectStakeholdersByRole(
+                task.project_id,
+                ["ADMIN", "DEPUTY_MANAGER", "OPERATION_EXECUTIVE"],
+                () => notifyPayload,
+            );
+
+            // Notify the task assignee directly (STAFF - matrix 2.5)
+            if (task.user_id) {
+                await sendNotification(task.user_id, notifyPayload);
+            }
 
             console.log(`75% alert triggered for task ${task.id}`);
         }

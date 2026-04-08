@@ -17,6 +17,8 @@ const TEAM_MEETING_NOTE_ROLES: UserRole[] = [
   "PROJECT_MANAGER",
   "DEPUTY_MANAGER",
   "DEPT_MANAGER",
+  "CONNECTION_DESIGNER_ENGINEER",
+  "CONNECTION_DESIGNER_ADMIN",
 ];
 
 const service = new TeamMeetingNotesService();
@@ -30,37 +32,50 @@ export class TeamMeetingNotesController {
 
     const note = await service.create({ ...data, files, createdById });
 
-    if (note && note.projectId) {
-      await notifyProjectStakeholdersByRole(note.projectId, TEAM_MEETING_NOTE_ROLES, (role) =>
-        buildRoleScopedNotification(role, {
-          type: "PROJECT_NOTE_CREATED",
-          basePayload: { noteId: note.id, projectId: note.projectId, timestamp: new Date() },
-          templates: {
-            creator: { title: "", message: "" },
-            external: { title: "Project Note Received", message: `Project note '${note.title}' was shared with you.` },
-            oversight: { title: "Project Note Created", message: `Project note '${note.title}' was created and is available for monitoring.` },
-            internal: { title: "Project Note Created", message: `A new project note '${note.title}' was created.` },
-            default: { title: "Project Note Created", message: `A new project note '${note.title}' was created.` },
-          },
-        }),
-        { excludeUserIds: [createdById] }
-      );
-    }
-
+    const creatorIdForBg = createdById;
+    const noteIdForBg = note.id;
+    const projectIdForBg = note.projectId;
+    const noteTitleForBg = note.title;
     const taggedUserIds = Array.isArray((note as any)?.taggedUsers)
       ? (note as any).taggedUsers
           .map((user: { id?: string }) => user.id)
-          .filter((userId: string | undefined): userId is string => Boolean(userId) && userId !== createdById)
+          .filter((userId: string | undefined): userId is string => Boolean(userId) && userId !== creatorIdForBg)
       : [];
 
-    await notifyUsers(taggedUserIds, {
-      type: "TEAM_MEETING_NOTE_TAGGED",
-      title: "You were tagged in a team meeting note",
-      message: `You were tagged in '${note.title}'.`,
-      noteId: note.id,
-      projectId: note.projectId,
-      timestamp: new Date(),
-    });
+    // Background non-blocking tasks
+    (async () => {
+      try {
+        if (note && projectIdForBg) {
+          await notifyProjectStakeholdersByRole(projectIdForBg, TEAM_MEETING_NOTE_ROLES, (role) =>
+            buildRoleScopedNotification(role, {
+              type: "PROJECT_NOTE_CREATED",
+              basePayload: { noteId: noteIdForBg, projectId: projectIdForBg, timestamp: new Date() },
+              templates: {
+                creator: { title: "", message: "" },
+                external: { title: "Project Note Received", message: `Project note '${noteTitleForBg}' was shared with you.` },
+                oversight: { title: "Project Note Created", message: `Project note '${noteTitleForBg}' was created and is available for monitoring.` },
+                internal: { title: "Project Note Created", message: `A new project note '${noteTitleForBg}' was created.` },
+                default: { title: "Project Note Created", message: `A new project note '${noteTitleForBg}' was created.` },
+              },
+            }),
+            { excludeUserIds: [creatorIdForBg] }
+          );
+        }
+
+        if (taggedUserIds.length > 0) {
+          await notifyUsers(taggedUserIds, {
+            type: "TEAM_MEETING_NOTE_TAGGED",
+            title: "You were tagged in a team meeting note",
+            message: `You were tagged in '${noteTitleForBg}'.`,
+            noteId: noteIdForBg,
+            projectId: projectIdForBg,
+            timestamp: new Date(),
+          });
+        }
+      } catch (error) {
+        console.error("Error in TeamMeetingNotes create background tasks:", error);
+      }
+    })();
 
     return res.status(201).json(note);
   }
@@ -81,40 +96,53 @@ export class TeamMeetingNotesController {
 
     const note = await service.update(id, { ...data, files: parsedFiles });
 
-    if (note && note.projectId) {
-      await notifyProjectStakeholdersByRole(note.projectId, TEAM_MEETING_NOTE_ROLES, (role) =>
-        buildRoleScopedNotification(role, {
-          type: "PROJECT_NOTE_UPDATED",
-          basePayload: { noteId: note.id, projectId: note.projectId, timestamp: new Date() },
-          templates: {
-            creator: { title: "", message: "" },
-            external: { title: "Project Note Updated", message: `Updated project note '${note.title}' was shared with you.` },
-            oversight: { title: "Project Note Updated", message: `Project note '${note.title}' was updated.` },
-            internal: { title: "Project Note Updated", message: `Project note '${note.title}' was updated.` },
-            default: { title: "Project Note Updated", message: `Project note '${note.title}' was updated.` },
-          },
-        }),
-        { excludeUserIds: req.user?.id ? [req.user.id] : [] }
-      );
-    }
-
+    const updaterIdForBg = req.user?.id;
+    const noteIdForBg = note.id;
+    const projectIdForBg = note.projectId;
+    const noteTitleForBg = note.title;
     const taggedUserIds = Array.isArray((note as any)?.taggedUsers)
       ? (note as any).taggedUsers
           .map((user: { id?: string }) => user.id)
           .filter(
             (userId: string | undefined): userId is string =>
-              Boolean(userId) && userId !== req.user?.id
+              Boolean(userId) && userId !== updaterIdForBg
           )
       : [];
 
-    await notifyUsers(taggedUserIds, {
-      type: "TEAM_MEETING_NOTE_TAGGED",
-      title: "You were tagged in a team meeting note",
-      message: `You were tagged in '${note.title}'.`,
-      noteId: note.id,
-      projectId: note.projectId,
-      timestamp: new Date(),
-    });
+    // Background non-blocking tasks
+    (async () => {
+      try {
+        if (note && projectIdForBg) {
+          await notifyProjectStakeholdersByRole(projectIdForBg, TEAM_MEETING_NOTE_ROLES, (role) =>
+            buildRoleScopedNotification(role, {
+              type: "PROJECT_NOTE_UPDATED",
+              basePayload: { noteId: noteIdForBg, projectId: projectIdForBg, timestamp: new Date() },
+              templates: {
+                creator: { title: "", message: "" },
+                external: { title: "Project Note Updated", message: `Updated project note '${noteTitleForBg}' was shared with you.` },
+                oversight: { title: "Project Note Updated", message: `Project note '${noteTitleForBg}' was updated.` },
+                internal: { title: "Project Note Updated", message: `Project note '${noteTitleForBg}' was updated.` },
+                default: { title: "Project Note Updated", message: `Project note '${noteTitleForBg}' was updated.` },
+              },
+            }),
+            { excludeUserIds: updaterIdForBg ? [updaterIdForBg] : [] }
+          );
+        }
+
+        if (taggedUserIds.length > 0) {
+          await notifyUsers(taggedUserIds, {
+            type: "TEAM_MEETING_NOTE_TAGGED",
+            title: "You were tagged in a team meeting note",
+            message: `You were tagged in '${noteTitleForBg}'.`,
+            noteId: noteIdForBg,
+            projectId: projectIdForBg,
+            timestamp: new Date(),
+          });
+        }
+      } catch (error) {
+        console.error("Error in TeamMeetingNotes update background tasks:", error);
+      }
+    })();
 
     return res.status(200).json(note);
   }

@@ -23,6 +23,7 @@ const SUBMITTAL_NOTIFY_ROLES: UserRole[] = [
   "PROJECT_MANAGER_OFFICER",
   "OPERATION_EXECUTIVE",
   "CONNECTION_DESIGNER_ENGINEER",
+  "CONNECTION_DESIGNER_ADMIN",
   "CLIENT",
   "CLIENT_ADMIN",
   "CLIENT_PROJECT_COORDINATOR",
@@ -80,117 +81,129 @@ export class SubmittalResponseController {
       },
       userId
     );
-    const [submittalMailContext, responder] = await Promise.all([
-      prisma.submittals.findUnique({
-        where: { id: submittalsId },
-        include: {
-          project: { select: { name: true } },
-          currentVersion: { select: { versionNumber: true } },
-          recepients: {
-            select: {
-              id: true,
-              email: true,
-              firstName: true,
-              middleName: true,
-              lastName: true,
-              username: true,
-              designation: true,
-            },
-          },
-          multipleRecipients: {
-            select: {
-              id: true,
-              email: true,
-              firstName: true,
-              middleName: true,
-              lastName: true,
-              username: true,
-              designation: true,
-            },
-          },
-          sender: {
-            select: {
-              id: true,
-              email: true,
-              firstName: true,
-              middleName: true,
-              lastName: true,
-              username: true,
-              designation: true,
-            },
-          },
-        },
-      }),
-      prisma.user.findUnique({
-        where: { id: userId },
-        select: {
-          id: true,
-          email: true,
-          firstName: true,
-          middleName: true,
-          lastName: true,
-          username: true,
-          designation: true,
-        },
-      }),
-    ]);
+    const responderId = userId;
+    const parentRespId = parentResponseId;
+    const respDesc = description;
+    const respReason = reason;
 
-    if (submittalMailContext && responder) {
-      const responseLabel = parentResponseId ? "Submittal Reply" : "Submittal Response";
-      const responderName = formatParticipantName(responder);
-
-      await sendResponseParticipantMail({
-        sender: submittalMailContext.sender,
-        primaryRecipient: submittalMailContext.recepients,
-        multipleRecipients: submittalMailContext.multipleRecipients,
-        responder,
-        subject: `${responseLabel}: ${submittalMailContext.subject}`,
-        text: description || reason || `${responseLabel} received for ${submittalMailContext.subject}`,
-        buildHtml: ({ greeting, involvedNames }) =>
-          responseMailTemplate({
-            title: "Project Station - Submittal Response",
-            projectName: submittalMailContext.project?.name,
-            subjectLine: `${responseLabel} - ${submittalMailContext.subject}`,
-            greeting,
-            intro: `A new ${parentResponseId ? "reply" : "response"} has been added to the submittal thread in Project Station. Please review the latest update below:`,
-            details: [
-              { label: "Reference", value: submittalMailContext.serialNo || "N/A" },
-              { label: "Project", value: submittalMailContext.project?.name || "N/A" },
-              { label: "Subject", value: submittalMailContext.subject || "N/A" },
-              { label: "Stage", value: submittalMailContext.stage },
-              { label: "Version", value: `v${submittalMailContext.currentVersion?.versionNumber || 1}` },
-              { label: "Response By", value: responderName },
-              { label: "Status", value: response.status },
-              { label: "WBT Status", value: response.wbtStatus },
-              { label: "Description", value: response.description || "N/A" },
-              { label: "Reason", value: response.reason || "N/A" },
-              { label: "Response Date", value: new Date(response.createdAt).toDateString() },
-            ],
-            involvedRecipients: involvedNames,
-            responderName,
-            responderDesignation: responder.designation,
-            ctaLabel: "Login to View Submittal",
+    // Background non-blocking tasks
+    (async () => {
+      try {
+        const [submittalMailContext, responder] = await Promise.all([
+          prisma.submittals.findUnique({
+            where: { id: submittalsId },
+            include: {
+              project: { select: { name: true } },
+              currentVersion: { select: { versionNumber: true } },
+              recepients: {
+                select: {
+                  id: true,
+                  email: true,
+                  firstName: true,
+                  middleName: true,
+                  lastName: true,
+                  username: true,
+                  designation: true,
+                },
+              },
+              multipleRecipients: {
+                select: {
+                  id: true,
+                  email: true,
+                  firstName: true,
+                  middleName: true,
+                  lastName: true,
+                  username: true,
+                  designation: true,
+                },
+              },
+              sender: {
+                select: {
+                  id: true,
+                  email: true,
+                  firstName: true,
+                  middleName: true,
+                  lastName: true,
+                  username: true,
+                  designation: true,
+                },
+              },
+            },
           }),
-      });
-    }
+          prisma.user.findUnique({
+            where: { id: responderId },
+            select: {
+              id: true,
+              email: true,
+              firstName: true,
+              middleName: true,
+              lastName: true,
+              username: true,
+              designation: true,
+            },
+          }),
+        ]);
 
-    const submittal = await prisma.submittals.findUnique({ where: { id: submittalsId } });
-    if (submittal) {
-      await notifyProjectStakeholdersByRole(submittal.project_id, SUBMITTAL_NOTIFY_ROLES, (role) =>
-        buildRoleScopedNotification(role, {
-          type: "SUBMITTAL_RESPONSE_RECEIVED",
-          basePayload: { submittalsId, submittalResponseId: response.id, timestamp: new Date() },
-          templates: {
-            creator: { title: "", message: "" },
-            external: { title: "Submittal Response Received", message: "A new submittal response was received for your action." },
-            oversight: { title: "Submittal Response Received", message: "A new submittal response was submitted and is available for review." },
-            internal: { title: "Submittal Response Received", message: "A new submittal response was submitted in the project." },
-            default: { title: "Submittal Response Received", message: "A new submittal response has been submitted." },
-          },
-        }),
-        { excludeUserIds: [userId] }
-      );
-    }
+        if (submittalMailContext && responder) {
+          const responseLabel = parentRespId ? "Submittal Reply" : "Submittal Response";
+          const responderName = formatParticipantName(responder);
+
+          await sendResponseParticipantMail({
+            sender: submittalMailContext.sender,
+            primaryRecipient: submittalMailContext.recepients,
+            multipleRecipients: submittalMailContext.multipleRecipients,
+            responder,
+            subject: `${responseLabel}: ${submittalMailContext.subject}`,
+            text: respDesc || respReason || `${responseLabel} received for ${submittalMailContext.subject}`,
+            buildHtml: ({ greeting, involvedNames }) =>
+              responseMailTemplate({
+                title: "Project Station - Submittal Response",
+                projectName: submittalMailContext.project?.name,
+                subjectLine: `${responseLabel} - ${submittalMailContext.subject}`,
+                greeting,
+                intro: `A new ${parentRespId ? "reply" : "response"} has been added to the submittal thread in Project Station. Please review the latest update below:`,
+                details: [
+                  { label: "Reference", value: submittalMailContext.serialNo || "N/A" },
+                  { label: "Project", value: submittalMailContext.project?.name || "N/A" },
+                  { label: "Subject", value: submittalMailContext.subject || "N/A" },
+                  { label: "Stage", value: submittalMailContext.stage },
+                  { label: "Version", value: `v${submittalMailContext.currentVersion?.versionNumber || 1}` },
+                  { label: "Response By", value: responderName },
+                  { label: "Status", value: response.status },
+                  { label: "WBT Status", value: response.wbtStatus },
+                  { label: "Description", value: response.description || "N/A" },
+                  { label: "Reason", value: response.reason || "N/A" },
+                  { label: "Response Date", value: new Date(response.createdAt).toDateString() },
+                ],
+                involvedRecipients: involvedNames,
+                responderName,
+                responderDesignation: responder.designation,
+                ctaLabel: "Login to View Submittal",
+              }),
+          });
+        }
+
+        const submittal = await prisma.submittals.findUnique({ where: { id: submittalsId } });
+        if (submittal) {
+          await notifyProjectStakeholdersByRole(submittal.project_id, SUBMITTAL_NOTIFY_ROLES, (role) =>
+            buildRoleScopedNotification(role, {
+              type: "SUBMITTAL_RESPONSE_RECEIVED",
+              basePayload: { submittalsId, submittalResponseId: response.id, timestamp: new Date() },
+              templates: {
+                creator: { title: "", message: "" },
+                external: { title: "Submittal Response Received", message: "A new submittal response was received for your action." },
+                oversight: { title: "Submittal Response Received", message: "A new submittal response was submitted and is available for review." },
+                internal: { title: "Submittal Response Received", message: "A new submittal response was submitted in the project." },
+                default: { title: "Submittal Response Received", message: "A new submittal response has been submitted." },
+              },
+            }),
+            { excludeUserIds: [responderId] }
+          );
+        }
+      } catch (error) {
+        console.error("Error in handleCreateResponse submittal background tasks:", error);
+      }
+    })();
 
     res.status(201).json({
       status: "success",
@@ -221,23 +234,33 @@ export class SubmittalResponseController {
       parentResponseId,
       status as State
     );
-    const submittal = await prisma.submittals.findUnique({ where: { id: (updated as any).submittalsId } });
-    if (submittal) {
-      await notifyProjectStakeholdersByRole(submittal.project_id, SUBMITTAL_NOTIFY_ROLES, (role) =>
-        buildRoleScopedNotification(role, {
-          type: "SUBMITTAL_STATUS_UPDATED",
-          basePayload: { parentResponseId, status, timestamp: new Date() },
-          templates: {
-            creator: { title: "", message: "" },
-            external: { title: "Submittal Status Updated", message: `Submittal workflow status changed to '${status}'.` },
-            oversight: { title: "Submittal Status Updated", message: `Submittal workflow status changed to '${status}'.` },
-            internal: { title: "Submittal Status Updated", message: `Submittal workflow status changed to '${status}'.` },
-            default: { title: "Submittal Status Updated", message: `Submittal workflow status updated to '${status}'.` },
-          },
-        }),
-        { excludeUserIds: req.user?.id ? [req.user.id] : [] }
-      );
-    }
+    const updaterId = req.user?.id;
+    const finalStatus = status;
+
+    // Background non-blocking tasks
+    (async () => {
+      try {
+        const submittal = await prisma.submittals.findUnique({ where: { id: (updated as any).submittalsId } });
+        if (submittal) {
+          await notifyProjectStakeholdersByRole(submittal.project_id, SUBMITTAL_NOTIFY_ROLES, (role) =>
+            buildRoleScopedNotification(role, {
+              type: "SUBMITTAL_STATUS_UPDATED",
+              basePayload: { parentResponseId, status: finalStatus, timestamp: new Date() },
+              templates: {
+                creator: { title: "", message: "" },
+                external: { title: "Submittal Status Updated", message: `Submittal workflow status changed to '${finalStatus}'.` },
+                oversight: { title: "Submittal Status Updated", message: `Submittal workflow status changed to '${finalStatus}'.` },
+                internal: { title: "Submittal Status Updated", message: `Submittal workflow status changed to '${finalStatus}'.` },
+                default: { title: "Submittal Status Updated", message: `Submittal workflow status updated to '${finalStatus}'.` },
+              },
+            }),
+            { excludeUserIds: updaterId ? [updaterId] : [] }
+          );
+        }
+      } catch (error) {
+        console.error("Error in handleUpdateStatus submittal background tasks:", error);
+      }
+    })();
 
     res.status(200).json({
       status: "success",

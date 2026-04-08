@@ -17,6 +17,7 @@ const NOTE_RESPONSE_NOTIFY_ROLES: UserRole[] = [
   "DEPUTY_MANAGER",
   "OPERATION_EXECUTIVE",
   "CONNECTION_DESIGNER_ENGINEER",
+  "CONNECTION_DESIGNER_ADMIN",
   "STAFF",
   "CLIENT",
   "CLIENT_ADMIN",
@@ -41,28 +42,39 @@ export class TeamMeetingNoteResponseController {
       files: uploadedFiles,
     });
 
-    const note = await prisma.teamMeetingNotes.findUnique({
-      where: { id: noteId },
-      select: { projectId: true },
-    });
+    const creatorIdForBg = userId;
+    const parentRespIdForBg = req.body?.parentResponseId;
+    const noteIdForBg = noteId;
 
-    if (note && note.projectId) {
-      const type = req.body?.parentResponseId ? "PROJECT_NOTE_REPLY" : "PROJECT_NOTE_RESPONSE";
-      await notifyProjectStakeholdersByRole(note.projectId, NOTE_RESPONSE_NOTIFY_ROLES, (role) =>
-        buildRoleScopedNotification(role, {
-          type,
-          basePayload: { noteId, noteResponseId: response.id, projectId: note.projectId, timestamp: new Date() },
-          templates: {
-            creator: { title: "", message: "" },
-            external: { title: req.body?.parentResponseId ? "Project Note Reply Received" : "Project Note Response Received", message: "A new project note response was received for your action." },
-            oversight: { title: req.body?.parentResponseId ? "Project Note Reply" : "Project Note Response", message: "A new project note response was submitted and is available for review." },
-            internal: { title: req.body?.parentResponseId ? "Project Note Reply" : "Project Note Response", message: "A new project note response was submitted in the project." },
-            default: { title: req.body?.parentResponseId ? "Project Note Reply" : "Project Note Response", message: "A new project note response was submitted." },
-          },
-        }),
-        { excludeUserIds: [userId] }
-      );
-    }
+    // Background non-blocking tasks
+    (async () => {
+      try {
+        const note = await prisma.teamMeetingNotes.findUnique({
+          where: { id: noteIdForBg },
+          select: { projectId: true },
+        });
+
+        if (note && note.projectId) {
+          const type = parentRespIdForBg ? "PROJECT_NOTE_REPLY" : "PROJECT_NOTE_RESPONSE";
+          await notifyProjectStakeholdersByRole(note.projectId, NOTE_RESPONSE_NOTIFY_ROLES, (role) =>
+            buildRoleScopedNotification(role, {
+              type,
+              basePayload: { noteId: noteIdForBg, noteResponseId: response.id, projectId: note.projectId, timestamp: new Date() },
+              templates: {
+                creator: { title: "", message: "" },
+                external: { title: parentRespIdForBg ? "Project Note Reply Received" : "Project Note Response Received", message: "A new project note response was received for your action." },
+                oversight: { title: parentRespIdForBg ? "Project Note Reply" : "Project Note Response", message: "A new project note response was submitted and is available for review." },
+                internal: { title: parentRespIdForBg ? "Project Note Reply" : "Project Note Response", message: "A new project note response was submitted in the project." },
+                default: { title: parentRespIdForBg ? "Project Note Reply" : "Project Note Response", message: "A new project note response was submitted." },
+              },
+            }),
+            { excludeUserIds: [creatorIdForBg] }
+          );
+        }
+      } catch (error) {
+        console.error("Error in TeamMeetingNoteResponse create background tasks:", error);
+      }
+    })();
 
     return res.status(201).json({
       message: "Team meeting note response created",
