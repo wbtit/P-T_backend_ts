@@ -29,53 +29,67 @@ export class RFQService {
       data.location || ""
     );
 
-    const rfq = await prisma.$transaction(async (tx) => {
-      const fabricator = await tx.fabricator.findUnique({
-        where: { id: data.fabricatorId },
-        select: {
-          wbtFabricatorPointOfContact: {
-            select: { id: true },
-          },
-        },
-      });
+    let rfq;
+    let attempts = 0;
+    while (attempts < 5) {
+      try {
+        rfq = await prisma.$transaction(async (tx) => {
+          const fabricator = await tx.fabricator.findUnique({
+            where: { id: data.fabricatorId },
+            select: {
+              wbtFabricatorPointOfContact: {
+                select: { id: true },
+              },
+            },
+          });
 
-      if (!fabricator) {
-        throw new AppError("Fabricator not found", 404);
+          if (!fabricator) {
+            throw new AppError("Fabricator not found", 404);
+          }
+
+          const recipientId = fabricator.wbtFabricatorPointOfContact[0]?.id;
+          if (!recipientId) {
+            throw new AppError(
+              "No wbtFabricatorPointOfContact found for selected fabricator",
+              400
+            );
+          }
+          const multipleRecipients = fabricator.wbtFabricatorPointOfContact.map(poc => poc.id);
+
+          const project = projectNumber
+            ? await tx.project.findUnique({
+                where: { projectNumber },
+                select: { id: true, projectCode: true },
+              })
+            : null;
+
+          const serialNo = await generateProjectScopedSerial(tx, {
+            prefix: SERIAL_PREFIX.RFQ,
+            projectScopeId:
+              project?.id ??
+              `RFQ_ENTRY:${(projectName || "RFQ").toUpperCase()}:${location.toUpperCase()}`,
+            projectToken: project?.projectCode || projectNumber || projectName || "RFQ",
+          });
+
+          return rfqrepo.createWithTx(tx, {
+            ...data,
+            senderId,
+            recipientId,
+            multipleRecipients,
+            projectNumber,
+            serialNo,
+          });
+        });
+        break; // If transaction succeeds, exit loop
+      } catch (error: any) {
+        if (error.code === "P2002" && (error.meta?.target as string[] | string | undefined)?.includes("serialNo")) {
+          attempts++;
+          if (attempts >= 5) throw error;
+          continue; // Retry
+        }
+        throw error;
       }
-
-      const recipientId = fabricator.wbtFabricatorPointOfContact[0]?.id;
-      if (!recipientId) {
-        throw new AppError(
-          "No wbtFabricatorPointOfContact found for selected fabricator",
-          400
-        );
-      }
-      const multipleRecipients = fabricator.wbtFabricatorPointOfContact.map(poc => poc.id);
-
-      const project = projectNumber
-        ? await tx.project.findUnique({
-            where: { projectNumber },
-            select: { id: true, projectCode: true },
-          })
-        : null;
-
-      const serialNo = await generateProjectScopedSerial(tx, {
-        prefix: SERIAL_PREFIX.RFQ,
-        projectScopeId:
-          project?.id ??
-          `RFQ_ENTRY:${(projectName || "RFQ").toUpperCase()}:${location.toUpperCase()}`,
-        projectToken: project?.projectCode ?? projectNumber ?? projectName ?? "RFQ",
-      });
-
-      return rfqrepo.createWithTx(tx, {
-        ...data,
-        senderId,
-        recipientId,
-        multipleRecipients,
-        projectNumber,
-        serialNo,
-      });
-    });
+    }
 
     return { newRfq: rfq, duplicateRfq };
   }

@@ -47,11 +47,11 @@ export function ifcCompletionInvoiceTemplate(project: any, fabricator: any) {
             <td bgcolor="#ffffff">
               <table border="0" cellpadding="0" cellspacing="0" width="100%">
                 <tr>
-                  <td class="logo-container" width="40%" style="padding: 20px;">
+                  <td class="logo-container" width="30%" style="padding: 20px;">
                     <img src="https://res.cloudinary.com/dp7yxzrgw/image/upload/v1753685727/logos/whiteboardtec-logo_oztrhh.png" alt="Whiteboard Logo" width="150" border="0" style="display: block; width: 150px; max-width: 150px;" />
                   </td>
-                  <td class="project-name-container" width="60%" bgcolor="#8cc63f" style="padding: 20px; color: #ffffff; font-weight: bold; font-size: 18px; text-align: left;">
-                    ${project.name?.toUpperCase() || "PROJECT NAME"}
+                  <td class="project-name-container" width="70%" style="padding: 20px; color: #888888; font-weight: 600; font-size: 18px; text-align: left;">
+                    Project Name: ${project.name?.toUpperCase() || "PROJECT NAME"}
                   </td>
                 </tr>
               </table>
@@ -89,9 +89,6 @@ export function ifcCompletionInvoiceTemplate(project: any, fabricator: any) {
 
               <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-top: 30px;">
                 <tr>
-                  <td class="signature-logo" width="120" valign="top" style="padding-right: 20px;">
-                    <img src="https://res.cloudinary.com/dp7yxzrgw/image/upload/v1753685727/logos/whiteboardtec-logo_oztrhh.png" alt="Logo" width="100" border="0" style="display: block; width: 100px;" />
-                  </td>
                   <td class="signature-details" valign="top" style="border-left: 1px solid #e0e0e0; padding-left: 20px; color: #777777; font-size: 14px;">
                     <strong style="color: #333333; font-size: 16px;">Project Station</strong><br />
                     Whiteboard Engineering | <a href="https://whiteboardtec.com" style="color: #8cc63f; text-decoration: none;">whiteboardtec.com</a>
