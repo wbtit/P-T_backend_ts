@@ -41,24 +41,24 @@ const zStringArray = z
 // FINAL PROJECT SCHEMA
 // ------------------------
 export const CreateProjectSchema = z.object({
-  projectNumber: z.string().min(1),
-  name: z.string().min(1),
-  description: z.string().min(1),
-  fabricatorID: z.string().min(1),
-  departmentID: z.string().min(1),
-  teamID: z.string().min(1).optional(),
-  managerID: z.string().min(1),
-  rfqId: z.string().min(1).optional(),
+  projectNumber: z.string(),
+  name: z.string(),
+  description: z.string(),
+  fabricatorID: z.string(),
+  departmentID: z.string(),
+  teamID: z.string().optional(),
+  managerID: z.string(),
+  rfqId: z.string().optional(),
   clientProjectManagers: zStringArray.optional(),
   pocOfConnectionDesigner: zStringArray.optional(),
   
-  clientProjectManager: z.string().min(1).optional(),
+  clientProjectManager: z.string().optional(),
   status: z.enum(Status),
   stage: z.enum(Stage),
   tools: z.enum(Tools),
 
-  CDQuataionID: z.string().min(1).optional(),
-  connectionDesignerID: z.string().min(1).optional(),
+  CDQuataionID: z.string().optional(),
+  connectionDesignerID: z.string().optional(),
 
   files: z
     .union([z.array(z.any()), z.literal(null)])
