@@ -41,9 +41,13 @@ import { generateProjectSerial } from "../../../utils/serial.util";
               },
             }
           : {}),
-          pocOfConnectionDesigner: data.pocOfConnectionDesigner ? {
-            connect: data.pocOfConnectionDesigner.map((id) => ({ id })),
-          } : undefined,
+          pocOfConnectionDesigner: data.pocOfConnectionDesigner?.length
+            ? {
+                connect: data.pocOfConnectionDesigner
+                  .filter(Boolean)
+                  .map((id) => ({ id })),
+              }
+            : undefined,
       },
       include: {
         stageHistory: true,
@@ -65,9 +69,7 @@ import { generateProjectSerial } from "../../../utils/serial.util";
       select: { id: true },
   });
 
-// if (validTemplates.length !== data.wbsTemplateIds?.length) {
-//   throw new AppError("Invalid WBS template selection", 400);
-// }
+
 
     await setProjectWbsSelection(
       tx,
@@ -92,25 +94,99 @@ import { generateProjectSerial } from "../../../utils/serial.util";
   data: UpdateprojectInput
 ) {
   const {
+    id: _ignoredId,
     clientProjectManagers,
     clientProjectManager,
+    fabricatorID,
+    departmentID,
+    teamID,
+    managerID,
+    connectionDesignerID,
+    rfqId,
+    CDQuataionID,
+    vendorquotatioID,
+    vendorId,
     ...projectPayload
-  } = data as UpdateprojectInput & {
-    clientProjectManagers?: string[];
-    clientProjectManager?: string;
-  };
-  const hasClientManagerUpdate =
-    Object.prototype.hasOwnProperty.call(data, "clientProjectManagers") ||
-    Object.prototype.hasOwnProperty.call(data, "clientProjectManager");
+  } = data as any;
+
+  const hasClientManagersUpdate =
+    Object.prototype.hasOwnProperty.call(data, "clientProjectManagers") &&
+    Array.isArray(clientProjectManagers);
+  const hasClientManagerSingleUpdate =
+    Object.prototype.hasOwnProperty.call(data, "clientProjectManager") &&
+    typeof clientProjectManager === "string" &&
+    clientProjectManager.trim() !== "";
+  const hasClientManagerUpdate = hasClientManagersUpdate || hasClientManagerSingleUpdate;
   const mergedClientManagers = [
     ...(clientProjectManagers ?? []),
     ...(clientProjectManager ? [clientProjectManager] : []),
   ].filter(Boolean);
   const uniqueClientManagers = Array.from(new Set(mergedClientManagers));
+
+  const hasPocUpdate =
+    Object.prototype.hasOwnProperty.call(data, "pocOfConnectionDesigner") &&
+    Array.isArray(data.pocOfConnectionDesigner);
+  const pocIds = Array.isArray(data.pocOfConnectionDesigner)
+    ? data.pocOfConnectionDesigner.filter(Boolean)
+    : undefined;
+
+  const relationUpdates: Prisma.ProjectUpdateInput = {
+    ...(Object.prototype.hasOwnProperty.call(data, "fabricatorID") &&
+    typeof fabricatorID === "string" &&
+    fabricatorID.trim() !== ""
+      ? { fabricator: { connect: { id: fabricatorID } } }
+      : {}),
+    ...(Object.prototype.hasOwnProperty.call(data, "departmentID") &&
+    typeof departmentID === "string" &&
+    departmentID.trim() !== ""
+      ? { department: { connect: { id: departmentID } } }
+      : {}),
+    ...(Object.prototype.hasOwnProperty.call(data, "managerID") &&
+    typeof managerID === "string" &&
+    managerID.trim() !== ""
+      ? { manager: { connect: { id: managerID } } }
+      : {}),
+    ...(Object.prototype.hasOwnProperty.call(data, "teamID") &&
+    typeof teamID === "string" &&
+    teamID.trim() !== ""
+      ? { team: { connect: { id: teamID } } }
+      : {}),
+    ...(Object.prototype.hasOwnProperty.call(data, "connectionDesignerID") &&
+    typeof connectionDesignerID === "string" &&
+    connectionDesignerID.trim() !== ""
+      ? {
+          connectionDesigner: {
+            connect: { id: connectionDesignerID },
+          },
+        }
+      : {}),
+    ...(Object.prototype.hasOwnProperty.call(data, "rfqId") &&
+    typeof rfqId === "string" &&
+    rfqId.trim() !== ""
+      ? { rfq: { connect: { id: rfqId } } }
+      : {}),
+    ...(Object.prototype.hasOwnProperty.call(data, "CDQuataionID") &&
+    typeof CDQuataionID === "string" &&
+    CDQuataionID.trim() !== ""
+      ? { awardedQuota: { connect: { id: CDQuataionID } } }
+      : {}),
+    ...(Object.prototype.hasOwnProperty.call(data, "vendorquotatioID") &&
+    typeof vendorquotatioID === "string" &&
+    vendorquotatioID.trim() !== ""
+      ? { vendorAwardedQuota: { connect: { id: vendorquotatioID } } }
+      : {}),
+    ...(Object.prototype.hasOwnProperty.call(data, "vendorId") &&
+    typeof vendorId === "string" &&
+    vendorId.trim() !== ""
+      ? { vendor: { connect: { id: vendorId } } }
+      : {}),
+  };
+
   return tx.project.update({
     where: { id },
     data: {
       ...projectPayload,
+      ...relationUpdates,
       ...(hasClientManagerUpdate
         ? {
             clientProjectManagers: {
@@ -118,9 +194,13 @@ import { generateProjectSerial } from "../../../utils/serial.util";
             },
           }
         : {}),
-        pocOfConnectionDesigner: data.pocOfConnectionDesigner ? {
-          set: data.pocOfConnectionDesigner.map((id) => ({ id })),
-        } : undefined,
+        ...(hasPocUpdate
+          ? {
+              pocOfConnectionDesigner: {
+                set: (pocIds ?? []).map((id) => ({ id })),
+              },
+            }
+          : {}),
     },
     include: {
       stageHistory: true,

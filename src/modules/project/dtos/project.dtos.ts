@@ -1,6 +1,30 @@
 import z from "zod";
 import { Status, Stage, Tools, Prisma } from "@prisma/client";
 
+const UUID_LIKE_REGEX =
+  /^(?:[0-9a-fA-F]{32}|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$/;
+
+const isUuidLike = (val: string) => UUID_LIKE_REGEX.test(val);
+
+const trimString = (val: unknown) =>
+  typeof val === "string" ? val.trim() : val;
+
+const emptyStringToUndefined = (val: unknown) => {
+  if (typeof val === "string" && val.trim() === "") return undefined;
+  return val;
+};
+
+const zUuidLikeRequired = z
+  .preprocess(trimString, z.string().min(1))
+  .refine(isUuidLike, "Invalid UUID");
+
+const zUuidLikeOptional = z.preprocess(
+  (val) => {
+    return emptyStringToUndefined(trimString(val));
+  },
+  z.string().refine(isUuidLike, "Invalid UUID").optional()
+);
+
 // Converts "true"/"false" or boolean → boolean
 const zBooleanString = z
   .union([z.boolean(), z.string()])
@@ -25,16 +49,17 @@ const zNumberString = z
   .refine((v) => !isNaN(v), "Invalid number");
 
 const zStringArray = z
-  .union([z.array(z.string()), z.string()])
+  .union([z.array(z.string()), z.string(), z.literal(""), z.null()])
   .transform((val) => {
-    if (Array.isArray(val)) return val;
+    if (val === null || val === "") return undefined;
+    if (Array.isArray(val)) return val.map((v) => v?.trim?.() ?? v).filter(Boolean);
     if (typeof val === "string" && val.includes(",")) {
       return val
         .split(",")
         .map((v) => v.trim())
         .filter(Boolean);
     }
-    return [val];
+    return [val.trim()].filter(Boolean);
   });
 
 // ------------------------
@@ -44,21 +69,24 @@ export const CreateProjectSchema = z.object({
   projectNumber: z.string(),
   name: z.string(),
   description: z.string(),
-  fabricatorID: z.string(),
-  departmentID: z.string(),
-  teamID: z.string().optional(),
-  managerID: z.string(),
-  rfqId: z.string().optional(),
+  fabricatorID: zUuidLikeRequired,
+  departmentID: zUuidLikeRequired,
+  teamID: zUuidLikeOptional,
+  managerID: zUuidLikeRequired,
+  rfqId: zUuidLikeOptional,
   clientProjectManagers: zStringArray.optional(),
   pocOfConnectionDesigner: zStringArray.optional(),
   
-  clientProjectManager: z.string().optional(),
+  clientProjectManager: z.preprocess(
+    emptyStringToUndefined,
+    z.string().optional()
+  ),
   status: z.enum(Status),
   stage: z.enum(Stage),
   tools: z.enum(Tools),
 
-  CDQuataionID: z.string().optional(),
-  connectionDesignerID: z.string().optional(),
+  CDQuataionID: zUuidLikeOptional,
+  connectionDesignerID: zUuidLikeOptional,
 
   files: z
     .union([z.array(z.any()), z.literal(null)])
