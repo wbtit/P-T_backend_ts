@@ -422,7 +422,7 @@ model Fabricator {
   files              Json?           @default("[]")
   isDeleted          Boolean         @default(false) @map("is_bin")
   currencyType       String          @default("")
-  accountId          String?         @unique @db.Uuid
+  accountId          String?         @db.Uuid
   fabStage           FabricatirStage @default(RFQ)
 
   // Relations      
@@ -1832,8 +1832,8 @@ model AccountInfo {
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 
-  // 🔗 Relation
-  fabricator Fabricator? @relation("bankAccount")
+  // Relation
+  fabricator Fabricator[] @relation("bankAccount")
 }
 
 model ManagerEstimationScore {
