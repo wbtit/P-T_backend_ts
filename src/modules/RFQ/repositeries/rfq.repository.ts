@@ -11,6 +11,20 @@ type CreateRfqPersistInput = Omit<CreateRfqInput, "recipientId"> & {
   serialNo: string;
 };
 
+const RFQ_RESPONSES_INCLUDE = {
+  where: {
+    parentResponseId: null,
+  },
+  include: {
+    user: true,
+    childResponses: {
+      include: {
+        user: true,
+      },
+    },
+  },
+} as const;
+
 export class RFQRepository {
     async create(data: CreateRfqPersistInput) {
       return this.createWithTx(prisma, data);
@@ -36,7 +50,7 @@ export class RFQRepository {
           multipleRecipients: { select: { id: true, firstName: true, lastName: true, username: true, designation: true, email: true } },
           project: { select: { name: true } },
           salesPerson: true,
-          responses: true
+          responses: RFQ_RESPONSES_INCLUDE
         }
       });
     }
@@ -67,7 +81,7 @@ export class RFQRepository {
                 recipient: true,
                 multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
                 salesPerson: true,
-                responses:true,
+                responses: RFQ_RESPONSES_INCLUDE,
                 connectionDesignerRFQ:true,
                 connectionEngineers:true,
             }
@@ -81,7 +95,7 @@ export class RFQRepository {
                 recipient: true,
                 multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
                 salesPerson: true,
-                responses:true,
+                responses: RFQ_RESPONSES_INCLUDE,
                 fabricator:true,
                 project: {select:{name:true}},
             }
@@ -114,7 +128,7 @@ export class RFQRepository {
                 recipient: true,
                 multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
                 salesPerson: true,
-                responses:true,
+                responses: RFQ_RESPONSES_INCLUDE,
                 fabricator:true,
                 project: {select:{name:true}},
                 connectionEngineers:{select:{firstName:true,lastName:true,id:true}},
@@ -151,7 +165,7 @@ export class RFQRepository {
                 recipient: true,
                 multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
                 salesPerson: true,
-                responses:true,
+                responses: RFQ_RESPONSES_INCLUDE,
                 fabricator:true,
                 project: {select:{name:true}},
                 connectionEngineers:{select:{firstName:true,lastName:true,id:true}},
@@ -173,7 +187,7 @@ export class RFQRepository {
                 recipient: true,
                 multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
                 salesPerson: true,
-                responses:true,
+                responses: RFQ_RESPONSES_INCLUDE,
                 fabricator:true,
                 project: {select:{name:true}},
                 connectionEngineers:{select:{firstName:true,lastName:true,id:true}},
@@ -216,7 +230,7 @@ export class RFQRepository {
                 recipient: true,
                 multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
                 salesPerson: true,
-                responses:true,
+                responses: RFQ_RESPONSES_INCLUDE,
                 fabricator:true,
                 project: {select:{name:true}},
                 connectionEngineers:{select:{firstName:true,lastName:true,id:true}},
@@ -260,7 +274,7 @@ export class RFQRepository {
                 recipient: true,
                 multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
                 salesPerson: true,
-                responses:true,
+                responses: RFQ_RESPONSES_INCLUDE,
                 project: {select:{name:true}},
                 connectionDesignerRFQ:true,
                 connectionEngineers:true,
@@ -279,7 +293,7 @@ export class RFQRepository {
                 recipient: true,
                 multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
                 salesPerson: true,
-                responses:true,
+                responses: RFQ_RESPONSES_INCLUDE,
                 fabricator:true,
                 project: {select:{name:true}},
             }
@@ -300,7 +314,7 @@ export class RFQRepository {
                 recipient: true,
                 multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
                 salesPerson: true,
-                responses:true,
+                responses: RFQ_RESPONSES_INCLUDE,
                 fabricator:true,
                 project: {select:{name:true}},
             }
@@ -317,7 +331,7 @@ export class RFQRepository {
                 recipient: true,
                 multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
                 salesPerson: true,
-                responses: true,
+                responses: RFQ_RESPONSES_INCLUDE,
                 fabricator: true,
                 project: { select: { name: true } },
                 connectionEngineers: { select: { firstName: true, lastName: true, id: true } },
@@ -345,7 +359,7 @@ export class RFQRepository {
                 recipient: true,
                 multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
                 salesPerson: true,
-                responses:true,
+                responses: RFQ_RESPONSES_INCLUDE,
                 project: {select:{name:true}},
             }
         })
@@ -361,7 +375,7 @@ export class RFQRepository {
             recipient: true,
                 multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
             salesPerson: true,
-            responses:true,
+            responses: RFQ_RESPONSES_INCLUDE,
             fabricator:true,
             project: {select:{name:true}},
         }
@@ -377,7 +391,7 @@ getbyProjectNameAndLocation(projectName:string,location:string){
             recipient: true,
                 multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
             salesPerson: true,
-            responses:true,
+            responses: RFQ_RESPONSES_INCLUDE,
             fabricator:true,
             project: {select:{name:true}},
         }
@@ -404,7 +418,7 @@ async getRFQOfConnectionEngineer(userId:string){
             recipient: true,
                 multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
             salesPerson: true,
-            responses:true,
+            responses: RFQ_RESPONSES_INCLUDE,
             fabricator:true,
             project: {select:{name:true}},
         }
@@ -426,7 +440,7 @@ async getRFQOfConnectionEngineer(userId:string){
                 recipient: true,
                 multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
                 salesPerson: true,
-                responses: true,
+                responses: RFQ_RESPONSES_INCLUDE,
                 fabricator: true,
                 project: { select: { name: true } },
             },
@@ -444,7 +458,7 @@ async getRFQOfConnectionEngineer(userId:string){
                 recipient: true,
                 multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
                 salesPerson: true,
-                responses: true,
+                responses: RFQ_RESPONSES_INCLUDE,
                 fabricator: true,
                 project: { select: { name: true } },
             },
