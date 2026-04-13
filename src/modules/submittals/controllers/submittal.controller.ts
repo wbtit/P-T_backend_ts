@@ -311,7 +311,7 @@ export class SubmittalController {
       existingSubmittal.project_id,
       user
     );
-    const { description } = req.body;
+    const { description, multipleRecipients } = req.body;
     console.log(req.body);
 
     if (!description) {
@@ -328,6 +328,7 @@ export class SubmittalController {
       {
         description,
         files: uploadedFiles,
+        multipleRecipients,
       },
       user.id
     );

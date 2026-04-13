@@ -8,6 +8,7 @@ import authMiddleware from "../../middleware/authMiddleware";
 import {
   createSubmittalsDto,
   createSubmittalsResponseDto,
+  createSubmittalVersionDto,
 } from "./dtos";
 import {
   submittalUploads,
@@ -42,8 +43,9 @@ router.post(
   submittalUploads.array("files"),
   validate({
     params: z.object({ id: z.string() }),
-    body: z.object({
-      description: z.string().min(1),
+    body: createSubmittalVersionDto.pick({
+      description: true,
+      multipleRecipients: true,
     }),
   }),
   submittalController.handleCreateNewVersion.bind(submittalController)

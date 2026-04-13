@@ -60,6 +60,7 @@ export class SubmittalVersionRepository {
     data: {
       description: string;
       files?: Prisma.InputJsonValue;
+      multipleRecipients?: string[];
     },
     userId: string
   ) {
@@ -108,6 +109,13 @@ export class SubmittalVersionRepository {
         data: {
           currentVersionId: newVersion.id,
           submittalVersion: nextVersionNumber,
+          multipleRecipients:
+            data.multipleRecipients !== undefined
+              ? {
+                  set: [],
+                  connect: data.multipleRecipients.map((id) => ({ id })),
+                }
+              : undefined,
         },
       });
 

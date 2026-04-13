@@ -12,6 +12,20 @@ const zTrimmedNativeEnum = <T extends Record<string, string>>(values: T) =>
     z.nativeEnum(values)
   );
 
+const zStringArrayFromFormData = z.preprocess((val) => {
+  if (val === undefined || val === null || val === "") return undefined;
+  if (Array.isArray(val)) return val;
+  if (typeof val === "string") {
+    try {
+      const parsed = JSON.parse(val);
+      if (Array.isArray(parsed)) return parsed;
+    } catch {
+      return [val];
+    }
+  }
+  return val;
+}, z.array(z.string().uuid()).optional());
+
 // ---------- SUBMITTALS (PARENT / IDENTITY) ----------
 export const createSubmittalsDto = z.object({
   fabricator_id: z.string().uuid(),
@@ -44,6 +58,7 @@ export const createSubmittalVersionDto = z.object({
   submittalId: z.string().uuid(),
 
   description: z.string(),
+  multipleRecipients: zStringArrayFromFormData,
 
   files: z
     .union([

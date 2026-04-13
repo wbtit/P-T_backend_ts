@@ -53,7 +53,7 @@ export class SubmittalService {
   // ----------------------------------
   async createNewVersion(
     submittalId: string,
-    data: { description: string; files?: any },
+    data: { description: string; files?: any; multipleRecipients?: string[] },
     userId: string
   ) {
     const existing = await submittalRepo.findById(submittalId);
