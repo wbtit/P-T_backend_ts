@@ -118,10 +118,14 @@ export class RFQRepository {
             where: {
                             fabricator:{id:fabricator?.id},
                             project: { status: { in: ["ACTIVE", "ONHOLD"] } },
-                            responses:{some:{
-                                childResponses:{
-                                    none:{}}
-                            }}
+                            responses: {
+                                some: {
+                                    parentResponseId: null,
+                                    childResponses: {
+                                        none: {}
+                                    }
+                                }
+                            }
                         },
                     include:{
                 sender: true,
@@ -155,10 +159,14 @@ export class RFQRepository {
                     }
                 },
                 project: { status: { in: ["ACTIVE", "ONHOLD"] } },
-                responses:{some:{
-                    childResponses:{
-                        none:{}}
-                }}
+                responses: {
+                    some: {
+                        parentResponseId: null,
+                        childResponses: {
+                            none: {}
+                        }
+                    }
+                }
             },
             include:{
                 sender: true,

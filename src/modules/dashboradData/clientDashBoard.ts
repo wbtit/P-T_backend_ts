@@ -42,10 +42,14 @@ export const clientDashBoard = async (req: AuthenticateRequest, res: Response) =
                                 }
                             },
                              project: { status: { in: ["ACTIVE", "ONHOLD"] } },
-                            responses:{some:{
-                                    childResponses:{
-                                    none:{}}
-                            }}
+                            responses: {
+                                some: {
+                                    parentResponseId: null,
+                                    childResponses: {
+                                        none: {}
+                                    }
+                                }
+                            }
                         },
                     });
     const pendingSubmittals = await prisma.submittals.count({

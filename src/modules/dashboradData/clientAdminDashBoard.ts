@@ -68,7 +68,12 @@ export const clientAdminDashBoard = async (req: AuthenticateRequest, res: Respon
         where: {
           project: { status: { in: ["ACTIVE", "ONHOLD"] } },
           fabricatorId: { in: fabricatorIds },
-          responses: { some: { childResponses: { none: {} } } },
+          responses: {
+            some: {
+              parentResponseId: null,
+              childResponses: { none: {} },
+            },
+          },
         },
       }),
 

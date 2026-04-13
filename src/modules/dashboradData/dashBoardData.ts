@@ -109,6 +109,7 @@ export const DashBoradData = async (
      where:{
         responses:{
           some:{
+            parentResponseId: null,
             childResponses:{every:{status:"RECEIVED"}}
           }
       }
