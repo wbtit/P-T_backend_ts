@@ -116,15 +116,12 @@ export const invoiceOpenApiDoc: ModuleOpenApiDoc = {
         }
       },
     },
-    "/invoice/client/{clientId}": {
+    "/invoice/client": {
       get: {
         tags: ["Invoice"],
-        summary: "GET /invoice/client/{clientId}",
-        operationId: "get_invoice_invoice_client_clientId",
+        summary: "GET /invoice/client",
+        operationId: "get_invoice_invoice_client",
         security: [{ bearerAuth: [] }],
-        parameters: [
-          { in: "path", name: "clientId", required: true, schema: { type: "string" } },
-        ],
         responses: {
           "200": { description: "Success" },
           "400": { description: "Bad Request" },

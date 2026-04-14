@@ -119,16 +119,19 @@ export class InvoiceController {
   }
 
   // ---------------------------------------------------------------------------
-  // Get Invoices by Client ID
+  // Get Pending Invoices for Authenticated Client
   // ---------------------------------------------------------------------------
-  async handleGetInvoicesByClientId(req: Request, res: Response) {
+  async handleGetInvoicesByClientId(req: AuthenticateRequest, res: Response) {
     try {
-      const { clientId } = req.params;
+      const clientId = req.user?.id;
+      if (!clientId) {
+        throw new AppError("User ID is missing", 400);
+      }
 
-      const invoices = await invoiceService.getInvoicesByClientId(clientId);
+      const invoices = await invoiceService.pendingInvoicesByClient(clientId);
 
       return res.status(200).json({
-        message: "Invoices fetched successfully for client",
+        message: "Pending invoices fetched successfully for client",
         success: true,
         data: invoices,
       });

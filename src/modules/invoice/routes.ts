@@ -25,13 +25,8 @@ router.post(
 
 router.get("/AllInvoices", authMiddleware, asyncHandler(invoiceCtrlr.handleGetAllInvoices.bind(invoiceCtrlr)));
 router.get(
-  "/client/:clientId",
+  "/client",
   authMiddleware,
-  validate({
-    params: z.object({
-      clientId: z.string(),
-    }),
-  }),
   asyncHandler(invoiceCtrlr.handleGetInvoicesByClientId.bind(invoiceCtrlr))
 );
 
