@@ -32,7 +32,7 @@ export class Invoicerepository{
               address:data.address,
               stateCode:data.stateCode,
               GSTIN:data.GSTIN,
-              invoiceNumber: serialNo,
+              invoiceNumber: data.invoiceNumber,
               placeOfSupply:data.placeOfSupply,
               jobName:data.jobName,
               currencyType:data.currencyType,
