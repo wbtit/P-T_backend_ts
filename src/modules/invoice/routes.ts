@@ -24,6 +24,9 @@ router.post(
 );
 
 router.get("/AllInvoices", authMiddleware, asyncHandler(invoiceCtrlr.handleGetAllInvoices.bind(invoiceCtrlr)));
+
+
+
 router.get(
   "/client",
   authMiddleware,
