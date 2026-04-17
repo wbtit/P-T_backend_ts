@@ -131,6 +131,10 @@ export class Invoicerepository{
             },
             include:{
                 fabricator:{select:{
+                    project:{select:{
+                        projectCode:true,
+                        projectNumber:true
+                    }},
                     accountId:true,
                     bankAccount:true,
                 }},
