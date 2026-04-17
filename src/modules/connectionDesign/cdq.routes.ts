@@ -3,6 +3,7 @@ import { ConnectionDesignerQuotaController } from "./controllers";
 import validate from "../../middleware/validate";
 import { asyncHandler } from "../../config/utils/asyncHandler";
 import authMiddleware from "../../middleware/authMiddleware";
+import { scanUploadMiddleware } from "../../middleware/scanUpload.middleware";
 import { connectionDesignerFilesUploads } from "../../utils/multerUploader.util";
 import z from "zod";
 
@@ -23,6 +24,7 @@ router.post(
   "/",
   authMiddleware,
   connectionDesignerFilesUploads.array("files"),
+  scanUploadMiddleware,
   validate({ body: ConnectionDesignerQuotaSchema }),
   asyncHandler(quotaCtrl.handleCreateQuota.bind(quotaCtrl))
 );
@@ -107,6 +109,7 @@ router.put(
   "/update/:id",
   authMiddleware,
   connectionDesignerFilesUploads.array("files"),
+  scanUploadMiddleware,
   validate({
     params: z.object({ id: z.string() }),
     body: updateConnectionDesignerQuotaSchema,

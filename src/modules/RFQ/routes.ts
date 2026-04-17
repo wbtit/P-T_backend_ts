@@ -2,6 +2,7 @@ import { Router } from "express";
 import { RFQController } from "./controllers";
 import validate from "../../middleware/validate";
 import authMiddleware from "../../middleware/authMiddleware";
+import { scanUploadMiddleware } from "../../middleware/scanUpload.middleware";
 import { CreateRfqSchema,UpdateRfqSchema } from "./dtos";
 
 import { RfqResponseSchema} from "./RFQresponse";
@@ -28,6 +29,7 @@ router.post(
     "/",
     authMiddleware,
     rfqCombinedUploads,
+    scanUploadMiddleware,
     validate({body: CreateRfqSchema}),
     rfqController.handleCreateRfq.bind(rfqController)
 );
@@ -60,6 +62,7 @@ router.put(
     "/update/:id",
     authMiddleware,
     rfqCombinedUploads,
+    scanUploadMiddleware,
     validate({params:z.object({id:z.string()}),body:UpdateRfqSchema}),
     rfqController.handleUpdateRfq.bind(rfqController)
 );
@@ -151,6 +154,7 @@ router.post(
     "/:rfqId/followups",
     authMiddleware,
     rfqFollowUpUploads.array("files"),
+    scanUploadMiddleware,
     validate({
         params: z.object({ rfqId: z.string() }),
         body: CreateRFQFollowUpSchema,
@@ -176,6 +180,7 @@ router.put(
     "/followups/:id",
     authMiddleware,
     rfqFollowUpUploads.array("files"),
+    scanUploadMiddleware,
     validate({
         params: z.object({ id: z.string() }),
         body: UpdateRFQFollowUpSchema,
@@ -211,6 +216,7 @@ router.post(
     "/:rfqId/responses",
     authMiddleware,
     rfqResponseUploads.array("files"),
+    scanUploadMiddleware,
     validate({params:z.object({rfqId:z.string()}),body:RfqResponseSchema}),
     rfqResponseController.handleCreate.bind(rfqResponseController)
 );

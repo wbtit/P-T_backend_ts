@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { COController } from "./controllers/co.controller";
 import authMiddleware from "../../middleware/authMiddleware";
+import { scanUploadMiddleware } from "../../middleware/scanUpload.middleware";
 import validate from "../../middleware/validate";
 import {
   CreateCoSchema,
@@ -25,6 +26,7 @@ router.post(
   "/",
   authMiddleware,
    coUploads.array("files"),
+  scanUploadMiddleware,
   validate({ body: CreateCoSchema }),
   coController.handleCreateCo.bind(coController)
 );
@@ -34,6 +36,7 @@ router.put(
   "/:id",
   authMiddleware,
   coUploads.array("files"),
+  scanUploadMiddleware,
   validate({
     params: z.object({ id: z.string() }),
     body: UpdateCoSchema,
@@ -182,6 +185,7 @@ router.post(
   "/:coId/responses",
   authMiddleware,
   coResponseUploads.array("files"),
+  scanUploadMiddleware,
   validate({
     params: z.object({ coId: z.string() }),
     body: CoResponseSchema,

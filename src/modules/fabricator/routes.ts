@@ -10,6 +10,7 @@ import {
 } from "./dtos";
 import z from "zod";
 import { fabricatorsUploads } from "../../utils/multerUploader.util";
+import { scanUploadMiddleware } from "../../middleware/scanUpload.middleware";
 import { BranchController } from "./branches";
 import { branchSchema } from "./branches";
 
@@ -21,6 +22,7 @@ router.post(
   "/",
   authMiddleware,
   fabricatorsUploads.array("files"),
+  scanUploadMiddleware,
   validate({ body: CreateFabricatorSchema }),
   asyncHandler(fabCtrl.handleCreateFabricator.bind(fabCtrl))
 );
@@ -29,6 +31,7 @@ router.put(
   "/update/:id",
   authMiddleware,
   fabricatorsUploads.array("files"),
+  scanUploadMiddleware,
   validate({ params: z.object({ id: z.string() }), body: UpdateFabricatorSchema }),
   asyncHandler(fabCtrl.handleUpdateFabricator.bind(fabCtrl))
 );

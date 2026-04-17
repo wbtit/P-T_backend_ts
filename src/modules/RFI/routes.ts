@@ -5,6 +5,7 @@ import validate from "../../middleware/validate";
 import authMiddleware from "../../middleware/authMiddleware";
 import { RFISchema,UpdateRFISchema,RFIResponseSchema,UpdateRFIResponseDto} from "./dtos";
 import { rfiUploads, rfiResponseUploads } from "../../utils/multerUploader.util";
+import { scanUploadMiddleware } from "../../middleware/scanUpload.middleware";
 import z from "zod";
 
 const router = Router();
@@ -19,6 +20,7 @@ router.post(
   "/",
   authMiddleware,
   rfiUploads.array("files"),
+  scanUploadMiddleware,
   validate({ body: RFISchema }),
   rfiController.handleCreateRfi.bind(rfiController)
 );
@@ -48,6 +50,7 @@ router.put(
     body: UpdateRFISchema,
   }),
   rfiUploads.array("files"),
+  scanUploadMiddleware,
   rfiController.handleUpdateRfi.bind(rfiController)
 );
 
@@ -140,6 +143,7 @@ router.post(
   "/:rfiId/responses",
   authMiddleware,
   rfiResponseUploads.array("files"),
+  scanUploadMiddleware,
   validate({
     params: z.object({ rfiId: z.string() }),
     body: RFIResponseSchema,

@@ -1,5 +1,6 @@
 import { Router } from "express";
 import authMiddleware from "../../middleware/authMiddleware";
+import { scanUploadMiddleware } from "../../middleware/scanUpload.middleware";
 import validate from "../../middleware/validate";
 import { asyncHandler } from "../../config/utils/asyncHandler";
 import z from "zod";
@@ -17,6 +18,7 @@ router.post(
   "/",
   authMiddleware,
   teamMeetingNotesUploads.array("files"),
+  scanUploadMiddleware,
   validate({ body: TeamMeetingNoteSchema }),
   asyncHandler(controller.create.bind(controller))
 );
@@ -25,6 +27,7 @@ router.put(
   "/:id",
   authMiddleware,
   teamMeetingNotesUploads.array("files"),
+  scanUploadMiddleware,
   validate({ params: z.object({ id: z.string() }), body: TeamMeetingNoteUpdateSchema }),
   asyncHandler(controller.update.bind(controller))
 );
@@ -81,6 +84,7 @@ router.post(
   "/:noteId/responses",
   authMiddleware,
   teamMeetingNotesResponsesUploads.array("files"),
+  scanUploadMiddleware,
   validate({ params: z.object({ noteId: z.string() }), body: TeamMeetingNoteResponseSchema }),
   asyncHandler(responseController.handleCreate.bind(responseController))
 );
@@ -103,6 +107,7 @@ router.put(
   "/responses/:id",
   authMiddleware,
   teamMeetingNotesResponsesUploads.array("files"),
+  scanUploadMiddleware,
   validate({ params: z.object({ id: z.string() }), body: TeamMeetingNoteResponseSchema.partial() }),
   asyncHandler(responseController.handleUpdate.bind(responseController))
 );

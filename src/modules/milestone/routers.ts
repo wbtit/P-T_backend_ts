@@ -1,4 +1,5 @@
 import authMiddleware from "../../middleware/authMiddleware";
+import { scanUploadMiddleware } from "../../middleware/scanUpload.middleware";
 import validate from "../../middleware/validate";
 import {
     createMileStoneSchema,
@@ -55,6 +56,7 @@ router.post(
     "/responses",
     authMiddleware,
     mileStoneResponseUploads.array("files"),
+    scanUploadMiddleware,
     validate({ body: createMileStoneResponseSchema }),
     mileStoneResCtrlr.handleCreateResponse.bind(mileStoneResCtrlr)
 )

@@ -3,6 +3,7 @@ import { Router } from "express";
 import authMiddleware from "../../middleware/authMiddleware";
 import { asyncHandler } from "../../config/utils/asyncHandler";
 import { userProfilePicUploads } from "../../utils/multerUploader.util";
+import { scanUploadMiddleware } from "../../middleware/scanUpload.middleware";
 
 const userCtrl = new UserController();
 const router = Router();
@@ -17,6 +18,7 @@ router.patch(
   "/me/profile-pic",
   authMiddleware,
   userProfilePicUploads.array("files", 1),
+  scanUploadMiddleware,
   asyncHandler(userCtrl.handleUpdateMyProfilePic.bind(userCtrl))
 );
 

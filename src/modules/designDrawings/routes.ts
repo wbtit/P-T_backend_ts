@@ -2,6 +2,7 @@ import { Router } from "express";
 import { DesignDrawingsController } from "./controller";
 import validate from "../../middleware/validate";
 import authMiddleware from "../../middleware/authMiddleware";
+import { scanUploadMiddleware } from "../../middleware/scanUpload.middleware";
 import {
   CreateDesignDrawingsSchema,
   UpdateDesignDrawingsSchema,
@@ -22,6 +23,7 @@ router.post(
   "/",
   authMiddleware,
   designUploads.array("files"),
+  scanUploadMiddleware,
   validate({ body: CreateDesignDrawingsSchema }),
   designController.handleCreateDesignDrawing.bind(designController)
 );
@@ -31,6 +33,7 @@ router.put(
   "/:id",
   authMiddleware,
   designUploads.array("files"),
+  scanUploadMiddleware,
   validate({
     params: z.object({ id: z.string() }),
     body: UpdateDesignDrawingsSchema,
@@ -106,6 +109,7 @@ router.post(
   "/:designId/responses",
   authMiddleware,
   designResponseUploads.array("files"),
+  scanUploadMiddleware,
   validate({
     params: z.object({ designId: z.string() }),
     body: CreateDesignDrawingsResponsesSchema,

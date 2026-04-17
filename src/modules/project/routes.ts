@@ -19,6 +19,7 @@ import {
   UpdateProjectAssistSchema,
 } from "./dtos/projectAssist.dtos";
  import { projectUploads,notesUploads } from "../../utils/multerUploader.util";
+ import { scanUploadMiddleware } from "../../middleware/scanUpload.middleware";
 
 
  import { PLIController, ProjectLineItemBulkSchema } from "./projectLineItems";
@@ -46,10 +47,10 @@ router.get("/job-studies/:id", authMiddleware, validate({params:z.object({id:z.s
 // PROJECTS ROUTES
 // ===========================================================
 const projectController = new ProjectController();
-router.post("/projects", authMiddleware,projectUploads.array("files"), validate({body: CreateProjectSchema}),
+router.post("/projects", authMiddleware,projectUploads.array("files"), scanUploadMiddleware, validate({body: CreateProjectSchema}),
 asyncHandler(projectController.handleCreateProject.bind(projectController)));
 
-router.put("/projects/:id", authMiddleware,projectUploads.array("files"), validate({params:z.object({id:z.string()}),body: UpdateProjectSchema}), 
+router.put("/projects/:id", authMiddleware,projectUploads.array("files"), scanUploadMiddleware, validate({params:z.object({id:z.string()}),body: UpdateProjectSchema}), 
 asyncHandler(projectController.handleUpdateProject.bind(projectController)));
 
 router.get("/projects/:id", authMiddleware, validate({params:z.object({id:z.string()})}), 
@@ -205,7 +206,7 @@ router.get(
 // ===========================================================
 const notesController = new NotesController();
 
-router.post("/projects/:projectId/notes", authMiddleware, notesUploads.array("files"), validate({ body: NoteSchema }), asyncHandler(notesController.create.bind(notesController)));
+router.post("/projects/:projectId/notes", authMiddleware, notesUploads.array("files"), scanUploadMiddleware, validate({ body: NoteSchema }), asyncHandler(notesController.create.bind(notesController)));
 router.put("/projects/:projectId/notes/:id", authMiddleware, validate({ body: NoteUpdateSchema }), asyncHandler(notesController.update.bind(notesController)));
 router.get("/projects/:projectId/notes/:id", authMiddleware, asyncHandler(notesController.findById.bind(notesController)));
 router.delete("/projects/:projectId/notes/:id", authMiddleware, asyncHandler(notesController.delete.bind(notesController)));

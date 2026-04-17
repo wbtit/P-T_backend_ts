@@ -5,6 +5,7 @@ import {
 } from "./controllers";
 import validate from "../../middleware/validate";
 import authMiddleware from "../../middleware/authMiddleware";
+import { scanUploadMiddleware } from "../../middleware/scanUpload.middleware";
 import {
   createSubmittalsDto,
   createSubmittalsResponseDto,
@@ -32,6 +33,7 @@ router.post(
   "/",
   authMiddleware,
   submittalUploads.array("files"),
+  scanUploadMiddleware,
   validate({ body: createSubmittalsDto }),
   submittalController.handleCreateSubmittal.bind(submittalController)
 );
@@ -41,6 +43,7 @@ router.post(
   "/:id/versions",
   authMiddleware,
   submittalUploads.array("files"),
+  scanUploadMiddleware,
   validate({
     params: z.object({ id: z.string() }),
     body: createSubmittalVersionDto.pick({
@@ -139,6 +142,7 @@ router.post(
   "/responses",
   authMiddleware,
   submittalResponseUploads.array("files"),
+  scanUploadMiddleware,
   validate({
     body: createSubmittalsResponseDto,
   }),

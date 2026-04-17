@@ -9,6 +9,7 @@ import {
   estimationTaskUploads,
   estimationResponseUploads,
 } from "../../utils/multerUploader.util";
+import { scanUploadMiddleware } from "../../middleware/scanUpload.middleware";
 import { EstimationSchema,UpdateEstimationDto } from "./management/dtos";
 import { EstimationTaskDTO,UpdateEstimationTask } from "./estimationTask/dtos";
 import { EstimationTaskController } from "./estimationTask/controllers/estTask.controller";
@@ -30,6 +31,7 @@ router.post(
   "/estimations",
   authMiddleware,
   estimationUploads.array("files"),
+  scanUploadMiddleware,
   validate({ body: EstimationSchema }),
   asyncHandler(estController.handleCreateEstimation.bind(estController))
 );
@@ -61,6 +63,7 @@ router.put(
   "/estimations/:id",
   authMiddleware,
   estimationUploads.array("files"),
+  scanUploadMiddleware,
   validate({
     params: z.object({ id: z.string() }),
     body: UpdateEstimationDto,
@@ -136,6 +139,7 @@ router.post(
   "/estimation-tasks",
   authMiddleware,
   estimationTaskUploads.array("files"),
+  scanUploadMiddleware,
   validate({ body: EstimationTaskDTO }),
   asyncHandler(taskController.handleCreateEstimationTask.bind(taskController))
 );
@@ -207,6 +211,7 @@ router.post(
   "/estimations/:estimationId/responses",
   authMiddleware,
   estimationResponseUploads.array("files"),
+  scanUploadMiddleware,
   validate({
     params: z.object({ estimationId: z.string() }),
     body: EstimationResponseSchema,
