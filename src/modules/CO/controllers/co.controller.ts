@@ -76,10 +76,8 @@ export class COController {
       "changeorder"
     );
 
-    const coNum = req.body.changeOrderNumber || ""; // optional, could be auto-generated
     const co = await coService.createCo(
       { ...req.body, files: uploadedFiles },
-      coNum,
       id
     );
     const coAny = co as any;
@@ -255,10 +253,13 @@ async handlePendingCOsForClient(req: AuthenticateRequest, res: Response) {
 
   async handleUpdateCoTableRow(req: AuthenticateRequest, res: Response) {
     if (!req.user) throw new AppError("User not found", 404);
-    const { id } = req.user;
-    const { rowId } = req.params;
+    const { id: userId } = req.user;
+    const { id } = req.params;
 
-    const updatedRow = await coService.updateCoTableRow(req.body, rowId, id);
+    const updatedRow = Array.isArray(req.body)
+      ? await coService.replaceCoTable(req.body, id, userId)
+      : await coService.updateCoTableRow(req.body, id, userId);
+
     res.status(200).json({
       status: "success",
       data: updatedRow,

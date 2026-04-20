@@ -138,7 +138,7 @@ router.put(
   authMiddleware,
   validate({
     params: z.object({ id: z.string() }),
-    body: CreateTableSchema,
+    body: z.union([CreateTableSchema, CreateCOTableSchema]),
   }),
   coController.handleUpdateCoTableRow.bind(coController)
 );

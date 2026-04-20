@@ -15,15 +15,15 @@ const corepo = new CORepository();
 
 export class COService {
   // Create a new Change Order
-  async createCo(data: CreateCoInput, coNum: string, userId: string) {
+  async createCo(data: CreateCoInput, userId: string) {
     const cuurUser= await prisma.user.findUnique({
       where:{id:userId}
     })
     let co;
     if(cuurUser?.role==="ADMIN" || cuurUser?.role==="PROJECT_MANAGER"){
-        co = await corepo.create(data, coNum, userId,true);
+        co = await corepo.create(data, userId,true);
     }else{
-        co = await corepo.create(data, coNum, userId,false);
+        co = await corepo.create(data, userId,false);
     }
     return co;
   }
@@ -88,6 +88,10 @@ export class COService {
     const updatedRow = await corepo.updateCoTableRow(data, id, userId);
     if (!updatedRow) throw new AppError("CO Table row not found", 404);
     return updatedRow;
+  }
+
+  async replaceCoTable(data: CreateCOTableInput, coId: string, userId: string) {
+    return await corepo.replaceCoTableByCoId(data, coId, userId);
   }
 
   // Get all CO table rows for a CO ID

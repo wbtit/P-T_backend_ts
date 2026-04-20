@@ -4,7 +4,7 @@ import { generateProjectScopedSerial, SERIAL_PREFIX } from "../../../utils/seria
 import { AppError } from "../../../config/utils/AppError";
 
 export class CORepository {
-    async create(data:CreateCoInput,coNum:string,userId:string,approval:boolean){
+    async create(data:CreateCoInput,userId:string,approval:boolean){
         return await prisma.$transaction(async (tx) => {
           const project = await tx.project.findUnique({
             where: { id: data.project },
@@ -23,7 +23,7 @@ export class CORepository {
           return tx.changeOrder.create({
             data: {
               serialNo,
-              changeOrderNumber: serialNo,
+              changeOrderNumber: data.changeOrderNumber ?? "",
               description:data.description,
               project:data.project,
               status: "NOT_REPLIED",
@@ -233,6 +233,34 @@ async updateCoTableRow(data:CotableRowInput,id:string,userId:string){
           costUpdatedAt: new Date()
         })
       }
+    });
+}
+async replaceCoTableByCoId(data: CreateCOTableInput, coId: string, userId: string) {
+    await prisma.changeOrdertable.deleteMany({
+      where: { CoId: coId }
+    });
+
+    if (!data.length) {
+      return [];
+    }
+
+    await prisma.changeOrdertable.createMany({
+      data: data.map((co) => ({
+        description: co.description,
+        referenceDoc: co.referenceDoc,
+        elements: co.elements,
+        QtyNo: co.QtyNo,
+        remarks: co.remarks ?? "",
+        hours: co.hours,
+        cost: co.cost,
+        costUpdatedBy: userId,
+        costUpdatedAt: new Date(),
+        CoId: coId,
+      })),
+    });
+
+    return await prisma.changeOrdertable.findMany({
+      where: { CoId: coId }
     });
 }
 async getCoTableByCoId(CoId:string,userId:string){
