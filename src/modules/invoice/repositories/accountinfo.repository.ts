@@ -3,14 +3,46 @@ import { createAccountInfoSchemaData,updateAccountInfoSchemaData } from "../dtos
 
 export class AccountRepository{
     async create(data:createAccountInfoSchemaData){
+        const normalizedData = {
+          ...data,
+          abaRoutingNumber: data.abaRoutingNumber ?? undefined,
+          accountNumber: data.accountNumber ?? undefined,
+          accountName: data.accountName ?? undefined,
+          paymentMethod: data.paymentMethod ?? undefined,
+          institutionNumber: data.institutionNumber ?? undefined,
+          transitNumber: data.transitNumber ?? undefined,
+          bankName: data.bankName ?? undefined,
+          accountType: data.accountType ?? undefined,
+          beneficiaryInfo: data.beneficiaryInfo ?? undefined,
+          beneficiaryAddress: data.beneficiaryAddress ?? undefined,
+          bankInfo: data.bankInfo ?? undefined,
+          bankAddress: data.bankAddress ?? undefined,
+        };
+
         return await prisma.accountInfo.create({
-      data: data as any,
+      data: normalizedData as any,
     });
     }
     async update(data:updateAccountInfoSchemaData,id:string){
+        const normalizedData = {
+          ...data,
+          abaRoutingNumber: data.abaRoutingNumber ?? undefined,
+          accountNumber: data.accountNumber ?? undefined,
+          accountName: data.accountName ?? undefined,
+          paymentMethod: data.paymentMethod ?? undefined,
+          institutionNumber: data.institutionNumber ?? undefined,
+          transitNumber: data.transitNumber ?? undefined,
+          bankName: data.bankName ?? undefined,
+          accountType: data.accountType ?? undefined,
+          beneficiaryInfo: data.beneficiaryInfo ?? undefined,
+          beneficiaryAddress: data.beneficiaryAddress ?? undefined,
+          bankInfo: data.bankInfo ?? undefined,
+          bankAddress: data.bankAddress ?? undefined,
+        };
+
         return await prisma.accountInfo.update({
       where: { id },
-      data,
+      data: normalizedData,
     });
     }
     async delete(id:string){

@@ -26,33 +26,41 @@ export class Invoicerepository{
               serialNo,
               projectId:data.projectId,
               fabricatorId:data.fabricatorId,
+              rfqId:data.rfqId,
+              changeOrderId:data.changeOrderId,
+              status:data.status,
               customerName:data.customerName,
-              contactName:data.contactName,
+              contactName:data.contactName ?? undefined,
               clientId:data.clientId,
-              address:data.address,
-              stateCode:data.stateCode,
-              GSTIN:data.GSTIN,
+              type:data.type ?? undefined,
+              address:data.address ?? undefined,
+              stateCode:data.stateCode ?? undefined,
+              GSTIN:data.GSTIN ?? undefined,
               invoiceNumber: data.invoiceNumber,
-              placeOfSupply:data.placeOfSupply,
+              invoiceDate:data.invoiceDate ? new Date(data.invoiceDate) : undefined,
+              dateOfSupply:data.dateOfSupply ? new Date(data.dateOfSupply) : undefined,
+              placeOfSupply:data.placeOfSupply ?? undefined,
               jobName:data.jobName,
+              signature:data.signature,
               currencyType:data.currencyType,
               totalInvoiceValue:data.totalInvoiceValue,
-              totalInvoiceValueInWords:data.totalInvoiceValueInWords,
+              totalInvoiceValueInWords:data.totalInvoiceValueInWords ?? undefined,
+              paymentStatus:data.paymentStatus,
               createdBy:userId,
-              pointOfContact:{connect:{id:data.clientId}},
+              ...(data.clientId ? { pointOfContact:{connect:{id:data.clientId}} } : {}),
               invoiceItems: {
                 create: data.invoiceItems || [],
               },
               
             },
-            include: { invoiceItems: true },
+            include: { invoiceItems: true, rfq: true, changeOrder: true },
           });
         });
     }
 
     async getAll(){
         return await prisma.invoice.findMany({
-      include: { invoiceItems: true ,pointOfContact:true},
+      include: { invoiceItems: true ,pointOfContact:true, rfq: true, changeOrder: true},
     });
     }
     async getAllByClientId(clientId:string){
@@ -60,13 +68,13 @@ export class Invoicerepository{
       where:{
         clientId:clientId
       },
-       include: { invoiceItems: true,pointOfContact:true},
+       include: { invoiceItems: true,pointOfContact:true, rfq: true, changeOrder: true},
      })
     }
     async getById(id:string){
         return await prisma.invoice.findUnique({
       where: { id },
-      include: { invoiceItems: true, pointOfContact:true,
+      include: { invoiceItems: true, pointOfContact:true, rfq: true, changeOrder: true,
         fabricator:{select:{
           accountId:true,
           bankAccount:true,
@@ -85,8 +93,17 @@ export class Invoicerepository{
     async update(data:updateInvoiceData,id:string){
         const { invoiceItems, accountInfo, ...restOfData } = data;
         
-        const updateData: Prisma.InvoiceUpdateInput = {
+        const updateData: Prisma.InvoiceUncheckedUpdateInput = {
             ...restOfData,
+            type: restOfData.type ?? undefined,
+            contactName: restOfData.contactName ?? undefined,
+            address: restOfData.address ?? undefined,
+            stateCode: restOfData.stateCode ?? undefined,
+            GSTIN: restOfData.GSTIN ?? undefined,
+            placeOfSupply: restOfData.placeOfSupply ?? undefined,
+            totalInvoiceValueInWords: restOfData.totalInvoiceValueInWords ?? undefined,
+            invoiceDate: restOfData.invoiceDate ? new Date(restOfData.invoiceDate) : restOfData.invoiceDate,
+            dateOfSupply: restOfData.dateOfSupply ? new Date(restOfData.dateOfSupply) : restOfData.dateOfSupply,
         };
         
         if (invoiceItems) {
@@ -100,7 +117,7 @@ export class Invoicerepository{
         return await prisma.invoice.update({
       where: { id:id },
       data: updateData,
-      include: { invoiceItems: true },
+      include: { invoiceItems: true, rfq: true, changeOrder: true },
     });
     }
     async deleteById(id:string){
@@ -117,7 +134,9 @@ export class Invoicerepository{
             },
             include:{
                 pointOfContact:true,
-                invoiceItems:true
+                invoiceItems:true,
+                rfq: true,
+                changeOrder: true
             }
         })
         return invoices;
@@ -138,7 +157,9 @@ export class Invoicerepository{
                     accountId:true,
                     bankAccount:true,
                 }},
-                invoiceItems:true
+                invoiceItems:true,
+                rfq: true,
+                changeOrder: true
             }
         })
         return invoices;

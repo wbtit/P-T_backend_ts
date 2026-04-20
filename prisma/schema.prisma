@@ -655,6 +655,7 @@ model RFQ {
   followUps             RFQFollowUp[]
   project               Project?                  @relation("ProjectRFQ")
   estimations           Estimation[]
+  invoices              Invoice[]                 @relation("rfqInvoices")
 
   @@index([projectName])
   @@index([projectNumber])
@@ -1583,6 +1584,7 @@ model ChangeOrder {
   multipleRecipients User[]             @relation("ChangeOrderMultipleRecipients")
   senders            User               @relation("ChangeOrderSender", fields: [sender], references: [id], onDelete: Cascade)
   CoRefersTo         ChangeOrdertable[] @relation("CoRefersTo")
+  invoices           Invoice[]          @relation("changeOrderInvoices")
 
   @@index([recipients])
   @@index([sender])
@@ -1771,7 +1773,10 @@ model Invoice {
   serialNo                 String?       @unique
   projectId                String        @db.Uuid
   fabricatorId             String        @db.Uuid
+  rfqId                    String?       @db.Uuid
+  changeOrderId            String?       @db.Uuid
   clientId                 String?       @default("00000000-0000-0000-0000-000000000000") @db.Uuid
+  type                     String        @default("")
   customerName             String        @default("")
   contactName              String        @default("")
   address                  String        @default("")
@@ -1795,9 +1800,14 @@ model Invoice {
   // 🔗 Relations
   project        Project       @relation("projectInvoice", fields: [projectId], references: [id])
   fabricator     Fabricator    @relation("fabricatorInvoice", fields: [fabricatorId], references: [id])
+  rfq            RFQ?          @relation("rfqInvoices", fields: [rfqId], references: [id], onDelete: SetNull)
+  changeOrder    ChangeOrder?  @relation("changeOrderInvoices", fields: [changeOrderId], references: [id], onDelete: SetNull)
   pointOfContact User[]        @relation("invoicePointOfContact")
   user           User?         @relation("invoiceCreatedBy", fields: [createdBy], references: [id])
   invoiceItems   InvoiceItem[]
+
+  @@index([rfqId])
+  @@index([changeOrderId])
 }
 
 model InvoiceItem {

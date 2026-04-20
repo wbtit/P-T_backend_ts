@@ -75,6 +75,7 @@ export class FabricatorRepository {
         fabName: data.fabName,
         website: data.website ?? null,
         drive: data.drive ?? null,
+        SAC: data.SAC?? "",
         fabricatPercentage: data.fabricatPercentage,
         approvalPercentage: data.approvalPercentage,
         paymenTDueDate: data.paymenTDueDate,
