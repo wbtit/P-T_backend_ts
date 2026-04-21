@@ -9,6 +9,7 @@ import {
   CreateCOTableSchema,
   CreateTableSchema,
   CoResponseSchema,
+  CreateChangeOrderVersionSchema,
 } from "./dtos";
 import z from "zod";
 import { coResponseUploads, coUploads } from "../../utils/multerUploader.util"; // similar to rfqUploads
@@ -171,6 +172,16 @@ router.get(
   authMiddleware,
   validate({
     params: z.object({ coId: z.string(), fileId: z.string() }),
+  }),
+  coController.handleViewFile.bind(coController)
+);
+
+// View version file (stream)
+router.get(
+  "/:coId/versions/:versionId/:fileId",
+  authMiddleware,
+  validate({
+    params: z.object({ coId: z.string(), versionId: z.string(), fileId: z.string() }),
   }),
   coController.handleViewFile.bind(coController)
 );

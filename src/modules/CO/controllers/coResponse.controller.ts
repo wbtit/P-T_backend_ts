@@ -35,6 +35,7 @@ export class CoResponseController {
     if (!req.user) throw new AppError("User not found", 404);
     const { id: userId } = req.user;
     const { coId } = req.params;
+    const { changeOrderVersionId } = req.body;
 
     // map uploaded files (if any)
     const uploadedFiles = mapUploadedFiles(
@@ -48,7 +49,8 @@ export class CoResponseController {
         files: uploadedFiles,
       },
       coId,
-      userId
+      userId,
+      changeOrderVersionId
     );
     const responderId = userId;
     const parentRespId = req.body?.parentResponseId;

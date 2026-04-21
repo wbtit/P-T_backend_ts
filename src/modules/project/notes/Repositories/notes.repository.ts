@@ -58,7 +58,9 @@ export class NotesRepository{
         });
     }
 
-    async findAll() {
-        return await prisma.notes.findMany();
+    async findAll(projectId: string) {
+        return await prisma.notes.findMany({
+            where: { projectId }
+        });
     }
 }

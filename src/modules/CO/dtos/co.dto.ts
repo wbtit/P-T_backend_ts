@@ -36,6 +36,17 @@ export const UpdateCoSchema = CreateCoSchema.partial();
 export type CreateCoInput = z.infer<typeof CreateCoSchema>;
 export type UpdateCoInput = z.infer<typeof UpdateCoSchema>;
 
+export const CreateChangeOrderVersionSchema = z.object({
+  description: z.string(),
+  remarks: z.string().optional(),
+  files: z
+    .union([z.array(z.any()), z.literal(null)])
+    .transform((val) => (val === null ? Prisma.JsonNull : val))
+    .optional(),
+});
+
+export type CreateChangeOrderVersionInput = z.infer<typeof CreateChangeOrderVersionSchema>;
+
 export const CreateTableSchema = z.object({
     description: z.string(),
     referenceDoc: z.string(),
@@ -45,7 +56,7 @@ export const CreateTableSchema = z.object({
     hours: z.number(),
     cost: z.number(),
     CoId: z.string().optional(),
-    
+    changeOrderVersionId: z.string().optional(),
 })
 
 // 👇 Accepts multiple table entries

@@ -5,6 +5,8 @@ export const CoResponseSchema = z.object({
   Status: z.enum(COSTATUS).default("NOT_REPLIED"),
   description: z.string().min(2).max(500),
   userId: z.string(),
+  CoId: z.string().optional(),
+  changeOrderVersionId: z.string().optional(),
   parentResponseId: z.string().optional(),       
     files: z
               .union([

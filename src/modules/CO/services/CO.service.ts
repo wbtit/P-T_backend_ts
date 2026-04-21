@@ -1,4 +1,4 @@
-import { CORepository } from "../repositories";
+import { CORepository, ChangeOrderVersionRepository } from "../repositories";
 import {
   CreateCoInput,
   UpdateCoInput,
@@ -10,8 +10,10 @@ import { FileObject } from "../../../shared/fileType";
 import { Response } from "express";
 import { resolveUploadFilePath, streamFile } from "../../../utils/fileUtil";
 import prisma from "../../../config/database/client";
+import { Prisma } from "@prisma/client";
 
 const corepo = new CORepository();
+const versionRepo = new ChangeOrderVersionRepository();
 
 export class COService {
   // Create a new Change Order
@@ -20,24 +22,57 @@ export class COService {
       where:{id:userId}
     })
     let co;
-    if(cuurUser?.role==="ADMIN" || cuurUser?.role==="PROJECT_MANAGER"){
-        co = await corepo.create(data, userId,true);
-    }else{
-        co = await corepo.create(data, userId,false);
-    }
+    const approval = (cuurUser?.role==="ADMIN" || cuurUser?.role==="PROJECT_MANAGER");
+    co = await corepo.create(data, userId, approval);
+
+    // 🔑 Create initial version (v1)
+    await versionRepo.createInitialVersion(
+      co.id,
+      {
+        description: data.description,
+        remarks: data.remarks,
+        files: co.files as Prisma.InputJsonValue,
+      },
+      userId
+    );
+
     return co;
   }
 
+  // Create New Version
+  async createNewVersion(
+    coId: string,
+    data: { description: string; remarks?: string; files?: any },
+    userId: string
+  ) {
+    const existing = await corepo.findById(coId);
+    if (!existing) throw new AppError("Change Order not found", 404);
+
+    return versionRepo.createNewVersion(coId, data, userId);
+  }
+
   // Update existing Change Order
-  async updateCo(id: string, data: UpdateCoInput) {
+  async updateCo(id: string, data: UpdateCoInput, userId: string) {
 
     if(!data.project){
         throw new AppError("Project ID is required for update", 400);
     }
-    const existing = await corepo.getByProjectId(data.project);
+    const existing = await corepo.findById(id);
     if (!existing) throw new AppError("Change Order not found", 404);
 
     const updated = await corepo.update(id, data);
+
+    // 🔑 Automatically bump version on update
+    await versionRepo.createNewVersion(
+      id,
+      {
+        description: data.description || existing.description,
+        remarks: data.remarks || existing.remarks,
+        files: updated.files as Prisma.InputJsonValue,
+      },
+      userId
+    );
+
     return updated;
   }
 
@@ -76,11 +111,11 @@ export class COService {
   // ------------------ CO Table Operations ------------------
 
   // Create multiple CO table rows
-  async createCoTable(data: CreateCOTableInput, coId: string, userId: string) {
+  async createCoTable(data: CreateCOTableInput, coId: string, userId: string, changeOrderVersionId?: string) {
     if (!data)
       throw new AppError("CO Table data cannot be empty", 400);
 
-    return await corepo.createCoTable(data, coId, userId);
+    return await corepo.createCoTable(data, coId, userId, changeOrderVersionId);
   }
 
   // Update single CO table row
@@ -90,13 +125,13 @@ export class COService {
     return updatedRow;
   }
 
-  async replaceCoTable(data: CreateCOTableInput, coId: string, userId: string) {
-    return await corepo.replaceCoTableByCoId(data, coId, userId);
+  async replaceCoTable(data: CreateCOTableInput, coId: string, userId: string, changeOrderVersionId?: string) {
+    return await corepo.replaceCoTableByCoId(data, coId, userId, changeOrderVersionId);
   }
 
   // Get all CO table rows for a CO ID
-  async getCoTableByCoId(CoId: string, userId: string) {
-    const coRows = await corepo.getCoTableByCoId(CoId, userId);
+  async getCoTableByCoId(CoId: string, userId: string, changeOrderVersionId?: string) {
+    const coRows = await corepo.getCoTableByCoId(CoId, userId, changeOrderVersionId);
     if (!coRows || coRows.length === 0)
       throw new AppError("No CO Table rows found for this CO", 404);
 
@@ -105,22 +140,38 @@ export class COService {
 
   // ------------------ File Handling ------------------
 
-  async getFile(coId: string, fileId: string) {
+  async getFile(coId: string, fileId: string, versionId?: string) {
     const co = await corepo.findById(coId);
     if (!co) throw new AppError("Change Order not found", 404);
 
-    const files = (co.files as unknown as FileObject[]) || [];
+    let files: FileObject[] = [];
+    if (versionId) {
+      const version = co.versions.find((v: any) => v.id === versionId);
+      if (!version) throw new AppError("Version not found", 404);
+      files = (version.files as unknown as FileObject[]) || [];
+    } else {
+      files = (co.files as unknown as FileObject[]) || [];
+    }
+
     const fileObject = files.find((file: FileObject) => file.id === fileId);
 
     if (!fileObject) throw new AppError("File not found", 404);
     return fileObject;
   }
 
-  async viewFile(coId: string, fileId: string, res: Response) {
+  async viewFile(coId: string, fileId: string, res: Response, versionId?: string) {
     const co = await corepo.findById(coId);
     if (!co) throw new AppError("Change Order not found", 404);
 
-    const files = (co.files as unknown as FileObject[]) || [];
+    let files: FileObject[] = [];
+    if (versionId) {
+      const version = co.versions.find((v: any) => v.id === versionId);
+      if (!version) throw new AppError("Version not found", 404);
+      files = (version.files as unknown as FileObject[]) || [];
+    } else {
+      files = (co.files as unknown as FileObject[]) || [];
+    }
+
     const cleanFileId = fileId.replace(/\.[^/.]+$/, "");
     const fileObject = files.find((file: FileObject) => file.id === cleanFileId);
 

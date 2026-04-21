@@ -54,8 +54,8 @@ export class NotesService {
         return await notesRepository.findById(id);
     }
 
-    async findAll() {
-        return await notesRepository.findAll();
+    async findAll(projectId: string) {
+        return await notesRepository.findAll(projectId);
     }
     async getFile(notesId: string, fileId: string) {
        const notes = await notesRepository.findById(notesId);

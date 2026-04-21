@@ -38,7 +38,8 @@ export class NotesController {
     }
 
     async findAll(req: Request, res: Response) {
-            const notes = await notesService.findAll();
+            const { projectId } = req.params;
+            const notes = await notesService.findAll(projectId);
             return res.status(200).json(notes);
     
     }

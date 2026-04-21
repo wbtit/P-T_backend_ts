@@ -12,7 +12,7 @@ import { getCCEmails } from "../../../services/mailServices/mailconfig";
 const coResponseRepo = new CoResponseRepository();
 
 export class CoResponseService {
-  async createCoResponse(data: CreateCoResponseDto, CoId: string, userId: string) {
+  async createCoResponse(data: CreateCoResponseDto, CoId: string, userId: string, changeOrderVersionId?: string) {
    
     const changeOrder = await prisma.changeOrder.findUnique({
       where:{id:CoId},
@@ -23,10 +23,23 @@ export class CoResponseService {
     if(!changeOrder){
       throw new AppError("Change Order not found",404);
     }
+
+    // 🔒 Enforce version reference
+    const versionId = changeOrderVersionId || data.changeOrderVersionId;
+    if (!versionId) {
+      throw new AppError("changeOrderVersionId is required to create a response", 400);
+    }
+
+    // 🔒 Only allow responding to the latest version
+    if (changeOrder.currentVersionId !== versionId) {
+      throw new AppError("Responses are allowed only on the latest Change Order version", 400);
+    }
+
     const response = await coResponseRepo.createCoResponse(
       data,
       CoId,
       userId,
+      versionId
     );
     if(response.Status ==="ACCEPT"){
       if (process.env.NODE_ENV !== 'production') {

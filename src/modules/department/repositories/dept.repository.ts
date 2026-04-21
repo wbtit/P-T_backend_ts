@@ -41,17 +41,31 @@ export class DeptRepository {
   async update(data: UpdateDeptInput) {
     const { id, name, managerIds } = data;
 
-    const dept = await prisma.department.update({
-      where: { id },
-      data: {
-        name,
-        ...(managerIds && {
-          managerIds: {
-            set: [], // clear old managers before connecting new ones
-            connect: managerIds.map((id) => ({ id })),
+    const dept = await prisma.$transaction(async (tx) => {
+      const updatedDept = await tx.department.update({
+        where: { id },
+        data: {
+          name,
+          ...(managerIds && {
+            managerIds: {
+              set: [], // clear old managers before connecting new ones
+              connect: managerIds.map((id) => ({ id })),
+            },
+          }),
+        },
+      });
+
+      if (managerIds && managerIds.length > 0) {
+        await tx.user.updateMany({
+          where: { id: { in: managerIds } },
+          data: {
+            role: "DEPT_MANAGER",
+            departmentId: updatedDept.id,
           },
-        }),
-      },
+        });
+      }
+
+      return updatedDept;
     });
 
     return dept;

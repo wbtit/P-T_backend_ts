@@ -368,6 +368,7 @@ model User {
   employeeperformance             EmployeePerformanceScore[] @relation("employeeperformance")
   clientCommunicatedBy            ClientCommunication[]
   submittalVersiondoneBy          SubmittalVersion[]
+  changeOrderVersionCreatedBy     ChangeOrderVersion[]
   projectBundleSelections         ProjectBundleSelection[]
   connectionEngineersRFQs         RFQ[]                      @relation("RFQ_connectionEngineers")
   milestoneResponseUser           MileStoneResponse[]        @relation("milestoneResponseUser")
@@ -838,10 +839,10 @@ model Notes {
 model TeamMeetingNotes {
   id          String                    @id @default(uuid()) @db.Uuid
   serialNo    String?                   @unique
-  flags       Json?                      @default("[]")
-  colorCode  String?                   @default("")
-  priority   Int?                      @default(0)
-  read       Boolean?                   @default(false)
+  flags       Json?                     @default("[]")
+  colorCode   String?                   @default("")
+  priority    Int?                      @default(0)
+  read        Boolean?                  @default(false)
   title       String
   content     String
   visibility  TeamMeetingNoteVisibility @default(INTERNAL)
@@ -852,11 +853,11 @@ model TeamMeetingNotes {
   createdAt   DateTime                  @default(now())
   updatedAt   DateTime                  @updatedAt
 
-  meeting   Meeting?                  @relation("MeetingTeamMeetingNotes", fields: [meetingId], references: [id], onDelete: Cascade)
-  project   Project                   @relation("ProjectTeamMeetingNotes", fields: [projectId], references: [id], onDelete: Cascade)
-  createdBy User                      @relation("TeamMeetingNotesCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
-  taggedUsers User[]                  @relation("TeamMeetingNotesTaggedUsers")
-  responses TeamMeetingNoteResponse[] @relation("TeamMeetingNoteResponses")
+  meeting     Meeting?                  @relation("MeetingTeamMeetingNotes", fields: [meetingId], references: [id], onDelete: Cascade)
+  project     Project                   @relation("ProjectTeamMeetingNotes", fields: [projectId], references: [id], onDelete: Cascade)
+  createdBy   User                      @relation("TeamMeetingNotesCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
+  taggedUsers User[]                    @relation("TeamMeetingNotesTaggedUsers")
+  responses   TeamMeetingNoteResponse[] @relation("TeamMeetingNoteResponses")
 
   @@index([projectId])
   @@index([meetingId])
@@ -1072,7 +1073,7 @@ model MileStone {
   date                  DateTime           @default(now())
   project_id            String             @db.Uuid
   approvalDate          DateTime?
-  CDApprovalDate         DateTime?
+  CDApprovalDate        DateTime?
   CDTargetDate          DateTime?
   status                Status             @default(ACTIVE)
   stage                 Stage              @default(IFA)
@@ -1468,22 +1469,22 @@ model RFIResponse {
 }
 
 model Submittals {
-  id                String   @id @default(uuid()) @db.Uuid
-  serialNo          String?  @unique
-  fabricator_id     String   @db.Uuid
-  mileStoneId       String?  @db.Uuid
-  project_id        String   @db.Uuid
-  recepient_id      String?  @db.Uuid
-  sender_id         String   @db.Uuid
-  date              DateTime @default(now())
-  stage             Stage    @default(IFA)
-  status            Boolean  @default(false)
+  id                   String       @id @default(uuid()) @db.Uuid
+  serialNo             String?      @unique
+  fabricator_id        String       @db.Uuid
+  mileStoneId          String?      @db.Uuid
+  project_id           String       @db.Uuid
+  recepient_id         String?      @db.Uuid
+  sender_id            String       @db.Uuid
+  date                 DateTime     @default(now())
+  stage                Stage        @default(IFA)
+  status               Boolean      @default(false)
   clientResponseStatus SubResStatus @default(PENDING)
-  subject           String
-  isAproovedByAdmin Boolean? @default(false)
-  submittalVersion  Int      @default(1)
+  subject              String
+  isAproovedByAdmin    Boolean?     @default(false)
+  submittalVersion     Int          @default(1)
   // 🔑 Versioning
-  currentVersionId  String?  @unique @db.Uuid
+  currentVersionId     String?      @unique @db.Uuid
 
   // Relations
   mileStoneBelongsTo MileStone?         @relation("mileStoneSubmittals", fields: [mileStoneId], references: [id], onDelete: Cascade)
@@ -1561,30 +1562,35 @@ model SubmittalsResponse {
 }
 
 model ChangeOrder {
-  id                String   @id @default(uuid()) @db.Uuid
-  serialNo          String?  @unique
-  project           String   @db.Uuid
-  recipients        String?  @db.Uuid
-  remarks           String   @default("")
-  changeOrderNumber String   @default("")
-  description       String   @default("")
-  sender            String   @db.Uuid
-  sentOn            DateTime @default(now())
-  files             Json     @default("[]")
-  stage             Stage    @default(IFA)
-  status            COSTATUS @default(NOT_REPLIED)
-  reason            String   @default("")
-  createdAt         DateTime @default(now())
-  isAproovedByAdmin Boolean? @default(false)
+  id                 String   @id @default(uuid()) @db.Uuid
+  serialNo           String?  @unique
+  project            String   @db.Uuid
+  recipients         String?  @db.Uuid
+  remarks            String   @default("")
+  changeOrderNumber  String   @default("")
+  description        String   @default("")
+  sender             String   @db.Uuid
+  sentOn             DateTime @default(now())
+  files              Json     @default("[]")
+  stage              Stage    @default(IFA)
+  status             COSTATUS @default(NOT_REPLIED)
+  reason             String   @default("")
+  createdAt          DateTime @default(now())
+  isAproovedByAdmin  Boolean? @default(false)
+  changeOrderVersion Int      @default(1)
+  // 🔑 Versioning
+  currentVersionId   String?  @unique @db.Uuid
 
   //Relations
-  coResponses        COResponse[]       @relation("coResponse")
-  Project            Project            @relation("ChangeOrderProject", fields: [project], references: [id], onDelete: Cascade)
-  Recipients         User?              @relation("ChangeOrderRecipients", fields: [recipients], references: [id], onDelete: Cascade)
-  multipleRecipients User[]             @relation("ChangeOrderMultipleRecipients")
-  senders            User               @relation("ChangeOrderSender", fields: [sender], references: [id], onDelete: Cascade)
-  CoRefersTo         ChangeOrdertable[] @relation("CoRefersTo")
-  invoices           Invoice[]          @relation("changeOrderInvoices")
+  versions           ChangeOrderVersion[]
+  currentVersion     ChangeOrderVersion?  @relation("CurrentChangeOrderVersion", fields: [currentVersionId], references: [id])
+  coResponses        COResponse[]         @relation("coResponse")
+  Project            Project              @relation("ChangeOrderProject", fields: [project], references: [id], onDelete: Cascade)
+  Recipients         User?                @relation("ChangeOrderRecipients", fields: [recipients], references: [id], onDelete: Cascade)
+  multipleRecipients User[]               @relation("ChangeOrderMultipleRecipients")
+  senders            User                 @relation("ChangeOrderSender", fields: [sender], references: [id], onDelete: Cascade)
+  CoRefersTo         ChangeOrdertable[]   @relation("CoRefersTo")
+  invoices           Invoice[]            @relation("changeOrderInvoices")
 
   @@index([recipients])
   @@index([sender])
@@ -1592,43 +1598,74 @@ model ChangeOrder {
   @@map("changeorder")
 }
 
+model ChangeOrderVersion {
+  id            String @id @default(uuid()) @db.Uuid
+  changeOrderId String @db.Uuid
+
+  versionNumber Int
+  description   String
+  remarks       String @default("")
+  files         Json   @default("[]")
+
+  createdById String   @db.Uuid
+  createdAt   DateTime @default(now())
+
+  isActive Boolean @default(true)
+
+  // Relations
+  changeOrder       ChangeOrder        @relation(fields: [changeOrderId], references: [id], onDelete: Cascade)
+  createdBy         User               @relation(fields: [createdById], references: [id])
+  responses         COResponse[]
+  changeOrderTables ChangeOrdertable[]
+  isCurrentFor      ChangeOrder?       @relation("CurrentChangeOrderVersion")
+
+  @@unique([changeOrderId, versionNumber])
+  @@index([changeOrderId])
+  @@map("changeorderversion")
+}
+
 model ChangeOrdertable {
-  id            String    @id @default(uuid()) @db.Uuid
-  description   String    @default("")
-  referenceDoc  String    @default("")
-  elements      String    @default("")
-  QtyNo         Int       @default(0)
-  remarks       String?   @default("")
-  hours         Float     @default(0.0)
-  cost          Float     @default(0.0)
-  CoId          String    @db.Uuid
-  costUpdatedBy String    @default("") // userId or role of the person who updated
-  costUpdatedAt DateTime? // timestamp of last cost update
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id                   String    @id @default(uuid()) @db.Uuid
+  description          String    @default("")
+  referenceDoc         String    @default("")
+  elements             String    @default("")
+  QtyNo                Int       @default(0)
+  remarks              String?   @default("")
+  hours                Float     @default(0.0)
+  cost                 Float     @default(0.0)
+  CoId                 String    @db.Uuid
+  changeOrderVersionId String?   @db.Uuid
+  costUpdatedBy        String    @default("") // userId or role of the person who updated
+  costUpdatedAt        DateTime? // timestamp of last cost update
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
 
   //Relations
-  CoRefersTo ChangeOrder @relation("CoRefersTo", fields: [CoId], references: [id])
+  CoRefersTo         ChangeOrder         @relation("CoRefersTo", fields: [CoId], references: [id])
+  changeOrderVersion ChangeOrderVersion? @relation(fields: [changeOrderVersionId], references: [id], onDelete: Cascade)
 
   @@index([CoId])
+  @@index([changeOrderVersionId])
   @@map("changeordertable")
 }
 
 model COResponse {
-  id               String       @id @default(uuid()) @db.Uuid
-  Status           COSTATUS     @default(NOT_REPLIED)
-  description      String       @default("")
-  CoId             String?      @db.Uuid
-  userId           String       @db.Uuid
-  parentResponseId String?      @db.Uuid
-  files            Json         @default("[]")
-  createdAt        DateTime     @default(now())
-  InvoiceAlerted   Boolean      @default(false)
+  id                   String              @id @default(uuid()) @db.Uuid
+  Status               COSTATUS            @default(NOT_REPLIED)
+  description          String              @default("")
+  CoId                 String?             @db.Uuid
+  changeOrderVersionId String?             @db.Uuid
+  userId               String              @db.Uuid
+  parentResponseId     String?             @db.Uuid
+  files                Json                @default("[]")
+  createdAt            DateTime            @default(now())
+  InvoiceAlerted       Boolean             @default(false)
   //Relations
-  coResponse       ChangeOrder? @relation("coResponse", fields: [CoId], references: [id])
-  parentResponse   COResponse?  @relation("ParentChildResponse", fields: [parentResponseId], references: [id])
-  childResponses   COResponse[] @relation("ParentChildResponse")
-  user             User         @relation("COrespondedby", fields: [userId], references: [id])
+  coResponse           ChangeOrder?        @relation("coResponse", fields: [CoId], references: [id])
+  changeOrderVersion   ChangeOrderVersion? @relation(fields: [changeOrderVersionId], references: [id])
+  parentResponse       COResponse?         @relation("ParentChildResponse", fields: [parentResponseId], references: [id])
+  childResponses       COResponse[]        @relation("ParentChildResponse")
+  user                 User                @relation("COrespondedby", fields: [userId], references: [id])
 
   @@map("coresponse")
 }

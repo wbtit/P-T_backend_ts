@@ -2,7 +2,7 @@ import prisma from "../../../config/database/client";
 import { CreateCoResponseDto,UpdateCoResponseDto } from "../dtos";
 import { AppError } from "../../../config/utils/AppError";
 export class CoResponseRepository {
-    async createCoResponse(data: CreateCoResponseDto, CoId: string, userId: string) {
+    async createCoResponse(data: CreateCoResponseDto, CoId: string, userId: string, changeOrderVersionId?: string) {
         console.log("changeOrderId:",CoId)
         const connectParent = data.parentResponseId  && data.parentResponseId !== '' ? { connect: { id: data.parentResponseId } } : undefined;
         if (CoId) {
@@ -17,6 +17,7 @@ export class CoResponseRepository {
         ...(connectParent && { parentResponse: connectParent }),
         user: { connect: { id: userId } },
         coResponse: CoId ? { connect: { id: CoId } } : undefined,
+        changeOrderVersion: (changeOrderVersionId || data.changeOrderVersionId) ? { connect: { id: changeOrderVersionId || data.changeOrderVersionId } } : undefined,
       },
       include:{
         user:{

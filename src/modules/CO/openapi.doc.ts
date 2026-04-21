@@ -1,6 +1,6 @@
 import { ModuleOpenApiDoc } from "../../openapi/types";
 import { genericRequestBody, zodRequestBody } from "../../openapi/zod";
-import { CoResponseSchema, CreateCOTableSchema, CreateCoSchema, CreateTableSchema, UpdateCoSchema } from "./dtos";
+import { CoResponseSchema, CreateCOTableSchema, CreateCoSchema, CreateTableSchema, UpdateCoSchema, CreateChangeOrderVersionSchema } from "./dtos";
 
 export const cOOpenApiDoc: ModuleOpenApiDoc = {
   tag: {
@@ -11,7 +11,7 @@ export const cOOpenApiDoc: ModuleOpenApiDoc = {
     "/changeOrder": {
       post: {
         tags: ["ChangeOrder"],
-        summary: "POST /changeOrder - Create Change Order (Supports multipleRecipients)",
+        summary: "POST /changeOrder - Create Change Order (Initial version v1 created automatically)",
         operationId: "post_CO_changeOrder",
         security: [{ bearerAuth: [] }],
         requestBody: zodRequestBody(CreateCoSchema),
@@ -22,6 +22,23 @@ export const cOOpenApiDoc: ModuleOpenApiDoc = {
           "500": { description: "Internal Server Error" }
         }
       },
+    },
+    "/changeOrder/{coId}/versions/{versionId}/{fileId}": {
+      get: {
+        tags: ["ChangeOrder"],
+        summary: "GET /changeOrder/{coId}/versions/{versionId}/{fileId} - View file from specific version",
+        operationId: "get_CO_changeOrder_version_file",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { in: "path", name: "coId", required: true, schema: { type: "string" } },
+          { in: "path", name: "versionId", required: true, schema: { type: "string" } },
+          { in: "path", name: "fileId", required: true, schema: { type: "string" } },
+        ],
+        responses: {
+          "200": { description: "Success" },
+          "404": { description: "File/Version not found" }
+        }
+      }
     },
     "/changeOrder/ById/{id}": {
       get: {
@@ -241,11 +258,12 @@ export const cOOpenApiDoc: ModuleOpenApiDoc = {
     "/changeOrder/table/{id}": {
       put: {
         tags: ["ChangeOrder"],
-        summary: "PUT /changeOrder/table/{id}",
+        summary: "PUT /changeOrder/table/{id} - Update/Replace table rows. Use query param 'changeOrderVersionId' to target specific version.",
         operationId: "put_CO_changeOrder_table_id",
         security: [{ bearerAuth: [] }],
         parameters: [
           { in: "path", name: "id", required: true, schema: { type: "string" } },
+          { in: "query", name: "changeOrderVersionId", required: false, schema: { type: "string" } },
         ],
         requestBody: zodRequestBody(CreateTableSchema),
         responses: {
@@ -295,12 +313,13 @@ export const cOOpenApiDoc: ModuleOpenApiDoc = {
     "/changeOrder/{coId}/files/{fileId}": {
       get: {
         tags: ["ChangeOrder"],
-        summary: "GET /changeOrder/{coId}/files/{fileId}",
+        summary: "GET /changeOrder/{coId}/files/{fileId} - Get file metadata. Supports 'versionId' query param.",
         operationId: "get_CO_changeOrder_coId_files_fileId",
         security: [{ bearerAuth: [] }],
         parameters: [
           { in: "path", name: "coId", required: true, schema: { type: "string" } },
           { in: "path", name: "fileId", required: true, schema: { type: "string" } },
+          { in: "query", name: "versionId", required: false, schema: { type: "string" } },
         ],
         responses: {
           "200": { description: "Success" },
@@ -328,7 +347,7 @@ export const cOOpenApiDoc: ModuleOpenApiDoc = {
       },
       post: {
         tags: ["ChangeOrder"],
-        summary: "POST /changeOrder/{coId}/responses",
+        summary: "POST /changeOrder/{coId}/responses - Create response. Must target the latest active version.",
         operationId: "post_CO_changeOrder_coId_responses",
         security: [{ bearerAuth: [] }],
         parameters: [
@@ -346,11 +365,12 @@ export const cOOpenApiDoc: ModuleOpenApiDoc = {
     "/changeOrder/{coId}/table": {
       get: {
         tags: ["ChangeOrder"],
-        summary: "GET /changeOrder/{coId}/table",
+        summary: "GET /changeOrder/{coId}/table - List table rows. Supports 'changeOrderVersionId' query param.",
         operationId: "get_CO_changeOrder_coId_table",
         security: [{ bearerAuth: [] }],
         parameters: [
           { in: "path", name: "coId", required: true, schema: { type: "string" } },
+          { in: "query", name: "changeOrderVersionId", required: false, schema: { type: "string" } },
         ],
         responses: {
           "200": { description: "Success" },
@@ -361,11 +381,12 @@ export const cOOpenApiDoc: ModuleOpenApiDoc = {
       },
       post: {
         tags: ["ChangeOrder"],
-        summary: "POST /changeOrder/{coId}/table",
+        summary: "POST /changeOrder/{coId}/table - Create table rows. Supports 'changeOrderVersionId' query param.",
         operationId: "post_CO_changeOrder_coId_table",
         security: [{ bearerAuth: [] }],
         parameters: [
           { in: "path", name: "coId", required: true, schema: { type: "string" } },
+          { in: "query", name: "changeOrderVersionId", required: false, schema: { type: "string" } },
         ],
         requestBody: zodRequestBody(CreateCOTableSchema),
         responses: {
@@ -379,7 +400,7 @@ export const cOOpenApiDoc: ModuleOpenApiDoc = {
     "/changeOrder/{id}": {
       put: {
         tags: ["ChangeOrder"],
-        summary: "PUT /changeOrder/{id} - Update Change Order (Supports multipleRecipients)",
+        summary: "PUT /changeOrder/{id} - Update Change Order (Automatically creates a new version/revision)",
         operationId: "put_CO_changeOrder_id",
         security: [{ bearerAuth: [] }],
         parameters: [

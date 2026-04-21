@@ -153,6 +153,7 @@ async handlePendingCOsForClient(req: AuthenticateRequest, res: Response) {
     if (!req.user) throw new AppError("User not found", 404);
 
     const { id } = req.params;
+    const { id: userId } = req.user;
     const uploadedFiles = mapUploadedFiles(
       (req.files as Express.Multer.File[]) || [],
       "co"
@@ -161,7 +162,7 @@ async handlePendingCOsForClient(req: AuthenticateRequest, res: Response) {
     const updatedCo = await coService.updateCo(id, {
       ...req.body,
       files: uploadedFiles,
-    });
+    }, userId);
     const updatedCoNumber = updatedCo.changeOrderNumber?.trim();
     const updaterId = req.user.id;
     const bodyStatus = req.body?.status;
@@ -243,8 +244,9 @@ async handlePendingCOsForClient(req: AuthenticateRequest, res: Response) {
     if (!req.user) throw new AppError("User not found", 404);
     const { id } = req.user;
     const { coId } = req.params;
+    const { changeOrderVersionId } = req.query;
 
-    const coTable = await coService.createCoTable(req.body, coId, id);
+    const coTable = await coService.createCoTable(req.body, coId, id, changeOrderVersionId as string);
     res.status(201).json({
       status: "success",
       data: coTable,
@@ -255,9 +257,10 @@ async handlePendingCOsForClient(req: AuthenticateRequest, res: Response) {
     if (!req.user) throw new AppError("User not found", 404);
     const { id: userId } = req.user;
     const { id } = req.params;
+    const { changeOrderVersionId } = req.query;
 
     const updatedRow = Array.isArray(req.body)
-      ? await coService.replaceCoTable(req.body, id, userId)
+      ? await coService.replaceCoTable(req.body, id, userId, changeOrderVersionId as string)
       : await coService.updateCoTableRow(req.body, id, userId);
 
     res.status(200).json({
@@ -270,8 +273,9 @@ async handlePendingCOsForClient(req: AuthenticateRequest, res: Response) {
     if (!req.user) throw new AppError("User not found", 404);
     const { id } = req.user;
     const { coId } = req.params;
+    const { changeOrderVersionId } = req.query;
 
-    const coRows = await coService.getCoTableByCoId(coId, id);
+    const coRows = await coService.getCoTableByCoId(coId, id, changeOrderVersionId as string);
     res.status(200).json({
       status: "success",
       data: coRows,
@@ -282,7 +286,8 @@ async handlePendingCOsForClient(req: AuthenticateRequest, res: Response) {
 
   async handleGetFile(req: Request, res: Response) {
     const { coId, fileId } = req.params;
-    const file = await coService.getFile(coId, fileId);
+    const { versionId } = req.query;
+    const file = await coService.getFile(coId, fileId, versionId as string);
     res.status(200).json({
       status: "success",
       data: file,
@@ -290,8 +295,8 @@ async handlePendingCOsForClient(req: AuthenticateRequest, res: Response) {
   }
 
   async handleViewFile(req: Request, res: Response) {
-    const { coId, fileId } = req.params;
-    await coService.viewFile(coId, fileId, res);
+    const { coId, fileId, versionId } = req.params;
+    await coService.viewFile(coId, fileId, res, versionId);
   }
   async handlePendingCOs(req: AuthenticateRequest, res: Response) {
    const cos = await coService.pendingCOs();

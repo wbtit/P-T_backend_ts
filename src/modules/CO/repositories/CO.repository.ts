@@ -180,6 +180,18 @@ export class CORepository {
         return await prisma.changeOrder.findUnique({
             where:{id:id}
           ,include:{
+            versions: {
+              include: {
+                createdBy: { select: { firstName: true, lastName: true, id: true } },
+                changeOrderTables: true,
+              },
+              orderBy: { versionNumber: "desc" },
+            },
+            currentVersion: {
+               include: {
+                 changeOrderTables: true
+               }
+            },
             coResponses:{include:{childResponses:true}},
             Project:true,
             Recipients:true,
@@ -195,19 +207,30 @@ export class CORepository {
 
 
 
-    async createCoTable(data: CreateCOTableInput, coId: string, userId: string) {
+    async createCoTable(data: CreateCOTableInput, coId: string, userId: string, changeOrderVersionId?: string) {
+  let targetVersionId = changeOrderVersionId;
+
+  if (!targetVersionId) {
+    const co = await prisma.changeOrder.findUnique({
+      where: { id: coId },
+      select: { currentVersionId: true }
+    });
+    targetVersionId = co?.currentVersionId || undefined;
+  }
+
   // data will be an array of items validated by Zod
-  const dataToInsert = data.map((co) => ({
-    description: co.description,
-    referenceDoc: co.referenceDoc,
-    elements: co.elements,
-    QtyNo: co.QtyNo,
-    remarks: co.remarks ?? "",
-    hours: co.hours,
-    cost: co.cost,
+  const dataToInsert = data.map((item) => ({
+    description: item.description,
+    referenceDoc: item.referenceDoc,
+    elements: item.elements,
+    QtyNo: item.QtyNo,
+    remarks: item.remarks ?? "",
+    hours: item.hours,
+    cost: item.cost,
     costUpdatedBy: userId,
     costUpdatedAt: new Date(),
     CoId: coId,
+    changeOrderVersionId: targetVersionId || item.changeOrderVersionId,
   }));
 
   return await prisma.changeOrdertable.createMany({
@@ -233,43 +256,70 @@ async updateCoTableRow(data:CotableRowInput,id:string,userId:string){
           costUpdatedAt: new Date()
         })
       }
+      
     });
 }
-async replaceCoTableByCoId(data: CreateCOTableInput, coId: string, userId: string) {
-    await prisma.changeOrdertable.deleteMany({
-      where: { CoId: coId }
-    });
+async replaceCoTableByCoId(data: CreateCOTableInput, coId: string, userId: string, changeOrderVersionId?: string) {
+    let targetVersionId = changeOrderVersionId;
+    if (!targetVersionId) {
+        const co = await prisma.changeOrder.findUnique({
+            where: { id: coId },
+            select: { currentVersionId: true }
+        });
+        targetVersionId = co?.currentVersionId || undefined;
+    }
+
+    if (targetVersionId) {
+      await prisma.changeOrdertable.deleteMany({
+        where: { changeOrderVersionId: targetVersionId }
+      });
+    } else {
+      await prisma.changeOrdertable.deleteMany({
+        where: { CoId: coId }
+      });
+    }
 
     if (!data.length) {
       return [];
     }
 
     await prisma.changeOrdertable.createMany({
-      data: data.map((co) => ({
-        description: co.description,
-        referenceDoc: co.referenceDoc,
-        elements: co.elements,
-        QtyNo: co.QtyNo,
-        remarks: co.remarks ?? "",
-        hours: co.hours,
-        cost: co.cost,
+      data: data.map((item) => ({
+        description: item.description,
+        referenceDoc: item.referenceDoc,
+        elements: item.elements,
+        QtyNo: item.QtyNo,
+        remarks: item.remarks ?? "",
+        hours: item.hours,
+        cost: item.cost,
         costUpdatedBy: userId,
         costUpdatedAt: new Date(),
         CoId: coId,
+        changeOrderVersionId: targetVersionId || item.changeOrderVersionId,
       })),
     });
 
     return await prisma.changeOrdertable.findMany({
-      where: { CoId: coId }
+      where: targetVersionId ? { changeOrderVersionId: targetVersionId } : { CoId: coId }
     });
 }
-async getCoTableByCoId(CoId:string,userId:string){
+async getCoTableByCoId(CoId:string,userId:string, changeOrderVersionId?: string){
     const curruser= await prisma.user.findUnique({
       where:{id:userId},
       select:{id:true,role:true}
     })
+
+    let targetVersionId = changeOrderVersionId;
+    if (!targetVersionId) {
+        const co = await prisma.changeOrder.findUnique({
+            where: { id: CoId },
+            select: { currentVersionId: true }
+        });
+        targetVersionId = co?.currentVersionId || undefined;
+    }
+
     let coRow = await prisma.changeOrdertable.findMany({
-      where: { CoId }
+      where: targetVersionId ? { changeOrderVersionId: targetVersionId } : { CoId }
     });
     if(curruser?.role==="ADMIN"||curruser?.role==="PROJECT_MANAGER"){
         coRow=coRow.map(row=>{
