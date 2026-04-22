@@ -34,6 +34,11 @@ router.post(
     rfqController.handleCreateRfq.bind(rfqController)
 );
 router.get(
+    "/pending/clientSide",
+    authMiddleware,
+    rfqController.handleClientSidePendingRFQs.bind(rfqController)
+)
+router.get(
     "/pending/clientAdmin",
     authMiddleware,
     rfqController.handlePendingForClientAdmin.bind(rfqController)
@@ -47,6 +52,16 @@ router.get(
     "/pending/projectManager",
     authMiddleware,
     rfqController.handlePendingForProjectManager.bind(rfqController)
+)
+router.get(
+    "/pending/departmentManager",
+    authMiddleware,
+    rfqController.handlePendingForDepartmentManager.bind(rfqController)
+)
+router.get(
+    "/pending/operationExecutive",
+    authMiddleware,
+    rfqController.handlePendingForOperationExecutive.bind(rfqController)
 )
 router.get(
     "/pending/CDAdmin",

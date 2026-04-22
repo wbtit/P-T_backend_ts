@@ -117,15 +117,56 @@ export const DashBoradData = async (
     });
     const pendingSubmittals = await prisma.submittals.count({
       where: {
-        currentVersion:{
-          responses:{some:{
-            childResponses:{none:{}}
-          }
+        status: false,
+        currentVersionId: { not: null },
+        currentVersion: {
+          responses: {
+            some: {
+              parentResponseId: null,
+              childResponses: { none: {} }
+            }
           }
         }
       },
     });
-    const response = {
+
+    const clientSidePendingRFI = await prisma.rFI.count({
+      where: {
+        project: { status: { in: ["ACTIVE", "ONHOLD"] } },
+        rfiresponse: { none: {} },
+      },
+    });
+
+    const clientSidePendingChangeOrders = await prisma.changeOrder.count({
+      where: {
+        Project: { status: { in: ["ACTIVE", "ONHOLD"] } },
+        coResponses: { none: {} },
+        isAproovedByAdmin: true,
+      },
+    });
+
+    const clientSidePendingRFQ = await prisma.rFQ.count({
+      where: {
+        project: { status: { in: ["ACTIVE", "ONHOLD"] } },
+        responses: {
+          some: {
+            parentResponseId: null,
+            childResponses: { none: {} },
+          },
+        },
+      },
+    });
+
+    const clientSidePendingSubmittals = await prisma.submittals.count({
+      where: {
+        project: { status: { in: ["ACTIVE", "ONHOLD"] } },
+        currentVersion: {
+          responses: { none: {} },
+        },
+      },
+    });
+
+    const response: Record<string, any> = {
       totalProjects,
       activeEmployeeCount,
       totalActiveProjects: 0,
@@ -138,6 +179,12 @@ export const DashBoradData = async (
       newRFQ,
       pendingRFQ,
       pendingSubmittals,
+      clientSidePendingActions: {
+        rfi: clientSidePendingRFI,
+        changeOrders: clientSidePendingChangeOrders,
+        rfq: clientSidePendingRFQ,
+        submittals: clientSidePendingSubmittals,
+      }
     };
 
     const statusMap: Record<string, keyof typeof response> = {

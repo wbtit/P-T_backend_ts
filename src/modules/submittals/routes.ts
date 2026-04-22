@@ -68,6 +68,11 @@ router.get(
 );
 
 router.get(
+  "/pending/clientSide",
+  authMiddleware,
+  submittalController.handleClientSidePendingSubmittals.bind(submittalController)
+)
+router.get(
   "/pending/clientAdmin",
   authMiddleware,
   submittalController.handlePendingForClientAdmin.bind(submittalController)
@@ -82,6 +87,16 @@ router.get(
   "/pending/projectManager",
   authMiddleware,
   submittalController.handlePendingForProjectManager.bind(submittalController)
+)
+router.get(
+  "/pending/departmentManager",
+  authMiddleware,
+  submittalController.handlePendingForDepartmentManager.bind(submittalController)
+)
+router.get(
+  "/pending/operationExecutive",
+  authMiddleware,
+  submittalController.handlePendingForOperationExecutive.bind(submittalController)
 )
 router.get(
   "/pending/CDAdmin",

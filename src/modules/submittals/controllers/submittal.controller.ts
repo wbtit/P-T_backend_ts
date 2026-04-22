@@ -167,6 +167,17 @@ export class SubmittalController {
       data: submittal,
     });
   }
+  async handleClientSidePendingSubmittals(req: AuthenticateRequest, res: Response) {
+    if (req.user?.role !== "ADMIN" && req.user?.role !== "OPERATION_EXECUTIVE") {
+      throw new AppError("Access denied", 403);
+    }
+    const pendingSubmittals = await submittalService.getClientSidePendingSubmittals();
+    res.status(200).json({
+      status: "success",
+      data: pendingSubmittals,
+    });
+  }
+
   async handlePendingForClientAdmin(req: AuthenticateRequest, res: Response) {
     if (!req.user) throw new AppError("User not found", 404);
     const { id } = req.user;
@@ -195,6 +206,27 @@ export class SubmittalController {
     const { id } = req.user;
 
     const pendingSubmittals = await submittalService.getPendingSubmittalsForProjectManager(id);
+    res.status(200).json({
+      status: "success",
+      data: pendingSubmittals,
+    });
+  }
+
+  async handlePendingForDepartmentManager(req: AuthenticateRequest, res: Response) {
+    if (!req.user) throw new AppError("User not found", 404);
+    const { id } = req.user;
+
+    const pendingSubmittals = await submittalService.getPendingSubmittalsForDepartmentManager(id);
+    res.status(200).json({
+      status: "success",
+      data: pendingSubmittals,
+    });
+  }
+
+  async handlePendingForOperationExecutive(req: AuthenticateRequest, res: Response) {
+    if (!req.user) throw new AppError("User not found", 404);
+
+    const pendingSubmittals = await submittalService.getPendingSubmittals();
     res.status(200).json({
       status: "success",
       data: pendingSubmittals,

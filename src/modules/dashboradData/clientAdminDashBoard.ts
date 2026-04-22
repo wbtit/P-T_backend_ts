@@ -56,14 +56,14 @@ export const clientAdminDashBoard = async (req: AuthenticateRequest, res: Respon
 
       prisma.changeOrder.count({
         where: {
-          Project: { 
+          Project: {
             status: { in: ["ACTIVE", "ONHOLD"] },
             fabricatorID: { in: fabricatorIds }
           },
           coResponses: { none: {} },
+          isAproovedByAdmin: true,
         },
       }),
-
       prisma.rFQ.count({
         where: {
           project: { status: { in: ["ACTIVE", "ONHOLD"] } },

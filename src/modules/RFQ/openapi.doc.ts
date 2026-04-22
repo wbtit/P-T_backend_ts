@@ -157,6 +157,20 @@ export const rFQOpenApiDoc: ModuleOpenApiDoc = {
         }
       },
     },
+    "/rfq/pending/clientSide": {
+      get: {
+        tags: ["RFQ"],
+        summary: "GET /rfq/pending/clientSide",
+        operationId: "get_RFQ_rfq_pending_clientSide",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
     "/rfq/pending/client": {
       get: {
         tags: ["RFQ"],
@@ -176,6 +190,34 @@ export const rFQOpenApiDoc: ModuleOpenApiDoc = {
         tags: ["RFQ"],
         summary: "GET /rfq/pending/projectManager",
         operationId: "get_RFQ_rfq_pending_projectManager",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
+    "/rfq/pending/departmentManager": {
+      get: {
+        tags: ["RFQ"],
+        summary: "GET /rfq/pending/departmentManager",
+        operationId: "get_RFQ_rfq_pending_departmentManager",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
+    "/rfq/pending/operationExecutive": {
+      get: {
+        tags: ["RFQ"],
+        summary: "GET /rfq/pending/operationExecutive",
+        operationId: "get_RFQ_rfq_pending_operationExecutive",
         security: [{ bearerAuth: [] }],
         responses: {
           "200": { description: "Success" },

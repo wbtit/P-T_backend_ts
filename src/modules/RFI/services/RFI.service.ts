@@ -53,6 +53,10 @@ export class RFIService {
   async getPendingForClientAdmin(userId: string) {
     return await rfiRepo.findPendingRFIsForClientAdmin(userId);
   }
+  async getClientSidePendingRFIs() {
+    return await rfiRepo.findClientSidePendingRFIs();
+  }
+
   async getPendingForClient(userId: string) {
     return await rfiRepo.findPendingRFIsForClient(userId);
   }
@@ -114,6 +118,10 @@ export class RFIService {
 
   async getPendingRFIsForProjectManager(managerId: string) {
     return await rfiRepo.findPendingRFIsForProjectManager(managerId);
+  }
+
+  async getPendingRFIsForDepartmentManager(managerId: string) {
+    return await rfiRepo.findPendingRFIsForDepartmentManager(managerId);
   }
 
   async getNewRFIsForProjectManager(managerId: string) {

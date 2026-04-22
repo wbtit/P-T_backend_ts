@@ -31,7 +31,8 @@ export const clientDashBoard = async (req: AuthenticateRequest, res: Response) =
                         clientProjectManagers: { some: { id: req.user?.id } },
                         status: { not: "INACTIVE" }
                     },
-                    coResponses:{none:{}}
+                    coResponses:{none:{}},
+                    isAproovedByAdmin: true
                 }
         })
     const pendingRFQ = await prisma.rFQ.count({

@@ -337,6 +337,17 @@ export class RFIController {
   }
 
 
+  async handleClientSidePendingRFIs(req: AuthenticateRequest, res: Response) {
+    if (req.user?.role !== "ADMIN" && req.user?.role !== "OPERATION_EXECUTIVE") {
+      throw new AppError("Access denied", 403);
+    }
+    const pendingRFIs = await rfiService.getClientSidePendingRFIs();
+    res.status(200).json({
+      status: "success",
+      data: pendingRFIs,
+    });
+  }
+
   async handlePendingForClientAdmin(req: AuthenticateRequest, res: Response) {
     if (!req.user) throw new AppError("User not found", 404);
     const { id: userId } = req.user;
@@ -380,6 +391,26 @@ export class RFIController {
   async handlePendingForProjectManager(req: AuthenticateRequest, res: Response) {
     if (!req.user) throw new AppError("User not found", 404);
     const pendingRFIs = await rfiService.getPendingRFIsForProjectManager(req.user.id);
+
+    res.status(200).json({
+      status: "success",
+      data: pendingRFIs,
+    });
+  }
+
+  async handlePendingForDepartmentManager(req: AuthenticateRequest, res: Response) {
+    if (!req.user) throw new AppError("User not found", 404);
+    const pendingRFIs = await rfiService.getPendingRFIsForDepartmentManager(req.user.id);
+
+    res.status(200).json({
+      status: "success",
+      data: pendingRFIs,
+    });
+  }
+
+  async handlePendingForOperationExecutive(req: AuthenticateRequest, res: Response) {
+    if (!req.user) throw new AppError("User not found", 404);
+    const pendingRFIs = await rfiService.getPendingRFIs(req.user.role || "");
 
     res.status(200).json({
       status: "success",

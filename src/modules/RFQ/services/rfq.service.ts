@@ -139,6 +139,10 @@ export class RFQService {
         return await rfqrepo.findByProject(projectId);
     }
 
+    async getClientSidePendingRFQs() {
+        return await rfqrepo.findClientSidePendingRFQs();
+    }
+
     async getPendingForClientAdmin(userId:string){
         return await rfqrepo.findPendingRFQsForClientAdmin(userId);
     }
@@ -198,6 +202,10 @@ export class RFQService {
 
     async getPendingRFQs(){
         return await rfqrepo.getPendingRFQs();
+    }
+
+    async getPendingRFQsForDepartmentManager(managerId: string) {
+        return await rfqrepo.findPendingRFQsForDepartmentManager(managerId);
     }
 
     async getPendingRFQsForProjectManager(managerId: string) {

@@ -74,6 +74,11 @@ router.get(
 );
 
 router.get(
+  "/pending/clientSide",
+  authMiddleware,
+  rfiController.handleClientSidePendingRFIs.bind(rfiController)
+)
+router.get(
   "/pending/clientAdmin",
   authMiddleware,
   rfiController.handlePendingForClientAdmin.bind(rfiController)
@@ -88,6 +93,16 @@ router.get(
   "/pending/projectManager",
   authMiddleware,
   rfiController.handlePendingForProjectManager.bind(rfiController)
+)
+router.get(
+  "/pending/departmentManager",
+  authMiddleware,
+  rfiController.handlePendingForDepartmentManager.bind(rfiController)
+)
+router.get(
+  "/pending/operationExecutive",
+  authMiddleware,
+  rfiController.handlePendingForOperationExecutive.bind(rfiController)
 )
 router.get(
   "/pending/CDAdmin",

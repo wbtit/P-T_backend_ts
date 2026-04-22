@@ -8,7 +8,7 @@ const zBooleanString = z
 export const CreateCoSchema = z.object({
   project: z.string(),
   sender: z.string(),
-  recipients: z.string(),
+  recipients: z.string().optional(),
   multipleRecipients: z.array(z.string()).optional(),
     remarks: z.string(),
     changeOrderNumber: z.string().optional(),

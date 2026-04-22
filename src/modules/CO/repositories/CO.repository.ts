@@ -76,6 +76,24 @@ export class CORepository {
     });
     }
 
+    async findClientSidePendingCOs() {
+        return await prisma.changeOrder.findMany({
+          where:{
+                Project: { status: { in: ["ACTIVE", "ONHOLD"] } },
+                coResponses:{none:{}},
+                isAproovedByAdmin: true
+            },
+            include:{
+              coResponses:{include:{childResponses:true}},
+              Project:true,
+              Recipients:true,
+              multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
+              senders:true,
+              CoRefersTo:true,
+          }
+        })
+    }
+
     async findPendingCOsForClientAdmin(userId:string){
       const fabricator = await prisma.fabricator.findFirst({
             where: {
@@ -95,7 +113,8 @@ export class CORepository {
                             id:fabricator?.id,
                         }
                     }},
-                    coResponses:{none:{}}
+                    coResponses:{none:{}},
+                    isAproovedByAdmin: true
                 },
                 include:{
             coResponses:{include:{childResponses:true}},
@@ -114,7 +133,8 @@ export class CORepository {
                         clientProjectManagers: { some: { id: userId } },
                         status: { not: "INACTIVE" }
                     },
-                    coResponses:{none:{}}
+                    coResponses:{none:{}},
+                    isAproovedByAdmin: true
                 },
                 include:{
             coResponses:{include:{childResponses:true}},
@@ -347,6 +367,29 @@ async pendingCOs(){
           }
         },
     })
+}
+
+async findPendingCOsForDepartmentManager(managerId: string) {
+    const manager = await prisma.user.findUnique({
+      where: { id: managerId },
+      select: { departmentId: true },
+    });
+    if (!manager?.departmentId) return [];
+
+    return await prisma.changeOrder.findMany({
+      where: {
+        Project: { departmentID: manager.departmentId },
+        NOT: {
+          coResponses: {
+            some: {
+              childResponses: {
+                some: { Status: "ACCEPT" },
+              },
+            },
+          },
+        },
+      },
+    });
 }
 
 async findPendingCOsForProjectManager(managerId: string) {

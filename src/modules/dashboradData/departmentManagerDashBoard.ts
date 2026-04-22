@@ -46,8 +46,6 @@ export const departmentManagerDashBoard = async (
 
     const [
       department,
-      totalEmployees,
-      activeEmployees,
       totalTeams,
       totalProjects,
       projectStatusRaw,
@@ -62,13 +60,18 @@ export const departmentManagerDashBoard = async (
       epsCurrent,
       topEmployeesCurrentRaw,
       topManagersCurrentRaw,
+      pendingRFI,
+      newRFI,
+      pendingChangeOrders,
+      newChangeOrders,
+      newRFQ,
+      pendingRFQ,
+      pendingSubmittals,
     ] = await Promise.all([
       prisma.department.findUnique({
         where: { id: departmentId },
         select: { id: true, name: true },
       }),
-      prisma.user.count({ where: { departmentId } }),
-      prisma.user.count({ where: { departmentId, isActive: true } }),
       prisma.team.count({ where: { departmentID: departmentId, isDeleted: false } }),
       prisma.project.count({ where: { departmentID: departmentId } }),
       prisma.project.groupBy({
@@ -148,19 +151,103 @@ export const departmentManagerDashBoard = async (
         orderBy: { score: "desc" },
         take: 5,
       }),
-      prisma.managerEstimationScore.findMany({
-        where: { period, project: { departmentID: departmentId } },
-        select: {
-          managerId: true,
-          score: true,
-          manager: {
-            select: { firstName: true, middleName: true, lastName: true, email: true },
+      (async () => {
+        const grouped = await prisma.managerEstimationScore.groupBy({
+          by: ["managerId"],
+          where: { period, project: { departmentID: departmentId } },
+          _avg: { score: true },
+          orderBy: { _avg: { score: "desc" } },
+          take: 5,
+        });
+
+        if (grouped.length === 0) return [];
+
+        const managerIds = grouped.map((g) => g.managerId);
+        const managersData = await prisma.user.findMany({
+          where: { id: { in: managerIds } },
+          select: { id: true, firstName: true, middleName: true, lastName: true, email: true },
+        });
+
+        const managerMap = new Map(managersData.map((m) => [m.id, m]));
+
+        return grouped.map((g) => ({
+          managerId: g.managerId,
+          score: g._avg.score ?? 0,
+          manager: managerMap.get(g.managerId)!,
+        }));
+      })(),
+      prisma.rFI.count({
+        where: {
+          project: { departmentID: departmentId },
+          NOT: {
+            rfiresponse: {
+              some: {
+                childResponses: {
+                  some: { wbtStatus: "COMPLETE" },
+                },
+              },
+            },
           },
         },
-        orderBy: { score: "desc" },
-        take: 5,
       }),
-    ]);
+      prisma.rFI.count({
+        where: {
+          project: { departmentID: departmentId },
+          rfiresponse: { none: {} },
+        },
+      }),
+      prisma.changeOrder.count({
+        where: {
+          Project: { departmentID: departmentId },
+          NOT: {
+            coResponses: {
+              some: {
+                childResponses: {
+                  some: { Status: "ACCEPT" },
+                },
+              },
+            },
+          },
+        },
+      }),
+      prisma.changeOrder.count({
+        where: {
+          Project: { departmentID: departmentId },
+          coResponses: { none: {} },
+        },
+      }),
+      prisma.rFQ.count({
+        where: {
+          project: { departmentID: departmentId },
+          responses: { none: {} },
+        },
+      }),
+      prisma.rFQ.count({
+        where: {
+          project: { departmentID: departmentId },
+          responses: {
+            some: {
+              parentResponseId: null,
+              childResponses: { every: { status: "RECEIVED" } },
+            },
+          },
+        },
+      }),
+      prisma.submittals.count({
+        where: {
+          project: { departmentID: departmentId },
+          status: false,
+          currentVersionId: { not: null },
+          currentVersion: {
+            responses: {
+              some: {
+                parentResponseId: null,
+                childResponses: { none: {} }
+              }
+            }
+          },
+        },
+      }),    ]);
 
     const projectStatusDistribution = projectStatusRaw.map((item) => ({
       status: item.status,
@@ -205,9 +292,6 @@ export const departmentManagerDashBoard = async (
           name: department?.name ?? "Unknown Department",
         },
         peopleOverview: {
-          totalEmployees,
-          activeEmployees,
-          inactiveEmployees: totalEmployees - activeEmployees,
           totalTeams,
         },
         workOverview: {
@@ -217,6 +301,15 @@ export const departmentManagerDashBoard = async (
           pendingTasks: totalTasks - completedTasks,
           projectStatusDistribution,
           taskStatusDistribution,
+          pendingActions: {
+            pendingRFI,
+            newRFI,
+            pendingChangeOrders,
+            newChangeOrders,
+            newRFQ,
+            pendingRFQ,
+            pendingSubmittals,
+          },
         },
         scoreSummary: {
           period,

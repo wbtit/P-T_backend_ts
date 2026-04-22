@@ -37,6 +37,34 @@ export const submittalsOpenApiDoc: ModuleOpenApiDoc = {
         }
       },
     },
+    "/submittal/pending/departmentManager": {
+      get: {
+        tags: ["Submittals"],
+        summary: "GET /submittal/pending/departmentManager",
+        operationId: "get_submittals_submittal_pending_departmentManager",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
+    "/submittal/pending/operationExecutive": {
+      get: {
+        tags: ["Submittals"],
+        summary: "GET /submittal/pending/operationExecutive",
+        operationId: "get_submittals_submittal_pending_operationExecutive",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
     "/submittal/pending/CDAdmin": {
       get: {
         tags: ["Submittals"],
@@ -56,6 +84,20 @@ export const submittalsOpenApiDoc: ModuleOpenApiDoc = {
         tags: ["Submittals"],
         summary: "GET /submittal/pending/client",
         operationId: "get_submittals_submittal_pending_client",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
+    "/submittal/pending/clientSide": {
+      get: {
+        tags: ["Submittals"],
+        summary: "GET /submittal/pending/clientSide",
+        operationId: "get_submittals_submittal_pending_clientSide",
         security: [{ bearerAuth: [] }],
         responses: {
           "200": { description: "Success" },

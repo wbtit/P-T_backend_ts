@@ -68,6 +68,34 @@ export const rFIOpenApiDoc: ModuleOpenApiDoc = {
         }
       },
     },
+    "/rfi/pending/departmentManager": {
+      get: {
+        tags: ["RFI"],
+        summary: "GET /rfi/pending/departmentManager",
+        operationId: "get_RFI_rfi_pending_departmentManager",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
+    "/rfi/pending/operationExecutive": {
+      get: {
+        tags: ["RFI"],
+        summary: "GET /rfi/pending/operationExecutive",
+        operationId: "get_RFI_rfi_pending_operationExecutive",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
     "/rfi/pending/CDAdmin": {
       get: {
         tags: ["RFI"],
@@ -87,6 +115,20 @@ export const rFIOpenApiDoc: ModuleOpenApiDoc = {
         tags: ["RFI"],
         summary: "GET /rfi/pending/client",
         operationId: "get_RFI_rfi_pending_client",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
+    "/rfi/pending/clientSide": {
+      get: {
+        tags: ["RFI"],
+        summary: "GET /rfi/pending/clientSide",
+        operationId: "get_RFI_rfi_pending_clientSide",
         security: [{ bearerAuth: [] }],
         responses: {
           "200": { description: "Success" },

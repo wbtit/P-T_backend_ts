@@ -66,6 +66,10 @@ export class SubmittalService {
     );
   }
 
+  async getClientSidePendingSubmittals() {
+    return await submittalRepo.getClientSidePendingSubmittals();
+  }
+
   async getPendingSubmittalsForClientAdmin(userId:string){
     return await submittalRepo.getPendingSubmittalsForClientAdmin(userId);
   }
@@ -76,6 +80,10 @@ export class SubmittalService {
 
   async getPendingSubmittalsForProjectManager(userId: string) {
     return await submittalRepo.getPendingSubmittalsForProjectManager(userId);
+  }
+
+  async getPendingSubmittalsForDepartmentManager(userId: string) {
+    return await submittalRepo.getPendingSubmittalsForDepartmentManager(userId);
   }
 
   // ----------------------------------

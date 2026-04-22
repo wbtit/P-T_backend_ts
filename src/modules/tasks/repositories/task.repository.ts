@@ -184,12 +184,21 @@ export class TaskRepository {
         return tasks;
     }
     async findTasksForDepartmentManager(departmentManagerId: string) {
+        const department = await prisma.department.findFirst({
+            where: {
+                managerIds: {
+                    some: { id: departmentManagerId }
+                }
+            },
+            select: { id: true }
+        });
+        if (!department) {
+            throw new AppError("Department not found for the manager", 404);
+        }
         const tasks = await prisma.task.findMany({
             where: {
-                department: {
-                    managerIds: {
-                        some: { id: departmentManagerId }
-                    }
+                department:{
+                    id:department.id
                 }
             },
             include: {

@@ -197,6 +197,17 @@ export class RFQController {
             data: rfq,
         });
     }
+    async handleClientSidePendingRFQs(req: AuthenticateRequest, res: Response) {
+        if (req.user?.role !== "ADMIN" && req.user?.role !== "OPERATION_EXECUTIVE") {
+            throw new AppError("Access denied", 403);
+        }
+        const pendingRFQs = await rfqService.getClientSidePendingRFQs();
+        res.status(200).json({
+            status: "success",
+            data: pendingRFQs,
+        });
+    }
+
     async handlePendingForClientAdmin(req:AuthenticateRequest,res:Response){
         if (!req.user) {
             throw new AppError('User not found', 404);
@@ -316,6 +327,24 @@ export class RFQController {
     async handlePendingForProjectManager(req: AuthenticateRequest, res: Response) {
         if (!req.user) throw new AppError('User not found', 404);
         const pendingRFQs = await rfqService.getPendingRFQsForProjectManager(req.user.id);
+        res.status(200).json({
+            status: 'success',
+            data: pendingRFQs,
+        });
+    }
+
+    async handlePendingForDepartmentManager(req: AuthenticateRequest, res: Response) {
+        if (!req.user) throw new AppError('User not found', 404);
+        const pendingRFQs = await rfqService.getPendingRFQsForDepartmentManager(req.user.id);
+        res.status(200).json({
+            status: 'success',
+            data: pendingRFQs,
+        });
+    }
+
+    async handlePendingForOperationExecutive(req: AuthenticateRequest, res: Response) {
+        if (!req.user) throw new AppError('User not found', 404);
+        const pendingRFQs = await rfqService.getPendingRFQs();
         res.status(200).json({
             status: 'success',
             data: pendingRFQs,

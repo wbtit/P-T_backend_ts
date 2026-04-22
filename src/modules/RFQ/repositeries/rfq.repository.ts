@@ -102,6 +102,30 @@ export class RFQRepository {
         })
     }
 
+    async findClientSidePendingRFQs() {
+        return await prisma.rFQ.findMany({
+            where: {
+                project: { status: { in: ["ACTIVE", "ONHOLD"] } },
+                responses: {
+                    some: {
+                        parentResponseId: null,
+                        childResponses: { none: {} },
+                    },
+                },
+            },
+            include: {
+                sender: true,
+                recipient: true,
+                multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
+                salesPerson: true,
+                responses: RFQ_RESPONSES_INCLUDE,
+                fabricator: true,
+                project: { select: { name: true } },
+            },
+            orderBy: { createdAt: "desc" },
+        });
+    }
+
     async findPendingRFQsForClientAdmin(userId:string){
         const fabricator = await prisma.fabricator.findFirst({
             where: {
@@ -431,6 +455,35 @@ async getRFQOfConnectionEngineer(userId:string){
             project: {select:{name:true}},
         }
         })
+    }
+
+    async findPendingRFQsForDepartmentManager(managerId: string) {
+        const manager = await prisma.user.findUnique({
+            where: { id: managerId },
+            select: { departmentId: true },
+        });
+        if (!manager?.departmentId) return [];
+
+        return await prisma.rFQ.findMany({
+            where: {
+                project: { departmentID: manager.departmentId },
+                responses: {
+                    some: {
+                        parentResponseId: null,
+                        childResponses: { every: { status: "RECEIVED" } }
+                    },
+                },
+            },
+            include: {
+                sender: true,
+                recipient: true,
+                multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
+                salesPerson: true,
+                responses: RFQ_RESPONSES_INCLUDE,
+                fabricator: true,
+                project: { select: { name: true } },
+            },
+        });
     }
 
     async findPendingRFQsForProjectManager(managerId: string) {

@@ -89,18 +89,31 @@ export const hrDashBoard = async (req: AuthenticateRequest, res: Response) => {
         _min: { score: true },
         _max: { score: true },
       }),
-      prisma.managerEstimationScore.findMany({
-        where: { period },
-        select: {
-          managerId: true,
-          score: true,
-          manager: {
-            select: { firstName: true, middleName: true, lastName: true, email: true },
-          },
-        },
-        orderBy: { score: "desc" },
-        take: 5,
-      }),
+      (async () => {
+        const grouped = await prisma.managerEstimationScore.groupBy({
+          by: ["managerId"],
+          where: { period },
+          _avg: { score: true },
+          orderBy: { _avg: { score: "desc" } },
+          take: 5,
+        });
+
+        if (grouped.length === 0) return [];
+
+        const managerIds = grouped.map((g) => g.managerId);
+        const managersData = await prisma.user.findMany({
+          where: { id: { in: managerIds } },
+          select: { id: true, firstName: true, middleName: true, lastName: true, email: true },
+        });
+
+        const managerMap = new Map(managersData.map((m) => [m.id, m]));
+
+        return grouped.map((g) => ({
+          managerId: g.managerId,
+          score: g._avg.score ?? 0,
+          manager: managerMap.get(g.managerId)!,
+        }));
+      })(),
       prisma.employeePerformanceScore.findMany({
         where: { period },
         select: {

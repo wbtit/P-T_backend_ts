@@ -82,9 +82,7 @@ export class SubmittalResponseService {
     return {
       ...existing,
       childResponses: Array.isArray(existing.childResponses)
-        ? existing.childResponses.filter(
-            resp => resp.parentResponseId === null
-          )
+        ? existing.childResponses
         : [],
     };
   }

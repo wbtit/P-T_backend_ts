@@ -81,12 +81,18 @@ export class SubmitalRepository {
         },
         currentVersion:{
           include:{
-            responses:true
+            responses:{
+              where: { parentResponseId: null },
+              include:{
+                childResponses:true
+              }
+            }
           }
         },
 
         // Responses
         submittalsResponse: {
+          where: { parentResponseId: null },
           include: {
             user: { select: { id: true, firstName: true, lastName: true, email: true } },
             childResponses: {
@@ -104,6 +110,25 @@ export class SubmitalRepository {
     });
   }
 
+
+  async getClientSidePendingSubmittals() {
+    return prisma.submittals.findMany({
+      where: {
+        project: { status: { in: ["ACTIVE", "ONHOLD"] } },
+        currentVersionId: { not: null },
+        currentVersion: {
+          responses: { none: {} },
+        },
+      },
+      include: {
+        project: { select: { name: true } },
+        fabricator: true,
+        recepients: true,
+        currentVersion: true,
+      },
+      orderBy: { date: "desc" },
+    });
+  }
 
 async getPendingSubmittalsForClientAdmin(userId: string) {
     const fabricators = await prisma.fabricator.findMany({
@@ -158,28 +183,64 @@ async getPendingSubmittalsForClientAdmin(userId: string) {
   }
 
 
-async getPendingSubmittalsForProjectManager(managerId: string) {
+async getPendingSubmittalsForDepartmentManager(managerId: string) {
+  const manager = await prisma.user.findUnique({
+    where: { id: managerId },
+    select: { departmentId: true },
+  });
+  if (!manager?.departmentId) return [];
+
   return prisma.submittals.findMany({
-    where:{
-      status:false,
-      project:{managerID: managerId},
-      currentVersion:{
-        NOT:{
-        responses:{some:{
-          childResponses:{some:{
-            status:"SUBMITTED_TO_EOR"
-          }
+    where: {
+      status: false,
+      currentVersionId: { not: null },
+      project: { departmentID: manager.departmentId },
+      currentVersion: {
+        responses: {
+          some: {
+            parentResponseId: null,
+            childResponses: { none: {} }
           }
         }
       }
-        },
+    },
+    include: {
+      currentVersion: {
+        include: {
+          responses:{
+            where: { parentResponseId: null },
+            include:{
+              childResponses:true
+            }
+          }
+        }
       }
-    
+    }
+  });
+}
+
+async getPendingSubmittalsForProjectManager(managerId: string) {
+  return prisma.submittals.findMany({
+    where: {
+      status: false,
+      currentVersionId: { not: null },
+      project: { managerID: managerId },
+      currentVersion: {
+        responses: {
+          some: {
+            parentResponseId: null,
+            childResponses: { none: {} }
+          }
+        }
+      }
     },
     include:{
       currentVersion:{
         include:{
-          responses:true
+          responses:{
+            where: { parentResponseId: null },
+            include: { childResponses: true }
+          }
         }
       }
     }
@@ -282,9 +343,17 @@ async getPendingSubmittalsForProjectManager(managerId: string) {
   async getPendingSubmittals(){
     return prisma.submittals.findMany({
       where: {
-          status: false,
-          currentVersion: { isNot: null },
-        },include:{
+        status: false,
+        currentVersionId: { not: null },
+        currentVersion: {
+          responses: {
+            some: {
+              parentResponseId: null,
+              childResponses: { none: {} }
+            }
+          }
+        }
+      },include:{
           project:{select:{name:true}},
           fabricator:{select:{fabName:true}},
         }

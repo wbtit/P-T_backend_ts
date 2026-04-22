@@ -103,6 +103,44 @@ export class RFIRepository{
       })
     }
 
+    async findClientSidePendingRFIs() {
+      return await prisma.rFI.findMany({
+        where:{
+          project: { status: { in: ["ACTIVE", "ONHOLD"] } },
+          rfiresponse:{
+            none:{}
+          }
+        },
+        include: {
+          fabricator:{select:{
+            fabName:true,
+            id:true,
+          }},
+          project: {select:{name:true}},
+          sender :  {select:{firstName:true,middleName:true,lastName:true,email:true,id:true}},
+          recepients: {
+            include: {
+              managedFabricator: {
+                select: {
+                  fabName: true,
+                  branches:true,
+                },
+              },
+            },
+          },
+          rfiresponse:{
+            include:{
+              childResponses:true
+            }
+          },
+          multipleRecipients: { select: { firstName: true, middleName: true, lastName: true, email: true, id: true } }
+        },
+        orderBy:{
+          date:'desc'
+        }
+      })
+    }
+
     async findPendingRFIsForClient(userId: string){
       return await prisma.rFI.findMany({
         where:{
@@ -306,6 +344,40 @@ export class RFIRepository{
           sender: { select: { firstName: true, middleName: true, lastName: true, email: true, id: true } },
           rfiresponse: true,
         },
+      });
+    }
+
+    async findPendingRFIsForDepartmentManager(managerId: string) {
+      const manager = await prisma.user.findUnique({
+        where: { id: managerId },
+        select: { departmentId: true },
+      });
+      if (!manager?.departmentId) return [];
+
+      return await prisma.rFI.findMany({
+        where: {
+          project: { departmentID: manager.departmentId },
+          NOT: {
+            rfiresponse: {
+              some: {
+                childResponses: {
+                  some: {
+                    wbtStatus: "COMPLETE",
+                  },
+                },
+              },
+            },
+          },
+        },
+        include: {
+          fabricator: true,
+          project: { select: { name: true } },
+          recepients: { select: { firstName: true, middleName: true, lastName: true, email: true, id: true } },
+          multipleRecipients: { select: { firstName: true, middleName: true, lastName: true, email: true, id: true } },
+          sender: { select: { firstName: true, middleName: true, lastName: true, email: true, id: true } },
+          rfiresponse: { include: { childResponses: true } },
+        },
+        orderBy: { date: "desc" },
       });
     }
 

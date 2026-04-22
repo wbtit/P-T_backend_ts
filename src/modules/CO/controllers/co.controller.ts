@@ -127,6 +127,17 @@ export class COController {
       data: co,
     });
   }
+  async handleClientSidePendingCOs(req: AuthenticateRequest, res: Response) {
+    if (req.user?.role !== "ADMIN" && req.user?.role !== "OPERATION_EXECUTIVE") {
+      throw new AppError("Access denied", 403);
+    }
+    const cos = await coService.clientSidePendingCOs();
+    res.status(200).json({
+      status: "success",
+      data: cos,
+    });
+  }
+
   async handlePendingCOsForClientAdmin(req: AuthenticateRequest, res: Response) {
     if (!req.user) throw new AppError("User not found", 404);
     const { id } = req.user;
@@ -197,9 +208,14 @@ async handlePendingCOsForClient(req: AuthenticateRequest, res: Response) {
 
   // ------------------- CO FETCHING -------------------
 
-  async handleGetByProjectId(req: Request, res: Response) {
+  async handleGetByProjectId(req: AuthenticateRequest, res: Response) {
     const { projectId } = req.params;
-    const cos = await coService.getByProjectId(projectId);
+    let cos = await coService.getByProjectId(projectId);
+
+    if (req.user?.role === "CLIENT" || req.user?.role === "CLIENT_ADMIN") {
+      cos = cos.filter(co => co.isAproovedByAdmin === true);
+    }
+
     res.status(200).json({
       status: "success",
       data: cos,
@@ -230,9 +246,14 @@ async handlePendingCOsForClient(req: AuthenticateRequest, res: Response) {
     });
   }
 
-  async handleGetById(req: Request, res: Response) {
+  async handleGetById(req: AuthenticateRequest, res: Response) {
     const { id } = req.params;
     const co = await coService.findById(id);
+
+    if ((req.user?.role === "CLIENT" || req.user?.role === "CLIENT_ADMIN") && co.isAproovedByAdmin !== true) {
+      throw new AppError("You do not have permission to view this change order until it is approved", 403);
+    }
+
     res.status(200).json({
       status: "success",
       data: co,
@@ -299,7 +320,10 @@ async handlePendingCOsForClient(req: AuthenticateRequest, res: Response) {
     await coService.viewFile(coId, fileId, res, versionId);
   }
   async handlePendingCOs(req: AuthenticateRequest, res: Response) {
-   const cos = await coService.pendingCOs();
+    if (req.user?.role === "CLIENT" || req.user?.role === "CLIENT_ADMIN") {
+      throw new AppError("Access denied", 403);
+    }
+    const cos = await coService.pendingCOs();
     res.status(200).json({
       status: "success",
       data: cos,
@@ -309,6 +333,24 @@ async handlePendingCOsForClient(req: AuthenticateRequest, res: Response) {
   async handlePendingCOsForProjectManager(req: AuthenticateRequest, res: Response) {
     if (!req.user) throw new AppError("User not found", 404);
     const cos = await coService.pendingCOsForProjectManager(req.user.id);
+    res.status(200).json({
+      status: "success",
+      data: cos,
+    });
+  }
+
+  async handlePendingCOsForDepartmentManager(req: AuthenticateRequest, res: Response) {
+    if (!req.user) throw new AppError("User not found", 404);
+    const cos = await coService.pendingCOsForDepartmentManager(req.user.id);
+    res.status(200).json({
+      status: "success",
+      data: cos,
+    });
+  }
+
+  async handlePendingCOsForOperationExecutive(req: AuthenticateRequest, res: Response) {
+    if (!req.user) throw new AppError("User not found", 404);
+    const cos = await coService.pendingCOs();
     res.status(200).json({
       status: "success",
       data: cos,

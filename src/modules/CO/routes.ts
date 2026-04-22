@@ -76,6 +76,11 @@ router.get(
 );
 
 router.get(
+  "/pending/clientSide",
+  authMiddleware,
+  coController.handleClientSidePendingCOs.bind(coController)
+)
+router.get(
   "/pending/clientAdmin",
   authMiddleware,
   coController.handlePendingCOsForClientAdmin.bind(coController)
@@ -89,6 +94,16 @@ router.get(
   "/pending/projectManager",
   authMiddleware,
   coController.handlePendingCOsForProjectManager.bind(coController)
+)
+router.get(
+  "/pending/departmentManager",
+  authMiddleware,
+  coController.handlePendingCOsForDepartmentManager.bind(coController)
+)
+router.get(
+  "/pending/operationExecutive",
+  authMiddleware,
+  coController.handlePendingCOsForOperationExecutive.bind(coController)
 )
 router.get(
   "/pending/CDAdmin",

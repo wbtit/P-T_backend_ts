@@ -76,6 +76,10 @@ export class COService {
     return updated;
   }
 
+  async clientSidePendingCOs() {
+    return await corepo.findClientSidePendingCOs();
+  }
+
   async pendingCOsForClientAdmin(userId:string){
     return await corepo.findPendingCOsForClientAdmin(userId);
   }
@@ -185,6 +189,10 @@ export class COService {
 
   async pendingCOs(){
     return await corepo.pendingCOs();
+  }
+
+  async pendingCOsForDepartmentManager(managerId: string) {
+    return await corepo.findPendingCOsForDepartmentManager(managerId);
   }
 
   async pendingCOsForProjectManager(managerId: string) {
