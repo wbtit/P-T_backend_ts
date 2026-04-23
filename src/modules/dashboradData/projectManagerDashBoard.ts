@@ -39,6 +39,10 @@ export const projectManagerDashBoard = async (
       newRFQ,
       pendingSubmittalsList,
       totalTeamMembers,
+      clientSidePendingRFI,
+      clientSidePendingChangeOrders,
+      clientSidePendingRFQ,
+      clientSidePendingSubmittals,
     ] = await Promise.all([
       prisma.project.groupBy({
         by: ["status"],
@@ -125,8 +129,40 @@ export const projectManagerDashBoard = async (
         where: {
           team: {
             project: {
-              some: { managerID: userId },
+              some: managerFilter,
             },
+          },
+        },
+      }),
+      prisma.rFI.count({
+        where: {
+          project: { managerID: userId, status: { in: ["ACTIVE", "ONHOLD"] } },
+          rfiresponse: { none: {} },
+        },
+      }),
+      prisma.changeOrder.count({
+        where: {
+          Project: { managerID: userId, status: { in: ["ACTIVE", "ONHOLD"] } },
+          coResponses: { none: {} },
+          isAproovedByAdmin: true,
+        },
+      }),
+      prisma.rFQ.count({
+        where: {
+          project: { managerID: userId, status: { in: ["ACTIVE", "ONHOLD"] } },
+          responses: {
+            some: {
+              parentResponseId: null,
+              childResponses: { none: {} },
+            },
+          },
+        },
+      }),
+      prisma.submittals.count({
+        where: {
+          project: { managerID: userId, status: { in: ["ACTIVE", "ONHOLD"] } },
+          currentVersion: {
+            responses: { none: {} },
           },
         },
       }),
@@ -148,11 +184,16 @@ export const projectManagerDashBoard = async (
       newRFI,
       pendingChangeOrders,
       newChangeOrders,
-     
+
 
       pendingSubmittals: pendingSubmittalsList.length,
-    };
-
+      clientSidePendingActions: {
+        rfi: clientSidePendingRFI,
+        changeOrders: clientSidePendingChangeOrders,
+        rfq: clientSidePendingRFQ,
+        submittals: clientSidePendingSubmittals,
+      }
+      };
     const statusMap: Record<string, keyof typeof response> = {
       ACTIVE: "totalActiveProjects",
       COMPLETE: "totalCompleteProject",

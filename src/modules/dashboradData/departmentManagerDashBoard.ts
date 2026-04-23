@@ -67,6 +67,10 @@ export const departmentManagerDashBoard = async (
       newRFQ,
       pendingRFQ,
       pendingSubmittals,
+      clientSidePendingRFI,
+      clientSidePendingChangeOrders,
+      clientSidePendingRFQ,
+      clientSidePendingSubmittals,
     ] = await Promise.all([
       prisma.department.findUnique({
         where: { id: departmentId },
@@ -247,7 +251,40 @@ export const departmentManagerDashBoard = async (
             }
           },
         },
-      }),    ]);
+      }),
+      prisma.rFI.count({
+        where: {
+          project: { departmentID: departmentId },
+          rfiresponse: { none: {} },
+        },
+      }),
+      prisma.changeOrder.count({
+        where: {
+          Project: { departmentID: departmentId },
+          coResponses: { none: {} },
+          isAproovedByAdmin: true,
+        },
+      }),
+      prisma.rFQ.count({
+        where: {
+          project: { departmentID: departmentId },
+          responses: {
+            some: {
+              parentResponseId: null,
+              childResponses: { none: {} },
+            },
+          },
+        },
+      }),
+      prisma.submittals.count({
+        where: {
+          project: { departmentID: departmentId },
+          currentVersion: {
+            responses: { none: {} },
+          },
+        },
+      }),
+      ]);
 
     const projectStatusDistribution = projectStatusRaw.map((item) => ({
       status: item.status,
@@ -309,6 +346,12 @@ export const departmentManagerDashBoard = async (
             newRFQ,
             pendingRFQ,
             pendingSubmittals,
+          },
+          clientSidePendingActions: {
+            rfi: clientSidePendingRFI,
+            changeOrders: clientSidePendingChangeOrders,
+            rfq: clientSidePendingRFQ,
+            submittals: clientSidePendingSubmittals,
           },
         },
         scoreSummary: {

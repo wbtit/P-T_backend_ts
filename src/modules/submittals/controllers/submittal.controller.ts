@@ -171,7 +171,9 @@ export class SubmittalController {
     if (
       req.user?.role !== "ADMIN" &&
       req.user?.role !== "OPERATION_EXECUTIVE" &&
-      req.user?.role !== "DEPUTY_MANAGER"
+      req.user?.role !== "DEPUTY_MANAGER" &&
+      req.user?.role !== "DEPT_MANAGER" &&
+      req.user?.role !== "PROJECT_MANAGER"
     ) {
       throw new AppError("Access denied", 403);
     }

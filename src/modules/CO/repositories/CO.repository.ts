@@ -85,7 +85,7 @@ export class CORepository {
             },
             include:{
               coResponses:{include:{childResponses:true}},
-              Project:true,
+              Project: { select: { name: true } },
               Recipients:true,
               multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
               senders:true,
@@ -363,12 +363,18 @@ async pendingCOs(){
                 some: { Status: "ACCEPT" },
               },
             },
-          }, 
+          },
           }
         },
+        include: {
+            Project: { select: { name: true } },
+            coResponses: { include: { childResponses: true } },
+            Recipients: true,
+            multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
+            senders: true,
+        }
     })
 }
-
 async findPendingCOsForDepartmentManager(managerId: string) {
     const manager = await prisma.user.findUnique({
       where: { id: managerId },
@@ -389,8 +395,12 @@ async findPendingCOsForDepartmentManager(managerId: string) {
           },
         },
       },
-      include:{
-        Project:{select:{name:true}},
+      include: {
+          Project: { select: { name: true } },
+          coResponses: { include: { childResponses: true } },
+          Recipients: true,
+          multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
+          senders: true,
       }
     });
 }
@@ -399,23 +409,23 @@ async findPendingCOsForProjectManager(managerId: string) {
     return await prisma.changeOrder.findMany({
         where: {
             Project: { managerID: managerId },
-            
+            NOT: {
                 coResponses: {
                     some: {
                         childResponses: {
-                            none:{},
+                            some: { Status: "ACCEPT" },
                         },
                     },
                 },
-            
+            },
         },
         include: {
+            Project: { select: { name: true } },
             coResponses: { include: { childResponses: true } },
-            Project: true,
             Recipients: true,
+            multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
             senders: true,
-            CoRefersTo: true,
-        },
+        }
     });
 }
 
