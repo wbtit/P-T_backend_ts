@@ -389,6 +389,9 @@ async findPendingCOsForDepartmentManager(managerId: string) {
           },
         },
       },
+      include:{
+        Project:{select:{name:true}},
+      }
     });
 }
 

@@ -194,7 +194,8 @@ async getPendingSubmittalsForDepartmentManager(managerId: string) {
     where: {
       status: false,
       currentVersionId: { not: null },
-      project: { departmentID: manager.departmentId },
+      project: { departmentID: manager.departmentId,
+       },
       currentVersion: {
         responses: {
           some: {
@@ -205,6 +206,7 @@ async getPendingSubmittalsForDepartmentManager(managerId: string) {
       }
     },
     include: {
+      project: { select: { name: true } },
       currentVersion: {
         include: {
           responses:{

@@ -198,7 +198,11 @@ export class RFQController {
         });
     }
     async handleClientSidePendingRFQs(req: AuthenticateRequest, res: Response) {
-        if (req.user?.role !== "ADMIN" && req.user?.role !== "OPERATION_EXECUTIVE") {
+        if (
+            req.user?.role !== "ADMIN" && 
+            req.user?.role !== "OPERATION_EXECUTIVE" &&
+            req.user?.role !== "DEPUTY_MANAGER"
+        ) {
             throw new AppError("Access denied", 403);
         }
         const pendingRFQs = await rfqService.getClientSidePendingRFQs();

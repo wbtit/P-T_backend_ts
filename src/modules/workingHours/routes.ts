@@ -226,6 +226,7 @@ router.post(
       await prisma.task.update({
         where: { id: taskId },
         data: {
+          status: "IN_REVIEW",
           autoCloseActionTaken: true,
           autoCloseActionAt: new Date(),
           autoCloseActionType: "end_task"

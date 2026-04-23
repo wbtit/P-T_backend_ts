@@ -119,6 +119,13 @@ export async function forceCloseStaleTasks() {
             }
         });
 
+        await prisma.task.update({
+            where: { id: task.id },
+            data: {
+                status: "IN_REVIEW",
+            }
+        });
+
         // Create flag and alert
         await prisma.taskFlag.create({
             data: {
