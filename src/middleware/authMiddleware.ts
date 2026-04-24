@@ -25,12 +25,16 @@ const authMiddleware = async (
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as UserJwt;
-    if (decoded.role === "CONNECTION_DESIGNER_ENGINEER" && !decoded.connectionDesignerId) {
+    if (
+      (decoded.role === "CONNECTION_DESIGNER_ENGINEER" && !decoded.connectionDesignerId) ||
+      (decoded.role === "DEPT_MANAGER" && !decoded.departmentId)
+    ) {
       const user = await prisma.user.findUnique({
         where: { id: decoded.id },
-        select: { connectionDesignerId: true },
+        select: { connectionDesignerId: true, departmentId: true },
       });
       decoded.connectionDesignerId = user?.connectionDesignerId ?? null;
+      decoded.departmentId = user?.departmentId ?? null;
     }
 
     req.user = decoded;

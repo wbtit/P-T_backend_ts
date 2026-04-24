@@ -17,6 +17,7 @@ type AuthUser = {
     username: string;
     role: string;
     connectionDesignerId?: string | null;
+    departmentId?: string | null;
     password: string;
     [key: string]: unknown;
 };
@@ -26,6 +27,7 @@ const toJwtPayload = (user: AuthUser): UserJwt => ({
     email: user.email,
     username: user.username,
     connectionDesignerId: user.connectionDesignerId ?? null,
+    departmentId: user.departmentId ?? null,
     role: user.role as UserJwt["role"],
 });
 

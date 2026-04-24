@@ -142,4 +142,26 @@ import {
             });
             return team;
         }
+
+
+        async getAllByDepartment(departmentId: string) {
+            const teams= await prisma.team.findMany({
+                where:{
+                    department:{
+                        id:departmentId
+                    }
+                },
+                include:{
+                    department:true,
+                    members:true,
+                    project:true,
+                    manager:{
+                        select:{
+                            id:true,firstName:true,lastName:true,middleName:true,email:true,phone:true
+                        }
+                    }
+                }
+            });
+            return teams;
+        }
     }

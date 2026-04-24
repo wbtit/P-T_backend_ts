@@ -4,6 +4,7 @@ import { AppError } from "../../../config/utils/AppError";
 import { TeamMemberRole } from "../dtos";
 import { notifyByRoles } from "../../../utils/notifyByRole";
 import { UserRole } from "@prisma/client";
+import { AuthenticateRequest } from "../../../middleware/authMiddleware";
 
 const teamService = new TeamService();
 const USER_TEAM_NOTIFY_ROLES: UserRole[] = ["ADMIN", "HUMAN_RESOURCE"];
@@ -50,8 +51,15 @@ export class TeamController {
         });
     }
 
-    async getAll(req: Request, res: Response) {
-        const result = await teamService.getAll();
+    async getAll(req: AuthenticateRequest, res: Response) {
+        let result = [];
+        if(req.user?.role ==="DEPT_MANAGER"){
+            result = await teamService.getAllByDepartment(req.user.departmentId!);
+
+        }else{
+            result = await teamService.getAll();
+        }
+        
         return res.status(200).json({
             message: "Teams retrieved successfully",
             data: result

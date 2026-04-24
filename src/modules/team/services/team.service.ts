@@ -47,4 +47,8 @@ export class TeamService {
     async removeTeamMembers(data: RemoveTeamMembersInput) {
         return teamRepository.removeTeamMembers(data);
     }
+    async getAllByDepartment(departmentId: string) {
+        return teamRepository.getAllByDepartment(departmentId);
+    }
+
 }

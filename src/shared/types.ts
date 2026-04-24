@@ -4,6 +4,7 @@ interface UserJwt extends JwtPayload{
     email:string|null;
     username:string;
     connectionDesignerId?: string | null;
+    departmentId?: string | null;
     role: 'STAFF'|
           'CLIENT'|
           'VENDOR'|
