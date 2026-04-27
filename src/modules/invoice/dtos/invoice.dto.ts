@@ -1,7 +1,36 @@
 import { InvoiceStatus } from "@prisma/client";
 import { z } from "zod";
 
+const UUID_LIKE_REGEX =
+  /^(?:[0-9a-fA-F]{32}|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$/;
 
+const emptyStringToUndefined = (value: unknown) => {
+  if (typeof value === "string" && value.trim() === "") {
+    return undefined;
+  }
+  return value;
+};
+
+const trimString = (value: unknown) =>
+  typeof value === "string" ? value.trim() : value;
+
+const zUuidRequired = z.preprocess(
+  trimString,
+  z.string().refine((value) => UUID_LIKE_REGEX.test(value), "Invalid UUID")
+);
+
+const zUuidOptional = z.preprocess(
+  (value) => emptyStringToUndefined(trimString(value)),
+  z
+    .string()
+    .refine((value) => UUID_LIKE_REGEX.test(value), "Invalid UUID")
+    .optional()
+);
+
+const zOptionalTrimmedString = z.preprocess(
+  (value) => emptyStringToUndefined(trimString(value)),
+  z.string().optional()
+);
 
 export const createInvoiceItemSchema = z.object({
   description: z.string(),
@@ -37,29 +66,29 @@ export type createAccountInfoSchemaData =z.infer<typeof createAccountInfoSchema>
 export type updateAccountInfoSchemaData = z.infer<typeof updateAccountInfoSchema>
 
 const invoiceSchemaFields = {
-  projectId: z.string(),
-  fabricatorId: z.string(),
-  rfqId: z.string().nullable().optional(),
-  changeOrderId: z.string().nullable().optional(),
-  clientId: z.string().nullable().optional(),
-  type: z.string().nullable().optional(),
-  invoiceType: z.string().nullable().optional(),
+  projectId: zUuidRequired,
+  fabricatorId: zUuidRequired,
+  rfqId: zUuidOptional,
+  changeOrderId: zUuidOptional,
+  clientId: zUuidOptional,
+  type: zOptionalTrimmedString,
+  invoiceType: zOptionalTrimmedString,
   customerName: z.string().min(1),
-  contactName: z.string().nullable().optional(),
-  receiptId: z.string().nullable().optional(),
-  address: z.string().nullable().optional(),
-  stateCode: z.string().nullable().optional(),
+  contactName: zOptionalTrimmedString,
+  receiptId: zOptionalTrimmedString,
+  address: zOptionalTrimmedString,
+  stateCode: zOptionalTrimmedString,
   status:z.enum(InvoiceStatus).optional(),
-  GSTIN: z.string().nullable().optional(),
+  GSTIN: zOptionalTrimmedString,
   invoiceNumber: z.string().trim(),
   invoiceDate: z.string().optional(),
   dateOfSupply: z.string().optional(),
-  placeOfSupply: z.string().nullable().optional(),
+  placeOfSupply: zOptionalTrimmedString,
   jobName: z.string().min(1),
   signature: z.any().optional(),
   currencyType: z.string(),
   totalInvoiceValue: z.number().default(0),
-  totalInvoiceValueInWords: z.string().nullable().optional(),
+  totalInvoiceValueInWords: zOptionalTrimmedString,
   paymentStatus: z.boolean().optional(),
   invoiceItems: z.array(createInvoiceItemSchema).optional(),
   accountInfo: z.array(createAccountInfoSchema).optional(),
