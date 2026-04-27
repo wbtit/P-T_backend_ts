@@ -275,6 +275,19 @@ import { generateProjectSerial } from "../../../utils/serial.util";
           username:true,
           id:true
         }},
+        assists:{
+          include:{
+            user:{
+              select:{
+                id:true,
+                firstName:true,
+                middleName:true,
+                lastName:true,
+                email:true
+              }
+            }
+          }
+        },
         clientProjectManagers:{select:{
           firstName:true,
           middleName:true,

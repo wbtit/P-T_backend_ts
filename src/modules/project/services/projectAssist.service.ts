@@ -1,3 +1,4 @@
+import { includes } from "zod";
 import prisma from "../../../config/database/client";
 import { AppError } from "../../../config/utils/AppError";
 import { UserJwt } from "../../../shared/types";
@@ -166,6 +167,8 @@ export class ProjectAssistService {
           select: { id: true, firstName: true, middleName: true, lastName: true, email: true },
         },
       },
+      
+
       orderBy: [{ isActive: "desc" }, { createdAt: "desc" }],
     });
   }

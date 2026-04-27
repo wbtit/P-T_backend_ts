@@ -25,6 +25,43 @@ const zUuidLikeOptional = z.preprocess(
   z.string().refine(isUuidLike, "Invalid UUID").optional()
 );
 
+const parseStringArrayInput = (val: unknown) => {
+  if (val === null || val === "") return undefined;
+
+  if (Array.isArray(val)) {
+    return val
+      .map((item) => (typeof item === "string" ? item.trim() : item))
+      .filter(Boolean);
+  }
+
+  if (typeof val !== "string") return val;
+
+  const trimmed = val.trim();
+  if (!trimmed) return undefined;
+
+  if (trimmed.startsWith("[")) {
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (Array.isArray(parsed)) {
+        return parsed
+          .map((item) => (typeof item === "string" ? item.trim() : item))
+          .filter(Boolean);
+      }
+    } catch {
+      return [trimmed];
+    }
+  }
+
+  if (trimmed.includes(",")) {
+    return trimmed
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+
+  return [trimmed];
+};
+
 // Converts "true"/"false" or boolean → boolean
 const zBooleanString = z
   .union([z.boolean(), z.string()])
@@ -48,19 +85,15 @@ const zNumberString = z
   .transform((val) => Number(val))
   .refine((v) => !isNaN(v), "Invalid number");
 
-const zStringArray = z
-  .union([z.array(z.string()), z.string(), z.literal(""), z.null()])
-  .transform((val) => {
-    if (val === null || val === "") return undefined;
-    if (Array.isArray(val)) return val.map((v) => v?.trim?.() ?? v).filter(Boolean);
-    if (typeof val === "string" && val.includes(",")) {
-      return val
-        .split(",")
-        .map((v) => v.trim())
-        .filter(Boolean);
-    }
-    return [val.trim()].filter(Boolean);
-  });
+const zStringArray = z.preprocess(
+  parseStringArrayInput,
+  z.array(z.string()).optional()
+);
+
+const zUuidLikeArray = z.preprocess(
+  parseStringArrayInput,
+  z.array(z.string().refine(isUuidLike, "Invalid UUID")).optional()
+);
 
 // ------------------------
 // FINAL PROJECT SCHEMA
@@ -74,8 +107,8 @@ export const CreateProjectSchema = z.object({
   teamID: zUuidLikeOptional,
   managerID: zUuidLikeRequired,
   rfqId: zUuidLikeOptional,
-  clientProjectManagers: zStringArray.optional(),
-  pocOfConnectionDesigner: zStringArray.optional(),
+  clientProjectManagers: zUuidLikeArray.optional(),
+  pocOfConnectionDesigner: zUuidLikeArray.optional(),
   
   clientProjectManager: z.preprocess(
     emptyStringToUndefined,
@@ -101,7 +134,10 @@ export const CreateProjectSchema = z.object({
   detailingMisc: zBooleanString,
   
   //wbsTemplateIds:string[] optional field
-  wbsTemplateIds: z.array(z.string()).optional(),
+  wbsTemplateIds: z.preprocess(
+    parseStringArrayInput,
+    z.array(z.string()).optional()
+  ),
 
 
   // DATE fields
@@ -110,7 +146,10 @@ export const CreateProjectSchema = z.object({
   approvalDate: zDateString,
   fabricationDate: zDateString,
 
-  endDateChangeLog: z.array(z.string()).optional(),
+  endDateChangeLog: z.preprocess(
+    parseStringArrayInput,
+    z.array(z.string()).optional()
+  ),
   approvalDateChangeReason: z.string().optional(),
   fabricationDateChangeReason: z.string().optional(),
 
