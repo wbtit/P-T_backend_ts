@@ -91,10 +91,11 @@ export class WHController {
         }
         const { id } = req.user;
         const { id: taskId } = req.params;
-        if (!id || !taskId) return res.status(404).json({ message: 'User or task not found' });
+        const { whId } = req.body;
+        if (!id || !taskId || !whId) return res.status(404).json({ message: 'User, task or working hours not found' });
         const findData = { user_id: id, task_id: taskId };
-        const updateData = { id: req.body.whId, duration_seconds: req.body.duration_seconds };
-        const wh = await whService.endTask(findData, updateData);
+        const updateData = { id: whId, duration_seconds: req.body.duration_seconds };
+        const wh = await whService.endRework(findData, updateData);
         res.status(200).json({
             status: 'success',
             data: wh,

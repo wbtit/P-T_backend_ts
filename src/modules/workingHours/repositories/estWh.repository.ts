@@ -30,12 +30,16 @@ export class EstimationWHRepository {
     });
 }
 
-    async create(userId:string,estimationTaskId:string){
+    async create(
+        userId:string,
+        estimationTaskId:string,
+        type: "WORK" | "REWORK" = "WORK"
+    ){
         const wh=await prisma.workingHours.create({
             data:{
                 user_id:userId,
                 estimationTaskId:estimationTaskId,
-                type:"WORK",
+                type,
             }
         });
         return wh;
@@ -47,17 +51,6 @@ export class EstimationWHRepository {
             data:{
                 ended_at:new Date(),
                 duration_seconds:cleanData.duration_seconds,
-            }
-        });
-        return wh;
-    }
-    async createrework(data:CreateWhDTO,userId:string,estimationTaskId:string){
-        const cleanData = cleandata(data)
-        const wh=await prisma.workingHours.create({
-            data:{
-                user_id:userId,
-                estimationTaskId:estimationTaskId,
-                type:"REWORK",
             }
         });
         return wh;
