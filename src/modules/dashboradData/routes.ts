@@ -3,6 +3,7 @@ import { asyncHandler } from "../../config/utils/asyncHandler";
 import authMiddleware from "../../middleware/authMiddleware";
 import { DashBoradData } from "./dashBoardData";
 import { clientAdminDashBoard } from "./clientAdminDashBoard";
+import { clientEstimatorDashBoard } from "./clientEstimatorDashBoard";
 import { clientDashBoard } from "./clientDashBoard";
 import { hrDashBoard } from "./hrDashBoard";
 import { departmentManagerDashBoard } from "./departmentManagerDashBoard";
@@ -20,6 +21,7 @@ const router = Router();
  */
 router.get("/", authMiddleware, asyncHandler(DashBoradData));
 router.get("/clientAdmin", authMiddleware, asyncHandler(clientAdminDashBoard));
+router.get("/clientEstimator", authMiddleware, asyncHandler(clientEstimatorDashBoard));
 router.get("/client", authMiddleware, asyncHandler(clientDashBoard));
 router.get("/hr", authMiddleware, asyncHandler(hrDashBoard));
 router.get(

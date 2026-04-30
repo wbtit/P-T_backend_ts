@@ -34,6 +34,40 @@ export const dashboradDataOpenApiDoc: ModuleOpenApiDoc = {
         }
       },
     },
+    "/dashBoardData/clientEstimator": {
+      get: {
+        tags: ["DashboardData"],
+        summary: "GET /dashBoardData/clientEstimator - RFQ data only for client estimator",
+        operationId: "get_dashboradData_dashBoardData_clientEstimator",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": {
+            description: "Success",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string" },
+                    success: { type: "boolean" },
+                    data: {
+                      type: "object",
+                      properties: {
+                        pendingRFQ: { type: "number" },
+                        totalRFQ: { type: "number" },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
     "/dashBoardData/client": {
       get: {
         tags: ["DashboardData"],
