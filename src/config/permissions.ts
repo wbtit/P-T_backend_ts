@@ -80,6 +80,10 @@ export const permissions: PermissionsConfig = {
     ...createDefaultRolePermissions(),
     // CEO can mark specific permissions here
   },
+  'CLIENT_ESTIMATOR': {
+    ...createDefaultRolePermissions(),
+    rfq: { create: true, read: true, update: true, delete: false },
+  },
   'VENDOR': {
     ...createDefaultRolePermissions(),
     // CEO can mark specific permissions here

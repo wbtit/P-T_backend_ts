@@ -380,6 +380,8 @@ model User {
   teamMeetingNotesTagged          TeamMeetingNotes[]         @relation("TeamMeetingNotesTaggedUsers")
   teamMeetingNoteResponsesCreated TeamMeetingNoteResponse[]  @relation("TeamMeetingNoteResponseCreatedBy")
   clientProjectManagers           Project[]                  @relation("clientProjectManagerProjects")
+  progressReportsCreated          ProjectProgressReport[]    @relation("progressReportCreatedBy")
+  progressReportResponseBy        ProjectProgressReportResponse[] @relation("progressReportResponseBy")
 
   @@index([email])
   @@index([phone])
@@ -791,6 +793,7 @@ model Project {
   projectBundles          ProjectBundle[]
   clentCommunications     ClientCommunication[]
   assists                 ProjectAssist[]
+  progressReports         ProjectProgressReport[]
 
   @@index([name])
   @@index([fabricatorID])
@@ -2002,4 +2005,58 @@ model SerialCounter {
 
   @@unique([scopeType, scopeId, entity])
   @@map("serial_counters")
+}
+
+enum ProjectProgressReportStatus {
+  DRAFT
+  SUBMITTED
+  REVIEWED
+  CLOSED
+}
+
+model ProjectProgressReport {
+  id        String   @id @default(uuid()) @db.Uuid
+  projectId String   @db.Uuid
+  title     String
+  message   String   @default("")
+  stage     Stage    @default(RFI)
+  files     Json     @default("[]")
+  createdById String? @db.Uuid
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  isDeleted Boolean  @default(false)
+
+  project   Project                     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdBy User?                       @relation("progressReportCreatedBy", fields: [createdById], references: [id])
+  responses ProjectProgressReportResponse[]
+
+  @@index([projectId])
+  @@index([createdById])
+  @@index([stage])
+  @@index([createdAt])
+  @@map("project_progress_reports")
+}
+
+model ProjectProgressReportResponse {
+  id               String                        @id @default(uuid()) @db.Uuid
+  reportId         String                        @db.Uuid
+  userId           String                        @db.Uuid
+  parentResponseId String?                       @db.Uuid
+  description      String                        @default("")
+  status           ProjectProgressReportStatus   @default(SUBMITTED)
+  wbtStatus        ProjectProgressReportStatus   @default(SUBMITTED)
+  files            Json                          @default("[]")
+  createdAt        DateTime                      @default(now())
+  isDeleted        Boolean                       @default(false)
+  deletedAt        DateTime?
+
+  parentResponse ProjectProgressReportResponse?  @relation("ProgressReportParentChild", fields: [parentResponseId], references: [id])
+  childResponses ProjectProgressReportResponse[] @relation("ProgressReportParentChild")
+  report         ProjectProgressReport           @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  user           User                            @relation("progressReportResponseBy", fields: [userId], references: [id])
+
+  @@index([reportId])
+  @@index([userId])
+  @@index([parentResponseId])
+  @@map("project_progress_report_responses")
 }

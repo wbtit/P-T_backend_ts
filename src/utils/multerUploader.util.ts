@@ -522,6 +522,12 @@ export const designUploads = createStreamUploader(path.join(UPLOAD_BASE_DIR, "de
 export const designDrawingResponseDataMap: Record<string, FileMeta> = {};
 export const designResponseUploads = createStreamUploader(path.join(UPLOAD_BASE_DIR, "designdrawingresponse"), designDrawingResponseDataMap, SIZE_LIMITS.ZIP);
 
+export const projectProgressReportDataMap: Record<string, FileMeta> = {};
+export const projectProgressReportUploads = createStreamUploader(path.join(UPLOAD_BASE_DIR, "projectprogressreport"), projectProgressReportDataMap, SIZE_LIMITS.ZIP);
+
+export const projectProgressReportResponseDataMap: Record<string, FileMeta> = {};
+export const projectProgressReportResponseUploads = createStreamUploader(path.join(UPLOAD_BASE_DIR, "projectprogressreportresponse"), projectProgressReportResponseDataMap, SIZE_LIMITS.ZIP);
+
 export const connectionDesignerDataMap: Record<string, FileMeta> = {}
 export const connectionDesignerUploads = createStreamUploader(path.join(UPLOAD_BASE_DIR, "connectiondesigners"), connectionDesignerDataMap, SIZE_LIMITS.ZIP);
 

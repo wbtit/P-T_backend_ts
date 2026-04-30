@@ -33,6 +33,7 @@ import { shareLinkRouter } from "./route";
 import { designDrawingsRoutes } from "./modules/designDrawings";
 import { meetingRoutes } from "./modules/meetings";
 import { teamMeetingNotesRoutes } from "./modules/teamMeetingNotes";
+import { default as ProjectProgressReportRoutes } from "./modules/projectProgressReport/routes";
 
 const routes = express.Router();
 
@@ -70,5 +71,6 @@ routes.use("/share",shareLinkRouter)
 routes.use("/designDrawings", designDrawingsRoutes);
 routes.use("/meetings", meetingRoutes);
 routes.use("/teamMeetingNotes", teamMeetingNotesRoutes);
+routes.use("/projectProgressReport", ProjectProgressReportRoutes);
 
 export default routes

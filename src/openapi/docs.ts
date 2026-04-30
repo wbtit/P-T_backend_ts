@@ -16,6 +16,7 @@ import meetings_doc from "../modules/meetings/openapi.doc";
 import milestone_doc from "../modules/milestone/openapi.doc";
 import notifications_doc from "../modules/notifications/openapi.doc";
 import project_doc from "../modules/project/openapi.doc";
+import projectProgressReport_doc from "../modules/projectProgressReport/openapi.doc";
 import RFI_doc from "../modules/RFI/openapi.doc";
 import RFQ_doc from "../modules/RFQ/openapi.doc";
 import scores_doc from "../modules/scores/openapi.doc";
@@ -48,6 +49,7 @@ const moduleDocs: ModuleOpenApiDoc[] = [
   milestone_doc,
   notifications_doc,
   project_doc,
+  projectProgressReport_doc,
   RFI_doc,
   RFQ_doc,
   scores_doc,

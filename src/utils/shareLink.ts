@@ -38,6 +38,10 @@ const MODEL_MAP: Record<string, string> = {
   estimationresponse:"estimationResponse",
   teamMeetingNotes:"teamMeetingNotes",
   teamMeetingNotesResponse:"teamMeetingNotesResponse",
+  projectProgressReport: "projectProgressReport",
+  projectProgressReportResponse: "projectProgressReportResponse",
+  projectprogressreport: "projectProgressReport",
+  projectprogressreportresponse: "projectProgressReportResponse",
 };
 
 const createShareLink = async (req: Request, res: Response) => {

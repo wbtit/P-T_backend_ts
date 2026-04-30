@@ -6,8 +6,9 @@ interface UserJwt extends JwtPayload{
     connectionDesignerId?: string | null;
     departmentId?: string | null;
     role: 'STAFF'|
-          'CLIENT'|
-          'VENDOR'|
+           'CLIENT'|
+           'CLIENT_ESTIMATOR'|
+           'VENDOR'|
           'ADMIN'|
           'SYSTEM_ADMIN'|
           'CLIENT_ADMIN'|
