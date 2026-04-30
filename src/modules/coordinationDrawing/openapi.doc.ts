@@ -1,5 +1,119 @@
 import { ModuleOpenApiDoc } from "../../openapi/types";
 
+const coordinationDrawingRequestBody = {
+  required: true,
+  content: {
+    "multipart/form-data": {
+      schema: {
+        type: "object",
+        required: ["projectId", "title", "message"],
+        properties: {
+          projectId: {
+            type: "string",
+            format: "uuid",
+            description: "Project ID this coordination drawing belongs to",
+          },
+          title: {
+            type: "string",
+            minLength: 1,
+            maxLength: 255,
+          },
+          message: {
+            type: "string",
+            minLength: 1,
+          },
+          stage: {
+            type: "string",
+            description: "Optional project stage enum value",
+            example: "RFI",
+          },
+          files: {
+            type: "array",
+            description: "Optional uploaded files. Send as form-data field name `files`.",
+            items: { type: "string", format: "binary" },
+          },
+        },
+      },
+    },
+    "application/json": {
+      schema: {
+        type: "object",
+        required: ["projectId", "title", "message"],
+        properties: {
+          projectId: { type: "string", format: "uuid" },
+          title: { type: "string", minLength: 1, maxLength: 255 },
+          message: { type: "string", minLength: 1 },
+          stage: { type: "string", example: "RFI" },
+        },
+      },
+    },
+  },
+};
+
+const coordinationDrawingResponseRequestBody = {
+  required: true,
+  content: {
+    "multipart/form-data": {
+      schema: {
+        type: "object",
+        required: ["drawingId", "description"],
+        properties: {
+          drawingId: {
+            type: "string",
+            format: "uuid",
+            description: "Coordination drawing ID being responded to",
+          },
+          parentResponseId: {
+            type: "string",
+            format: "uuid",
+            description: "Optional parent response ID for threaded replies",
+          },
+          description: {
+            type: "string",
+            minLength: 1,
+          },
+          status: {
+            type: "string",
+            enum: ["DRAFT", "SUBMITTED", "REVIEWED", "CLOSED"],
+            default: "SUBMITTED",
+          },
+          wbtStatus: {
+            type: "string",
+            enum: ["DRAFT", "SUBMITTED", "REVIEWED", "CLOSED"],
+            default: "SUBMITTED",
+          },
+          files: {
+            type: "array",
+            description: "Optional uploaded files. Send as form-data field name `files`.",
+            items: { type: "string", format: "binary" },
+          },
+        },
+      },
+    },
+    "application/json": {
+      schema: {
+        type: "object",
+        required: ["drawingId", "description"],
+        properties: {
+          drawingId: { type: "string", format: "uuid" },
+          parentResponseId: { type: "string", format: "uuid" },
+          description: { type: "string", minLength: 1 },
+          status: {
+            type: "string",
+            enum: ["DRAFT", "SUBMITTED", "REVIEWED", "CLOSED"],
+            default: "SUBMITTED",
+          },
+          wbtStatus: {
+            type: "string",
+            enum: ["DRAFT", "SUBMITTED", "REVIEWED", "CLOSED"],
+            default: "SUBMITTED",
+          },
+        },
+      },
+    },
+  },
+};
+
 export const coordinationDrawingOpenApiDoc: ModuleOpenApiDoc = {
   tag: {
     name: "CoordinationDrawing",
@@ -12,6 +126,7 @@ export const coordinationDrawingOpenApiDoc: ModuleOpenApiDoc = {
         summary: "Create a new coordination drawing",
         operationId: "post_coordinationDrawing",
         security: [{ bearerAuth: [] }],
+        requestBody: coordinationDrawingRequestBody,
         responses: {
           "201": { description: "Created" },
           "400": { description: "Bad Request" },
@@ -94,6 +209,7 @@ export const coordinationDrawingOpenApiDoc: ModuleOpenApiDoc = {
         summary: "Create a response to a coordination drawing",
         operationId: "post_coordinationDrawing_response",
         security: [{ bearerAuth: [] }],
+        requestBody: coordinationDrawingResponseRequestBody,
         responses: {
           "201": { description: "Created" },
           "400": { description: "Bad Request" },
