@@ -6,6 +6,7 @@ import CO_doc from "../modules/CO/openapi.doc";
 import comments_doc from "../modules/comments/openapi.doc";
 import communications_doc from "../modules/communications/openapi.doc";
 import connectionDesign_doc from "../modules/connectionDesign/openapi.doc";
+import coordinationDrawing_doc from "../modules/coordinationDrawing/openapi.doc";
 import dashboradData_doc from "../modules/dashboradData/openapi.doc";
 import department_doc from "../modules/department/openapi.doc";
 import designDrawings_doc from "../modules/designDrawings/openapi.doc";
@@ -39,6 +40,7 @@ const moduleDocs: ModuleOpenApiDoc[] = [
   comments_doc,
   communications_doc,
   connectionDesign_doc,
+  coordinationDrawing_doc,
   dashboradData_doc,
   department_doc,
   designDrawings_doc,

@@ -350,38 +350,40 @@ model User {
   multipleSubmittalsReceived   Submittals[]  @relation("SubmittalMultipleRecipients")
   multipleChangeOrdersReceived ChangeOrder[] @relation("ChangeOrderMultipleRecipients")
 
-  meetingsCreated                 Meeting[]                  @relation("MeetingCreatedBy")
-  meetingAttendee                 MeetingAttendee[]          @relation("MeetingAttendeeUser")
-  designDrawnBy                   DesignDrawings[]           @relation("designdrawingsuser")
-  designDrwingRespondedBy         DesignDrawingsResponses[]  @relation("designdrawingsresponseuser")
-  groupadmin                      Group[]                    @relation("groupAdmin")
-  groupmembers                    GroupUser[]                @relation("groupMembers")
-  messageReceivedBy               Message[]                  @relation("messageReceivedBy")
-  messageSentBy                   Message[]                  @relation("messageSentBy")
-  taggedUsers                     Message[]                  @relation("TaggedUsers")
-  invoicePointOfContact           Invoice[]                  @relation("invoicePointOfContact")
-  invoiceCreatedBy                Invoice[]                  @relation("invoiceCreatedBy")
-  FabricatorPointOfContacts       Fabricator[]               @relation("FabricatorPointOfContacts")
-  wbtFabricatorPointOfContact     Fabricator[]               @relation("wbtFabricatorPointOfContacts")
-  taskCreatedByUser               Task[]                     @relation("taskCreatedByUser")
-  ManagerEstimationScore          ManagerEstimationScore[]   @relation("ManagerEstimationScore")
-  managerbias                     ManagerBiasRecord[]        @relation("managerbias")
-  employeeperformance             EmployeePerformanceScore[] @relation("employeeperformance")
+  meetingsCreated                 Meeting[]                       @relation("MeetingCreatedBy")
+  meetingAttendee                 MeetingAttendee[]               @relation("MeetingAttendeeUser")
+  designDrawnBy                   DesignDrawings[]                @relation("designdrawingsuser")
+  designDrwingRespondedBy         DesignDrawingsResponses[]       @relation("designdrawingsresponseuser")
+  groupadmin                      Group[]                         @relation("groupAdmin")
+  groupmembers                    GroupUser[]                     @relation("groupMembers")
+  messageReceivedBy               Message[]                       @relation("messageReceivedBy")
+  messageSentBy                   Message[]                       @relation("messageSentBy")
+  taggedUsers                     Message[]                       @relation("TaggedUsers")
+  invoicePointOfContact           Invoice[]                       @relation("invoicePointOfContact")
+  invoiceCreatedBy                Invoice[]                       @relation("invoiceCreatedBy")
+  FabricatorPointOfContacts       Fabricator[]                    @relation("FabricatorPointOfContacts")
+  wbtFabricatorPointOfContact     Fabricator[]                    @relation("wbtFabricatorPointOfContacts")
+  taskCreatedByUser               Task[]                          @relation("taskCreatedByUser")
+  ManagerEstimationScore          ManagerEstimationScore[]        @relation("ManagerEstimationScore")
+  managerbias                     ManagerBiasRecord[]             @relation("managerbias")
+  employeeperformance             EmployeePerformanceScore[]      @relation("employeeperformance")
   clientCommunicatedBy            ClientCommunication[]
   submittalVersiondoneBy          SubmittalVersion[]
   changeOrderVersionCreatedBy     ChangeOrderVersion[]
   projectBundleSelections         ProjectBundleSelection[]
-  connectionEngineersRFQs         RFQ[]                      @relation("RFQ_connectionEngineers")
-  milestoneResponseUser           MileStoneResponse[]        @relation("milestoneResponseUser")
-  estimationResponseBy            EstimationResponse[]       @relation("estimationResponseBy")
-  projectAssistMemberships        ProjectAssist[]            @relation("ProjectAssistUser")
-  assignedProjectAssists          ProjectAssist[]            @relation("ProjectAssistAssignedBy")
-  teamMeetingNotesCreated         TeamMeetingNotes[]         @relation("TeamMeetingNotesCreatedBy")
-  teamMeetingNotesTagged          TeamMeetingNotes[]         @relation("TeamMeetingNotesTaggedUsers")
-  teamMeetingNoteResponsesCreated TeamMeetingNoteResponse[]  @relation("TeamMeetingNoteResponseCreatedBy")
-  clientProjectManagers           Project[]                  @relation("clientProjectManagerProjects")
-  progressReportsCreated          ProjectProgressReport[]    @relation("progressReportCreatedBy")
+  connectionEngineersRFQs         RFQ[]                           @relation("RFQ_connectionEngineers")
+  milestoneResponseUser           MileStoneResponse[]             @relation("milestoneResponseUser")
+  estimationResponseBy            EstimationResponse[]            @relation("estimationResponseBy")
+  projectAssistMemberships        ProjectAssist[]                 @relation("ProjectAssistUser")
+  assignedProjectAssists          ProjectAssist[]                 @relation("ProjectAssistAssignedBy")
+  teamMeetingNotesCreated         TeamMeetingNotes[]              @relation("TeamMeetingNotesCreatedBy")
+  teamMeetingNotesTagged          TeamMeetingNotes[]              @relation("TeamMeetingNotesTaggedUsers")
+  teamMeetingNoteResponsesCreated TeamMeetingNoteResponse[]       @relation("TeamMeetingNoteResponseCreatedBy")
+  clientProjectManagers           Project[]                       @relation("clientProjectManagerProjects")
+  progressReportsCreated          ProjectProgressReport[]         @relation("progressReportCreatedBy")
   progressReportResponseBy        ProjectProgressReportResponse[] @relation("progressReportResponseBy")
+  coordinationDrawingsCreated     CoordinationDrawing[]           @relation("coordinationDrawingCreatedBy")
+  coordinationDrawingResponseBy   CoordinationDrawingResponse[]   @relation("coordinationDrawingResponseBy")
 
   @@index([email])
   @@index([phone])
@@ -794,6 +796,7 @@ model Project {
   clentCommunications     ClientCommunication[]
   assists                 ProjectAssist[]
   progressReports         ProjectProgressReport[]
+  coordinationDrawings    CoordinationDrawing[]
 
   @@index([name])
   @@index([fabricatorID])
@@ -2015,19 +2018,19 @@ enum ProjectProgressReportStatus {
 }
 
 model ProjectProgressReport {
-  id        String   @id @default(uuid()) @db.Uuid
-  projectId String   @db.Uuid
-  title     String
-  message   String   @default("")
-  stage     Stage    @default(RFI)
-  files     Json     @default("[]")
-  createdById String? @db.Uuid
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  isDeleted Boolean  @default(false)
+  id          String   @id @default(uuid()) @db.Uuid
+  projectId   String   @db.Uuid
+  title       String
+  message     String   @default("")
+  stage       Stage    @default(RFI)
+  files       Json     @default("[]")
+  createdById String?  @db.Uuid
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  isDeleted   Boolean  @default(false)
 
-  project   Project                     @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  createdBy User?                       @relation("progressReportCreatedBy", fields: [createdById], references: [id])
+  project   Project                         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdBy User?                           @relation("progressReportCreatedBy", fields: [createdById], references: [id])
   responses ProjectProgressReportResponse[]
 
   @@index([projectId])
@@ -2038,16 +2041,16 @@ model ProjectProgressReport {
 }
 
 model ProjectProgressReportResponse {
-  id               String                        @id @default(uuid()) @db.Uuid
-  reportId         String                        @db.Uuid
-  userId           String                        @db.Uuid
-  parentResponseId String?                       @db.Uuid
-  description      String                        @default("")
-  status           ProjectProgressReportStatus   @default(SUBMITTED)
-  wbtStatus        ProjectProgressReportStatus   @default(SUBMITTED)
-  files            Json                          @default("[]")
-  createdAt        DateTime                      @default(now())
-  isDeleted        Boolean                       @default(false)
+  id               String                      @id @default(uuid()) @db.Uuid
+  reportId         String                      @db.Uuid
+  userId           String                      @db.Uuid
+  parentResponseId String?                     @db.Uuid
+  description      String                      @default("")
+  status           ProjectProgressReportStatus @default(SUBMITTED)
+  wbtStatus        ProjectProgressReportStatus @default(SUBMITTED)
+  files            Json                        @default("[]")
+  createdAt        DateTime                    @default(now())
+  isDeleted        Boolean                     @default(false)
   deletedAt        DateTime?
 
   parentResponse ProjectProgressReportResponse?  @relation("ProgressReportParentChild", fields: [parentResponseId], references: [id])
@@ -2059,4 +2062,58 @@ model ProjectProgressReportResponse {
   @@index([userId])
   @@index([parentResponseId])
   @@map("project_progress_report_responses")
+}
+
+enum CoordinationDrawingStatus {
+  DRAFT
+  SUBMITTED
+  REVIEWED
+  CLOSED
+}
+
+model CoordinationDrawing {
+  id          String   @id @default(uuid()) @db.Uuid
+  projectId   String   @db.Uuid
+  title       String
+  message     String   @default("")
+  stage       Stage    @default(RFI)
+  files       Json     @default("[]")
+  createdById String?  @db.Uuid
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  isDeleted   Boolean  @default(false)
+
+  project   Project                       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdBy User?                         @relation("coordinationDrawingCreatedBy", fields: [createdById], references: [id])
+  responses CoordinationDrawingResponse[]
+
+  @@index([projectId])
+  @@index([createdById])
+  @@index([stage])
+  @@index([createdAt])
+  @@map("coordination_drawings")
+}
+
+model CoordinationDrawingResponse {
+  id               String                    @id @default(uuid()) @db.Uuid
+  drawingId        String                    @db.Uuid
+  userId           String                    @db.Uuid
+  parentResponseId String?                   @db.Uuid
+  description      String                    @default("")
+  status           CoordinationDrawingStatus @default(SUBMITTED)
+  wbtStatus        CoordinationDrawingStatus @default(SUBMITTED)
+  files            Json                      @default("[]")
+  createdAt        DateTime                  @default(now())
+  isDeleted        Boolean                   @default(false)
+  deletedAt        DateTime?
+
+  parentResponse CoordinationDrawingResponse?  @relation("CoordinationDrawingParentChild", fields: [parentResponseId], references: [id])
+  childResponses CoordinationDrawingResponse[] @relation("CoordinationDrawingParentChild")
+  drawing        CoordinationDrawing           @relation(fields: [drawingId], references: [id], onDelete: Cascade)
+  user           User                          @relation("coordinationDrawingResponseBy", fields: [userId], references: [id])
+
+  @@index([drawingId])
+  @@index([userId])
+  @@index([parentResponseId])
+  @@map("coordination_drawing_responses")
 }

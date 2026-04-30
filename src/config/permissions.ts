@@ -43,7 +43,9 @@ const entities = [
   'vendors',
   'vendorQuota',
   'share',
-  'designDrawings'
+  'designDrawings',
+  'projectProgressReport',
+  'coordinationDrawing'
 ];
 
 // Default permissions: all false, CEO can mark true as needed

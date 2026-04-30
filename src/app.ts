@@ -34,6 +34,7 @@ import { designDrawingsRoutes } from "./modules/designDrawings";
 import { meetingRoutes } from "./modules/meetings";
 import { teamMeetingNotesRoutes } from "./modules/teamMeetingNotes";
 import { default as ProjectProgressReportRoutes } from "./modules/projectProgressReport/routes";
+import { default as CoordinationDrawingRoutes } from "./modules/coordinationDrawing/routes";
 
 const routes = express.Router();
 
@@ -72,5 +73,6 @@ routes.use("/designDrawings", designDrawingsRoutes);
 routes.use("/meetings", meetingRoutes);
 routes.use("/teamMeetingNotes", teamMeetingNotesRoutes);
 routes.use("/projectProgressReport", ProjectProgressReportRoutes);
+routes.use("/coordinationDrawing", CoordinationDrawingRoutes);
 
 export default routes
