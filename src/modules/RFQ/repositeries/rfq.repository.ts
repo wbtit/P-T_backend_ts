@@ -25,6 +25,28 @@ const RFQ_RESPONSES_INCLUDE = {
   },
 } as const;
 
+const RFQ_LIST_INCLUDE = {
+  sender: true,
+  recipient: true,
+  multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
+  salesPerson: true,
+  responses: RFQ_RESPONSES_INCLUDE,
+  fabricator: true,
+  project: { select: { name: true } },
+  connectionEngineers: { select: { firstName: true, lastName: true, id: true } },
+  connectionDesignerRFQ: {
+    include: {
+      CDEngineers: true,
+      CDQuotations: true,
+    },
+  },
+  CDQuotas: {
+    include: {
+      connectionDesigner: { select: { name: true } },
+    },
+  },
+} as const;
+
 export class RFQRepository {
     async create(data: CreateRfqPersistInput) {
       return this.createWithTx(prisma, data);
@@ -379,6 +401,35 @@ export class RFQRepository {
                     }
                 },
             }
+        });
+    }
+
+    async findFabricatorIdsForUser(userId: string) {
+        const fabricators = await prisma.fabricator.findMany({
+            where: {
+                isDeleted: false,
+                OR: [
+                    { createdById: userId },
+                    { pointOfContact: { some: { id: userId } } },
+                    { wbtFabricatorPointOfContact: { some: { id: userId } } },
+                ],
+            },
+            select: { id: true },
+        });
+
+        return fabricators.map((fabricator) => fabricator.id);
+    }
+
+    async findByFabricatorIds(fabricatorIds: string[]) {
+        if (fabricatorIds.length === 0) return [];
+
+        return await prisma.rFQ.findMany({
+            where: {
+                fabricatorId: { in: fabricatorIds },
+                isDeleted: false,
+            },
+            include: RFQ_LIST_INCLUDE,
+            orderBy: { createdAt: "desc" },
         });
     }
 

@@ -139,6 +139,16 @@ export class RFQService {
         return await rfqrepo.findByProject(projectId);
     }
 
+    async findByLoggedInUserFabricators(userId: string) {
+        const fabricatorIds = await rfqrepo.findFabricatorIdsForUser(userId);
+        const rfqs = await rfqrepo.findByFabricatorIds(fabricatorIds);
+
+        return {
+            fabricatorIds,
+            rfqs,
+        };
+    }
+
     async getClientSidePendingRFQs() {
         return await rfqrepo.findClientSidePendingRFQs();
     }

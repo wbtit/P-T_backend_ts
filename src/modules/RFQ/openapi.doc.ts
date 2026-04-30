@@ -109,6 +109,22 @@ export const rFQOpenApiDoc: ModuleOpenApiDoc = {
         }
       },
     },
+    "/rfq/fabricators/me": {
+      get: {
+        tags: ["RFQ"],
+        summary: "GET /rfq/fabricators/me - Get RFQs for logged-in user's fabricators",
+        description: "Returns RFQs whose fabricator is linked to the authenticated user as creator, point of contact, or WBT fabricator point of contact.",
+        operationId: "get_RFQ_rfq_fabricators_me",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": {
+            description: "Success",
+          },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
     "/rfq/delete/{id}": {
       delete: {
         tags: ["RFQ"],

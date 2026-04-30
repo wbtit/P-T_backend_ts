@@ -292,6 +292,18 @@ export class RFQController {
             data: rfqs,
         });
     }
+    async handleFindByLoggedInUserFabricators(req: AuthenticateRequest, res: Response) {
+        if (!req.user) {
+            throw new AppError('User not found', 404);
+        }
+
+        const result = await rfqService.findByLoggedInUserFabricators(req.user.id);
+        res.status(200).json({
+            status: 'success',
+            data: result.rfqs,
+            fabricatorIds: result.fabricatorIds,
+        });
+    }
     async handleCloseRfq(req:AuthenticateRequest,res:Response){
         const {id}=req.params
         const rfq = await rfqService.closeRfq(id);

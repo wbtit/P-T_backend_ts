@@ -132,6 +132,11 @@ router.get(
     rfqController.handleFindByProject.bind(rfqController)
 );
 router.get(
+    "/fabricators/me",
+    authMiddleware,
+    rfqController.handleFindByLoggedInUserFabricators.bind(rfqController)
+);
+router.get(
     "/:rfqId/files/:fileId",
     authMiddleware,
     validate({params:z.object({rfqId:z.string(),fileId:z.string()})}),
