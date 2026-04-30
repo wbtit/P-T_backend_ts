@@ -145,6 +145,31 @@ export class InvoiceController {
     }
   }
 
+  async handleGetInvoicesByLoggedInUserFabricators(req: AuthenticateRequest, res: Response) {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        throw new AppError("User ID is missing", 400);
+      }
+
+      const result = await invoiceService.getInvoicesByLoggedInUserFabricators(userId);
+
+      return res.status(200).json({
+        message: "Invoices for logged-in user's fabricators fetched successfully",
+        success: true,
+        data: result.invoices,
+        fabricatorIds: result.fabricatorIds,
+      });
+    } catch (error: any) {
+      console.error("Get Invoices By Logged In User Fabricators Error:", error);
+      return res.status(error.statusCode || 500).json({
+        message: error.message || "Failed to fetch invoices by logged-in user fabricators",
+        success: false,
+        data: null,
+      });
+    }
+  }
+
   // ---------------------------------------------------------------------------
   // Update Invoice
   // ---------------------------------------------------------------------------

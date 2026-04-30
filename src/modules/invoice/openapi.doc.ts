@@ -139,6 +139,20 @@ export const invoiceOpenApiDoc: ModuleOpenApiDoc = {
         }
       },
     },
+    "/invoice/fabricators/me": {
+      get: {
+        tags: ["Invoice"],
+        summary: "Get invoices for logged-in fabricator",
+        description: "Retrieves a list of invoices for the currently authenticated fabricator.",
+        operationId: "get_invoice_invoice_fabricators_me",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": { description: "Successfully retrieved invoices for fabricator" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
     "/invoice/create": {
       post: {
         tags: ["Invoice"],

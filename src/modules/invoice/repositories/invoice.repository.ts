@@ -4,6 +4,29 @@ import {createInvoceData,updateInvoiceData} from "../dtos/invoice.dto"
 import { generateProjectScopedSerial, SERIAL_PREFIX } from "../../../utils/serial.util";
 import { AppError } from "../../../config/utils/AppError";
 
+const INVOICE_LIST_INCLUDE = {
+    invoiceItems: true,
+    pointOfContact: true,
+    rfq: true,
+    changeOrder: true,
+    fabricator: {
+        select: {
+            id: true,
+            fabName: true,
+            accountId: true,
+            bankAccount: true,
+        },
+    },
+    project: {
+        select: {
+            id: true,
+            name: true,
+            projectCode: true,
+            projectNumber: true,
+        },
+    },
+} as const;
+
 export class Invoicerepository{
     async createInvoice(data:createInvoceData,userId:string){
         return  await prisma.$transaction(async (tx) => {
@@ -71,6 +94,35 @@ export class Invoicerepository{
        include: { invoiceItems: true,pointOfContact:true, rfq: true, changeOrder: true},
      })
     }
+
+    async findFabricatorIdsForUser(userId: string) {
+        const fabricators = await prisma.fabricator.findMany({
+            where: {
+                isDeleted: false,
+                OR: [
+                    { createdById: userId },
+                    { pointOfContact: { some: { id: userId } } },
+                    { wbtFabricatorPointOfContact: { some: { id: userId } } },
+                ],
+            },
+            select: { id: true },
+        });
+
+        return fabricators.map((fabricator) => fabricator.id);
+    }
+
+    async findByFabricatorIds(fabricatorIds: string[]) {
+        if (fabricatorIds.length === 0) return [];
+
+        return await prisma.invoice.findMany({
+            where: {
+                fabricatorId: { in: fabricatorIds },
+            },
+            include: INVOICE_LIST_INCLUDE,
+            orderBy: { createdAt: "desc" },
+        });
+    }
+
     async getById(id:string){
         return await prisma.invoice.findUnique({
       where: { id },

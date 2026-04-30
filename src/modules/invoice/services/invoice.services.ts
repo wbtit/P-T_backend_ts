@@ -64,6 +64,20 @@ export class InvoiceService {
     return invoices;
   }
 
+  async getInvoicesByLoggedInUserFabricators(userId: string) {
+    if (!userId) {
+      throw new AppError("User ID is required", 400);
+    }
+
+    const fabricatorIds = await invoiceRepo.findFabricatorIdsForUser(userId);
+    const invoices = await invoiceRepo.findByFabricatorIds(fabricatorIds);
+
+    return {
+      fabricatorIds,
+      invoices,
+    };
+  }
+
   // ---------------------------------------------------------------------------
   // Get Invoice by ID
   // ---------------------------------------------------------------------------
