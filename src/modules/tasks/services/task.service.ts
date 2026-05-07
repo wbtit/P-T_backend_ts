@@ -126,12 +126,12 @@ export class TaskService {
     const tasks = await this.taskRepository.findTasksByProjectManagerId(projectManagerId);
     return tasks;
   }
-  async updateTask(id: string, data: updateTaskInput) {
+  async updateTask(id: string, data: updateTaskInput, updatedBy: string) {
     const existingTask = await this.taskRepository.findById(id);
     if (!existingTask) {
       throw new AppError("Task not found", 404);
     }
-    const updatedTask = await this.taskRepository.update(id, data);
+    const updatedTask = await this.taskRepository.update(id, data, updatedBy);
     if (data.status) {
     const updStatus = data.status;
     const updTaskId = updatedTask.id;

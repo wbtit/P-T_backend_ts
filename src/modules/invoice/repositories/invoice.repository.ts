@@ -127,8 +127,15 @@ export class Invoicerepository{
         return await prisma.invoice.findUnique({
       where: { id },
       include: { invoiceItems: true, pointOfContact:true, rfq: true, changeOrder: true,
+        project:{select:{
+          id:true,
+          name:true,
+          projectCode:true,
+          projectNumber:true
+        }},
         fabricator:{select:{
           accountId:true,
+          fabName:true,
           bankAccount:true,
         }
         }

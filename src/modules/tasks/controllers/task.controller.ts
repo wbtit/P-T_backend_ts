@@ -38,9 +38,12 @@ export class TaskController {
             data: tasks,
         });
     }
-    async updateTask(req:Request, res: Response) {
+    async updateTask(req:AuthenticateRequest, res: Response) {
+        if (!req.user) {
+            throw new AppError('User not found', 404);
+        }
         const { id } = req.params;
-        const task = await taskService.updateTask(id, req.body);
+        const task = await taskService.updateTask(id, req.body, req.user.id);
         res.status(200).json({
             status: 'success',
             data: task,

@@ -1,4 +1,7 @@
 export const rfqhtmlContent = (newrfq: any) => {
+  const projectName = newrfq.project?.name || newrfq.projectName || "N/A";
+  const headerProjectName = projectName === "N/A" ? "PROJECT NAME" : projectName.toUpperCase();
+
   // Build greeting from all recipients
   const allRecipients: { firstName?: string; lastName?: string; username?: string }[] = [
     ...(newrfq.multipleRecipients || []),
@@ -62,7 +65,7 @@ export const rfqhtmlContent = (newrfq: any) => {
                     <img src="https://res.cloudinary.com/dp7yxzrgw/image/upload/v1753685727/logos/whiteboardtec-logo_oztrhh.png" alt="Whiteboard Logo" width="170" border="0" style="display: block; width: 150px; max-width: 150px;" />
                   </td>
                   <td class="project-name-container" width="70%" style="padding: 10px; color: #888888; font-weight: 600; font-size: 18px; text-align: left;">
-                    Project Name: ${newrfq.project?.name?.toUpperCase() || "PROJECT NAME"}
+                    Project Name: ${headerProjectName}
                   </td>
                 </tr>
               </table>
@@ -82,7 +85,7 @@ export const rfqhtmlContent = (newrfq: any) => {
                 </tr>
                 <tr>
                   <td width="140" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #888888; font-weight: bold; font-size: 14px;">Project</td>
-                  <td valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333;">${newrfq.project?.name || "N/A"}</td>
+                  <td valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333;">${projectName}</td>
                 </tr>
                 <tr>
                   <td width="140" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #888888; font-weight: bold; font-size: 14px;">Subject</td>

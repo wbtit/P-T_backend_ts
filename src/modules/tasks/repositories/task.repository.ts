@@ -284,7 +284,7 @@ export class TaskRepository {
         return tasks;
     }
 
-    async update(id: string, data: updateTaskInput) {
+    async update(id: string, data: updateTaskInput, updatedBy: string) {
         return await prisma.$transaction(async (tx) => {
             const task = await tx.task.update({
                 where: { id },
@@ -308,12 +308,16 @@ export class TaskRepository {
 
             // Only update allocation hours if duration is explicitly provided
             if (data.duration !== undefined) {
-                await tx.taskAllocation.create({
-                    data: {
+                await tx.taskAllocation.upsert({
+                    where: { taskId: task.id },
+                    update: {
+                        allocatedHours: data.duration,
+                    },
+                    create: {
                         taskId: task.id,
                         allocatedHours: data.duration,
-                        createdBy: data.user_id??""
-                    }
+                        createdBy: updatedBy,
+                    },
                 });
             }
             // Otherwise, keep existing allocation hours unchanged
