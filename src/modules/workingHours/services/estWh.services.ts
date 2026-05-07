@@ -2,22 +2,43 @@ import { EstimationWHRepository } from "../repositories";
 import { FindWhDTO, CreateWhDTO, UpdateWhDTO, FindManyDTO } from "../dtos/wh.dto";
 import prisma from "../../../config/database/client";
 import { secondsBetween } from "../utils/calculateSecs";
-import { EstimationTaskRepository } from "../../estimation/estimationTask/repositories/estTask.repository";
+import { AppError } from "../../../config/utils/AppError";
 
 const whRepository = new EstimationWHRepository();
-const estTaskRepository = new EstimationTaskRepository();
 
 export class EstWHService {
+    private async ensureUserCanWorkOnTask(estimationTaskId: string, userId: string) {
+        const [user, task] = await Promise.all([
+            prisma.user.findUnique({
+                where: { id: userId },
+                select: { id: true },
+            }),
+            prisma.estimationTask.findUnique({
+                where: { id: estimationTaskId },
+                select: { id: true, assignedToId: true },
+            }),
+        ]);
+
+        if (!user) {
+            throw new AppError("Authenticated user not found. Please login again.", 401);
+        }
+
+        if (!task) {
+            throw new AppError("Estimation task not found.", 404);
+        }
+
+        if (task.assignedToId !== userId) {
+            throw new AppError("This estimation task is not assigned to the logged-in user.", 403);
+        }
+
+        return task;
+    }
 
     // -------------------------
     // START TASK
     // -------------------------
     async startTask(findData: FindWhDTO,estimationTaskId:string,userId:string) {
-        // Validate that the estimation task exists
-        const task = await estTaskRepository.getById(estimationTaskId);
-        if (!task) {
-            throw new Error("Estimation task not found.");
-        }
+        await this.ensureUserCanWorkOnTask(estimationTaskId, userId);
 
         const active = await whRepository.findFirst(findData);
         if (active) {
@@ -65,11 +86,7 @@ export class EstWHService {
     // RESUME TASK
     // -------------------------
     async resumeTask(findData: FindWhDTO,estimationTaskId:string,userId:string) {
-        // Validate that the estimation task exists
-        const task = await estTaskRepository.getById(estimationTaskId);
-        if (!task) {
-            throw new Error("Estimation task not found.");
-        }
+        await this.ensureUserCanWorkOnTask(estimationTaskId, userId);
 
         const active = await whRepository.findFirst(findData);
         if (active) throw new Error("You already have an active session. Please pause/end it first.");
@@ -115,11 +132,7 @@ export class EstWHService {
     // START REWORK
     // -------------------------
     async startRework(findData: FindWhDTO,estimationTaskId:string,userId:string) {
-        // Validate that the estimation task exists
-        const task = await estTaskRepository.getById(estimationTaskId);
-        if (!task) {
-            throw new Error("Estimation task not found.");
-        }
+        await this.ensureUserCanWorkOnTask(estimationTaskId, userId);
 
         const active = await whRepository.findFirst(findData);
 
