@@ -33,12 +33,8 @@ export class EstimationTaskController {
     }
 
     async handleGetAllEstimationTasks(req: AuthenticateRequest, res: Response) {
-        if (!req.user || req.user.role !== "ADMIN") {
-            throw new AppError("Access denied", 403);
-        }
 
         const tasks = await estimationTaskService.getAllTasks();
-
         res.status(200).json({
             status: "success",
             data: tasks,
