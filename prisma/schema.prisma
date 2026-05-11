@@ -1403,6 +1403,9 @@ model EstimationLineItem {
   quantity    Float?
   type        String                   @default("")
   hoursPerQty Float?
+  totalDays   Int?
+  fabricationPercentage Float?
+  withfabricationTotalHours Float?
   totalHours  Float?
   weeks       Float?
   createdAt   DateTime                 @default(now())
