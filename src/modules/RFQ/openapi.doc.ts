@@ -18,8 +18,18 @@ const rfqMultipartRequestBody = (schema: typeof CreateRfqSchema | typeof UpdateR
           bidPrice: { type: "string" },
           fabricatorId: { type: "string" },
           senderId: { type: "string" },
-          MTOManual: { oneOf: [{ type: "boolean" }, { type: "string" }] },
-          MTOStickModel: { type: "string" },
+          MTOManual: {
+            oneOf: [{ type: "boolean" }, { type: "string" }],
+            description: "Whether the RFQ uses a manual MTO value.",
+          },
+          MTOManualValue: {
+            type: "string",
+            description: "Manual MTO value provided for the RFQ when MTOManual is enabled.",
+          },
+          MTOStickModel: {
+            type: "string",
+            description: "Stick model reference associated with the RFQ.",
+          },
           recipientId: { type: "string" },
           multipleRecipients: { type: "array", items: { type: "string" } },
           ConnectionDesignerIds: { type: "array", items: { type: "string" } },
