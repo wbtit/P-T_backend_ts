@@ -1,7 +1,6 @@
-import {transporter}  from "./transporter";
 import prisma from "../../config/database/client";
 import { approvalReminderTemplate } from "./mailtemplates/approvalMailReminderTemplate";
-import { getCCEmails } from "./mailconfig";
+import { getCCEmails, sendEmail } from "./mailconfig";
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -13,7 +12,6 @@ export default async function sendApprovalReminder(project:any){
 
     const ccEmails = await getCCEmails();
     const mailOptions={
-        from:process.env.EMAIL,
         to:project.manager.email,
         cc: ccEmails,
         subject:`Project Approval Reminder: ${project.name}`,
@@ -21,7 +19,7 @@ export default async function sendApprovalReminder(project:any){
     }
     console.log("The email from .env",project.manager.email)
     try {
-        await transporter.sendMail(mailOptions)
+        await sendEmail(mailOptions)
         console.log(`Approval reminder sent for project: ${project.name}`);
 
         await prisma.project.update({

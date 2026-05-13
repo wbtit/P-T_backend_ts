@@ -21,13 +21,19 @@ export class RFQService {
   async createRfq(data: CreateRfqInput, createdById: string) {
     const senderId = data.senderId ?? createdById;
     const projectNumber = data.projectNumber?.trim();
-    const projectName = data.projectName?.trim();
-    const location = data.location?.trim() || "GENERAL";
+    const projectName = data.projectName.trim().replace(/\s+/g, " ");
+    const location = (data.location?.trim().replace(/\s+/g, " ") || "GENERAL");
+    const subject = data.subject.trim().replace(/\s+/g, " ");
 
-    const duplicateRfq = await rfqrepo.getbyProjectNameAndLocation(
-      data.projectName,
-      data.location || ""
+    const duplicateRfq = await rfqrepo.findDuplicateForCreate(
+      projectName,
+      location,
+      subject
     );
+
+    if (duplicateRfq) {
+      throw new AppError("An RFQ with the same project, location, and subject already exists", 409);
+    }
 
     let rfq;
     let attempts = 0;
@@ -73,6 +79,9 @@ export class RFQService {
 
           return rfqrepo.createWithTx(tx, {
             ...data,
+            projectName,
+            location,
+            subject,
             senderId,
             recipientId,
             multipleRecipients,
@@ -90,8 +99,7 @@ export class RFQService {
         throw error;
       }
     }
-
-    return { newRfq: rfq, duplicateRfq };
+    return { newRfq: rfq };
   }
 
     async updateRfq(id:string,data:UpdateRfqInput){

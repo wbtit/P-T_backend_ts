@@ -6,6 +6,7 @@ export const RfqResponseSchema = z.object({
     rfqId: z.string(),
     userId: z.string(),
     parentResponseId:z.string().optional().nullable(),
+    subject: z.string().optional(),
     description:z.string(),
     status: z.enum(RFQStatus).optional(),
     wbtStatus: z.enum(RFQStatus).optional(),

@@ -95,6 +95,7 @@ export class RfqResponseController {
         if (rfqMailContext && responder) {
             const responseLabel = req.body?.parentResponseId ? "RFQ Reply" : "RFQ Response";
             const responderName = formatParticipantName(responder);
+            const responseSubject = result.subject || rfqMailContext.subject;
 
             // Background non-blocking tasks
             (async () => {
@@ -104,19 +105,20 @@ export class RfqResponseController {
                         primaryRecipient: rfqMailContext.recipient,
                         multipleRecipients: rfqMailContext.multipleRecipients,
                         responder,
-                        subject: `${responseLabel}: ${rfqMailContext.subject}`,
-                        text: result.description || `${responseLabel} received for ${rfqMailContext.subject}`,
+                        subject: `${responseLabel}: ${responseSubject}`,
+                        text: result.description || `${responseLabel} received for ${responseSubject}`,
                         buildHtml: ({ greeting, involvedNames }) =>
                             responseMailTemplate({
                                 title: "Project Station - RFQ Response",
                                 projectName: rfqMailContext.project?.name || rfqMailContext.projectName,
-                                subjectLine: `${responseLabel} - ${rfqMailContext.subject}`,
+                                subjectLine: `${responseLabel} - ${responseSubject}`,
                                 greeting,
                                 intro: `A new ${req.body?.parentResponseId ? "reply" : "response"} has been added to the RFQ thread in Project Station. Please review the latest update below:`,
                                 details: [
                                     { label: "Reference", value: rfqMailContext.serialNo || "N/A" },
                                     { label: "Project", value: rfqMailContext.project?.name || rfqMailContext.projectName || "N/A" },
-                                    { label: "Subject", value: rfqMailContext.subject || "N/A" },
+                                    { label: "RFQ Subject", value: rfqMailContext.subject || "N/A" },
+                                    { label: "Response Subject", value: result.subject || "N/A" },
                                     { label: "Response By", value: responderName },
                                     { label: "Response Status", value: result.status },
                                     { label: "WBT Status", value: result.wbtStatus },

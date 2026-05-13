@@ -6,8 +6,7 @@ import { resolveUploadFilePath, streamFile } from "../../../utils/fileUtil";
 import { Response } from "express";
 import prisma from "../../../config/database/client";
 import changeOrderInvoiceRequestTemplate from "../../../services/mailServices/mailtemplates/changeOrderApprovedInvoice";
-import { transporter } from "../../../services/mailServices/transporter";
-import { getCCEmails } from "../../../services/mailServices/mailconfig";
+import { getCCEmails, sendEmail } from "../../../services/mailServices/mailconfig";
 
 const coResponseRepo = new CoResponseRepository();
 
@@ -44,10 +43,11 @@ export class CoResponseService {
     if(response.Status ==="ACCEPT"){
       if (process.env.NODE_ENV !== 'production') {
         console.log('Email sending disabled in development environment');
+      } else if (!process.env.PMO_EMAIL) {
+        console.warn("PMO_EMAIL is not configured; skipping change order invoice alert");
       } else {
         const ccEmails = await getCCEmails();
         const mailOptions={
-                from:process.env.EMAIL,
                 to:process.env.PMO_EMAIL,
                 cc: ccEmails,
                 subject:`Raise Invoice for the ChangeOrder : ${changeOrder.description}`,
@@ -61,7 +61,7 @@ export class CoResponseService {
                 )
             }
            try {
-             await transporter.sendMail(mailOptions)
+             await sendEmail(mailOptions)
             await prisma.cOResponse.update({
               where:{id:response.id},
               data:{

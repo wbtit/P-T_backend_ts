@@ -36,7 +36,7 @@ export const CreateRfqSchema = z.object({
   fabricatorId: z.string(),
   senderId: z.string().optional(),
   MTOManual: zBooleanString.optional(),
-  MTOManualValue: z.string().optional(),
+  MTOValue: z.string().optional(),
   MTOStickModel: z.string().optional(),
   recipientId: z.string().optional(),
   multipleRecipients: zStringArrayFromFormData,

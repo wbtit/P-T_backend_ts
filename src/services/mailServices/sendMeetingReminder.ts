@@ -1,4 +1,4 @@
-import { transporter } from "./transporter";
+import { sendEmail } from "./mailconfig";
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -11,7 +11,6 @@ export async function sendMeetingReminder(meeting:any) {
   const participantEmails = meeting.participants.map((p:any) => p.email);
 
   const mailOptions = {
-    from: process.env.EMAIL,
     to: participantEmails,
     subject: `⏰ Reminder: Meeting "${meeting.title}" starts soon`,
     html: `
@@ -25,7 +24,7 @@ export async function sendMeetingReminder(meeting:any) {
   };
 
   try {
-    await transporter.sendMail(mailOptions);
+    await sendEmail(mailOptions);
     console.log(`✅ Reminder sent for meeting: ${meeting.title}`);
     return true;
   } catch (error) {

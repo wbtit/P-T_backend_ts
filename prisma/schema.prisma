@@ -617,7 +617,7 @@ model RFQ {
   location       String?   @default("")
   bidPrice       String?
   MTOManual      Boolean?  @default(false)
-  MTOManualValue String?   @default("")
+  MTOValue String?   @default("")
   MTOStickModel  String?   @default("")
   senderId       String?   @db.Uuid
   recipientId    String?   @db.Uuid
@@ -680,6 +680,7 @@ model RFQResponse {
   rfqId            String    @db.Uuid
   userId           String    @db.Uuid
   parentResponseId String?   @db.Uuid
+  subject         String    @default("")
   description      String    @default("")
   status           RFQStatus @default(RECEIVED)
   wbtStatus        RFQStatus @default(SENT)

@@ -157,7 +157,7 @@ export class RFIRepository{
         }},
         project: {select:{name:true}},
         sender :  {select:{firstName:true,middleName:true,lastName:true,email:true,id:true}},
-        recepients: {
+        multipleRecipients: {
           include: {
             managedFabricator: {
               select: {
@@ -340,7 +340,7 @@ export class RFIRepository{
         include: {
           fabricator: true,
           project: { select: { name: true } },
-          recepients: { select: { firstName: true, middleName: true, lastName: true, email: true, id: true } },
+          multipleRecipients: { select: { firstName: true, middleName: true, lastName: true, email: true, id: true } },
           sender: { select: { firstName: true, middleName: true, lastName: true, email: true, id: true } },
           rfiresponse: true,
         },

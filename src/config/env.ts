@@ -13,6 +13,10 @@ const envSchema = z.object({
     .regex(/[A-Z]/, "DEFAULT_PASSWORD must include an uppercase letter")
     .regex(/\d/, "DEFAULT_PASSWORD must include a number")
     .regex(/[^A-Za-z0-9]/, "DEFAULT_PASSWORD must include a special character"),
+  ESTIMATION_RAISED_RFQ_EMAIL: z
+    .string()
+    .email("ESTIMATION_RAISED_RFQ_EMAIL must be a valid email")
+    .optional(),
 });
 
 export const env = envSchema.parse(process.env);

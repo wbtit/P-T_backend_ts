@@ -1,26 +1,46 @@
-export const rfqhtmlContent = (newrfq: any) => {
-  const projectName = newrfq.project?.name || newrfq.projectName || "N/A";
-  const headerProjectName = projectName === "N/A" ? "PROJECT NAME" : projectName.toUpperCase();
+type InternalRfqRaisedMailContext = {
+  creatorName: string;
+  creatorRole: string;
+  projectName: string;
+  subject: string;
+  serialNo?: string | null;
+  raisedAt: Date;
+};
 
-  // Build greeting from all recipients
-  const allRecipients: { firstName?: string; lastName?: string; username?: string }[] = [
-    ...(newrfq.multipleRecipients || []),
-    ...(newrfq.recipient ? [newrfq.recipient] : []),
-  ];
-  // Deduplicate by a simple name string
-  const recipientNames = Array.from(
-    new Set(allRecipients.map(r => [r.firstName, r.lastName].filter(Boolean).join(" ") || r.username || "Recipient"))
-  );
-  const greeting = recipientNames.length > 1
-    ? recipientNames.join(", ")
-    : recipientNames[0] || "Recipient";
+const formatRoleLabel = (role: string) =>
+  role
+    .split("_")
+    .map((part) => part.charAt(0) + part.slice(1).toLowerCase())
+    .join(" ");
+
+const formatDate = (date: Date) => date.toDateString();
+
+const formatTime = (date: Date) =>
+  new Intl.DateTimeFormat("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: true,
+  }).format(date);
+
+export const internalRfqRaisedHtmlContent = ({
+  creatorName,
+  creatorRole,
+  projectName,
+  subject,
+  serialNo,
+  raisedAt,
+}: InternalRfqRaisedMailContext) => {
+  const safeProjectName = projectName || "N/A";
+  const headerProjectName =
+    safeProjectName === "N/A" ? "PROJECT NAME" : safeProjectName.toUpperCase();
 
   return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Project Station - RFQ Notification</title>
+  <title>Project Station - RFQ Raised Notification</title>
   <!--[if gte mso 9]>
   <xml>
     <o:OfficeDocumentSettings>
@@ -56,7 +76,6 @@ export const rfqhtmlContent = (newrfq: any) => {
         <td align="center" valign="top" width="600">
         <![endif]-->
         <table border="0" cellpadding="0" cellspacing="0" width="100%" class="email-container" style="max-width: 600px; background-color: #ffffff; border: 1px solid #e0e0e0;">
-          <!-- Header -->
           <tr>
             <td bgcolor="#ffffff">
               <table border="0" cellpadding="0" cellspacing="0" width="100%">
@@ -71,48 +90,50 @@ export const rfqhtmlContent = (newrfq: any) => {
               </table>
             </td>
           </tr>
-          <!-- Body Content -->
           <tr>
             <td class="content-body" style="padding: 40px 30px; color: #333333; line-height: 1.6;">
-              <div style="font-size: 18px; font-weight: bold; margin: 0 0 20px 0;">Subject: ${newrfq.subject || "RFQ Notification"}</div>
-              <p style="margin: 0 0 20px 0;">You have been notified about a new <strong>Request for Quotation (RFQ)</strong>. Please find the details below:</p>
+              <div style="font-size: 18px; font-weight: bold; margin: 0 0 20px 0;">Subject: RFQ Raised Notification</div>
+              <p style="margin: 0 0 20px 0;">A new <strong>Request for Quotation (RFQ)</strong> has been raised internally. Please find the details below:</p>
 
               <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 20px;">
                 <tr>
                   <td width="140" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #888888; font-weight: bold; font-size: 14px;">Reference</td>
-                  <td valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333;">${newrfq.serialNo || "N/A"}</td>
+                  <td valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333;">${serialNo || "N/A"}</td>
                 </tr>
                 <tr>
                   <td width="140" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #888888; font-weight: bold; font-size: 14px;">Project</td>
-                  <td valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333;">${projectName}</td>
+                  <td valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333;">${safeProjectName}</td>
                 </tr>
                 <tr>
                   <td width="140" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #888888; font-weight: bold; font-size: 14px;">Subject</td>
-                  <td valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333;">${newrfq.subject || "N/A"}</td>
+                  <td valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333;">${subject}</td>
                 </tr>
                 <tr>
-                  <td width="140" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #888888; font-weight: bold; font-size: 14px;">Status</td>
-                  <td valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333;">${newrfq.status || "N/A"}</td>
+                  <td width="140" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #888888; font-weight: bold; font-size: 14px;">Raised By</td>
+                  <td valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333;">${creatorName}</td>
                 </tr>
                 <tr>
-                  <td width="140" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #888888; font-weight: bold; font-size: 14px;">Sender</td>
-                  <td valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333;">${[newrfq.sender?.firstName, newrfq.sender?.lastName].filter(Boolean).join(" ") || newrfq.sender?.username || "N/A"}</td>
+                  <td width="140" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #888888; font-weight: bold; font-size: 14px;">Raised By Role</td>
+                  <td valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333;">${formatRoleLabel(creatorRole)}</td>
                 </tr>
                 <tr>
                   <td width="140" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #888888; font-weight: bold; font-size: 14px;">Date</td>
-                  <td valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333;">${newrfq.createdAt ? new Date(newrfq.createdAt).toDateString() : new Date().toDateString()}</td>
+                  <td valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333;">${formatDate(raisedAt)}</td>
+                </tr>
+                <tr>
+                  <td width="140" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #888888; font-weight: bold; font-size: 14px;">Time</td>
+                  <td valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333;">${formatTime(raisedAt)}</td>
                 </tr>
               </table>
 
-              ${recipientNames.length > 1 ? `
               <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f9f9f9; border-left: 3px solid #8cc63f; margin-bottom: 25px;">
                 <tr>
                   <td style="padding: 10px 15px; font-size: 14px;">
-                    <strong>All Recipients:</strong><br/>
-                    ${recipientNames.join(" &nbsp;|&nbsp; ")}
+                    <strong>Internal Notification:</strong><br/>
+                    This email was sent for internal RFQ awareness only.
                   </td>
                 </tr>
-              </table>` : ""}
+              </table>
 
               <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin: 30px 0;">
                 <tr>
@@ -138,7 +159,6 @@ export const rfqhtmlContent = (newrfq: any) => {
               </table>
             </td>
           </tr>
-          <!-- Footer -->
           <tr>
             <td bgcolor="#f4f4f4" style="padding: 20px; text-align: center; font-size: 12px; color: #999999;">
               © ${new Date().getFullYear()} Whiteboard Engineering. All Rights Reserved.
@@ -156,3 +176,22 @@ export const rfqhtmlContent = (newrfq: any) => {
 </body>
 </html>`;
 };
+
+export const internalRfqRaisedTextContent = ({
+  creatorName,
+  creatorRole,
+  projectName,
+  subject,
+  serialNo,
+  raisedAt,
+}: InternalRfqRaisedMailContext) =>
+  [
+    `A new RFQ has been raised internally.`,
+    `Raised By: ${creatorName}`,
+    `Raised By Role: ${formatRoleLabel(creatorRole)}`,
+    `Project: ${projectName}`,
+    `Subject: ${subject}`,
+    `Reference: ${serialNo || "N/A"}`,
+    `Date: ${formatDate(raisedAt)}`,
+    `Time: ${formatTime(raisedAt)}`,
+  ].join("\n");

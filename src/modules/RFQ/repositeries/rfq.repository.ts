@@ -468,7 +468,8 @@ getbyProjectNameAndLocation(projectName:string,location:string){
     return prisma.rFQ.findFirst({
         where:{
             projectName,
-            location
+            location,
+            isDeleted: false,
         },include:{
             sender: true,
             recipient: true,
@@ -480,6 +481,26 @@ getbyProjectNameAndLocation(projectName:string,location:string){
         }
     });
     }
+
+async findDuplicateForCreate(projectName: string, location: string, subject: string) {
+    return prisma.rFQ.findFirst({
+        where: {
+            isDeleted: false,
+            projectName: { equals: projectName, mode: "insensitive" },
+            location: { equals: location, mode: "insensitive" },
+            subject: { equals: subject, mode: "insensitive" },
+        },
+        include: {
+            sender: true,
+            recipient: true,
+            multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
+            salesPerson: true,
+            responses: RFQ_RESPONSES_INCLUDE,
+            fabricator: true,
+            project: { select: { name: true } },
+        }
+    });
+}
 async deleteRFQ(id:string){
     return await prisma.rFQ.delete({
         where:{

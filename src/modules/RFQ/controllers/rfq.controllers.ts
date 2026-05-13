@@ -3,12 +3,17 @@ import { AuthenticateRequest } from "../../../middleware/authMiddleware";
 import { AppError } from "../../../config/utils/AppError";
 import { RFQService } from "../services/rfq.service";
 import { mapUploadedFiles } from "../../uploads/fileUtil";
-import { sendEmail, getCCEmails } from "../../../services/mailServices/mailconfig";
+import { sendEmail, getCCEmails, getEmailsByRoles } from "../../../services/mailServices/mailconfig";
 import { rfqhtmlContent } from "../../../services/mailServices/mailtemplates/rfqMailtemplate";
 import { notifyRfqStakeholdersByRole } from "../../../utils/notifyRfqStakeholders";
 import { UserRole } from "@prisma/client";
 import prisma from "../../../config/database/client";
 import { buildRoleScopedNotification } from "../../../utils/stakeholderNotificationMessages";
+import { env } from "../../../config/env";
+import {
+  internalRfqRaisedHtmlContent,
+  internalRfqRaisedTextContent,
+} from "../../../services/mailServices/mailtemplates/internalRfqRaisedMailtemplate";
 
 const rfqService = new RFQService();
 const RFQ_NOTIFY_ROLES: UserRole[] = [
@@ -21,6 +26,24 @@ const RFQ_NOTIFY_ROLES: UserRole[] = [
   "VENDOR",
   "VENDOR_ADMIN",
 ];
+
+const INTERNAL_OVERSIGHT_RFQ_ROLES: UserRole[] = [
+  "ADMIN",
+  "DEPUTY_MANAGER",
+  "OPERATION_EXECUTIVE",
+];
+
+const ESTIMATION_SIDE_RFQ_ROLES = new Set<UserRole>(["ESTIMATION_HEAD", "ESTIMATOR"]);
+
+const buildUserDisplayName = (user: {
+  firstName?: string | null;
+  middleName?: string | null;
+  lastName?: string | null;
+  username?: string | null;
+}) =>
+  [user.firstName, user.middleName, user.lastName].filter(Boolean).join(" ") ||
+  user.username ||
+  "Unknown User";
 
 type ThreadResponseNode = {
     createdAt: Date;
@@ -62,7 +85,7 @@ export class RFQController {
     if (!req.user) {
     throw new AppError('User not found', 404);
     }
-    const { id } = req.user;
+    const { id, role } = req.user;
 
     if(!id) throw new AppError('User not found', 404);
     const uploadedFileMap = (req.files as
@@ -102,6 +125,47 @@ export class RFQController {
               subject: newrfq.subject,
               text: newrfq.description,
             });
+
+            const raisedAt = newrfq.createdAt ? new Date(newrfq.createdAt) : new Date();
+            const creatorName = buildUserDisplayName(newrfq.sender || req.user);
+            const internalMailSubject = `RFQ Raised: ${newrfq.project?.name || newrfq.projectName || "N/A"} - ${newrfq.subject}`;
+            let internalRecipients: string[] = [];
+
+            if (ESTIMATION_SIDE_RFQ_ROLES.has(role as UserRole)) {
+              internalRecipients = await getEmailsByRoles(INTERNAL_OVERSIGHT_RFQ_ROLES);
+            } else {
+              if (!env.ESTIMATION_RAISED_RFQ_EMAIL) {
+                console.warn("ESTIMATION_RAISED_RFQ_EMAIL is not configured; skipping internal estimation RFQ email");
+              } else {
+                internalRecipients = [env.ESTIMATION_RAISED_RFQ_EMAIL];
+              }
+            }
+
+            const uniqueInternalRecipients = Array.from(new Set(internalRecipients.filter(Boolean)));
+
+            if (uniqueInternalRecipients.length > 0) {
+              await sendEmail({
+                to: uniqueInternalRecipients.join(","),
+                subject: internalMailSubject,
+                text: internalRfqRaisedTextContent({
+                  creatorName,
+                  creatorRole: role,
+                  projectName: newrfq.project?.name || newrfq.projectName || "N/A",
+                  subject: newrfq.subject,
+                  serialNo: newrfq.serialNo,
+                  raisedAt,
+                }),
+                html: internalRfqRaisedHtmlContent({
+                  creatorName,
+                  creatorRole: role,
+                  projectName: newrfq.project?.name || newrfq.projectName || "N/A",
+                  subject: newrfq.subject,
+                  serialNo: newrfq.serialNo,
+                  raisedAt,
+                }),
+              });
+            }
+
             await notifyRfqStakeholdersByRole(newrfq.id, RFQ_NOTIFY_ROLES, (role) =>
               buildRoleScopedNotification(role, {
                 type: "RFQ_CREATED",

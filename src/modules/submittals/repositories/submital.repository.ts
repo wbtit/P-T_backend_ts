@@ -124,6 +124,8 @@ export class SubmitalRepository {
         project: { select: { name: true } },
         fabricator: true,
         recepients: true,
+        multipleRecipients:true,
+        sender:true,
         currentVersion: true,
       },
       orderBy: { date: "desc" },
@@ -358,6 +360,8 @@ async getPendingSubmittalsForProjectManager(managerId: string) {
       },include:{
           project:{select:{name:true}},
           fabricator:{select:{fabName:true}},
+          multipleRecipients:true,
+          sender:true, 
         }
     })
   }
