@@ -27,13 +27,21 @@ const RFQ_NOTIFY_ROLES: UserRole[] = [
   "VENDOR_ADMIN",
 ];
 
-const INTERNAL_OVERSIGHT_RFQ_ROLES: UserRole[] = [
+const INTERNAL_GROUP_ROLES: UserRole[] = [
   "ADMIN",
   "DEPUTY_MANAGER",
   "OPERATION_EXECUTIVE",
+  "ESTIMATION_HEAD",
+  "ESTIMATOR",
 ];
 
-const ESTIMATION_SIDE_RFQ_ROLES = new Set<UserRole>(["ESTIMATION_HEAD", "ESTIMATOR"]);
+const INTERNAL_RFQ_CREATOR_ROLES = new Set<UserRole>([
+  "ADMIN",
+  "DEPUTY_MANAGER",
+  "OPERATION_EXECUTIVE",
+  "ESTIMATION_HEAD",
+  "ESTIMATOR",
+]);
 
 const buildUserDisplayName = (user: {
   firstName?: string | null;
@@ -117,23 +125,34 @@ export class RFQController {
         // Background non-blocking tasks
         (async () => {
           try {
-            const ccEmails = await getCCEmails();
+            const internalGroupEmails = await getEmailsByRoles(INTERNAL_GROUP_ROLES);
+            const isInternalCreator = INTERNAL_RFQ_CREATOR_ROLES.has(role as UserRole);
+
+            // 1. STANDARD RFQ MAIL (Old Template)
+            // For internal creators, send standard mail to Client only.
+            // For external creators (Client, etc.), send to Client + Internal Group (Admin, OE, Deputy, Estimators).
+            const standardMailTo = isInternalCreator 
+              ? uniqueEmails 
+              : Array.from(new Set([...uniqueEmails, ...internalGroupEmails]));
+
             await sendEmail({
               html: rfqhtmlContent(newrfq),
-              to: uniqueEmails.join(","),
-              cc: ccEmails,
+              to: standardMailTo.join(","),
               subject: newrfq.subject,
               text: newrfq.description,
             });
 
+            // 2. INTERNAL RFQ-RAISED MAIL (New Template)
             const raisedAt = newrfq.createdAt ? new Date(newrfq.createdAt) : new Date();
             const creatorName = buildUserDisplayName(newrfq.sender || req.user);
             const internalMailSubject = `RFQ Raised: ${newrfq.project?.name || newrfq.projectName || "N/A"} - ${newrfq.subject}`;
             let internalRecipients: string[] = [];
 
-            if (ESTIMATION_SIDE_RFQ_ROLES.has(role as UserRole)) {
-              internalRecipients = await getEmailsByRoles(INTERNAL_OVERSIGHT_RFQ_ROLES);
+            if (isInternalCreator) {
+              // Internal creators trigger internal group notification via internal template
+              internalRecipients = internalGroupEmails;
             } else {
+              // External creators trigger estimation mailbox notification via internal template
               if (!env.ESTIMATION_RAISED_RFQ_EMAIL) {
                 console.warn("ESTIMATION_RAISED_RFQ_EMAIL is not configured; skipping internal estimation RFQ email");
               } else {

@@ -56,6 +56,12 @@ export const rfqhtmlContent = (newrfq: any) => {
         <td align="center" valign="top" width="600">
         <![endif]-->
         <table border="0" cellpadding="0" cellspacing="0" width="100%" class="email-container" style="max-width: 600px; background-color: #ffffff; border: 1px solid #e0e0e0;">
+          <!-- Action Required Banner -->
+          <tr>
+            <td bgcolor="#d9534f" style="padding: 10px; text-align: center; color: #ffffff; font-weight: bold; font-size: 16px;">
+              ACTION REQUIRED
+            </td>
+          </tr>
           <!-- Header -->
           <tr>
             <td bgcolor="#ffffff">
