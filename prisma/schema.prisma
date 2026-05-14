@@ -101,6 +101,7 @@ enum Tools {
   SDS2
   PEMB
   BOTH
+  NO_PREFERENCE
 }
 
 enum WorkSessionStatus {
