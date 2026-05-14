@@ -599,7 +599,9 @@ async getRFQOfConnectionEngineer(userId:string){
     }
 
     async findRFQsForClientEstimator(userId: string) {
+        console.log(`[RFQRepo:findRFQsForClientEstimator] Starting for userId: ${userId}`);
         const fabricatorIds = await this.findFabricatorIdsForUser(userId);
+        console.log(`[RFQRepo:findRFQsForClientEstimator] Fabricator IDs found: ${JSON.stringify(fabricatorIds)}`);
         if (fabricatorIds.length === 0) return [];
 
         const clientEstimators = await prisma.user.findMany({
@@ -607,18 +609,18 @@ async getRFQOfConnectionEngineer(userId:string){
                 role: "CLIENT_ESTIMATOR",
                 OR: [
                     { FabricatorPointOfContacts: { some: { id: { in: fabricatorIds } } } },
-                    { wbtFabricatorPointOfContact: { some: { id: { in: fabricatorIds } } } }
                 ]
             },
             select: { id: true }
         });
+        console.log(`[RFQRepo:findRFQsForClientEstimator] Client Estimators found: ${JSON.stringify(clientEstimators)}`);
 
         const estimatorIds = clientEstimators.map(u => u.id);
         if (estimatorIds.length === 0) return [];
 
-        return await prisma.rFQ.findMany({
+        console.log(`[RFQRepo:findRFQsForClientEstimator] Fetching RFQs for estimatorIds: ${JSON.stringify(estimatorIds)}`);
+        const rfqs = await prisma.rFQ.findMany({
             where: {
-                project: { status: { in: ["ACTIVE", "ONHOLD"] } },
                 OR: [
                     { senderId: { in: estimatorIds } },
                     { recipientId: { in: estimatorIds } },
@@ -629,6 +631,8 @@ async getRFQOfConnectionEngineer(userId:string){
             include: RFQ_LIST_INCLUDE,
             orderBy: { createdAt: "desc" }
         });
+        console.log(`[RFQRepo:findRFQsForClientEstimator] Total RFQs found: ${rfqs.length}`);
+        return rfqs;
     }
 
 }
