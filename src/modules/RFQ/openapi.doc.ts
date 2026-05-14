@@ -267,6 +267,20 @@ export const rFQOpenApiDoc: ModuleOpenApiDoc = {
         }
       },
     },
+    "/rfq/pending/clientEstimator": {
+      get: {
+        tags: ["RFQ"],
+        summary: "GET /rfq/pending/clientEstimator",
+        operationId: "get_RFQ_rfq_pending_clientEstimator",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "403": { description: "Access Denied" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
     "/rfq/new/projectManager": {
       get: {
         tags: ["RFQ"],

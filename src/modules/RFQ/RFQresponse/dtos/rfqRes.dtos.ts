@@ -8,6 +8,9 @@ export const RfqResponseSchema = z.object({
     parentResponseId:z.string().optional().nullable(),
     subject: z.string().optional(),
     description:z.string(),
+    totalTonnageWithConnection: z.string().optional().nullable(),
+    totalTonnageWithoutConnection: z.string().optional().nullable(),
+    PageNumbers: z.string().optional().nullable(),
     status: z.enum(RFQStatus).optional(),
     wbtStatus: z.enum(RFQStatus).optional(),
     files: z

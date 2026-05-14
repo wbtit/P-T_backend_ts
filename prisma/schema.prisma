@@ -702,6 +702,9 @@ model RFQResponse {
   parentResponseId String?   @db.Uuid
   subject         String    @default("")
   description      String    @default("")
+  totalTonnageWithConnection      String?   @default("")
+  totalTonnageWithoutConnection   String?   @default("")
+  PageNumbers       String?   @default("")
   status           RFQStatus @default(RECEIVED)
   wbtStatus        RFQStatus @default(SENT)
   files            Json?     @default("[]")

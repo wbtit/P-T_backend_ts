@@ -461,6 +461,18 @@ export class RFQController {
         });
     }
 
+    async handlePendingForClientEstimator(req: AuthenticateRequest, res: Response) {
+        if (!req.user) throw new AppError('User not found', 404);
+        if (req.user.role !== "CLIENT_ESTIMATOR") {
+            throw new AppError("Access denied", 403);
+        }
+        const rfqs = await rfqService.getRFQsForClientEstimator(req.user.id);
+        res.status(200).json({
+            status: 'success',
+            data: rfqs,
+        });
+    }
+
     async handlePendingForCDAdmin(req: AuthenticateRequest, res: Response) {
         if (!req.user) throw new AppError('User not found', 404);
 

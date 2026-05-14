@@ -233,4 +233,8 @@ export class RFQService {
     async getNewRFQsForProjectManager(managerId: string) {
         return await rfqrepo.findNewRFQsForProjectManager(managerId);
     }
+
+    async getRFQsForClientEstimator(userId: string) {
+        return await rfqrepo.findRFQsForClientEstimator(userId);
+    }
 }
