@@ -637,6 +637,7 @@ model RFQ {
   location       String?   @default("")
   bidPrice       String?
   MTOManual      Boolean?  @default(false)
+  isMTOStickModel  Boolean?  @default(false)
   MTOValue String?   @default("")
   MTOStickModel  String?   @default("")
   senderId       String?   @db.Uuid

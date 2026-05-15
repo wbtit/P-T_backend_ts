@@ -9,7 +9,6 @@ import { notifyRfqStakeholdersByRole } from "../../../utils/notifyRfqStakeholder
 import { UserRole } from "@prisma/client";
 import prisma from "../../../config/database/client";
 import { buildRoleScopedNotification } from "../../../utils/stakeholderNotificationMessages";
-import { env } from "../../../config/env";
 import {
   internalRfqRaisedHtmlContent,
   internalRfqRaisedTextContent,
@@ -32,7 +31,10 @@ const INTERNAL_GROUP_ROLES: UserRole[] = [
   "DEPUTY_MANAGER",
   "OPERATION_EXECUTIVE",
   "ESTIMATION_HEAD",
-  "ESTIMATOR",
+];
+
+const ESTIMATION_HEAD_ONLY_ROLES: UserRole[] = [
+  "ESTIMATION_HEAD",
 ];
 
 const INTERNAL_RFQ_CREATOR_ROLES = new Set<UserRole>([
@@ -40,7 +42,6 @@ const INTERNAL_RFQ_CREATOR_ROLES = new Set<UserRole>([
   "DEPUTY_MANAGER",
   "OPERATION_EXECUTIVE",
   "ESTIMATION_HEAD",
-  "ESTIMATOR",
 ]);
 
 const buildUserDisplayName = (user: {
@@ -125,7 +126,35 @@ export class RFQController {
         // Background non-blocking tasks
         (async () => {
           try {
-            const internalGroupEmails = await getEmailsByRoles(INTERNAL_GROUP_ROLES);
+            const [internalGroupEmails, estimationHeadEmails, rfqSender, senderFabricator] = await Promise.all([
+              getEmailsByRoles(INTERNAL_GROUP_ROLES),
+              getEmailsByRoles(ESTIMATION_HEAD_ONLY_ROLES),
+              newrfq.senderId
+                ? prisma.user.findUnique({
+                    where: { id: newrfq.senderId },
+                    select: {
+                      firstName: true,
+                      middleName: true,
+                      lastName: true,
+                      username: true,
+                    },
+                  })
+                : Promise.resolve(null),
+              newrfq.senderId
+                ? prisma.fabricator.findFirst({
+                    where: {
+                      OR: [
+                        { pointOfContact: { some: { id: newrfq.senderId } } },
+                        { wbtFabricatorPointOfContact: { some: { id: newrfq.senderId } } },
+                        { createdById: newrfq.senderId },
+                      ],
+                    },
+                    select: {
+                      fabName: true,
+                    },
+                  })
+                : Promise.resolve(null),
+            ]);
             const isInternalCreator = INTERNAL_RFQ_CREATOR_ROLES.has(role as UserRole);
 
             // 1. STANDARD RFQ MAIL (Old Template)
@@ -144,7 +173,9 @@ export class RFQController {
 
             // 2. INTERNAL RFQ-RAISED MAIL (New Template)
             const raisedAt = newrfq.createdAt ? new Date(newrfq.createdAt) : new Date();
-            const creatorName = buildUserDisplayName(newrfq.sender || req.user);
+            const creatorName =
+              senderFabricator?.fabName ||
+              buildUserDisplayName(rfqSender || newrfq.sender || req.user);
             const internalMailSubject = `RFQ Raised: ${newrfq.project?.name || newrfq.projectName || "N/A"} - ${newrfq.subject}`;
             let internalRecipients: string[] = [];
 
@@ -152,12 +183,8 @@ export class RFQController {
               // Internal creators trigger internal group notification via internal template
               internalRecipients = internalGroupEmails;
             } else {
-              // External creators trigger estimation mailbox notification via internal template
-              if (!env.ESTIMATION_RAISED_RFQ_EMAIL) {
-                console.warn("ESTIMATION_RAISED_RFQ_EMAIL is not configured; skipping internal estimation RFQ email");
-              } else {
-                internalRecipients = [env.ESTIMATION_RAISED_RFQ_EMAIL];
-              }
+              // External creators trigger only Estimation Head notification via internal template
+              internalRecipients = estimationHeadEmails;
             }
 
             const uniqueInternalRecipients = Array.from(new Set(internalRecipients.filter(Boolean)));
@@ -168,19 +195,25 @@ export class RFQController {
                 subject: internalMailSubject,
                 text: internalRfqRaisedTextContent({
                   creatorName,
-                  creatorRole: role,
                   projectName: newrfq.project?.name || newrfq.projectName || "N/A",
                   subject: newrfq.subject,
                   serialNo: newrfq.serialNo,
                   raisedAt,
+                  isMTOStickModel: newrfq.isMTOStickModel,
+                  MTOStickModel: newrfq.MTOStickModel,
+                  MTOManual: newrfq.MTOManual,
+                  MTOValue: newrfq.MTOValue,
                 }),
                 html: internalRfqRaisedHtmlContent({
                   creatorName,
-                  creatorRole: role,
                   projectName: newrfq.project?.name || newrfq.projectName || "N/A",
                   subject: newrfq.subject,
                   serialNo: newrfq.serialNo,
                   raisedAt,
+                  isMTOStickModel: newrfq.isMTOStickModel,
+                  MTOStickModel: newrfq.MTOStickModel,
+                  MTOManual: newrfq.MTOManual,
+                  MTOValue: newrfq.MTOValue,
                 }),
               });
             }

@@ -22,6 +22,10 @@ const rfqMultipartRequestBody = (schema: typeof CreateRfqSchema | typeof UpdateR
             oneOf: [{ type: "boolean" }, { type: "string" }],
             description: "Whether the RFQ uses a manual MTO value.",
           },
+          isMTOStickModel: {
+            oneOf: [{ type: "boolean" }, { type: "string" }],
+            description: "Whether the RFQ uses an MTO stick model.",
+          },
           MTOValue: {
             type: "string",
             description: "Manual MTO value provided for the RFQ when MTOManual is enabled.",

@@ -1,17 +1,10 @@
 type InternalRfqRaisedMailContext = {
   creatorName: string;
-  creatorRole: string;
   projectName: string;
   subject: string;
   serialNo?: string | null;
   raisedAt: Date;
 };
-
-const formatRoleLabel = (role: string) =>
-  role
-    .split("_")
-    .map((part) => part.charAt(0) + part.slice(1).toLowerCase())
-    .join(" ");
 
 const formatDate = (date: Date) => date.toDateString();
 
@@ -25,7 +18,6 @@ const formatTime = (date: Date) =>
 
 export const internalRfqRaisedHtmlContent = ({
   creatorName,
-  creatorRole,
   projectName,
   subject,
   serialNo,
@@ -113,10 +105,6 @@ export const internalRfqRaisedHtmlContent = ({
                   <td valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333;">${creatorName}</td>
                 </tr>
                 <tr>
-                  <td width="140" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #888888; font-weight: bold; font-size: 14px;">Raised By Role</td>
-                  <td valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333;">${formatRoleLabel(creatorRole)}</td>
-                </tr>
-                <tr>
                   <td width="140" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #888888; font-weight: bold; font-size: 14px;">Date</td>
                   <td valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333;">${formatDate(raisedAt)}</td>
                 </tr>
@@ -179,7 +167,6 @@ export const internalRfqRaisedHtmlContent = ({
 
 export const internalRfqRaisedTextContent = ({
   creatorName,
-  creatorRole,
   projectName,
   subject,
   serialNo,
@@ -188,10 +175,9 @@ export const internalRfqRaisedTextContent = ({
   [
     `A new RFQ has been raised internally.`,
     `Raised By: ${creatorName}`,
-    `Raised By Role: ${formatRoleLabel(creatorRole)}`,
     `Project: ${projectName}`,
     `Subject: ${subject}`,
     `Reference: ${serialNo || "N/A"}`,
     `Date: ${formatDate(raisedAt)}`,
     `Time: ${formatTime(raisedAt)}`,
-  ].join("\n");
+  ].filter(Boolean).join("\n");
