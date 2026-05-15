@@ -39,6 +39,9 @@ export class InvoiceController {
       // Background non-blocking tasks
       (async () => {
         try {
+          if (!result.projectId) {
+            return;
+          }
           await notifyProjectStakeholdersByRole(result.projectId, INVOICE_NOTIFY_ROLES, (role) =>
             buildRoleScopedNotification(role, {
               type: "INVOICE_CREATED",
@@ -187,6 +190,9 @@ export class InvoiceController {
         // Background non-blocking tasks
         (async () => {
           try {
+            if (!updatedInvoice.projectId) {
+              return;
+            }
             await notifyProjectStakeholdersByRole(updatedInvoice.projectId, INVOICE_NOTIFY_ROLES, (role) =>
               buildRoleScopedNotification(role, {
                 type: "INVOICE_STATUS_UPDATED",

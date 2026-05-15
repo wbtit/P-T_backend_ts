@@ -196,24 +196,12 @@ export class RFQController {
                 text: internalRfqRaisedTextContent({
                   creatorName,
                   projectName: newrfq.project?.name || newrfq.projectName || "N/A",
-                  subject: newrfq.subject,
-                  serialNo: newrfq.serialNo,
                   raisedAt,
-                  isMTOStickModel: newrfq.isMTOStickModel,
-                  MTOStickModel: newrfq.MTOStickModel,
-                  MTOManual: newrfq.MTOManual,
-                  MTOValue: newrfq.MTOValue,
                 }),
                 html: internalRfqRaisedHtmlContent({
                   creatorName,
                   projectName: newrfq.project?.name || newrfq.projectName || "N/A",
-                  subject: newrfq.subject,
-                  serialNo: newrfq.serialNo,
                   raisedAt,
-                  isMTOStickModel: newrfq.isMTOStickModel,
-                  MTOStickModel: newrfq.MTOStickModel,
-                  MTOManual: newrfq.MTOManual,
-                  MTOValue: newrfq.MTOValue,
                 }),
               });
             }

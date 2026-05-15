@@ -30,24 +30,32 @@ const INVOICE_LIST_INCLUDE = {
 export class Invoicerepository{
     async createInvoice(data:createInvoceData,userId:string){
         return  await prisma.$transaction(async (tx) => {
-          const project = await tx.project.findUnique({
-            where: { id: data.projectId },
-            select: { projectCode: true, projectNumber: true },
-          });
-          if (!project) {
+          const project = data.projectId
+            ? await tx.project.findUnique({
+                where: { id: data.projectId },
+                select: { projectCode: true, projectNumber: true },
+              })
+            : null;
+
+          if (data.projectId && !project) {
             throw new AppError("Project not found for invoice serial generation", 404);
           }
 
           const serialNo = await generateProjectScopedSerial(tx, {
             prefix: SERIAL_PREFIX.INVOICE,
-            projectScopeId: data.projectId,
-            projectToken: project.projectCode ?? project.projectNumber,
+            projectScopeId: data.projectId ?? `INVOICE_ENTRY:${data.fabricatorId}`,
+            projectToken:
+              project?.projectCode ??
+              project?.projectNumber ??
+              data.jobName ??
+              data.invoiceNumber ??
+              "INVOICE",
           });
 
           return tx.invoice.create({
             data: {
               serialNo,
-              projectId:data.projectId,
+              projectId:data.projectId ?? undefined,
               fabricatorId:data.fabricatorId,
               rfqId:data.rfqId,
               changeOrderId:data.changeOrderId,

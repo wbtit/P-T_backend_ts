@@ -1844,7 +1844,7 @@ model CronLog {
 model Invoice {
   id                       String        @id @default(uuid()) @db.Uuid
   serialNo                 String?       @unique
-  projectId                String        @db.Uuid
+  projectId                String?       @db.Uuid
   fabricatorId             String        @db.Uuid
   rfqId                    String?       @db.Uuid
   changeOrderId            String?       @db.Uuid
@@ -1871,7 +1871,7 @@ model Invoice {
   createdBy                String?       @db.Uuid
 
   // 🔗 Relations
-  project        Project       @relation("projectInvoice", fields: [projectId], references: [id])
+  project        Project?      @relation("projectInvoice", fields: [projectId], references: [id])
   fabricator     Fabricator    @relation("fabricatorInvoice", fields: [fabricatorId], references: [id])
   rfq            RFQ?          @relation("rfqInvoices", fields: [rfqId], references: [id], onDelete: SetNull)
   changeOrder    ChangeOrder?  @relation("changeOrderInvoices", fields: [changeOrderId], references: [id], onDelete: SetNull)
@@ -2220,4 +2220,3 @@ model UserSession {
 
   @@map("user_session")
 }
-
