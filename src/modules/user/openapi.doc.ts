@@ -17,7 +17,62 @@ export const userOpenApiDoc: ModuleOpenApiDoc = {
         requestBody: zodRequestBody(signinSchema),
         responses: {
           "200": { description: "Success" },
+          "202": { description: "Challenge Required" },
           "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
+    "/auth/verify-challenge": {
+      post: {
+        tags: ["User"],
+        summary: "POST /auth/verify-challenge",
+        operationId: "post_user_auth_verify_challenge",
+        requestBody: {
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  otp: { type: "string" },
+                  challengeToken: { type: "string" },
+                },
+                required: ["otp", "challengeToken"],
+              },
+            },
+          },
+        },
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
+    "/auth/analytics/admin": {
+      get: {
+        tags: ["User"],
+        summary: "GET /auth/analytics/admin",
+        operationId: "get_user_auth_analytics_admin",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": { description: "Success" },
+          "401": { description: "Unauthorized" },
+          "403": { description: "Forbidden" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
+    "/auth/analytics/me": {
+      get: {
+        tags: ["User"],
+        summary: "GET /auth/analytics/me",
+        operationId: "get_user_auth_analytics_me",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": { description: "Success" },
           "401": { description: "Unauthorized" },
           "500": { description: "Internal Server Error" }
         }
