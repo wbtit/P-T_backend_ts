@@ -36,10 +36,12 @@ export class InvoiceController {
       const result = await invoiceService.createInvoice(data, user.id);
       const invoiceNumber = result.invoiceNumber?.trim();
       const creatorId = user.id;
+      const projectId = result.projectId;
       // Background non-blocking tasks
-      (async () => {
+      if (projectId) {
+        (async () => {
         try {
-          await notifyProjectStakeholdersByRole(result.projectId, INVOICE_NOTIFY_ROLES, (role) =>
+          await notifyProjectStakeholdersByRole(projectId, INVOICE_NOTIFY_ROLES, (role) =>
             buildRoleScopedNotification(role, {
               type: "INVOICE_CREATED",
               basePayload: { invoiceId: result.id, timestamp: new Date() },
@@ -55,7 +57,8 @@ export class InvoiceController {
         } catch (error) {
           console.error("Error in handleCreateInvoice background tasks:", error);
         }
-      })();
+        })();
+      }
 
       return res.status(201).json({
         message: "Invoice created successfully",
@@ -183,11 +186,13 @@ export class InvoiceController {
         const updatedInvoiceNumber = updatedInvoice.invoiceNumber?.trim();
         const updaterId = (req as AuthenticateRequest).user?.id;
         const bodyStatus = data.status;
+        const projectId = updatedInvoice.projectId;
 
         // Background non-blocking tasks
-        (async () => {
+        if (projectId) {
+          (async () => {
           try {
-            await notifyProjectStakeholdersByRole(updatedInvoice.projectId, INVOICE_NOTIFY_ROLES, (role) =>
+            await notifyProjectStakeholdersByRole(projectId, INVOICE_NOTIFY_ROLES, (role) =>
               buildRoleScopedNotification(role, {
                 type: "INVOICE_STATUS_UPDATED",
                 basePayload: { invoiceId: updatedInvoice.id, status: bodyStatus, timestamp: new Date() },
@@ -203,7 +208,8 @@ export class InvoiceController {
           } catch (error) {
             console.error("Error in handleUpdateInvoice background tasks:", error);
           }
-        })();
+          })();
+        }
       }
 
       return res.status(200).json({

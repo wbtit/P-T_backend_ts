@@ -137,6 +137,7 @@ export class Invoicerepository{
           accountId:true,
           fabName:true,
           bankAccount:true,
+          paymenTDueDate:true
         }
         }
       },
