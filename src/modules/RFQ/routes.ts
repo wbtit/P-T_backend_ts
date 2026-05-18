@@ -69,6 +69,11 @@ router.get(
     rfqController.handlePendingForCDAdmin.bind(rfqController)
 )
 router.get(
+    "/all/clientEstimator",
+    authMiddleware,
+    rfqController.handlePendingForClientEstimator.bind(rfqController)
+)
+router.get(
     "/new/projectManager",
     authMiddleware,
     rfqController.handleNewForProjectManager.bind(rfqController)

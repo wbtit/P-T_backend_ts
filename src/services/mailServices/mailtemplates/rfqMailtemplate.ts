@@ -1,6 +1,11 @@
 export const rfqhtmlContent = (newrfq: any) => {
   const projectName = newrfq.project?.name || newrfq.projectName || "N/A";
   const headerProjectName = projectName === "N/A" ? "PROJECT NAME" : projectName.toUpperCase();
+  const rawDueDate = newrfq.estimationDate ?? newrfq.EstimationDate ?? newrfq.dueDate;
+  const dueDate =
+    rawDueDate && !Number.isNaN(new Date(rawDueDate).getTime())
+      ? new Date(rawDueDate).toDateString()
+      : "N/A";
 
   // Build greeting from all recipients
   const allRecipients: { firstName?: string; lastName?: string; username?: string }[] = [
@@ -80,29 +85,17 @@ export const rfqhtmlContent = (newrfq: any) => {
           <!-- Body Content -->
           <tr>
             <td class="content-body" style="padding: 40px 30px; color: #333333; line-height: 1.6;">
-              <div style="font-size: 18px; font-weight: bold; margin: 0 0 20px 0;">Subject: ${newrfq.subject || "RFQ Notification"}</div>
+              <div style="font-size: 18px; font-weight: bold; margin: 0 0 20px 0;">RFQ Notification</div>
               <p style="margin: 0 0 20px 0;">You have been notified about a new <strong>Request for Quotation (RFQ)</strong>. Please find the details below:</p>
 
               <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 20px;">
                 <tr>
-                  <td width="140" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #888888; font-weight: bold; font-size: 14px;">Reference</td>
-                  <td valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333;">${newrfq.serialNo || "N/A"}</td>
-                </tr>
-                <tr>
-                  <td width="140" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #888888; font-weight: bold; font-size: 14px;">Project</td>
-                  <td valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333;">${projectName}</td>
-                </tr>
-                <tr>
-                  <td width="140" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #888888; font-weight: bold; font-size: 14px;">Subject</td>
-                  <td valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333;">${newrfq.subject || "N/A"}</td>
-                </tr>
-                <tr>
-                  <td width="140" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #888888; font-weight: bold; font-size: 14px;">Status</td>
-                  <td valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333;">${newrfq.status || "N/A"}</td>
-                </tr>
-                <tr>
                   <td width="140" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #888888; font-weight: bold; font-size: 14px;">Sender</td>
                   <td valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333;">${[newrfq.sender?.firstName, newrfq.sender?.lastName].filter(Boolean).join(" ") || newrfq.sender?.username || "N/A"}</td>
+                </tr>
+                <tr>
+                  <td width="140" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #888888; font-weight: bold; font-size: 14px;">Due Date</td>
+                  <td valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333;">${dueDate}</td>
                 </tr>
                 <tr>
                   <td width="140" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #888888; font-weight: bold; font-size: 14px;">Date</td>

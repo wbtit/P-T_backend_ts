@@ -11,8 +11,8 @@ export class InvoiceService {
   // Create Invoice
   // ---------------------------------------------------------------------------
   async createInvoice(data: createInvoceData, userId: string) {
-    if (!data.projectId || !data.fabricatorId) {
-      throw new AppError("Project ID and Fabricator ID are required", 400);
+    if (!data.fabricatorId) {
+      throw new AppError("Fabricator ID is required", 400);
     }
 
     const invoice = await invoiceRepo.createInvoice(data, userId);

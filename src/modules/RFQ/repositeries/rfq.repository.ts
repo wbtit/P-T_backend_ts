@@ -598,4 +598,35 @@ async getRFQOfConnectionEngineer(userId:string){
         });
     }
 
+    async findRFQsForClientEstimator(userId: string) {
+        const fabricatorIds = await this.findFabricatorIdsForUser(userId);
+        if (fabricatorIds.length === 0) return [];
+
+        const clientEstimators = await prisma.user.findMany({
+            where: {
+                role: "CLIENT_ESTIMATOR",
+                OR: [
+                    { FabricatorPointOfContacts: { some: { id: { in: fabricatorIds } } } },
+                ]
+            },
+            select: { id: true }
+        });
+
+        const estimatorIds = clientEstimators.map(u => u.id);
+        if (estimatorIds.length === 0) return [];
+
+        return await prisma.rFQ.findMany({
+            where: {
+                OR: [
+                    { senderId: { in: estimatorIds } },
+                    { recipientId: { in: estimatorIds } },
+                    { multipleRecipients: { some: { id: { in: estimatorIds } } } }
+                ],
+                isDeleted: false
+            },
+            include: RFQ_LIST_INCLUDE,
+            orderBy: { createdAt: "desc" }
+        });
+    }
+
 }

@@ -66,7 +66,7 @@ export type createAccountInfoSchemaData =z.infer<typeof createAccountInfoSchema>
 export type updateAccountInfoSchemaData = z.infer<typeof updateAccountInfoSchema>
 
 const invoiceSchemaFields = {
-  projectId: zUuidRequired,
+  projectId: zUuidOptional,
   fabricatorId: zUuidRequired,
   rfqId: zUuidOptional,
   changeOrderId: zUuidOptional,

@@ -1,17 +1,8 @@
 type InternalRfqRaisedMailContext = {
   creatorName: string;
-  creatorRole: string;
   projectName: string;
-  subject: string;
-  serialNo?: string | null;
   raisedAt: Date;
 };
-
-const formatRoleLabel = (role: string) =>
-  role
-    .split("_")
-    .map((part) => part.charAt(0) + part.slice(1).toLowerCase())
-    .join(" ");
 
 const formatDate = (date: Date) => date.toDateString();
 
@@ -25,10 +16,7 @@ const formatTime = (date: Date) =>
 
 export const internalRfqRaisedHtmlContent = ({
   creatorName,
-  creatorRole,
   projectName,
-  subject,
-  serialNo,
   raisedAt,
 }: InternalRfqRaisedMailContext) => {
   const safeProjectName = projectName || "N/A";
@@ -92,29 +80,13 @@ export const internalRfqRaisedHtmlContent = ({
           </tr>
           <tr>
             <td class="content-body" style="padding: 40px 30px; color: #333333; line-height: 1.6;">
-              <div style="font-size: 18px; font-weight: bold; margin: 0 0 20px 0;">Subject: RFQ Raised Notification</div>
+              <div style="font-size: 18px; font-weight: bold; margin: 0 0 20px 0;">RFQ Raised Notification</div>
               <p style="margin: 0 0 20px 0;">A new <strong>Request for Quotation (RFQ)</strong> has been raised internally. Please find the details below:</p>
 
               <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 20px;">
                 <tr>
-                  <td width="140" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #888888; font-weight: bold; font-size: 14px;">Reference</td>
-                  <td valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333;">${serialNo || "N/A"}</td>
-                </tr>
-                <tr>
-                  <td width="140" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #888888; font-weight: bold; font-size: 14px;">Project</td>
-                  <td valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333;">${safeProjectName}</td>
-                </tr>
-                <tr>
-                  <td width="140" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #888888; font-weight: bold; font-size: 14px;">Subject</td>
-                  <td valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333;">${subject}</td>
-                </tr>
-                <tr>
                   <td width="140" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #888888; font-weight: bold; font-size: 14px;">Raised By</td>
                   <td valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333;">${creatorName}</td>
-                </tr>
-                <tr>
-                  <td width="140" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #888888; font-weight: bold; font-size: 14px;">Raised By Role</td>
-                  <td valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333;">${formatRoleLabel(creatorRole)}</td>
                 </tr>
                 <tr>
                   <td width="140" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #888888; font-weight: bold; font-size: 14px;">Date</td>
@@ -179,19 +151,11 @@ export const internalRfqRaisedHtmlContent = ({
 
 export const internalRfqRaisedTextContent = ({
   creatorName,
-  creatorRole,
-  projectName,
-  subject,
-  serialNo,
   raisedAt,
 }: InternalRfqRaisedMailContext) =>
   [
     `A new RFQ has been raised internally.`,
     `Raised By: ${creatorName}`,
-    `Raised By Role: ${formatRoleLabel(creatorRole)}`,
-    `Project: ${projectName}`,
-    `Subject: ${subject}`,
-    `Reference: ${serialNo || "N/A"}`,
     `Date: ${formatDate(raisedAt)}`,
     `Time: ${formatTime(raisedAt)}`,
-  ].join("\n");
+  ].filter(Boolean).join("\n");

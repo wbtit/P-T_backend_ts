@@ -151,6 +151,7 @@ async function collectCounters() {
     select: { serialNo: true, projectId: true },
   });
   for (const row of invoices) {
+    if (!row.projectId) continue;
     upsertMax(
       counters,
       { scopeType: "PROJECT", scopeId: row.projectId, entity: SERIAL_PREFIX.INVOICE },

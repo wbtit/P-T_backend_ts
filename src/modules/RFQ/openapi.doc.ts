@@ -22,6 +22,10 @@ const rfqMultipartRequestBody = (schema: typeof CreateRfqSchema | typeof UpdateR
             oneOf: [{ type: "boolean" }, { type: "string" }],
             description: "Whether the RFQ uses a manual MTO value.",
           },
+          isMTOStickModel: {
+            oneOf: [{ type: "boolean" }, { type: "string" }],
+            description: "Whether the RFQ uses an MTO stick model.",
+          },
           MTOValue: {
             type: "string",
             description: "Manual MTO value provided for the RFQ when MTOManual is enabled.",
@@ -263,6 +267,20 @@ export const rFQOpenApiDoc: ModuleOpenApiDoc = {
           "200": { description: "Success" },
           "400": { description: "Bad Request" },
           "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
+    "/rfq/pending/clientEstimator": {
+      get: {
+        tags: ["RFQ"],
+        summary: "GET /rfq/pending/clientEstimator",
+        operationId: "get_RFQ_rfq_pending_clientEstimator",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "403": { description: "Access Denied" },
           "500": { description: "Internal Server Error" }
         }
       },
