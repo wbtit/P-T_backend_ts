@@ -15,6 +15,7 @@ const INVOICE_LIST_INCLUDE = {
             fabName: true,
             accountId: true,
             bankAccount: true,
+            paymenTDueDate: true,
         },
     },
     project: {
