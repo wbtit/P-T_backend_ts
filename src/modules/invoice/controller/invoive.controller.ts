@@ -41,10 +41,7 @@ export class InvoiceController {
       if (projectId) {
         (async () => {
         try {
-          if (!result.projectId) {
-            return;
-          }
-          await notifyProjectStakeholdersByRole(result.projectId, INVOICE_NOTIFY_ROLES, (role) =>
+          await notifyProjectStakeholdersByRole(projectId, INVOICE_NOTIFY_ROLES, (role) =>
             buildRoleScopedNotification(role, {
               type: "INVOICE_CREATED",
               basePayload: { invoiceId: result.id, timestamp: new Date() },
@@ -195,10 +192,7 @@ export class InvoiceController {
         if (projectId) {
           (async () => {
           try {
-            if (!updatedInvoice.projectId) {
-              return;
-            }
-            await notifyProjectStakeholdersByRole(updatedInvoice.projectId, INVOICE_NOTIFY_ROLES, (role) =>
+            await notifyProjectStakeholdersByRole(projectId, INVOICE_NOTIFY_ROLES, (role) =>
               buildRoleScopedNotification(role, {
                 type: "INVOICE_STATUS_UPDATED",
                 basePayload: { invoiceId: updatedInvoice.id, status: bodyStatus, timestamp: new Date() },

@@ -1,5 +1,7 @@
 import express from "express";
 import { AuthRoutes } from "./modules/user/auth";
+import ChallengeRoutes from "./modules/user/auth/routes/challenge.routes";
+import AnalyticsRoutes from "./modules/user/auth/routes/analytics.routes";
 import { EmployeeRoutes } from "./modules/user/employee";
 import { fabricatorRoutes } from "./modules/fabricator";
 import { TeamRoutes } from "./modules/team";
@@ -39,6 +41,8 @@ import { default as CoordinationDrawingRoutes } from "./modules/coordinationDraw
 const routes = express.Router();
 
 routes.use("/auth", AuthRoutes);
+routes.use("/auth", ChallengeRoutes);
+routes.use("/auth", AnalyticsRoutes);
 routes.use("/user", userRouter);
 routes.use("/task", whRoutes);
 routes.use("/employee",EmployeeRoutes)

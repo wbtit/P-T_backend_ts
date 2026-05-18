@@ -290,6 +290,12 @@ enum IpChallengeAction {
   BLOCKED
 }
 
+enum ChallengeContext {
+  NEW_DEVICE
+  NEW_NETWORK
+  NEW_BOTH
+}
+
 // ===========================================================
 // MODELS
 // ===========================================================
@@ -2148,15 +2154,18 @@ model CoordinationDrawingResponse {
 }
 
 model UserTrustedIp {
-  id         String   @id @default(cuid())
-  userId     String   @db.Uuid
-  ipAddress  String
-  country    String?
-  city       String?
-  label      String?
-  createdAt  DateTime @default(now())
-  lastUsedAt DateTime @default(now())
-  isActive   Boolean  @default(true)
+  id                String    @id @default(cuid())
+  userId            String    @db.Uuid
+  ipAddress         String
+  country           String?
+  city              String?
+  label             String?
+  userAgent         String?
+  deviceFingerprint String?
+  expiresAt         DateTime?
+  createdAt         DateTime  @default(now())
+  lastUsedAt        DateTime  @default(now())
+  isActive          Boolean   @default(true)
 
   user User @relation("UserTrustedIps", fields: [userId], references: [id], onDelete: Cascade)
 
@@ -2165,20 +2174,21 @@ model UserTrustedIp {
 }
 
 model LoginAttempt {
-  id          String             @id @default(cuid())
-  userId      String?            @db.Uuid
-  ip          String
-  userAgent   String?
-  country     String?
-  city        String?
-  isp         String?
-  isVpn       Boolean            @default(false)
-  isTor       Boolean            @default(false)
-  isProxy     Boolean            @default(false)
-  riskScore   Int                @default(0)
-  riskReasons Json               @default("[]")
-  status      LoginAttemptStatus
-  createdAt   DateTime           @default(now())
+  id                String             @id @default(cuid())
+  userId            String?            @db.Uuid
+  ip                String
+  userAgent         String?
+  deviceFingerprint String?
+  country           String?
+  city              String?
+  isp               String?
+  isVpn             Boolean            @default(false)
+  isTor             Boolean            @default(false)
+  isProxy           Boolean            @default(false)
+  riskScore         Int                @default(0)
+  riskReasons       Json               @default("[]")
+  status            LoginAttemptStatus
+  createdAt         DateTime           @default(now())
 
   user User? @relation("UserLoginAttempts", fields: [userId], references: [id], onDelete: SetNull)
 
@@ -2188,15 +2198,18 @@ model LoginAttempt {
 }
 
 model IpChallenge {
-  id             String            @id @default(cuid())
-  userId         String            @db.Uuid
-  ipAddress      String
-  tokenHash      String            @unique
-  loginAttemptId String?
-  expiresAt      DateTime
-  usedAt         DateTime?
-  action         IpChallengeAction @default(PENDING)
-  createdAt      DateTime          @default(now())
+  id               String            @id @default(cuid())
+  userId           String            @db.Uuid
+  ipAddress        String
+  tokenHash        String            @unique
+  otpHash          String
+  otpSalt          String
+  challengeContext ChallengeContext  @default(NEW_BOTH)
+  loginAttemptId   String?
+  expiresAt        DateTime
+  usedAt           DateTime?
+  action           IpChallengeAction @default(PENDING)
+  createdAt        DateTime          @default(now())
 
   user         User          @relation("UserIpChallenges", fields: [userId], references: [id], onDelete: Cascade)
   loginAttempt LoginAttempt? @relation("LoginAttemptChallenges", fields: [loginAttemptId], references: [id], onDelete: SetNull)
@@ -2205,16 +2218,17 @@ model IpChallenge {
 }
 
 model UserSession {
-  id         String   @id @default(cuid())
-  userId     String   @db.Uuid
-  ipAddress  String
-  country    String?
-  city       String?
-  latitude   Float?
-  longitude  Float?
-  userAgent  String?
-  lastSeenAt DateTime @default(now())
-  createdAt  DateTime @default(now())
+  id                String   @id @default(cuid())
+  userId            String   @db.Uuid
+  ipAddress         String
+  country           String?
+  city              String?
+  latitude          Float?
+  longitude         Float?
+  userAgent         String?
+  deviceFingerprint String?
+  lastSeenAt        DateTime @default(now())
+  createdAt         DateTime @default(now())
 
   user User @relation("UserSessions", fields: [userId], references: [id], onDelete: Cascade)
 

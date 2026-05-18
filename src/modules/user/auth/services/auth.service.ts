@@ -22,7 +22,7 @@ type AuthUser = {
     [key: string]: unknown;
 };
 
-const toJwtPayload = (user: AuthUser): UserJwt => ({
+export const toJwtPayload = (user: AuthUser): UserJwt => ({
     id: user.id,
     email: user.email,
     username: user.username,
@@ -31,9 +31,19 @@ const toJwtPayload = (user: AuthUser): UserJwt => ({
     role: user.role as UserJwt["role"],
 });
 
-const sanitizeUser = <T extends { password?: string }>(user: T): Omit<T, "password"> => {
+export const sanitizeUser = <T extends { password?: string }>(user: T): Omit<T, "password"> => {
     const { password, ...safeUser } = user;
     return safeUser;
+};
+
+export const verifyCredentials = async (data: SigninInput): Promise<AuthUser> => {
+    const user = await findUserByUsername(data.username) as AuthUser | null;
+    if (!user) throw new AppError('User not found', 409);
+
+    const isMatch = await bcrypt.compare(data.password, user.password);
+    if (!isMatch) throw new AppError('Invalid Password', 401);
+
+    return user;
 };
 
 export const signup=async(data:SignupInput)=>{
@@ -52,12 +62,7 @@ export const signup=async(data:SignupInput)=>{
 }
 
 export const signin=async(data:SigninInput)=>{
-    const user = await findUserByUsername(data.username) as AuthUser | null;
-    if(!user) throw new AppError('User not found',409);
-
-
-    const isMatch = await bcrypt.compare(data.password,user.password)
-    if(!isMatch) throw new AppError('Invalid Password',401)
+    const user = await verifyCredentials(data);
        
     const token = generateToken(toJwtPayload(user));
     return { token,user:sanitizeUser(user)};
