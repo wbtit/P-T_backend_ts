@@ -163,9 +163,7 @@ export class SubmittalResponseController {
                 greeting,
                 intro: `A new ${parentRespId ? "reply" : "response"} has been added to the submittal thread in Project Station. Please review the latest update below:`,
                 details: [
-                  { label: "Reference", value: submittalMailContext.serialNo || "N/A" },
                   { label: "Project", value: submittalMailContext.project?.name || "N/A" },
-                  { label: "Subject", value: submittalMailContext.subject || "N/A" },
                   { label: "Stage", value: submittalMailContext.stage },
                   { label: "Version", value: `v${submittalMailContext.currentVersion?.versionNumber || 1}` },
                   { label: "Response By", value: responderName },

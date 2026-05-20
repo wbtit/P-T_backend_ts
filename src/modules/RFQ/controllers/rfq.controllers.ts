@@ -10,6 +10,10 @@ import { UserRole } from "@prisma/client";
 import prisma from "../../../config/database/client";
 import { buildRoleScopedNotification } from "../../../utils/stakeholderNotificationMessages";
 import {
+  notifyMtoClientEstimatorsForRfq,
+  notifyMtoClientEstimatorsForRfqStatus,
+} from "../../../utils/notifyMtoClientEstimators";
+import {
   internalRfqRaisedHtmlContent,
   internalRfqRaisedTextContent,
 } from "../../../services/mailServices/mailtemplates/internalRfqRaisedMailtemplate";
@@ -21,6 +25,7 @@ const RFQ_NOTIFY_ROLES: UserRole[] = [
   "SALES_PERSON",
   "CLIENT",
   "CLIENT_ADMIN",
+  "CLIENT_ACCOUNTANT",
   "CLIENT_PROJECT_COORDINATOR",
   "VENDOR",
   "VENDOR_ADMIN",
@@ -220,6 +225,18 @@ export class RFQController {
               }),
               { excludeUserIds: [creatorId] }
             );
+
+            await notifyMtoClientEstimatorsForRfq(
+              newrfq.id,
+              {
+                type: "RFQ_CREATED",
+                title: "MTO RFQ Received",
+                message: `MTO RFQ '${newrfq.subject}' was shared with your team.`,
+                rfqId: newrfq.id,
+                timestamp: new Date(),
+              },
+              { excludeUserIds: [creatorId] }
+            );
           } catch (error) {
             console.error("Error in handleCreateRfq background tasks:", error);
           }
@@ -279,6 +296,26 @@ export class RFQController {
               });
             },
             { excludeUserIds: [updaterId] }
+            );
+
+            await notifyMtoClientEstimatorsForRfq(
+              rfq.id,
+              {
+                type: "RFQ_UPDATED",
+                title: "MTO RFQ Updated",
+                message: `MTO RFQ '${rfq.subject}' was updated.`,
+                rfqId: rfq.id,
+                status: (rfq as any).status ?? bodyStatus ?? null,
+                timestamp: new Date(),
+              },
+              { excludeUserIds: [updaterId] }
+            );
+
+            await notifyMtoClientEstimatorsForRfqStatus(
+              rfq.id,
+              String((rfq as any).status ?? bodyStatus ?? ""),
+              rfq.subject,
+              { excludeUserIds: [updaterId] }
             );
           } catch (error) {
             console.error("Error in handleUpdateRfq background tasks:", error);
@@ -411,6 +448,20 @@ export class RFQController {
     async handleCloseRfq(req:AuthenticateRequest,res:Response){
         const {id}=req.params
         const rfq = await rfqService.closeRfq(id);
+
+        (async () => {
+          try {
+            await notifyMtoClientEstimatorsForRfqStatus(
+              rfq.id,
+              String(rfq.status),
+              rfq.subject,
+              { excludeUserIds: req.user?.id ? [req.user.id] : [] }
+            );
+          } catch (error) {
+            console.error("Error in handleCloseRfq MTO notification:", error);
+          }
+        })();
+
         res.status(200).json({
             status: 'success',
             data: rfq,

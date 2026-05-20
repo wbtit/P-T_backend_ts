@@ -100,8 +100,64 @@ export class Invoicerepository{
       where:{
         clientId:clientId
       },
-       include: { invoiceItems: true,pointOfContact:true, rfq: true, changeOrder: true},
+       include: { 
+            invoiceItems: true,
+            pointOfContact:true, 
+            rfq: true, 
+            changeOrder: true,
+            project: {
+                select: {
+                    id: true,
+                    name: true,
+                    projectCode: true,
+                    projectNumber: true,
+                },
+            },
+            fabricator: {
+                select: {
+                    id: true,
+                    fabName: true,
+                },
+            },
+        },
+        orderBy: { createdAt: "desc" },
      })
+    }
+
+    async getAllForClientEstimators(fabricatorIds: string[]) {
+        if (fabricatorIds.length === 0) return [];
+
+        return await prisma.invoice.findMany({
+            where: {
+                fabricatorId: { in: fabricatorIds },
+                pointOfContact: {
+                    some: {
+                        role: "CLIENT_ESTIMATOR",
+                    },
+                },
+            },
+            include: {
+                invoiceItems: true,
+                pointOfContact: true,
+                rfq: true,
+                changeOrder: true,
+                project: {
+                    select: {
+                        id: true,
+                        name: true,
+                        projectCode: true,
+                        projectNumber: true,
+                    },
+                },
+                fabricator: {
+                    select: {
+                        id: true,
+                        fabName: true,
+                    },
+                },
+            },
+            orderBy: { createdAt: "desc" },
+        });
     }
 
     async findFabricatorIdsForUser(userId: string) {
@@ -232,5 +288,39 @@ export class Invoicerepository{
             }
         })
         return invoices;
-}
+    }
+
+    async pendingInvoicesForClientEstimators(fabricatorIds: string[]) {
+        if (fabricatorIds.length === 0) return [];
+
+        return await prisma.invoice.findMany({
+            where: {
+                fabricatorId: { in: fabricatorIds },
+                status: "PENDING",
+                pointOfContact: {
+                    some: {
+                        role: "CLIENT_ESTIMATOR",
+                    },
+                },
+            },
+            include: {
+                fabricator: {
+                    select: {
+                        project: {
+                            select: {
+                                projectCode: true,
+                                projectNumber: true,
+                            },
+                        },
+                        accountId: true,
+                        bankAccount: true,
+                    },
+                },
+                invoiceItems: true,
+                rfq: true,
+                changeOrder: true,
+            },
+            orderBy: { createdAt: "desc" },
+        });
+    }
 }

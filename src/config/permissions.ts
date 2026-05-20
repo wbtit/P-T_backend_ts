@@ -151,6 +151,18 @@ export const permissions: PermissionsConfig = {
   'HUMAN_RESOURCE': {
     ...createDefaultRolePermissions(),
     // CEO can mark specific permissions here
+  },
+  'VENDOR_ADMIN': {
+    ...createDefaultRolePermissions(),
+  },
+  'CLIENT_ACCOUNTANT': {
+    ...createDefaultRolePermissions(),
+  },
+  'CLIENT_PROJECT_COORDINATOR': {
+    ...createDefaultRolePermissions(),
+  },
+  'CLIENT_GENERAL_CONSTRUCTOR': {
+    ...createDefaultRolePermissions(),
   }
 };
 

@@ -6,6 +6,8 @@ import { UserRole } from "@prisma/client";
 const CLIENT_ROLES: UserRole[] = [
   "CLIENT",
   "CLIENT_ADMIN",
+  "CLIENT_ACCOUNTANT",
+  "CLIENT_ESTIMATOR",
   "CLIENT_PROJECT_COORDINATOR",
   "CLIENT_GENERAL_CONSTRUCTOR",
 ];

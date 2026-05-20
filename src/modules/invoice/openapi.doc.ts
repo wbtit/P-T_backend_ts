@@ -129,11 +129,25 @@ export const invoiceOpenApiDoc: ModuleOpenApiDoc = {
       get: {
         tags: ["Invoice"],
         summary: "Get pending invoices for authenticated client",
-        description: "Retrieves a list of pending invoices for the currently authenticated client.",
+        description: "Retrieves a list of pending invoices for the currently authenticated client. If the user is a CLIENT_ESTIMATOR, it returns all pending invoices for their shared fabricators.",
         operationId: "get_invoice_invoice_client",
         security: [{ bearerAuth: [] }],
         responses: {
           "200": { description: "Successfully retrieved pending invoices for client" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
+    "/invoice/client/all": {
+      get: {
+        tags: ["Invoice"],
+        summary: "Get all invoices for authenticated client",
+        description: "Retrieves a list of all invoices for the currently authenticated client. If the user is a CLIENT_ESTIMATOR, it returns all invoices for their shared fabricators.",
+        operationId: "get_invoice_invoice_client_all",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": { description: "Successfully retrieved all invoices for client" },
           "401": { description: "Unauthorized" },
           "500": { description: "Internal Server Error" }
         }
@@ -173,7 +187,7 @@ export const invoiceOpenApiDoc: ModuleOpenApiDoc = {
       get: {
         tags: ["Invoice"],
         summary: "Get pending invoices for client",
-        description: "Retrieves pending invoices for the authenticated client (same as /invoice/client).",
+        description: "Retrieves pending invoices for the authenticated client. If the user is a CLIENT_ESTIMATOR, it returns all pending invoices for their shared fabricators.",
         operationId: "get_invoice_invoice_pending_client",
         security: [{ bearerAuth: [] }],
         responses: {

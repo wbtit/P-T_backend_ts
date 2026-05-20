@@ -55,9 +55,14 @@ export class InvoiceService {
   // ---------------------------------------------------------------------------
   // Get all Invoices by Client ID
   // ---------------------------------------------------------------------------
-  async getInvoicesByClientId(clientId: string) {
+  async getInvoicesByClientId(clientId: string, role?: string) {
     if (!clientId) {
       throw new AppError("Client ID is required", 400);
+    }
+
+    if (role === "CLIENT_ESTIMATOR") {
+      const fabricatorIds = await invoiceRepo.findFabricatorIdsForUser(clientId);
+      return await invoiceRepo.getAllForClientEstimators(fabricatorIds);
     }
 
     const invoices = await invoiceRepo.getAllByClientId(clientId);
@@ -94,7 +99,11 @@ export class InvoiceService {
     return await invoiceRepo.pendingInvoicesByFabricator(fabricatorId)
   }
 
-  async pendingInvoicesByClient(clientId:string){
-    return await invoiceRepo.pendingInvoicesByClient(clientId)
+  async pendingInvoicesByClient(clientId: string, role?: string) {
+    if (role === "CLIENT_ESTIMATOR") {
+      const fabricatorIds = await invoiceRepo.findFabricatorIdsForUser(clientId);
+      return await invoiceRepo.pendingInvoicesForClientEstimators(fabricatorIds);
+    }
+    return await invoiceRepo.pendingInvoicesByClient(clientId);
   }
 }

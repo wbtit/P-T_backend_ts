@@ -3,6 +3,7 @@ import z from "zod";
 
 export const CreateRFQFollowUpSchema = z.object({
   description: z.string().min(1),
+  dueDate: z.string().optional(),
   files: z
     .union([z.array(z.any()), z.literal(null)])
     .transform((val) => (val === null ? Prisma.JsonNull : val))
@@ -11,6 +12,7 @@ export const CreateRFQFollowUpSchema = z.object({
 
 export const UpdateRFQFollowUpSchema = z.object({
   description: z.string().min(1).optional(),
+  dueDate: z.string().optional(),
   files: z
     .union([z.array(z.any()), z.literal(null)])
     .transform((val) => (val === null ? Prisma.JsonNull : val))
@@ -19,4 +21,3 @@ export const UpdateRFQFollowUpSchema = z.object({
 
 export type CreateRFQFollowUpInput = z.infer<typeof CreateRFQFollowUpSchema>;
 export type UpdateRFQFollowUpInput = z.infer<typeof UpdateRFQFollowUpSchema>;
-

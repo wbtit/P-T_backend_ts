@@ -127,9 +127,7 @@ export class RFIResponseController {
                 greeting,
                 intro: `A new ${parentRespId ? "reply" : "response"} has been added to the RFI thread in Project Station. Please find the latest details below:`,
                 details: [
-                  { label: "Reference", value: rfiMailContext.serialNo || "N/A" },
                   { label: "Project", value: rfiMailContext.project?.name || "N/A" },
-                  { label: "Subject", value: rfiMailContext.subject || "N/A" },
                   { label: "Response By", value: responderName },
                   { label: "Response State", value: response.responseState },
                   { label: "WBT Status", value: response.wbtStatus },

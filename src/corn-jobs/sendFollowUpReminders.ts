@@ -2,6 +2,7 @@ import prisma from "../config/database/client";
 import { sendEmail } from "../services/mailServices/mailconfig";
 import { followUpReminderTemplate } from "../services/mailServices/mailtemplates/followUpMailTemplate";
 import { notifyProjectStakeholders } from "../utils/notifyProjectStakeholders";
+import { notifyMtoClientEstimatorsForRfq } from "../utils/notifyMtoClientEstimators";
 
 export function startOfToday(): Date {
   const now = new Date();
@@ -100,6 +101,73 @@ export async function sendFollowUpReminders() {
       communicationId: item.id,
       followUpDate: item.followUpDate,
       timestamp: new Date(),
+    });
+  }
+
+  const rfqFollowUpsDueSoon = await prisma.rFQFollowUp.findMany({
+    where: {
+      reminderSent: false,
+      dueDate: {
+        gte: tomorrowStart,
+        lte: tomorrowEnd,
+      },
+    },
+    include: {
+      rfq: {
+        select: {
+          id: true,
+          subject: true,
+        },
+      },
+    },
+  });
+
+  for (const followUp of rfqFollowUpsDueSoon) {
+    await notifyMtoClientEstimatorsForRfq(followUp.rfqId, {
+      type: "RFQ_FOLLOWUP_DUE",
+      title: "MTO RFQ Follow-Up Due",
+      message: `A follow-up for MTO RFQ '${followUp.rfq.subject}' is due soon.`,
+      rfqId: followUp.rfqId,
+      followUpId: followUp.id,
+      dueDate: followUp.dueDate,
+      timestamp: new Date(),
+    });
+
+    await prisma.rFQFollowUp.update({
+      where: { id: followUp.id },
+      data: { reminderSent: true },
+    });
+  }
+
+  const overdueRfqFollowUps = await prisma.rFQFollowUp.findMany({
+    where: {
+      overdueNotificationSent: false,
+      dueDate: { lt: startOfToday() },
+    },
+    include: {
+      rfq: {
+        select: {
+          id: true,
+          subject: true,
+        },
+      },
+    },
+  });
+
+  for (const followUp of overdueRfqFollowUps) {
+    await notifyMtoClientEstimatorsForRfq(followUp.rfqId, {
+      type: "RFQ_FOLLOWUP_OVERDUE",
+      title: "MTO RFQ Follow-Up Overdue",
+      message: `A follow-up for MTO RFQ '${followUp.rfq.subject}' is overdue.`,
+      rfqId: followUp.rfqId,
+      followUpId: followUp.id,
+      dueDate: followUp.dueDate,
+      timestamp: new Date(),
+    });
+
+    await prisma.rFQFollowUp.update({
+      where: { id: followUp.id },
+      data: { overdueNotificationSent: true },
     });
   }
 }

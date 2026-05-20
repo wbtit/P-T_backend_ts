@@ -38,6 +38,7 @@ enum UserRole {
   HUMAN_RESOURCE
   CLIENT
   CLIENT_ADMIN
+  CLIENT_ACCOUNTANT
   CLIENT_ESTIMATOR
   CLIENT_PROJECT_COORDINATOR
   CLIENT_GENERAL_CONSTRUCTOR
@@ -727,19 +728,23 @@ model RFQResponse {
 }
 
 model RFQFollowUp {
-  id          String   @id @default(uuid()) @db.Uuid
-  rfqId       String   @db.Uuid
-  createdById String   @db.Uuid
-  description String   @default("")
-  files       Json?    @default("[]")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                       String   @id @default(uuid()) @db.Uuid
+  rfqId                    String   @db.Uuid
+  createdById              String   @db.Uuid
+  description              String   @default("")
+  files                    Json?    @default("[]")
+  dueDate                  DateTime?
+  reminderSent             Boolean  @default(false)
+  overdueNotificationSent  Boolean  @default(false)
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
 
   rfq       RFQ  @relation(fields: [rfqId], references: [id], onDelete: Cascade)
   createdBy User @relation("RFQFollowUpCreatedBy", fields: [createdById], references: [id])
 
   @@index([rfqId])
   @@index([createdById])
+  @@index([dueDate])
   @@index([createdAt])
   @@map("rfq_follow_up")
 }

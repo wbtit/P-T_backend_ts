@@ -92,6 +92,8 @@ export async function getRfqStakeholderRecipients(
         break;
       case "CLIENT":
       case "CLIENT_ADMIN":
+      case "CLIENT_ACCOUNTANT":
+      case "CLIENT_ESTIMATOR":
       case "CLIENT_PROJECT_COORDINATOR":
       case "CLIENT_GENERAL_CONSTRUCTOR":
       case "VENDOR":

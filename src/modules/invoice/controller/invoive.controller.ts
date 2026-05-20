@@ -6,6 +6,7 @@ import prisma from "../../../config/database/client";
 import { notifyProjectStakeholdersByRole } from "../../../utils/notifyProjectStakeholders";
 import { UserRole } from "@prisma/client";
 import { buildRoleScopedNotification } from "../../../utils/stakeholderNotificationMessages";
+import { notifyMtoClientEstimatorsForInvoice } from "../../../utils/notifyMtoClientEstimators";
 
 const invoiceService = new InvoiceService();
 const INVOICE_NOTIFY_ROLES: UserRole[] = [
@@ -15,6 +16,7 @@ const INVOICE_NOTIFY_ROLES: UserRole[] = [
   "CONNECTION_DESIGNER_ADMIN",
   "CLIENT",
   "CLIENT_ADMIN",
+  "CLIENT_ACCOUNTANT",
   "CLIENT_PROJECT_COORDINATOR",
   "VENDOR",
   "VENDOR_ADMIN",
@@ -62,6 +64,27 @@ export class InvoiceController {
         }
         })();
       }
+
+      (async () => {
+        try {
+          await notifyMtoClientEstimatorsForInvoice(
+            result.id,
+            {
+              type: "INVOICE_CREATED",
+              title: "MTO Invoice Received",
+              message: invoiceNumber
+                ? `Invoice '${invoiceNumber}' was created for an MTO RFQ.`
+                : "A new invoice was created for an MTO RFQ.",
+              invoiceId: result.id,
+              rfqId: result.rfqId,
+              timestamp: new Date(),
+            },
+            { excludeUserIds: [creatorId] }
+          );
+        } catch (error) {
+          console.error("Error in handleCreateInvoice MTO notification:", error);
+        }
+      })();
 
       return res.status(201).json({
         message: "Invoice created successfully",
@@ -176,6 +199,32 @@ export class InvoiceController {
     }
   }
 
+  async handleGetAllInvoicesByClientId(req: AuthenticateRequest, res: Response) {
+    try {
+      const clientId = req.user?.id;
+      const role = req.user?.role;
+
+      if (!clientId) {
+        throw new AppError("User ID is missing", 400);
+      }
+
+      const invoices = await invoiceService.getInvoicesByClientId(clientId, role);
+
+      return res.status(200).json({
+        message: "All invoices fetched successfully for client",
+        success: true,
+        data: invoices,
+      });
+    } catch (error: any) {
+      console.error("Get All Invoices By Client Error:", error);
+      return res.status(error.statusCode || 500).json({
+        message: error.message || "Failed to fetch invoices",
+        success: false,
+        data: null,
+      });
+    }
+  }
+
   // ---------------------------------------------------------------------------
   // Update Invoice
   // ---------------------------------------------------------------------------
@@ -183,11 +232,36 @@ export class InvoiceController {
     try {
       const { id } = req.params;
       const data = req.body;
+      const updaterId = (req as AuthenticateRequest).user?.id;
+      const hasStatusChange = Object.prototype.hasOwnProperty.call(data, "status");
+      const hasPaymentStatusChange = Object.prototype.hasOwnProperty.call(data, "paymentStatus");
 
       const updatedInvoice = await invoiceService.updateInvoice(id, data);
+      const updatedInvoiceNumber = updatedInvoice.invoiceNumber?.trim();
+
+      (async () => {
+        try {
+          await notifyMtoClientEstimatorsForInvoice(
+            updatedInvoice.id,
+            {
+              type: "INVOICE_UPDATED",
+              title: "MTO Invoice Updated",
+              message: updatedInvoiceNumber
+                ? `Invoice '${updatedInvoiceNumber}' was updated.`
+                : "An MTO invoice was updated.",
+              invoiceId: updatedInvoice.id,
+              rfqId: updatedInvoice.rfqId,
+              timestamp: new Date(),
+            },
+            { excludeUserIds: updaterId ? [updaterId] : [] }
+          );
+        } catch (error) {
+          console.error("Error in handleUpdateInvoice MTO update notification:", error);
+        }
+      })();
+
       if (data?.status) {
         const updatedInvoiceNumber = updatedInvoice.invoiceNumber?.trim();
-        const updaterId = (req as AuthenticateRequest).user?.id;
         const bodyStatus = data.status;
         const projectId = updatedInvoice.projectId;
 
@@ -216,6 +290,35 @@ export class InvoiceController {
           }
           })();
         }
+
+      }
+
+      if (hasStatusChange || hasPaymentStatusChange) {
+        const bodyStatus = hasStatusChange ? data.status : updatedInvoice.status;
+        const paymentStatus = hasPaymentStatusChange ? data.paymentStatus : updatedInvoice.paymentStatus;
+
+        (async () => {
+          try {
+            await notifyMtoClientEstimatorsForInvoice(
+              updatedInvoice.id,
+              {
+                type: "INVOICE_PAYMENT_OR_STATUS_UPDATED",
+                title: "MTO Invoice Payment/Status Updated",
+                message: updatedInvoiceNumber
+                  ? `Invoice '${updatedInvoiceNumber}' payment or status details were updated.`
+                  : "An MTO invoice payment or status was updated.",
+                invoiceId: updatedInvoice.id,
+                rfqId: updatedInvoice.rfqId,
+                status: bodyStatus,
+                paymentStatus,
+                timestamp: new Date(),
+              },
+              { excludeUserIds: updaterId ? [updaterId] : [] }
+            );
+          } catch (error) {
+            console.error("Error in handleUpdateInvoice MTO payment/status notification:", error);
+          }
+        })();
       }
 
       return res.status(200).json({
@@ -281,7 +384,8 @@ export class InvoiceController {
   async handlePendingInvoicesByClient(req:AuthenticateRequest,res:Response){
     try {
       const id = req.user?.id;
-      const result= await invoiceService.pendingInvoicesByClient(id!);
+      const role = req.user?.role;
+      const result= await invoiceService.pendingInvoicesByClient(id!, role);
   
       return res.status(200).json({
         message: "Pending invoices for client fetched successfully",

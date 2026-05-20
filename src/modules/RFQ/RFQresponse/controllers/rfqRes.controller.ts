@@ -6,6 +6,7 @@ import { UserRole } from "@prisma/client";
 import { AuthenticateRequest } from "../../../../middleware/authMiddleware";
 import { buildRoleScopedNotification } from "../../../../utils/stakeholderNotificationMessages";
 import prisma from "../../../../config/database/client";
+import { notifyMtoClientEstimatorsForRfq } from "../../../../utils/notifyMtoClientEstimators";
 import { responseMailTemplate } from "../../../../services/mailServices/mailtemplates/responseMailTemplate";
 import {
     formatParticipantName,
@@ -115,17 +116,8 @@ export class RfqResponseController {
                                 greeting,
                                 intro: `A new ${req.body?.parentResponseId ? "reply" : "response"} has been added to the RFQ thread in Project Station. Please review the latest update below:`,
                                 details: [
-                                    { label: "Reference", value: rfqMailContext.serialNo || "N/A" },
                                     { label: "Project", value: rfqMailContext.project?.name || rfqMailContext.projectName || "N/A" },
-                                    { label: "RFQ Subject", value: rfqMailContext.subject || "N/A" },
-                                    { label: "Response Subject", value: result.subject || "N/A" },
                                     { label: "Response By", value: responderName },
-                                    { label: "Response Status", value: result.status },
-                                    { label: "WBT Status", value: result.wbtStatus },
-                                    { label: "Total Tonnage (With Conn.)", value: result.totalTonnageWithConnection || "N/A" },
-                                    { label: "Total Tonnage (Without Conn.)", value: result.totalTonnageWithoutConnection || "N/A" },
-                                    { label: "Page Numbers", value: result.PageNumbers || "N/A" },
-                                    { label: "Description", value: result.description || "N/A" },
                                     { label: "Response Date", value: new Date(result.createdAt).toDateString() },
                                 ],
                                 involvedRecipients: involvedNames,
@@ -154,6 +146,23 @@ export class RfqResponseController {
                     {
                         excludeUserIds: userId ? [userId] : [],
                     });
+
+                    await notifyMtoClientEstimatorsForRfq(
+                        result.rfqId,
+                        {
+                            type: "RFQ_RESPONSE_RECEIVED",
+                            title: req.body?.parentResponseId ? "MTO RFQ Reply Received" : "MTO RFQ Response Received",
+                            message: req.body?.parentResponseId
+                                ? `A new reply was added to MTO RFQ '${responseSubject}'.`
+                                : `A new response was added to MTO RFQ '${responseSubject}'.`,
+                            rfqId: result.rfqId,
+                            rfqResponseId: result.id,
+                            timestamp: new Date(),
+                        },
+                        {
+                            excludeUserIds: userId ? [userId] : [],
+                        }
+                    );
                 } catch (error) {
                     console.error("Error in rfqResponse background tasks:", error);
                 }

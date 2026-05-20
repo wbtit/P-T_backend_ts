@@ -64,7 +64,7 @@ export const DashBoradData = async (
               some: {
                 childResponses: {
                   some: {
-                    [role === "CLIENT" || role === "CLIENT_ADMIN"
+                    [role === "CLIENT" || role === "CLIENT_ADMIN" || role === "CLIENT_ACCOUNTANT" || role === "CLIENT_ESTIMATOR" || role === "CLIENT_PROJECT_COORDINATOR" || role === "CLIENT_GENERAL_CONSTRUCTOR"
                                ? "responseState"
                                : "wbtStatus"]: "COMPLETE",
                   },

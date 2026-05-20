@@ -39,6 +39,12 @@ router.get(
   asyncHandler(invoiceCtrlr.handleGetInvoicesByLoggedInUserFabricators.bind(invoiceCtrlr))
 );
 
+router.get(
+  "/client/all",
+  authMiddleware,
+  asyncHandler(invoiceCtrlr.handleGetAllInvoicesByClientId.bind(invoiceCtrlr))
+);
+
 router.put(
   "/:id",
   authMiddleware,

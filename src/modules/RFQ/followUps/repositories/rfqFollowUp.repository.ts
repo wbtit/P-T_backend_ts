@@ -15,6 +15,7 @@ export class RFQFollowUpRepository {
     return prisma.rFQFollowUp.create({
       data: {
         ...cleanedData,
+        dueDate: cleanedData.dueDate ? new Date(cleanedData.dueDate) : undefined,
         rfqId,
         createdById,
       },
@@ -72,9 +73,22 @@ export class RFQFollowUpRepository {
 
   async update(id: string, data: UpdateRFQFollowUpInput) {
     const cleanedData = cleandata(data);
+    const hasDueDate = Object.prototype.hasOwnProperty.call(cleanedData, "dueDate");
     return prisma.rFQFollowUp.update({
       where: { id },
-      data: cleanedData,
+      data: {
+        ...cleanedData,
+        dueDate:
+          typeof cleanedData.dueDate === "string"
+            ? new Date(cleanedData.dueDate)
+            : cleanedData.dueDate,
+        ...(hasDueDate
+          ? {
+              reminderSent: false,
+              overdueNotificationSent: false,
+            }
+          : {}),
+      },
       include: {
         createdBy: {
           select: {
@@ -96,4 +110,3 @@ export class RFQFollowUpRepository {
     });
   }
 }
-
