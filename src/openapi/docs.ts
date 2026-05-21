@@ -13,6 +13,7 @@ import designDrawings_doc from "../modules/designDrawings/openapi.doc";
 import estimation_doc from "../modules/estimation/openapi.doc";
 import fabricator_doc from "../modules/fabricator/openapi.doc";
 import invoice_doc from "../modules/invoice/openapi.doc";
+import invoiceWireTransfer_doc from "../modules/invoiceWireTransfers/openapi.doc";
 import meetings_doc from "../modules/meetings/openapi.doc";
 import milestone_doc from "../modules/milestone/openapi.doc";
 import notifications_doc from "../modules/notifications/openapi.doc";
@@ -47,6 +48,7 @@ const moduleDocs: ModuleOpenApiDoc[] = [
   estimation_doc,
   fabricator_doc,
   invoice_doc,
+  invoiceWireTransfer_doc,
   meetings_doc,
   milestone_doc,
   notifications_doc,

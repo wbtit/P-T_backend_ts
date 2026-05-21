@@ -376,6 +376,7 @@ model User {
   taggedUsers                     Message[]                       @relation("TaggedUsers")
   invoicePointOfContact           Invoice[]                       @relation("invoicePointOfContact")
   invoiceCreatedBy                Invoice[]                       @relation("invoiceCreatedBy")
+  invoiceWireTransfers            InvoiceWireTransfers[]          @relation("InvoiceWireTransferCreatedBy")
   FabricatorPointOfContacts       Fabricator[]                    @relation("FabricatorPointOfContacts")
   wbtFabricatorPointOfContact     Fabricator[]                    @relation("wbtFabricatorPointOfContacts")
   taskCreatedByUser               Task[]                          @relation("taskCreatedByUser")
@@ -1883,6 +1884,7 @@ model Invoice {
   pointOfContact User[]        @relation("invoicePointOfContact")
   user           User?         @relation("invoiceCreatedBy", fields: [createdBy], references: [id])
   invoiceItems   InvoiceItem[]
+  wireTransfers  InvoiceWireTransfers[] @relation("InvoiceWireTransferRelation")
 
   @@index([rfqId])
   @@index([changeOrderId])
@@ -2224,4 +2226,21 @@ model UserSession {
   user User @relation("UserSessions", fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("user_session")
+}
+
+model InvoiceWireTransfers {
+  id          String   @id @default(uuid()) @db.Uuid
+  subject     String   @default("")
+  description String?
+  date        DateTime?
+  files       Json     @default("[]")
+  createdBy   String   @db.Uuid
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  invoices Invoice[] @relation("InvoiceWireTransferRelation")
+  user     User      @relation("InvoiceWireTransferCreatedBy", fields: [createdBy], references: [id])
+
+  @@index([createdBy])
+  @@map("invoice_wire_transfers")
 }

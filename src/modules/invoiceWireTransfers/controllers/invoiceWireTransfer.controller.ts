@@ -1,0 +1,75 @@
+import { Request, Response } from "express";
+import { InvoiceWireTransferService } from "../services";
+import {
+  CreateInvoiceWireTransferSchema,
+  UpdateInvoiceWireTransferSchema,
+} from "../dtos";
+import { asyncHandler } from "../../../config/utils/asyncHandler";
+import { AppError } from "../../../config/utils/AppError";
+import { AuthenticateRequest } from "../../../middleware/authMiddleware";
+
+export class InvoiceWireTransferController {
+  private service = new InvoiceWireTransferService();
+
+  handleCreate = asyncHandler(async (req: AuthenticateRequest, res: Response) => {
+    const userId = req.user?.id;
+    if (!userId) throw new AppError("User not authenticated", 401);
+
+    const payload = CreateInvoiceWireTransferSchema.parse(req.body);
+    const result = await this.service.create(payload, userId);
+    return res.status(201).json({
+      message: "Invoice wire transfer created successfully",
+      success: true,
+      data: result,
+    });
+  });
+
+  handleUpdate = asyncHandler(async (req: AuthenticateRequest, res: Response) => {
+    const { id } = req.params;
+    const payload = UpdateInvoiceWireTransferSchema.parse(req.body);
+    const result = await this.service.update(id, payload);
+    return res.status(200).json({
+      message: "Invoice wire transfer updated successfully",
+      success: true,
+      data: result,
+    });
+  });
+
+  handleGetById = asyncHandler(async (req: AuthenticateRequest, res: Response) => {
+    const { id } = req.params;
+    const result = await this.service.get({ id });
+    return res.status(200).json({
+      message: "Invoice wire transfer fetched successfully",
+      success: true,
+      data: result,
+    });
+  });
+
+  handleDelete = asyncHandler(async (req: AuthenticateRequest, res: Response) => {
+    const { id } = req.params;
+    await this.service.delete(id);
+    return res.status(200).json({
+      message: "Invoice wire transfer deleted successfully",
+      success: true,
+    });
+  });
+
+  handleGetAll = asyncHandler(async (req: AuthenticateRequest, res: Response) => {
+    const results = await this.service.getAll();
+    return res.status(200).json({
+      message: "Invoice wire transfers fetched successfully",
+      success: true,
+      data: results,
+    });
+  });
+
+  handleGetByInvoiceId = asyncHandler(async (req: AuthenticateRequest, res: Response) => {
+    const { invoiceId } = req.params;
+    const results = await this.service.getByInvoiceId(invoiceId);
+    return res.status(200).json({
+      message: "Invoice wire transfers fetched successfully",
+      success: true,
+      data: results,
+    });
+  });
+}
