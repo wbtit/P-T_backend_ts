@@ -37,6 +37,12 @@ router.get(
 );
 
 router.get(
+  "/my-transfers",
+  authMiddleware,
+  ctrlr.handleGetMyTransfers
+);
+
+router.get(
   "/byId/:id",
   authMiddleware,
   validate({

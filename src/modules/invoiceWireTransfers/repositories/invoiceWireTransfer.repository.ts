@@ -101,4 +101,17 @@ export class InvoiceWireTransferRepository {
       orderBy: { createdAt: "desc" },
     });
   }
+
+  async getByCreatedBy(userId: string) {
+    return prisma.invoiceWireTransfers.findMany({
+      where: { createdBy: userId },
+      include: {
+        invoices: INVOICE_INCLUDE,
+        user: {
+          select: { id: true, firstName: true, lastName: true, username: true },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+  }
 }

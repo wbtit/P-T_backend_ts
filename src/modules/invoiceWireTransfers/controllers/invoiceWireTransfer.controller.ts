@@ -72,4 +72,16 @@ export class InvoiceWireTransferController {
       data: results,
     });
   });
+
+  handleGetMyTransfers = asyncHandler(async (req: AuthenticateRequest, res: Response) => {
+    const userId = req.user?.id;
+    if (!userId) throw new AppError("User not authenticated", 401);
+
+    const results = await this.service.getByCreatedBy(userId);
+    return res.status(200).json({
+      message: "My invoice wire transfers fetched successfully",
+      success: true,
+      data: results,
+    });
+  });
 }

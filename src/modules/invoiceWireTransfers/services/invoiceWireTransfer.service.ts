@@ -47,4 +47,8 @@ export class InvoiceWireTransferService {
   async getByInvoiceId(invoiceId: string) {
     return repository.getByInvoiceId(invoiceId);
   }
+
+  async getByCreatedBy(userId: string) {
+    return repository.getByCreatedBy(userId);
+  }
 }
