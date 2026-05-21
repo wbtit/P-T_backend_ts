@@ -51,6 +51,19 @@ export const invoiceWireTransferOpenApiDoc: ModuleOpenApiDoc = {
         },
       },
     },
+    "/invoiceWireTransfer/my-transfers": {
+      get: {
+        tags: ["InvoiceWireTransfers"],
+        summary: "Get all wire transfers created by the logged-in user",
+        operationId: "get_invoiceWireTransfer_myTransfers",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": { description: "Success" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" },
+        },
+      },
+    },
     "/invoiceWireTransfer/{id}": {
       get: {
         tags: ["InvoiceWireTransfers"],
