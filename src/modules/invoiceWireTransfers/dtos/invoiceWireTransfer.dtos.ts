@@ -2,7 +2,7 @@ import z from "zod";
 import { Prisma } from "@prisma/client";
 
 export const CreateInvoiceWireTransferSchema = z.object({
-  invoiceIds: z.array(z.string().uuid()).min(1),
+  invoiceIds: z.array(z.string().uuid()).optional(),
   subject: z.string().max(255).optional(),
   description: z.string().optional(),
   date: z.preprocess(

@@ -18,13 +18,17 @@ const INVOICE_INCLUDE = {
 export class InvoiceWireTransferRepository {
   async create(data: CreateInvoiceWireTransferInput, userId: string) {
     const { invoiceIds, ...rest } = data;
+    const relationData: any = {};
+    if (invoiceIds && invoiceIds.length > 0) {
+      relationData.invoices = {
+        connect: invoiceIds.map((id) => ({ id })),
+      };
+    }
     return prisma.invoiceWireTransfers.create({
       data: {
         ...rest,
         createdBy: userId,
-        invoices: {
-          connect: invoiceIds.map((id) => ({ id })),
-        },
+        ...relationData,
       },
       include: {
         invoices: INVOICE_INCLUDE,

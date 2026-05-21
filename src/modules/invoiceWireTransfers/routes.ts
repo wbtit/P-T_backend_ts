@@ -2,12 +2,14 @@ import { Router } from "express";
 import authMiddleware from "../../middleware/authMiddleware";
 import validate from "../../middleware/validate";
 import z from "zod";
+import { scanUploadMiddleware } from "../../middleware/scanUpload.middleware";
 
 import { InvoiceWireTransferController } from "./controllers";
 import {
   CreateInvoiceWireTransferSchema,
   UpdateInvoiceWireTransferSchema,
 } from "./dtos";
+import { invoiceWireTransferUploads } from "../../utils/multerUploader.util";
 
 const ctrlr = new InvoiceWireTransferController();
 const router = Router();
@@ -15,6 +17,8 @@ const router = Router();
 router.post(
   "/create",
   authMiddleware,
+  invoiceWireTransferUploads.array("files"),
+  scanUploadMiddleware,
   validate({
     body: CreateInvoiceWireTransferSchema,
   }),
@@ -51,12 +55,32 @@ router.get(
   ctrlr.handleGetById
 );
 
+router.get(
+  "/:id/files/:fileId",
+  authMiddleware,
+  validate({
+    params: z.object({ id: z.string(), fileId: z.string() }),
+  }),
+  ctrlr.handleGetFile
+);
+
+router.get(
+  "/viewFile/:id/:fileId",
+  authMiddleware,
+  validate({
+    params: z.object({ id: z.string(), fileId: z.string() }),
+  }),
+  ctrlr.handleViewFile
+);
+
 router.put(
   "/:id",
   authMiddleware,
+  invoiceWireTransferUploads.array("files"),
+  scanUploadMiddleware,
   validate({
     body: UpdateInvoiceWireTransferSchema,
-    params: z.object({ id: z.string()}),
+    params: z.object({ id: z.string() }),
   }),
   ctrlr.handleUpdate
 );
@@ -65,7 +89,7 @@ router.delete(
   "/:id",
   authMiddleware,
   validate({
-    params: z.object({ id: z.string()}),
+    params: z.object({ id: z.string() }),
   }),
   ctrlr.handleDelete
 );

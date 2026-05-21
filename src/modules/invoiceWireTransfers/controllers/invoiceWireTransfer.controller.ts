@@ -7,6 +7,7 @@ import {
 import { asyncHandler } from "../../../config/utils/asyncHandler";
 import { AppError } from "../../../config/utils/AppError";
 import { AuthenticateRequest } from "../../../middleware/authMiddleware";
+import { mapUploadedFiles } from "../../uploads/fileUtil";
 
 export class InvoiceWireTransferController {
   private service = new InvoiceWireTransferService();
@@ -15,7 +16,15 @@ export class InvoiceWireTransferController {
     const userId = req.user?.id;
     if (!userId) throw new AppError("User not authenticated", 401);
 
-    const payload = CreateInvoiceWireTransferSchema.parse(req.body);
+    const uploadedFiles = mapUploadedFiles(
+      (req.files as Express.Multer.File[]) || [],
+      "invoicewiretransfer"
+    );
+
+    const payload = CreateInvoiceWireTransferSchema.parse({
+      ...req.body,
+      files: uploadedFiles.length ? uploadedFiles : req.body.files,
+    });
     const result = await this.service.create(payload, userId);
     return res.status(201).json({
       message: "Invoice wire transfer created successfully",
@@ -26,7 +35,16 @@ export class InvoiceWireTransferController {
 
   handleUpdate = asyncHandler(async (req: AuthenticateRequest, res: Response) => {
     const { id } = req.params;
-    const payload = UpdateInvoiceWireTransferSchema.parse(req.body);
+
+    const uploadedFiles = mapUploadedFiles(
+      (req.files as Express.Multer.File[]) || [],
+      "invoicewiretransfer"
+    );
+
+    const payload = UpdateInvoiceWireTransferSchema.parse({
+      ...req.body,
+      files: uploadedFiles.length ? uploadedFiles : req.body.files,
+    });
     const result = await this.service.update(id, payload);
     return res.status(200).json({
       message: "Invoice wire transfer updated successfully",
@@ -83,5 +101,20 @@ export class InvoiceWireTransferController {
       success: true,
       data: results,
     });
+  });
+
+  handleGetFile = asyncHandler(async (req: AuthenticateRequest, res: Response) => {
+    const { id, fileId } = req.params;
+    const file = await this.service.getFile(id, fileId);
+    return res.status(200).json({
+      message: "File fetched successfully",
+      success: true,
+      data: file,
+    });
+  });
+
+  handleViewFile = asyncHandler(async (req: AuthenticateRequest, res: Response) => {
+    const { id, fileId } = req.params;
+    await this.service.viewFile(id, fileId, res);
   });
 }

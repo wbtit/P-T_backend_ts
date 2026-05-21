@@ -645,3 +645,10 @@ export const userProfilePicUploads = createMemoryUploader(
   SIZE_LIMITS.IMAGES,
   [".jpg", ".jpeg", ".png", ".webp", ".heic"]
 );
+
+export const invoiceWireTransferDataMap: Record<string, FileMeta> = {};
+export const invoiceWireTransferUploads = createStreamUploader(
+  path.join(UPLOAD_BASE_DIR, "invoicewiretransfer"),
+  invoiceWireTransferDataMap,
+  SIZE_LIMITS.ZIP
+);
