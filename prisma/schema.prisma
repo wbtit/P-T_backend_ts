@@ -2233,6 +2233,7 @@ model InvoiceWireTransfers {
   subject     String   @default("")
   description String?
   date        DateTime?
+  status      Boolean  @default(false)
   files       Json     @default("[]")
   createdBy   String   @db.Uuid
   createdAt   DateTime @default(now())

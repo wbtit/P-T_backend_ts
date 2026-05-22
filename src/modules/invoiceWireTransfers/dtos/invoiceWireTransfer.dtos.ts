@@ -9,6 +9,7 @@ export const CreateInvoiceWireTransferSchema = z.object({
     (val) => (typeof val === "string" ? new Date(val) : val),
     z.date().optional()
   ),
+  status: z.boolean().optional(),
   files: z
     .union([z.array(z.any()), z.literal(null)])
     .transform((val) => (val === null ? Prisma.JsonNull : val))
@@ -23,6 +24,7 @@ export const UpdateInvoiceWireTransferSchema = z.object({
     (val) => (typeof val === "string" ? new Date(val) : val),
     z.date().optional()
   ),
+  status: z.boolean().optional(),
   files: z
     .union([z.array(z.any()), z.literal(null)])
     .transform((val) => (val === null ? Prisma.JsonNull : val))
