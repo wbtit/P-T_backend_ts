@@ -102,6 +102,10 @@ export const CreateProjectSchema = z.object({
   projectNumber: z.string(),
   name: z.string(),
   description: z.string(),
+  reason: z.preprocess(
+    emptyStringToUndefined,
+    z.string().optional()
+  ),
   fabricatorID: zUuidLikeRequired,
   departmentID: zUuidLikeRequired,
   teamID: zUuidLikeOptional,

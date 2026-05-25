@@ -1,9 +1,19 @@
 import z from "zod";
 import { Prisma } from "@prisma/client";
 
+const optionalNullableTrimmedString = (maxLength: number) =>
+  z.preprocess((val) => {
+    if (val === undefined) return undefined;
+    if (val === null) return null;
+    if (typeof val !== "string") return val;
+
+    const trimmed = val.trim();
+    return trimmed === "" ? null : trimmed;
+  }, z.string().max(maxLength).nullable().optional());
+
 export const CreateInvoiceWireTransferSchema = z.object({
   invoiceIds: z.array(z.string().uuid()).optional(),
-  subject: z.string().max(255).optional(),
+  subject: optionalNullableTrimmedString(255),
   description: z.string().optional(),
   date: z.preprocess(
     (val) => (typeof val === "string" ? new Date(val) : val),
@@ -18,7 +28,7 @@ export const CreateInvoiceWireTransferSchema = z.object({
 
 export const UpdateInvoiceWireTransferSchema = z.object({
   invoiceIds: z.array(z.string().uuid()).optional(),
-  subject: z.string().max(255).optional(),
+  subject: optionalNullableTrimmedString(255),
   description: z.string().optional(),
   date: z.preprocess(
     (val) => (typeof val === "string" ? new Date(val) : val),

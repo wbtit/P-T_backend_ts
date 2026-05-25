@@ -149,6 +149,7 @@ enum RFQStatus {
   REJECTED
   RE_ESTIMATION_REQUESTED
   SENT
+  WBT_SUBMITTED
 }
 
 enum EstimationStatus {
@@ -766,6 +767,7 @@ model Project {
   CDQuataionID             String?   @unique @db.Uuid
   vendorquotatioID         String?   @unique @db.Uuid
   rfqId                    String?   @unique @db.Uuid
+  reason             String?   @default("")
   status                   Status    @default(ACTIVE)
   stage                    Stage     @default(RFI)
   tools                    Tools     @default(TEKLA)
@@ -2230,7 +2232,7 @@ model UserSession {
 
 model InvoiceWireTransfers {
   id          String   @id @default(uuid()) @db.Uuid
-  subject     String   @default("")
+  subject     String?
   description String?
   date        DateTime?
   status      Boolean  @default(false)
