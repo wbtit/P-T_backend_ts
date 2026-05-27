@@ -31,26 +31,25 @@ export async function runPMOComplition() {
         let totalIFAMileStones =0;
         let totalIFCMileStones =0;
 
-        let totalIFASubmittals = 0;
-        let totalIFCSubmittals = 0;
+        let completedIFAMileStones = 0;
+        let completedIFCMileStones = 0;
 
         for(const mileStone of project.mileStones){
             if(mileStone.stage === 'IFA'){
                 totalIFAMileStones++;
+                if (mileStone.status === "COMPLETE") {
+                    completedIFAMileStones++;
+                }
             } else if(mileStone.stage === 'IFC'){
                 totalIFCMileStones++;
-            }
-        }
-        for(const submittal of project.submittals){
-            if(submittal.stage === 'IFA'){
-                totalIFASubmittals++;
-            } else if(submittal.stage === 'IFC'){
-                totalIFCSubmittals++;
+                if (mileStone.status === "COMPLETE") {
+                    completedIFCMileStones++;
+                }
             }
         }
 
-        const IFACOmpletion = totalIFAMileStones===0?0:(totalIFASubmittals/totalIFAMileStones)*100;
-        const IFCCompletion = totalIFCMileStones===0?0:(totalIFCSubmittals/totalIFCMileStones)*100;
+        const IFACOmpletion = totalIFAMileStones===0?0:(completedIFAMileStones/totalIFAMileStones)*100;
+        const IFCCompletion = totalIFCMileStones===0?0:(completedIFCMileStones/totalIFCMileStones)*100;
 
         await prisma.project.update({
             where:{id:project.id},

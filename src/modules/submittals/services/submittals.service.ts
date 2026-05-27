@@ -95,6 +95,9 @@ export class SubmittalService {
 
     return {
       ...existing,
+      mileStones: Array.isArray((existing as any).mileStoneLinks) && (existing as any).mileStoneLinks.length > 0
+        ? (existing as any).mileStoneLinks.map((link: any) => link.mileStone)
+        : ((existing as any).mileStoneBelongsTo ? [(existing as any).mileStoneBelongsTo] : []),
       submittalsResponse: Array.isArray(existing.submittalsResponse)
         ? existing.submittalsResponse.filter(
             resp => resp.parentResponseId === null

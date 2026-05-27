@@ -49,6 +49,11 @@ export class MileStoneRepository{
                 project:true,
                 Tasks:true,
                 fabricator:true,
+                mileStoneSubmittals: {
+                    include: {
+                        submittal: true,
+                    },
+                },
                 currentVersion: true,
                 versions: {
                     orderBy: {
@@ -75,6 +80,11 @@ export class MileStoneRepository{
                     }
                 },
                 fabricator:true,
+                mileStoneSubmittals: {
+                    include: {
+                        submittal: true,
+                    },
+                },
                 currentVersion: true,
                 versions: {
                     include:{
@@ -110,6 +120,11 @@ export class MileStoneRepository{
                 project:true,
                 Tasks:true,
                 fabricator:true,
+                mileStoneSubmittals: {
+                    include: {
+                        submittal: true,
+                    },
+                },
                 currentVersion: true,
                 versions: {
                     orderBy: {
@@ -131,7 +146,12 @@ export class MileStoneRepository{
             },
             include:{
                 project:{select:{name:true}},
-                fabricator:{select:{fabName:true}}
+                fabricator:{select:{fabName:true}},
+                mileStoneSubmittals: {
+                    include: {
+                        submittal: true,
+                    },
+                },
             }
         })
     }
@@ -147,7 +167,12 @@ export class MileStoneRepository{
             },
             include:{
                 project:{select:{name:true}},
-                fabricator:{select:{fabName:true}}
+                fabricator:{select:{fabName:true}},
+                mileStoneSubmittals: {
+                    include: {
+                        submittal: true,
+                    },
+                },
             }
         })
     }
@@ -166,6 +191,11 @@ export class MileStoneRepository{
             include: {
                 project: { select: { name: true } },
                 fabricator: { select: { fabName: true } },
+                mileStoneSubmittals: {
+                    include: {
+                        submittal: true,
+                    },
+                },
             },
         });
     }
@@ -182,7 +212,12 @@ export class MileStoneRepository{
         },
         include:{
             project:{select:{name:true}},
-            fabricator:{select:{fabName:true}}
+            fabricator:{select:{fabName:true}},
+            mileStoneSubmittals: {
+                include: {
+                    submittal: true,
+                },
+            },
         }
     })
  }
@@ -213,7 +248,12 @@ export class MileStoneRepository{
         },
         include:{
             project:{select:{name:true}},
-            fabricator:{select:{fabName:true}}
+            fabricator:{select:{fabName:true}},
+            mileStoneSubmittals: {
+                include: {
+                    submittal: true,
+                },
+            },
         }
     })
  }
@@ -239,7 +279,12 @@ export class MileStoneRepository{
         },
         include:{
             project:{select:{name:true}},
-            fabricator:{select:{fabName:true}}
+            fabricator:{select:{fabName:true}},
+            mileStoneSubmittals: {
+                include: {
+                    submittal: true,
+                },
+            },
         }
     })
  }

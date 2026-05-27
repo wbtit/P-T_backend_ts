@@ -1,6 +1,19 @@
 import z from "zod";
 import { Stage, Status, Prisma, mileStoneResponseStatus } from "@prisma/client";
 
+const MILESTONE_TYPES = [
+  "ANCHOR_BOLT",
+  "MAIN_STEEL",
+  "MAIN_STEEL_CONNECTION_DESIGN",
+  "MISC_STEEL",
+  "MISC_STEEL_CONNECTION_DESIGN",
+  "MAIN_AND_MISC_STEEL",
+  "MAIN_AND_MISC_STEEL_CONNECTION_DESIGN",
+  "FOUNDATION_EMBEDS",
+  "PANEL_EMBEDS",
+  "OTHERS",
+] as const;
+
 
 const zDateString = z
   .union([z.string(), z.date(), z.literal("")])
@@ -16,10 +29,13 @@ export const createMileStoneSchema=z.object({
     fabricator_id:z.string(),
     project_id:z.string(),
     approvalDate:zDateString,
+    isConnectionDesign:z.boolean().optional(),
     CDApprovalDate:zDateString,
     CDTargetDate:zDateString,
     status:z.enum(Status),
     stage:z.enum(Stage),
+    types:z.enum(MILESTONE_TYPES),
+    subSubject:z.string().optional(),
     reason:z.string().optional(),
     completeionPercentage:z.number().min(0).max(100).default(0).optional(),
     subject:z.string(),

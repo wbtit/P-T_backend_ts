@@ -9,9 +9,12 @@ export class MileStoneService{
         const milestone = await mileStoneRepo.create(data);
         await mileStoneVersionRepo.createInitialVersion(milestone.id, {
             approvalDate: milestone.approvalDate,
+            isConnectionDesign: milestone.isConnectionDesign,
             status: milestone.status,
             stage: milestone.stage,
             subject: milestone.subject,
+            types: milestone.types,
+            subSubject: milestone.subSubject,
             description: milestone.description,
         });
         return await mileStoneRepo.getById(milestone.id);

@@ -8,6 +8,29 @@ import {
 } from "./dtos";
 import z from "zod";
 
+const milestoneCreateExample = {
+  fabricator_id: "9d2f6f70-6d18-4f4f-9b9a-3c61e7b58a11",
+  project_id: "a37c3d33-2c45-4d13-b2f5-63f5eec3f413",
+  approvalDate: "2026-05-26T00:00:00.000Z",
+  CDApprovalDate: "2026-05-27T00:00:00.000Z",
+  CDTargetDate: "2026-06-10T00:00:00.000Z",
+  status: "ACTIVE",
+  stage: "IFA",
+  types: "ANCHOR_BOLT",
+  subSubject: "Tower A base plate package",
+  reason: "Initial submission",
+  completeionPercentage: 0,
+  subject: "Anchor bolt layout review",
+  description: "Milestone for reviewing anchor bolt layout and approvals.",
+};
+
+const milestoneUpdateExample = {
+  subject: "Anchor bolt layout review - revised",
+  types: "MAIN_STEEL",
+  subSubject: "Tower A main steel package",
+  description: "Updated scope and description for the next milestone version.",
+};
+
 const milestoneUpdateRequestBody = {
   required: true,
   content: {
@@ -29,6 +52,18 @@ const milestoneUpdateRequestBody = {
             required: ["data"],
           },
         ],
+      },
+      examples: {
+        direct: {
+          summary: "Update milestone directly",
+          value: milestoneUpdateExample,
+        },
+        wrapped: {
+          summary: "Update milestone with data wrapper",
+          value: {
+            data: milestoneUpdateExample,
+          },
+        },
       },
     },
   },
@@ -129,7 +164,20 @@ export const milestoneOpenApiDoc: ModuleOpenApiDoc = {
         summary: "Create milestone",
         operationId: "post_milestone_create",
         security: [{ bearerAuth: [] }],
-        requestBody: zodRequestBody(createMileStoneSchema),
+        requestBody: {
+          ...zodRequestBody(createMileStoneSchema),
+          content: {
+            "application/json": {
+              ...zodRequestBody(createMileStoneSchema).content["application/json"],
+              examples: {
+                default: {
+                  summary: "Create milestone payload",
+                  value: milestoneCreateExample,
+                },
+              },
+            },
+          },
+        },
         responses: {
           "201": { description: "Created" },
           "400": { description: "Bad Request" },

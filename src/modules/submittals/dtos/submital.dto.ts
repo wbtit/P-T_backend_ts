@@ -29,7 +29,7 @@ const zStringArrayFromFormData = z.preprocess((val) => {
 // ---------- SUBMITTALS (PARENT / IDENTITY) ----------
 export const createSubmittalsDto = z.object({
   fabricator_id: z.string().uuid(),
-  mileStoneId: z.string().uuid().optional(),
+  mileStoneIds: zStringArrayFromFormData,
   project_id: z.string().uuid(),
   recepient_id: z.string().optional(),
   clientResponseStatus:z.enum(SubResStatus).optional(),

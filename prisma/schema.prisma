@@ -292,6 +292,19 @@ enum IpChallengeAction {
   BLOCKED
 }
 
+
+ enum MileStoneType{
+  ANCHOR_BOLT
+  MAIN_STEEL
+  MAIN_STEEL_CONNECTION_DESIGN
+  MISC_STEEL
+  MISC_STEEL_CONNECTION_DESIGN
+  MAIN_AND_MISC_STEEL
+  MAIN_AND_MISC_STEEL_CONNECTION_DESIGN
+  FOUNDATION_EMBEDS
+  PANEL_EMBEDS
+  OTHERS
+ }
 // ===========================================================
 // MODELS
 // ===========================================================
@@ -1114,11 +1127,14 @@ model MileStone {
   date                  DateTime           @default(now())
   project_id            String             @db.Uuid
   approvalDate          DateTime?
+  isConnectionDesign     Boolean            @default(false)
   CDApprovalDate        DateTime?
   CDTargetDate          DateTime?
   status                Status             @default(ACTIVE)
   stage                 Stage              @default(IFA)
   subject               String
+  types                 MileStoneType       @default(ANCHOR_BOLT)
+  subSubject            String?            @default("")
   reason                String?            @default("")
   description           String
   completeionPercentage Float?             @default(0.0)
@@ -1127,9 +1143,9 @@ model MileStone {
   //relations
   fabricator            Fabricator         @relation("FabricatorMileStone", fields: [fabricator_id], references: [id], onDelete: Cascade)
   project               Project            @relation("ProjectMileStone", fields: [project_id], references: [id], onDelete: Cascade)
-  // mileStoneSubmittals Submittals[]       @relation("mileStoneSubmittals")
   Tasks                 Task[]             @relation("mileStoneTasks")
-  mileStoneSubmittals   Submittals[]       @relation("mileStoneSubmittals")
+  legacySubmittals      Submittals[]       @relation("LegacyMileStoneSubmittals")
+  mileStoneSubmittals   MilestoneSubmittal[]
   versions              MileStoneVersion[]
   currentVersion        MileStoneVersion?  @relation("CurrentMileStoneVersion", fields: [currentVersionId], references: [id])
 }
@@ -1137,17 +1153,17 @@ model MileStone {
 model MileStoneVersion {
   id          String @id @default(uuid()) @db.Uuid
   mileStoneId String @db.Uuid
-
   versionNumber Int
   approvalDate  DateTime?
+  isConnectionDesign Boolean @default(false)
   status        Status    @default(ACTIVE)
   stage         Stage     @default(IFA)
   subject       String
+  types         MileStoneType @default(ANCHOR_BOLT)
+  subSubject    String?       @default("")
   description   String
-
   createdAt DateTime @default(now())
   isActive  Boolean  @default(true)
-
   mileStone    MileStone           @relation(fields: [mileStoneId], references: [id], onDelete: Cascade)
   isCurrentFor MileStone?          @relation("CurrentMileStoneVersion")
   responses    MileStoneResponse[]
@@ -1531,12 +1547,13 @@ model Submittals {
   currentVersionId     String?      @unique @db.Uuid
 
   // Relations
-  mileStoneBelongsTo MileStone?         @relation("mileStoneSubmittals", fields: [mileStoneId], references: [id], onDelete: Cascade)
+  mileStoneBelongsTo MileStone?         @relation("LegacyMileStoneSubmittals", fields: [mileStoneId], references: [id], onDelete: Cascade)
   fabricator         Fabricator         @relation("FabricatorSubmittals", fields: [fabricator_id], references: [id], onDelete: Cascade)
   project            Project            @relation("ProjectSubmittals", fields: [project_id], references: [id], onDelete: Cascade)
   recepients         User?              @relation("SubmittalsRecepient", fields: [recepient_id], references: [id], onDelete: Cascade)
   multipleRecipients User[]             @relation("SubmittalMultipleRecipients")
   sender             User               @relation("SubmittalsSender", fields: [sender_id], references: [id], onDelete: Cascade)
+  mileStoneLinks     MilestoneSubmittal[]
   // Versioning relations
   versions           SubmittalVersion[]
   currentVersion     SubmittalVersion?  @relation("CurrentSubmittalVersion", fields: [currentVersionId], references: [id])
@@ -1545,9 +1562,23 @@ model Submittals {
   submittalsResponse SubmittalsResponse[] @relation("submittalsresponse")
 
   @@index([project_id])
+  @@index([mileStoneId])
   @@index([recepient_id])
   @@index([sender_id])
   @@map("submittals")
+}
+
+model MilestoneSubmittal {
+  mileStoneId String   @db.Uuid
+  submittalId String   @db.Uuid
+  linkedAt    DateTime @default(now())
+
+  mileStone MileStone  @relation(fields: [mileStoneId], references: [id], onDelete: Cascade)
+  submittal  Submittals @relation(fields: [submittalId], references: [id], onDelete: Cascade)
+
+  @@id([mileStoneId, submittalId])
+  @@index([submittalId])
+  @@map("milestone_submittal")
 }
 
 model SubmittalVersion {
