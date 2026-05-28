@@ -5,7 +5,7 @@ import { AppError } from "../../../config/utils/AppError";
 import { FileObject } from "../../../shared/fileType";
 import { Response } from "express";
 import { resolveUploadFilePath, streamFile } from "../../../utils/fileUtil";
-import { State } from "@prisma/client";
+import { SubResStatus } from "@prisma/client";
 
 const responseRepo = new SubmittalResponseRepository();
 const submittalRepo = new SubmitalRepository();
@@ -46,7 +46,7 @@ export class SubmittalResponseService {
     if (data.parentResponseId) {
       await responseRepo.updateWorkflowStatus(
         data.parentResponseId,
-        State.SENT
+        SubResStatus.ACKNOWLEDGED
       );
     }
 
@@ -58,7 +58,7 @@ export class SubmittalResponseService {
   // ----------------------------------
   async updateStatus(
     parentResponseId: string,
-    status: State
+    status: SubResStatus
   ) {
     if (!parentResponseId) {
       throw new AppError("parentResponseId is required", 400);

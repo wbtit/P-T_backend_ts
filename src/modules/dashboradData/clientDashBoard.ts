@@ -1,6 +1,7 @@
 import prisma from "../../config/database/client";
 import { AuthenticateRequest } from "../../middleware/authMiddleware";
 import { Response } from "express";
+import { SubResStatus } from "@prisma/client";
 
 export const clientDashBoard = async (req: AuthenticateRequest, res: Response) => {
     try {
@@ -56,7 +57,12 @@ export const clientDashBoard = async (req: AuthenticateRequest, res: Response) =
                         where: {
                            project: { clientProjectManagers: { some: { id: req.user?.id } }, status: { not: "INACTIVE" } },
                            currentVersion:{
-                            responses:{none:{}},
+                            responses:{
+                              some: {
+                                parentResponseId: null,
+                                status: SubResStatus.ACTION_REQUIRED,
+                              },
+                            },
                            }
                         },
                     });

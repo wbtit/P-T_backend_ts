@@ -3,7 +3,7 @@ import { AuthenticateRequest } from "../../../middleware/authMiddleware";
 import { SubmittalResponseService } from "../services";
 import { AppError } from "../../../config/utils/AppError";
 import { mapUploadedFiles } from "../../uploads/fileUtil";
-import { State } from "@prisma/client";
+import { SubResStatus } from "@prisma/client";
 import { notifyProjectStakeholdersByRole } from "../../../utils/notifyProjectStakeholders";
 import prisma from "../../../config/database/client";
 import { UserRole } from "@prisma/client";
@@ -230,7 +230,7 @@ export class SubmittalResponseController {
 
     const updated = await submittalResponseService.updateStatus(
       parentResponseId,
-      status as State
+      status as SubResStatus
     );
     const updaterId = req.user?.id;
     const finalStatus = status;

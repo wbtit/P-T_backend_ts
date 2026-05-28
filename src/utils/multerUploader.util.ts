@@ -504,6 +504,10 @@ export const rfiResponseUploads = createStreamUploader(path.join(UPLOAD_BASE_DIR
 export const submittalsDataMap: Record<string, FileMeta> = {};
 export const submittalUploads = createStreamUploader(path.join(UPLOAD_BASE_DIR, "submittals"), submittalsDataMap, SIZE_LIMITS.ZIP);
 
+export const bfaDataMap: Record<string, FileMeta> = {};
+export const bfaUploads = createStreamUploader(path.join(UPLOAD_BASE_DIR, "bfa"), bfaDataMap, SIZE_LIMITS.ZIP);
+
+
 export const submittalsResDataMap: Record<string, FileMeta> = {};
 export const submittalResponseUploads = createStreamUploader(path.join(UPLOAD_BASE_DIR, "submittalsresponse"), submittalsResDataMap, SIZE_LIMITS.ZIP);
 

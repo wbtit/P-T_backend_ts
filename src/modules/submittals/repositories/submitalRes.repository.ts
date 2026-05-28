@@ -1,4 +1,4 @@
-import { State } from "@prisma/client";
+import { State, SubResStatus } from "@prisma/client";
 import prisma from "../../../config/database/client";
 import { CreateSubmittalsResponseDto } from "../dtos";
 
@@ -9,14 +9,14 @@ export class SubmittalResponseRepository {
   // ----------------------------------
   async updateWorkflowStatus(
     parentResponseId: string,
-    status: State
+    status: SubResStatus
   ) {
     if (!parentResponseId) return null;
 
     return prisma.submittalsResponse.update({
       where: { id: parentResponseId },
       data: {
-        wbtStatus: status,
+        status,
       },
     });
   }
@@ -33,6 +33,8 @@ export class SubmittalResponseRepository {
         reason: data.reason || "",
         description: data.description || "",
         files: data.files,
+        status: data.status,
+        wbtStatus: data.wbtStatus,
 
         submittalsId: data.submittalsId,
         submittalVersionId: data.submittalVersionId ?? null,

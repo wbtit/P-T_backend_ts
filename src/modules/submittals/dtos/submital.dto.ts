@@ -42,6 +42,7 @@ export const createSubmittalsDto = z.object({
 
   status: zBooleanString.optional(),
   isAproovedByAdmin: zBooleanString.optional(),
+  isConnectionDesign: zBooleanString.optional(),
 });
 
 export const updateSubmittalsDto =

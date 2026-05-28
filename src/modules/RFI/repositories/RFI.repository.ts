@@ -38,7 +38,8 @@ export class RFIRepository{
               subject:data.subject,
               description:data.description,
               files: data.files,
-              isAproovedByAdmin
+              isAproovedByAdmin,
+              isConnectionDesign: data.isConnectionDesign ?? false,
             },
             include: {
               recepients:  {select:{firstName:true,middleName:true,lastName:true,username:true,designation:true,email:true,id:true}},
@@ -230,6 +231,7 @@ export class RFIRepository{
           status,
           isAproovedByAdmin,
           files,
+          isConnectionDesign,
         } = data;
     
         return await prisma.rFI.update({
@@ -243,6 +245,10 @@ export class RFIRepository{
                 ? isAproovedByAdmin
                 : existing.isAproovedByAdmin,
             files: files ?? existing.files as any,
+            isConnectionDesign:
+              typeof isConnectionDesign === "boolean"
+                ? isConnectionDesign
+                : existing.isConnectionDesign,
           },
         });
     }

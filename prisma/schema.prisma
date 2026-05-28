@@ -196,6 +196,8 @@ enum SubResStatus {
   PENDING
   RELEASE_FOR_FABRICATION
   REVISED_RESUBMIT_FOR_FABRICATION
+  ACKNOWLEDGED
+  ACTION_REQUIRED
 }
 
 enum COSTATUS {
@@ -414,6 +416,9 @@ model User {
   progressReportResponseBy        ProjectProgressReportResponse[] @relation("progressReportResponseBy")
   coordinationDrawingsCreated     CoordinationDrawing[]           @relation("coordinationDrawingCreatedBy")
   coordinationDrawingResponseBy   CoordinationDrawingResponse[]   @relation("coordinationDrawingResponseBy")
+
+  createdBfas                     BFA[]                           @relation("BfaCreator")
+  createdBfaVersions              BfaVersion[]                    @relation("BfaVersionCreator")
 
   // RBA Relations
   trustedIps    UserTrustedIp[] @relation("UserTrustedIps")
@@ -1494,6 +1499,7 @@ model RFI {
   description        String
   files              Json          @default("[]")
   isAproovedByAdmin  Boolean?      @default(false)
+  isConnectionDesign Boolean       @default(false)
   //Relations
   fabricator         Fabricator    @relation("FabricatorRFI", fields: [fabricator_id], references: [id], onDelete: Cascade)
   project            Project       @relation("ProjectRFI", fields: [project_id], references: [id], onDelete: Cascade)
@@ -1539,9 +1545,11 @@ model Submittals {
   date                 DateTime     @default(now())
   stage                Stage        @default(IFA)
   status               Boolean      @default(false)
+  bfaStatus            Boolean      @default(false)
   clientResponseStatus SubResStatus @default(PENDING)
   subject              String
   isAproovedByAdmin    Boolean?     @default(false)
+  isConnectionDesign   Boolean      @default(false)
   submittalVersion     Int          @default(1)
   // 🔑 Versioning
   currentVersionId     String?      @unique @db.Uuid
@@ -1560,6 +1568,8 @@ model Submittals {
 
   // Responses
   submittalsResponse SubmittalsResponse[] @relation("submittalsresponse")
+
+  bfa                BFA?                 @relation("SubmittalBFA")
 
   @@index([project_id])
   @@index([mileStoneId])
@@ -2278,3 +2288,54 @@ model InvoiceWireTransfers {
   @@index([createdBy])
   @@map("invoice_wire_transfers")
 }
+
+model BFA {
+  id               String       @id @default(uuid()) @db.Uuid
+  serialNo         String?      @unique
+  submittalID      String       @unique @db.Uuid
+  subject          String
+  description      String?
+  status           BfaStatus    @default(partial)
+  bfaVersion       Int          @default(1)
+  currentVersionId String?      @unique @db.Uuid
+  
+  createdById      String       @db.Uuid
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  submittal        Submittals   @relation("SubmittalBFA", fields: [submittalID], references: [id], onDelete: Cascade)
+  createdBy        User         @relation("BfaCreator", fields: [createdById], references: [id])
+  
+  versions         BfaVersion[] @relation("BfaVersions")
+  currentVersion   BfaVersion?  @relation("CurrentBfaVersion", fields: [currentVersionId], references: [id])
+
+  @@map("bfa")
+}
+
+model BfaVersion {
+  id            String    @id @default(uuid()) @db.Uuid
+  bfaId         String    @db.Uuid
+  versionNumber Int
+  subject       String
+  description   String?
+  status        BfaStatus
+  file          Json?     @default("[]")
+  
+  createdById   String    @db.Uuid
+  createdAt     DateTime  @default(now())
+  isActive      Boolean   @default(true)
+
+  bfa           BFA       @relation("BfaVersions", fields: [bfaId], references: [id], onDelete: Cascade)
+  createdBy     User      @relation("BfaVersionCreator", fields: [createdById], references: [id])
+  isCurrentFor  BFA?      @relation("CurrentBfaVersion")
+
+  @@unique([bfaId, versionNumber])
+  @@index([bfaId])
+  @@map("bfa_version")
+}
+
+enum BfaStatus {
+  partial
+  complete
+}
+

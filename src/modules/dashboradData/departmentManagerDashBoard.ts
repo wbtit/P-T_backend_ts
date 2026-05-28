@@ -1,6 +1,7 @@
 import { Response } from "express";
 import prisma from "../../config/database/client";
 import { AuthenticateRequest } from "../../middleware/authMiddleware";
+import { SubResStatus } from "@prisma/client";
 
 const DEPARTMENT_MANAGER_ALLOWED_ROLES = new Set(["DEPT_MANAGER", "ADMIN"]);
 
@@ -246,7 +247,7 @@ export const departmentManagerDashBoard = async (
             responses: {
               some: {
                 parentResponseId: null,
-                childResponses: { none: {} }
+                status: SubResStatus.ACTION_REQUIRED,
               }
             }
           },
@@ -280,7 +281,12 @@ export const departmentManagerDashBoard = async (
         where: {
           project: { departmentID: departmentId },
           currentVersion: {
-            responses: { none: {} },
+            responses: {
+              some: {
+                parentResponseId: null,
+                status: SubResStatus.ACTION_REQUIRED,
+              },
+            },
           },
         },
       }),
@@ -408,4 +414,3 @@ export const departmentManagerDashBoard = async (
     });
   }
 };
-

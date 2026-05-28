@@ -28,6 +28,7 @@ export const SERIAL_PREFIX = {
   CHANGE_ORDER: "CO",
   DESIGN_DRAWING: "DD",
   INVOICE: "INV",
+  BFA: "BFA",
 } as const;
 
 function pad6(value: number): string {

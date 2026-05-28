@@ -1,6 +1,7 @@
 import { Response } from "express";
 import { AuthenticateRequest } from "../../middleware/authMiddleware";
 import prisma from "../../config/database/client";
+import { SubResStatus } from "@prisma/client";
 
 const FULL_ACCESS_ROLES = new Set([
   "ADMIN",
@@ -123,7 +124,7 @@ export const DashBoradData = async (
           responses: {
             some: {
               parentResponseId: null,
-              childResponses: { none: {} }
+              status: SubResStatus.ACTION_REQUIRED,
             }
           }
         }
@@ -161,7 +162,12 @@ export const DashBoradData = async (
       where: {
         project: { status: { in: ["ACTIVE", "ONHOLD"] } },
         currentVersion: {
-          responses: { none: {} },
+          responses: {
+            some: {
+              parentResponseId: null,
+              status: SubResStatus.ACTION_REQUIRED,
+            },
+          },
         },
       },
     });

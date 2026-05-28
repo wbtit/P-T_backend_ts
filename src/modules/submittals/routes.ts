@@ -11,6 +11,7 @@ import {
   createSubmittalsResponseDto,
   createSubmittalVersionDto,
 } from "./dtos";
+import { SubResStatus } from "@prisma/client";
 import {
   submittalUploads,
   submittalResponseUploads,
@@ -172,7 +173,7 @@ router.patch(
   authMiddleware,
   validate({
     params: z.object({ parentResponseId: z.string() }),
-    body: z.object({ status: z.string() }), // State enum validated in service
+    body: z.object({ status: z.nativeEnum(SubResStatus) }),
   }),
   submittalResponseController.handleUpdateStatus.bind(
     submittalResponseController

@@ -2,7 +2,14 @@ import prisma from "../../../config/database/client";
 import { CreateSubmittalsDto, UpdateSubmittalsDto } from "../dtos";
 import { generateProjectScopedSerial, SERIAL_PREFIX } from "../../../utils/serial.util";
 import { AppError } from "../../../config/utils/AppError";
-import { Prisma } from "@prisma/client";
+import { Prisma, SubResStatus } from "@prisma/client";
+
+const ACTION_REQUIRED_FILTER = {
+  some: {
+    parentResponseId: null as null,
+    status: SubResStatus.ACTION_REQUIRED,
+  },
+};
 
 export class SubmitalRepository {
   private normalizeMilestoneIds(mileStoneIds?: string[]) {
@@ -72,6 +79,7 @@ export class SubmitalRepository {
           sender_id: userId,
           stage: data.stage,
           isAproovedByAdmin: approval,
+          isConnectionDesign: data.isConnectionDesign ?? false,
           multipleRecipients: data.multipleRecipients?.length
             ? { connect: data.multipleRecipients.map((id: string) => ({ id })) }
             : undefined,
@@ -166,7 +174,7 @@ export class SubmitalRepository {
         project: { status: { in: ["ACTIVE", "ONHOLD"] } },
         currentVersionId: { not: null },
         currentVersion: {
-          responses: { none: {} },
+          responses: ACTION_REQUIRED_FILTER,
         },
       },
       include: {
@@ -206,7 +214,7 @@ async getPendingSubmittalsForClientAdmin(userId: string) {
         project: { status: { in: ["ACTIVE", "ONHOLD"] } },
         currentVersionId: { not: null },
         currentVersion: {
-          responses: { none: {} },
+          responses: ACTION_REQUIRED_FILTER,
         },
       },
       include: {
@@ -233,7 +241,7 @@ async getPendingSubmittalsForClientAdmin(userId: string) {
         project: { clientProjectManagers: { some: { id: userId } }, status: { not: "INACTIVE" } },
         currentVersionId: { not: null },
         currentVersion: {
-          responses: { none: {} },
+          responses: ACTION_REQUIRED_FILTER,
         },
       },
       include: {
@@ -267,12 +275,7 @@ async getPendingSubmittalsForDepartmentManager(managerId: string) {
       project: { departmentID: manager.departmentId,
        },
       currentVersion: {
-        responses: {
-          some: {
-            parentResponseId: null,
-            childResponses: { none: {} }
-          }
-        }
+        responses: ACTION_REQUIRED_FILTER,
       }
     },
     include: {
@@ -304,12 +307,7 @@ async getPendingSubmittalsForProjectManager(managerId: string) {
       currentVersionId: { not: null },
       project: { managerID: managerId },
       currentVersion: {
-        responses: {
-          some: {
-            parentResponseId: null,
-            childResponses: { none: {} }
-          }
-        }
+        responses: ACTION_REQUIRED_FILTER,
       }
     },
     include:{
@@ -366,6 +364,7 @@ async getPendingSubmittalsForProjectManager(managerId: string) {
           subject: data.subject,
           isAproovedByAdmin: data.isAproovedByAdmin,
           status: data.status,
+          isConnectionDesign: data.isConnectionDesign,
         },
       });
 
@@ -484,12 +483,7 @@ async getPendingSubmittalsForProjectManager(managerId: string) {
         status: false,
         currentVersionId: { not: null },
         currentVersion: {
-          responses: {
-            some: {
-              parentResponseId: null,
-              childResponses: { none: {} }
-            }
-          }
+          responses: ACTION_REQUIRED_FILTER,
         }
       },include:{
           project:{select:{name:true}},

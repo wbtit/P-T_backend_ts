@@ -23,6 +23,7 @@ import RFI_doc from "../modules/RFI/openapi.doc";
 import RFQ_doc from "../modules/RFQ/openapi.doc";
 import scores_doc from "../modules/scores/openapi.doc";
 import submittals_doc from "../modules/submittals/openapi.doc";
+import bfa_doc from "../modules/bfa/openapi.doc";
 import share_doc from "../modules/share/openapi.doc";
 import tasks_doc from "../modules/tasks/openapi.doc";
 import team_doc from "../modules/team/openapi.doc";
@@ -58,6 +59,7 @@ const moduleDocs: ModuleOpenApiDoc[] = [
   RFQ_doc,
   scores_doc,
   submittals_doc,
+  bfa_doc,
   share_doc,
   tasks_doc,
   team_doc,

@@ -2,6 +2,7 @@ import { ModuleOpenApiDoc } from "../../openapi/types";
 import { zodRequestBody } from "../../openapi/zod";
 import { createSubmittalsDto, createSubmittalsResponseDto } from "./dtos";
 import z from "zod";
+import { SubResStatus } from "@prisma/client";
 
 export const submittalsOpenApiDoc: ModuleOpenApiDoc = {
   tag: {
@@ -245,7 +246,7 @@ export const submittalsOpenApiDoc: ModuleOpenApiDoc = {
         ],
         requestBody: zodRequestBody(
           z.object({
-            status: z.string(),
+            status: z.nativeEnum(SubResStatus),
           })
         ),
         responses: {

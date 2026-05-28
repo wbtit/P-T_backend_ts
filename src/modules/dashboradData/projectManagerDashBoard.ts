@@ -2,6 +2,7 @@ import { Response } from "express";
 import prisma from "../../config/database/client";
 import { SubmitalRepository } from "../submittals/repositories";
 import { AuthenticateRequest } from "../../middleware/authMiddleware";
+import { SubResStatus } from "@prisma/client";
 
 export const projectManagerDashBoard = async (
   req: AuthenticateRequest,
@@ -162,7 +163,12 @@ export const projectManagerDashBoard = async (
         where: {
           project: { managerID: userId, status: { in: ["ACTIVE", "ONHOLD"] } },
           currentVersion: {
-            responses: { none: {} },
+            responses: {
+              some: {
+                parentResponseId: null,
+                status: SubResStatus.ACTION_REQUIRED,
+              },
+            },
           },
         },
       }),

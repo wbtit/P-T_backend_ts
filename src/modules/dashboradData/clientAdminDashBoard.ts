@@ -1,6 +1,7 @@
 import prisma from "../../config/database/client";
 import { AuthenticateRequest } from "../../middleware/authMiddleware";
 import { Response } from "express";
+import { SubResStatus } from "@prisma/client";
 
 export const clientAdminDashBoard = async (req: AuthenticateRequest, res: Response) => {
   try {
@@ -83,7 +84,12 @@ export const clientAdminDashBoard = async (req: AuthenticateRequest, res: Respon
           project: { status: { in: ["ACTIVE", "ONHOLD"] } },
           fabricator_id: { in: fabricatorIds },
           currentVersion: {
-            responses: { none: {} },
+            responses: {
+              some: {
+                parentResponseId: null,
+                status: SubResStatus.ACTION_REQUIRED,
+              },
+            },
           },
         },
       }),
