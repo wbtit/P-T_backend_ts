@@ -9,26 +9,27 @@ import {runMonthlyEPS } from "./runMonthlyEPS";
 import { runMonthlyTES } from "./runMonthlyTES";
 import { sendFollowUpReminders } from "./sendFollowUpReminders";
 import { runPMOComplition } from "./pmoComplition";
+import redlock from "../config/redlock";
+import { Lock } from "redlock";
+import logger from "../utils/logger";
+
 // ───────────────────────────────
-// Advisory Lock Helper Functions 
+// Redis Distributed Lock Helpers 
 // ───────────────────────────────
-async function acquireLock(lockKey = 987654321): Promise<boolean> {
+async function acquireLock(lockKey: string | number): Promise<Lock | null> {
   try {
-    const result = await prisma.$queryRaw<{ pg_try_advisory_lock: boolean }[]>`
-      SELECT pg_try_advisory_lock(${lockKey});
-    `;
-    return result[0]?.pg_try_advisory_lock ?? false;
+    return await redlock.acquire([`lock:cron:${lockKey}`], 30000);
   } catch (err) {
-    console.error(" Failed to acquire lock:", err);
-    return false;
+    // Redlock throws an error if the lock cannot be acquired
+    return null;
   }
 }
 
-async function releaseLock(lockKey = 987654321): Promise<void> {
+async function releaseLock(lock: Lock): Promise<void> {
   try {
-    await prisma.$executeRaw`SELECT pg_advisory_unlock(${lockKey});`;
+    await lock.release();
   } catch (err) {
-    console.error(" Failed to release lock:", err);
+    // Swallow the error silently
   }
 }
 
@@ -38,10 +39,10 @@ async function releaseLock(lockKey = 987654321): Promise<void> {
 async function safeCheckAndSendReminders() {
   const jobName = "checkAndSendReminders";
 
-  // 1. Acquire DB advisory lock
-  const lockAcquired = await acquireLock(111222003);
-  if (!lockAcquired) {
-    console.log(`🚫 ${jobName}: Another instance is running. Skipping.`);
+  // 1. Acquire Redis distributed lock
+  const lock = await acquireLock(111222003);
+  if (!lock) {
+    logger.warn(`🚫 ${jobName}: Another instance is running. Skipping.`);
     return;
   }
 
@@ -53,7 +54,7 @@ async function safeCheckAndSendReminders() {
   });
 
   try {
-    console.log(`${jobName}: Started at ${new Date().toISOString()}`);
+    logger.info(`${jobName}: Started at ${new Date().toISOString()}`);
     await checkAndSendReminders();
 
     // 3. Update success log
@@ -66,9 +67,9 @@ async function safeCheckAndSendReminders() {
       },
     });
 
-    console.log(` ${jobName}: Completed successfully.`);
+    logger.info(` ${jobName}: Completed successfully.`);
   } catch (err: any) {
-    console.error(` ${jobName}: Failed - ${err.message}`);
+    logger.error(` ${jobName}: Failed - ${err.message}`);
 
     // 4. Update failed log
     await prisma.cronLog.update({
@@ -82,17 +83,18 @@ async function safeCheckAndSendReminders() {
     });
   } finally {
     // 5. Always release lock
-    await releaseLock(111222003);
+    await releaseLock(lock);
   }
 }
+
 //autoclose stale tasks
 async function safeAutoCloseTasks() {
   const jobName = "autoCloseTasks";
   const lockKey = 111222004; // different lock key from your reminders job!
 
-  const lockAcquired = await acquireLock(lockKey);
-  if (!lockAcquired) {
-    console.log(`🚫 ${jobName}: Another instance running. Skipping.`);
+  const lock = await acquireLock(lockKey);
+  if (!lock) {
+    logger.warn(`🚫 ${jobName}: Another instance running. Skipping.`);
     return;
   }
 
@@ -101,7 +103,7 @@ async function safeAutoCloseTasks() {
   const log = await prisma.cronLog.create({ data: { jobName } });
 
   try {
-    console.log(`${jobName}: Started at ${new Date().toISOString()}`);
+    logger.info(`${jobName}: Started at ${new Date().toISOString()}`);
 
     await autoCloseStaleTasks(); 
 
@@ -114,7 +116,7 @@ async function safeAutoCloseTasks() {
       },
     });
 
-    console.log(` ${jobName}: Completed successfully.`);
+    logger.info(` ${jobName}: Completed successfully.`);
 
   } catch (err: any) {
 
@@ -129,17 +131,18 @@ async function safeAutoCloseTasks() {
     });
 
   } finally {
-    await releaseLock(lockKey);
+    await releaseLock(lock);
   }
 }
+
 //75 percent alert cron
 async function safeCheck75Alert() {
   const jobName = "check75Alert";
   const lockKey = 111222005; // unique lock key
 
-  const lockAcquired = await acquireLock(lockKey);
-  if (!lockAcquired) {
-    console.log(`🚫 ${jobName}: Another instance running. Skipping.`);
+  const lock = await acquireLock(lockKey);
+  if (!lock) {
+    logger.warn(`🚫 ${jobName}: Another instance running. Skipping.`);
     return;
   }
 
@@ -147,7 +150,7 @@ async function safeCheck75Alert() {
   const log = await prisma.cronLog.create({ data: { jobName } });
 
   try {
-    console.log(`${jobName}: Started at ${new Date().toISOString()}`);
+    logger.info(`${jobName}: Started at ${new Date().toISOString()}`);
 
     await check75Alert();
 
@@ -160,7 +163,7 @@ async function safeCheck75Alert() {
       },
     });
 
-    console.log(` ${jobName}: Completed successfully.`);
+    logger.info(` ${jobName}: Completed successfully.`);
   } catch (err: any) {
     await prisma.cronLog.update({
       where: { id: log.id },
@@ -172,15 +175,16 @@ async function safeCheck75Alert() {
       },
     });
   } finally {
-    await releaseLock(lockKey);
+    await releaseLock(lock);
   }
 }
-//100 percent overrun alert cron
 
+//100 percent overrun alert cron
 async function safeCheckOverrunAlert() {
   const lockKey = 111222006;
 
-  if (!(await acquireLock(lockKey))) return;
+  const lock = await acquireLock(lockKey);
+  if (!lock) return;
 
   const log = await prisma.cronLog.create({ data: { jobName: "checkOverrunAlert" } });
   const start = Date.now();
@@ -197,47 +201,49 @@ async function safeCheckOverrunAlert() {
       data: { status: "FAILED", completedAt: new Date(), errorMessage: err.message }
     });
   } finally {
-    await releaseLock(lockKey);
+    await releaseLock(lock);
   }
 }
+
 async function safeMEAS(){
     const lockKey = 111222007; // unique key
-    const gotLock = await acquireLock(lockKey);
-    if (!gotLock) return console.log("MEAS already running elsewhere.");
+    const lock = await acquireLock(lockKey);
+    if (!lock) return logger.info("MEAS already running elsewhere.");
 
     try {
       await runMonthlyMEAS();
     } catch (err) {
-      console.error("MEAS job failed", err);
+      logger.error({ err }, "MEAS job failed");
     } finally {
-      await releaseLock(lockKey);
+      await releaseLock(lock);
     }
 } 
 
 async function safeEPS(){
     const lockKey = 111222008; // unique key
-    const gotLock = await acquireLock(lockKey);
-    if (!gotLock) return console.log("EPS already running elsewhere.");
+    const lock = await acquireLock(lockKey);
+    if (!lock) return logger.info("EPS already running elsewhere.");
 
     try {
       await runMonthlyEPS();
     } catch (err) {
-      console.error("EPS job failed", err);
+      logger.error({ err }, "EPS job failed");
     } finally {
-      await releaseLock(lockKey);
+      await releaseLock(lock);
     }
 }
+
 async function safeTES(){
     const lockKey = 111222009; // unique key
-    const gotLock = await acquireLock(lockKey);
-    if (!gotLock) return console.log("TES already running elsewhere.");
+    const lock = await acquireLock(lockKey);
+    if (!lock) return logger.info("TES already running elsewhere.");
 
     try {
       await runMonthlyTES();
     } catch (err) {
-      console.error("TES job failed", err);
+      logger.error({ err }, "TES job failed");
     } finally {
-      await releaseLock(lockKey);
+      await releaseLock(lock);
     }
 }
 
@@ -246,9 +252,9 @@ async function safeForceCloseTasks() {
   const jobName = "forceCloseTasks";
   const lockKey = 111222010; // unique lock key
 
-  const lockAcquired = await acquireLock(lockKey);
-  if (!lockAcquired) {
-    console.log(`🚫 ${jobName}: Another instance running. Skipping.`);
+  const lock = await acquireLock(lockKey);
+  if (!lock) {
+    logger.warn(`🚫 ${jobName}: Another instance running. Skipping.`);
     return;
   }
 
@@ -256,7 +262,7 @@ async function safeForceCloseTasks() {
   const log = await prisma.cronLog.create({ data: { jobName } });
 
   try {
-    console.log(`${jobName}: Started at ${new Date().toISOString()}`);
+    logger.info(`${jobName}: Started at ${new Date().toISOString()}`);
 
     await forceCloseStaleTasks();
 
@@ -269,7 +275,7 @@ async function safeForceCloseTasks() {
       },
     });
 
-    console.log(` ${jobName}: Completed successfully.`);
+    logger.info(` ${jobName}: Completed successfully.`);
   } catch (err: any) {
     await prisma.cronLog.update({
       where: { id: log.id },
@@ -281,38 +287,38 @@ async function safeForceCloseTasks() {
       },
     });
   } finally {
-    await releaseLock(lockKey);
+    await releaseLock(lock);
   }
 }
+
 // PMO completion alerts
 async function safePMOComplition() {
   const lockKey = 111222001; // unique key
-  const gotLock = await acquireLock(lockKey);
-  if (!gotLock) return console.log("PMO completion already running elsewhere.");
+  const lock = await acquireLock(lockKey);
+  if (!lock) return logger.info("PMO completion already running elsewhere.");
 
   try {
     await runPMOComplition();
   } catch (err) {
-    console.error("PMO completion job failed", err);
+    logger.error({ err }, "PMO completion job failed");
   } finally {
-    await releaseLock(lockKey);
+    await releaseLock(lock);
   }
 }
 
 //communication
 async function sendFollowUp() {
   const lockKey = 111222002; // unique key
-  const gotLock = await acquireLock(lockKey);
-  if (!gotLock) return console.log("Follow-up already running elsewhere.");
+  const lock = await acquireLock(lockKey);
+  if (!lock) return logger.info("Follow-up already running elsewhere.");
 
   try {
     await sendFollowUpReminders();
   } catch (err) {
-    console.error("Follow-up job failed", err);
+    logger.error({ err }, "Follow-up job failed");
   } finally {
-    await releaseLock(lockKey);
+    await releaseLock(lock);
   }
-
 }
 
 // ───────────────────────────────
@@ -378,7 +384,7 @@ if (process.env.ENABLE_CRON === "true") {
     () => void safePMOComplition(),
     { timezone: "Asia/Kolkata" }
   );
-  console.log(" Scheduler started for reminders with DB lock protection.");
+  logger.info(" Scheduler started for reminders with Redis lock protection.");
 } else {
-  console.log("⏸ Cron jobs are disabled for this environment.");
+  logger.info("⏸ Cron jobs are disabled for this environment.");
 }
