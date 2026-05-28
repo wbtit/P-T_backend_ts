@@ -39,7 +39,7 @@ async function safeCheckAndSendReminders() {
   const jobName = "checkAndSendReminders";
 
   // 1. Acquire DB advisory lock
-  const lockAcquired = await acquireLock();
+  const lockAcquired = await acquireLock(111222003);
   if (!lockAcquired) {
     console.log(`🚫 ${jobName}: Another instance is running. Skipping.`);
     return;
@@ -82,13 +82,13 @@ async function safeCheckAndSendReminders() {
     });
   } finally {
     // 5. Always release lock
-    await releaseLock();
+    await releaseLock(111222003);
   }
 }
 //autoclose stale tasks
 async function safeAutoCloseTasks() {
   const jobName = "autoCloseTasks";
-  const lockKey = 123456789; // different lock key from your reminders job!
+  const lockKey = 111222004; // different lock key from your reminders job!
 
   const lockAcquired = await acquireLock(lockKey);
   if (!lockAcquired) {
@@ -135,7 +135,7 @@ async function safeAutoCloseTasks() {
 //75 percent alert cron
 async function safeCheck75Alert() {
   const jobName = "check75Alert";
-  const lockKey = 123123123; // unique lock key
+  const lockKey = 111222005; // unique lock key
 
   const lockAcquired = await acquireLock(lockKey);
   if (!lockAcquired) {
@@ -178,7 +178,7 @@ async function safeCheck75Alert() {
 //100 percent overrun alert cron
 
 async function safeCheckOverrunAlert() {
-  const lockKey = 222333444;
+  const lockKey = 111222006;
 
   if (!(await acquireLock(lockKey))) return;
 
@@ -201,7 +201,7 @@ async function safeCheckOverrunAlert() {
   }
 }
 async function safeMEAS(){
-    const lockKey = 555777999; // unique key
+    const lockKey = 111222007; // unique key
     const gotLock = await acquireLock(lockKey);
     if (!gotLock) return console.log("MEAS already running elsewhere.");
 
@@ -215,7 +215,7 @@ async function safeMEAS(){
 } 
 
 async function safeEPS(){
-    const lockKey = 666888000; // unique key
+    const lockKey = 111222008; // unique key
     const gotLock = await acquireLock(lockKey);
     if (!gotLock) return console.log("EPS already running elsewhere.");
 
@@ -228,7 +228,7 @@ async function safeEPS(){
     }
 }
 async function safeTES(){
-    const lockKey = 777999111; // unique key
+    const lockKey = 111222009; // unique key
     const gotLock = await acquireLock(lockKey);
     if (!gotLock) return console.log("TES already running elsewhere.");
 
@@ -244,7 +244,7 @@ async function safeTES(){
 //force close stale tasks after grace period
 async function safeForceCloseTasks() {
   const jobName = "forceCloseTasks";
-  const lockKey = 444555666; // unique lock key
+  const lockKey = 111222010; // unique lock key
 
   const lockAcquired = await acquireLock(lockKey);
   if (!lockAcquired) {
@@ -286,7 +286,7 @@ async function safeForceCloseTasks() {
 }
 // PMO completion alerts
 async function safePMOComplition() {
-  const lockKey = 111222333; // unique key
+  const lockKey = 111222001; // unique key
   const gotLock = await acquireLock(lockKey);
   if (!gotLock) return console.log("PMO completion already running elsewhere.");
 
@@ -301,7 +301,7 @@ async function safePMOComplition() {
 
 //communication
 async function sendFollowUp() {
-  const lockKey = 111222333; // unique key
+  const lockKey = 111222002; // unique key
   const gotLock = await acquireLock(lockKey);
   if (!gotLock) return console.log("Follow-up already running elsewhere.");
 
