@@ -1,6 +1,7 @@
-import { Stage } from "@prisma/client";
+import { Stage, UserRole } from "@prisma/client";
 import prisma from "../../../config/database/client";
 import { AppError } from "../../../config/utils/AppError";
+import { computeSubmittalStatus } from "../../submittals/utils/statusHelper";
 import { CreateProjectInput,
   UpdateprojectInput,
   GetProjectInput,
@@ -343,11 +344,15 @@ async expandProjectWbs(
    return updateHistory;
  }
 
- async getAllDocuments(id:string){
-  const project = await projectRepository.get({ id });
-  if (!project) {
-    throw new AppError("Project not found", 404);
-  }
-  return projectRepository.getAllDocuments(id);
-}
+  async getAllDocuments(id:string, role?: UserRole){
+   const project = await projectRepository.get({ id });
+   if (!project) {
+     throw new AppError("Project not found", 404);
+   }
+   const docs = await projectRepository.getAllDocuments(id, role);
+   if (docs && Array.isArray(docs.submittals)) {
+     docs.submittals = docs.submittals.map(submittal => computeSubmittalStatus(submittal));
+   }
+   return docs;
+ }
 }

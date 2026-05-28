@@ -2,6 +2,8 @@ import { Request, Response } from "express";
 import { AuthenticateRequest } from "../../../middleware/authMiddleware";
 import { AppError } from "../../../config/utils/AppError";
 import { SubmittalService } from "../services";
+import { computeSubmittalStatus } from "../utils/statusHelper";
+import { getRoleVisibilityFilter } from "../../../utils/roleFilter";
 import { mapUploadedFiles } from "../../uploads/fileUtil";
 import { sendEmail, getCCEmails } from "../../../services/mailServices/mailconfig";
 import { submittalhtmlContent } from "../../../services/mailServices/mailtemplates/submittalMailtemplate";
@@ -178,7 +180,7 @@ export class SubmittalController {
     ) {
       throw new AppError("Access denied", 403);
     }
-    const pendingSubmittals = await submittalService.getClientSidePendingSubmittals();
+    const pendingSubmittals = await submittalService.getClientSidePendingSubmittals(req.user?.role);
     res.status(200).json({
       status: "success",
       data: pendingSubmittals,
@@ -189,7 +191,7 @@ export class SubmittalController {
     if (!req.user) throw new AppError("User not found", 404);
     const { id } = req.user;
     
-    const pendingSubmittals = await submittalService.getPendingSubmittalsForClientAdmin(id);
+    const pendingSubmittals = await submittalService.getPendingSubmittalsForClientAdmin(id, req.user?.role);
     res.status(200).json({
       status: "success",
       data: pendingSubmittals,
@@ -200,7 +202,7 @@ export class SubmittalController {
     if (!req.user) throw new AppError("User not found", 404);
     const { id } = req.user;
     
-    const pendingSubmittals = await submittalService.getPendingSubmittalsForClient(id);
+    const pendingSubmittals = await submittalService.getPendingSubmittalsForClient(id, req.user?.role);
     res.status(200).json({
       status: "success",
       data: pendingSubmittals,
@@ -212,7 +214,7 @@ export class SubmittalController {
     if (!req.user) throw new AppError("User not found", 404);
     const { id } = req.user;
 
-    const pendingSubmittals = await submittalService.getPendingSubmittalsForProjectManager(id);
+    const pendingSubmittals = await submittalService.getPendingSubmittalsForProjectManager(id, req.user?.role);
     res.status(200).json({
       status: "success",
       data: pendingSubmittals,
@@ -223,7 +225,7 @@ export class SubmittalController {
     if (!req.user) throw new AppError("User not found", 404);
     const { id } = req.user;
 
-    const pendingSubmittals = await submittalService.getPendingSubmittalsForDepartmentManager(id);
+    const pendingSubmittals = await submittalService.getPendingSubmittalsForDepartmentManager(id, req.user?.role);
     res.status(200).json({
       status: "success",
       data: pendingSubmittals,
@@ -233,7 +235,7 @@ export class SubmittalController {
   async handlePendingForOperationExecutive(req: AuthenticateRequest, res: Response) {
     if (!req.user) throw new AppError("User not found", 404);
 
-    const pendingSubmittals = await submittalService.getPendingSubmittals();
+    const pendingSubmittals = await submittalService.getPendingSubmittals(req.user?.role);
     res.status(200).json({
       status: "success",
       data: pendingSubmittals,
@@ -256,10 +258,12 @@ export class SubmittalController {
           status: { in: ["ACTIVE", "ONHOLD"] },
         },
         currentVersionId: { not: null },
+        bfaStatus: false,
         OR: [
           { recepients: { connectionDesignerId } },
           { multipleRecipients: { some: { connectionDesignerId } } },
         ],
+        ...getRoleVisibilityFilter(req.user?.role),
       },
       include: {
         project: { select: { id: true, name: true, status: true } },
@@ -307,12 +311,7 @@ export class SubmittalController {
       orderBy: { date: "desc" },
     });
 
-    const pendingSubmittals = submittals.filter((submittal) =>
-      needsCompanyAttention(
-        (submittal.currentVersion?.responses ?? []) as unknown as ThreadResponseNode[],
-        connectionDesignerId
-      )
-    );
+    const pendingSubmittals = submittals.map(item => computeSubmittalStatus(item));
 
     res.status(200).json({
       status: "success",
@@ -326,7 +325,7 @@ export class SubmittalController {
     req: AuthenticateRequest,
     res: Response
   ) {
-       const pendingSubmittals = await submittalService.getPendingSubmittals();
+       const pendingSubmittals = await submittalService.getPendingSubmittals(req.user?.role);
        
 
     res.status(200).json({
@@ -345,7 +344,7 @@ export class SubmittalController {
     if (!user) throw new AppError("User not found", 404);
     
     const { id: submittalId } = req.params;
-    const existingSubmittal = await submittalService.getSubmittalById(submittalId);
+    const existingSubmittal = await submittalService.getSubmittalById(submittalId, req.user?.role);
     const access = await projectAssistService.assertRfiSubmittalCreateUpdateAccess(
       existingSubmittal.project_id,
       user
@@ -425,7 +424,7 @@ export class SubmittalController {
   ) {
     const { id } = req.params;
 
-    const submittal = await submittalService.getSubmittalById(id);
+    const submittal = await submittalService.getSubmittalById(id, (req as AuthenticateRequest).user?.role);
 
     res.status(200).json({
       status: "success",
@@ -443,7 +442,7 @@ export class SubmittalController {
     if (!req.user) throw new AppError("User not found", 404);
 
     const { projectId } = req.params;
-    const sent = await submittalService.sent(req.user.id, projectId);
+    const sent = await submittalService.sent(req.user.id, projectId, req.user.role);
 
     res.status(200).json({
       status: "success",
@@ -461,7 +460,7 @@ export class SubmittalController {
     if (!req.user) throw new AppError("User not found", 404);
 
     const { projectId } = req.params;
-    const received = await submittalService.received(req.user.id, projectId);
+    const received = await submittalService.received(req.user.id, projectId, req.user.role);
 
     res.status(200).json({
       status: "success",
@@ -478,7 +477,7 @@ export class SubmittalController {
   ) {
     const { projectId } = req.params;
 
-    const submittals = await submittalService.findByProject(projectId);
+    const submittals = await submittalService.findByProject(projectId, (req as AuthenticateRequest).user?.role);
 
     res.status(200).json({
       status: "success",

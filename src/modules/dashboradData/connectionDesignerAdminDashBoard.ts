@@ -2,6 +2,7 @@ import { Response } from "express";
 import { Status } from "@prisma/client";
 import prisma from "../../config/database/client";
 import { AuthenticateRequest } from "../../middleware/authMiddleware";
+import { getRoleVisibilityFilter } from "../../utils/roleFilter";
 
 const CONNECTION_DESIGNER_ADMIN_ALLOWED_ROLES = new Set([
   "CONNECTION_DESIGNER_ADMIN",
@@ -116,6 +117,7 @@ export const connectionDesignerAdminDashBoard = async (
       prisma.rFI.findMany({
         where: {
           project: activeProjectWhere,
+          ...getRoleVisibilityFilter(role),
           OR: [
             { recepients: { connectionDesignerId } },
             { multipleRecipients: { some: { connectionDesignerId } } },
@@ -228,6 +230,8 @@ export const connectionDesignerAdminDashBoard = async (
         where: {
           project: activeProjectWhere,
           currentVersionId: { not: null },
+          bfaStatus: false,
+          ...getRoleVisibilityFilter(role),
           OR: [
             { recepients: { connectionDesignerId } },
             { multipleRecipients: { some: { connectionDesignerId } } },
@@ -280,9 +284,7 @@ export const connectionDesignerAdminDashBoard = async (
       return needsCompanyAttention(item.responses, connectionDesignerId);
     }).length;
 
-    const pendingSubmittals = submittalsRequiringReview.filter((item) =>
-      needsCompanyAttention(item.currentVersion?.responses ?? [], connectionDesignerId)
-    ).length;
+    const pendingSubmittals = submittalsRequiringReview.length;
 
     const response = {
       totalActiveProjects: 0,

@@ -2,6 +2,7 @@ import prisma from "../../config/database/client";
 import { AuthenticateRequest } from "../../middleware/authMiddleware";
 import { Response } from "express";
 import { SubResStatus } from "@prisma/client";
+import { getRoleVisibilityFilter } from "../../utils/roleFilter";
 
 export const clientDashBoard = async (req: AuthenticateRequest, res: Response) => {
     try {
@@ -24,6 +25,7 @@ export const clientDashBoard = async (req: AuthenticateRequest, res: Response) =
                         where: {
                             project: { clientProjectManagers: { some: { id: req.user?.id } }, status: { not: "INACTIVE" } },
                             rfiresponse: { none: {} },
+                            ...getRoleVisibilityFilter(req.user?.role),
                         },
                     });
     const pendingChangeOrders = await prisma.changeOrder.count({
@@ -55,15 +57,9 @@ export const clientDashBoard = async (req: AuthenticateRequest, res: Response) =
                     });
     const pendingSubmittals = await prisma.submittals.count({
                         where: {
-                           project: { clientProjectManagers: { some: { id: req.user?.id } }, status: { not: "INACTIVE" } },
-                           currentVersion:{
-                            responses:{
-                              some: {
-                                parentResponseId: null,
-                                status: SubResStatus.ACTION_REQUIRED,
-                              },
-                            },
-                           }
+                            project: { clientProjectManagers: { some: { id: req.user?.id } }, status: { not: "INACTIVE" } },
+                            bfaStatus: false,
+                            ...getRoleVisibilityFilter(req.user?.role),
                         },
                     });
     const response:Record<string,any>={

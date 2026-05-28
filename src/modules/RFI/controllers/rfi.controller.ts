@@ -11,6 +11,7 @@ import { ProjectAssistService } from "../../project/services/projectAssist.servi
 import { sendNotification } from "../../../utils/sendNotification";
 import { buildRoleScopedNotification } from "../../../utils/stakeholderNotificationMessages";
 import prisma from "../../../config/database/client";
+import { getRoleVisibilityFilter } from "../../../utils/roleFilter";
 
 const rfiService = new RFIService();
 const projectAssistService = new ProjectAssistService();
@@ -183,7 +184,7 @@ export class RFIController {
     if (!req.user) throw new AppError("User not found", 404);
 
     const { id: rfiId } = req.params;
-    const existingRfi = await rfiService.getRfiById(rfiId);
+    const existingRfi = await rfiService.getRfiById(rfiId, req.user?.role);
     const access = await projectAssistService.assertRfiSubmittalCreateUpdateAccess(
       existingRfi.project_id,
       req.user
@@ -268,7 +269,7 @@ export class RFIController {
   // GET RFI by ID
   async handleGetRfiById(req: Request, res: Response) {
     const { id } = req.params;
-    const rfi = await rfiService.getRfiById(id);
+    const rfi = await rfiService.getRfiById(id, (req as AuthenticateRequest).user?.role);
 
     res.status(200).json({
       status: "success",
@@ -282,7 +283,7 @@ export class RFIController {
     const { id: userId } = req.user;
     const { projectId } = req.params;
 
-    const sentRfis = await rfiService.sent(userId, projectId);
+    const sentRfis = await rfiService.sent(userId, projectId, req.user.role);
 
     res.status(200).json({
       status: "success",
@@ -296,7 +297,7 @@ export class RFIController {
     const { id: userId } = req.user;
     const { projectId } = req.params;
 
-    const receivedRfis = await rfiService.received(userId, projectId);
+    const receivedRfis = await rfiService.received(userId, projectId, req.user.role);
 
     res.status(200).json({
       status: "success",
@@ -306,7 +307,7 @@ export class RFIController {
 
   async handleFindByProject(req: Request, res: Response) {
     const { projectId } = req.params;
-    const rfis = await rfiService.findByProject(projectId);
+    const rfis = await rfiService.findByProject(projectId, (req as AuthenticateRequest).user?.role);
 
     res.status(200).json({
       status: "success",
@@ -348,7 +349,7 @@ export class RFIController {
     ) {
       throw new AppError("Access denied", 403);
     }
-    const pendingRFIs = await rfiService.getClientSidePendingRFIs();
+    const pendingRFIs = await rfiService.getClientSidePendingRFIs(req.user?.role);
     res.status(200).json({
       status: "success",
       data: pendingRFIs,
@@ -359,7 +360,7 @@ export class RFIController {
     if (!req.user) throw new AppError("User not found", 404);
     const { id: userId } = req.user;
 
-    const pendingRFIs = await rfiService.getPendingForClientAdmin(userId);
+    const pendingRFIs = await rfiService.getPendingForClientAdmin(userId, req.user?.role);
 
     res.status(200).json({
       status: "success",
@@ -371,7 +372,7 @@ export class RFIController {
     if (!req.user) throw new AppError("User not found", 404);
     const { id: userId } = req.user;
 
-    const pendingRFIs = await rfiService.getPendingForClient(userId);
+    const pendingRFIs = await rfiService.getPendingForClient(userId, req.user?.role);
 
     res.status(200).json({
       status: "success",
@@ -387,7 +388,7 @@ export class RFIController {
 
   async handlePendingRFIs(req: AuthenticateRequest, res: Response) {
     const role = req.user?.role || "";
-    const pendingRFIs = await rfiService.getPendingRFIs(role);
+    const pendingRFIs = await rfiService.getPendingRFIs(role, req.user?.role);
 
     res.status(200).json({
       status: "success",
@@ -397,7 +398,7 @@ export class RFIController {
 
   async handlePendingForProjectManager(req: AuthenticateRequest, res: Response) {
     if (!req.user) throw new AppError("User not found", 404);
-    const pendingRFIs = await rfiService.getPendingRFIsForProjectManager(req.user.id);
+    const pendingRFIs = await rfiService.getPendingRFIsForProjectManager(req.user.id, req.user.role);
 
     res.status(200).json({
       status: "success",
@@ -407,7 +408,7 @@ export class RFIController {
 
   async handlePendingForDepartmentManager(req: AuthenticateRequest, res: Response) {
     if (!req.user) throw new AppError("User not found", 404);
-    const pendingRFIs = await rfiService.getPendingRFIsForDepartmentManager(req.user.id);
+    const pendingRFIs = await rfiService.getPendingRFIsForDepartmentManager(req.user.id, req.user.role);
 
     res.status(200).json({
       status: "success",
@@ -417,7 +418,7 @@ export class RFIController {
 
   async handlePendingForOperationExecutive(req: AuthenticateRequest, res: Response) {
     if (!req.user) throw new AppError("User not found", 404);
-    const pendingRFIs = await rfiService.getPendingRFIs(req.user.role || "");
+    const pendingRFIs = await rfiService.getPendingRFIs(req.user.role || "", req.user.role);
 
     res.status(200).json({
       status: "success",
@@ -427,7 +428,7 @@ export class RFIController {
 
   async handleNewForProjectManager(req: AuthenticateRequest, res: Response) {
     if (!req.user) throw new AppError("User not found", 404);
-    const newRFIs = await rfiService.getNewRFIsForProjectManager(req.user.id);
+    const newRFIs = await rfiService.getNewRFIsForProjectManager(req.user.id, req.user.role);
 
     res.status(200).json({
       status: "success",
@@ -454,6 +455,7 @@ export class RFIController {
           { recepients: { connectionDesignerId } },
           { multipleRecipients: { some: { connectionDesignerId } } },
         ],
+        ...getRoleVisibilityFilter(req.user?.role),
       },
       include: {
         fabricator: { select: { id: true, fabName: true } },

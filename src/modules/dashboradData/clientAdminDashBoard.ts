@@ -2,6 +2,7 @@ import prisma from "../../config/database/client";
 import { AuthenticateRequest } from "../../middleware/authMiddleware";
 import { Response } from "express";
 import { SubResStatus } from "@prisma/client";
+import { getRoleVisibilityFilter } from "../../utils/roleFilter";
 
 export const clientAdminDashBoard = async (req: AuthenticateRequest, res: Response) => {
   try {
@@ -52,6 +53,7 @@ export const clientAdminDashBoard = async (req: AuthenticateRequest, res: Respon
           project: { status: { in: ["ACTIVE", "ONHOLD"] } },
           fabricator_id: { in: fabricatorIds },
           rfiresponse: { none: {} },
+          ...getRoleVisibilityFilter(req.user?.role),
         },
       }),
 
@@ -83,19 +85,13 @@ export const clientAdminDashBoard = async (req: AuthenticateRequest, res: Respon
         where: {
           project: { status: { in: ["ACTIVE", "ONHOLD"] } },
           fabricator_id: { in: fabricatorIds },
-          currentVersion: {
-            responses: {
-              some: {
-                parentResponseId: null,
-                status: SubResStatus.ACTION_REQUIRED,
-              },
-            },
-          },
+          bfaStatus: false,
+          ...getRoleVisibilityFilter(req.user?.role),
         },
       }),
 
       prisma.rFI.count({
-        where: { project: { status: { in: ["ACTIVE", "ONHOLD"] } }, fabricator_id: { in: fabricatorIds } },
+        where: { project: { status: { in: ["ACTIVE", "ONHOLD"] } }, fabricator_id: { in: fabricatorIds }, ...getRoleVisibilityFilter(req.user?.role) },
       }),
 
       prisma.rFQ.count({
@@ -103,7 +99,7 @@ export const clientAdminDashBoard = async (req: AuthenticateRequest, res: Respon
       }),
 
       prisma.submittals.count({
-        where: { project: { status: { in: ["ACTIVE", "ONHOLD"] } }, fabricator_id: { in: fabricatorIds } },
+        where: { project: { status: { in: ["ACTIVE", "ONHOLD"] } }, fabricator_id: { in: fabricatorIds }, ...getRoleVisibilityFilter(req.user?.role) },
       }),
     ]);
 

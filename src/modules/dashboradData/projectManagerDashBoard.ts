@@ -3,6 +3,7 @@ import prisma from "../../config/database/client";
 import { SubmitalRepository } from "../submittals/repositories";
 import { AuthenticateRequest } from "../../middleware/authMiddleware";
 import { SubResStatus } from "@prisma/client";
+import { getRoleVisibilityFilter } from "../../utils/roleFilter";
 
 export const projectManagerDashBoard = async (
   req: AuthenticateRequest,
@@ -72,7 +73,7 @@ export const projectManagerDashBoard = async (
       prisma.rFI.count({
         where: {
           project: managerFilter,
-          
+          ...getRoleVisibilityFilter(role),
             rfiresponse: {
               some: {
                 childResponses: {
@@ -87,6 +88,7 @@ export const projectManagerDashBoard = async (
         where: {
           project: managerFilter,
           rfiresponse: { none: {} },
+          ...getRoleVisibilityFilter(role),
         },
       }),
       prisma.changeOrder.count({
@@ -125,7 +127,7 @@ export const projectManagerDashBoard = async (
           responses: { none: {} },
         },
       }),
-      submittalRepo.getPendingSubmittalsForProjectManager(userId),
+      submittalRepo.getPendingSubmittalsForProjectManager(userId, role),
       prisma.teamMember.count({
         where: {
           team: {
@@ -139,6 +141,7 @@ export const projectManagerDashBoard = async (
         where: {
           project: { managerID: userId, status: { in: ["ACTIVE", "ONHOLD"] } },
           rfiresponse: { none: {} },
+          ...getRoleVisibilityFilter(role),
         },
       }),
       prisma.changeOrder.count({
@@ -162,14 +165,8 @@ export const projectManagerDashBoard = async (
       prisma.submittals.count({
         where: {
           project: { managerID: userId, status: { in: ["ACTIVE", "ONHOLD"] } },
-          currentVersion: {
-            responses: {
-              some: {
-                parentResponseId: null,
-                status: SubResStatus.ACTION_REQUIRED,
-              },
-            },
-          },
+          bfaStatus: false,
+          ...getRoleVisibilityFilter(role),
         },
       }),
     ]);

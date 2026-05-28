@@ -109,6 +109,7 @@ export class SubmittalVersionRepository {
         data: {
           currentVersionId: newVersion.id,
           submittalVersion: nextVersionNumber,
+          bfaStatus: false,
           multipleRecipients:
             data.multipleRecipients !== undefined
               ? {

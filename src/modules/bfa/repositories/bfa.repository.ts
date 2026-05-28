@@ -135,6 +135,12 @@ export class BfaRepository {
         },
       });
 
+      // 4.5. Set parent submittal's bfaStatus to true
+      await tx.submittals.update({
+        where: { id: existing.submittalID },
+        data: { bfaStatus: true },
+      });
+
       // 5. Update main BFA with new details and pointer
       const updatedBfa = await tx.bFA.update({
         where: { id },

@@ -294,7 +294,7 @@ async expandWbs(req: AuthenticateRequest, res: Response) {
 
     async handleGetAllDocuments(req:Request,res:Response){
       const { id } = req.params;
-      const documents = await projectService.getAllDocuments(id);
+      const documents = await projectService.getAllDocuments(id, (req as AuthenticateRequest).user?.role);
       res.status(200).json({
         status: 'success',
         data: documents

@@ -2,6 +2,7 @@ import { Response } from "express";
 import { AuthenticateRequest } from "../../middleware/authMiddleware";
 import prisma from "../../config/database/client";
 import { SubResStatus } from "@prisma/client";
+import { getRoleVisibilityFilter } from "../../utils/roleFilter";
 
 const FULL_ACCESS_ROLES = new Set([
   "ADMIN",
@@ -60,6 +61,7 @@ export const DashBoradData = async (
 
     const pendingRFI = await prisma.rFI.count({
               where: {
+          ...getRoleVisibilityFilter(role),
           NOT: {
             rfiresponse: {
               some: {
@@ -78,6 +80,7 @@ export const DashBoradData = async (
 
     const newRFI = await prisma.rFI.count({
       where: {
+        ...getRoleVisibilityFilter(role),
         rfiresponse: { none: {} },
       },
     });
@@ -118,22 +121,16 @@ export const DashBoradData = async (
     });
     const pendingSubmittals = await prisma.submittals.count({
       where: {
-        status: false,
+        bfaStatus: false,
         currentVersionId: { not: null },
-        currentVersion: {
-          responses: {
-            some: {
-              parentResponseId: null,
-              status: SubResStatus.ACTION_REQUIRED,
-            }
-          }
-        }
+        ...getRoleVisibilityFilter(role),
       },
     });
 
     const clientSidePendingRFI = await prisma.rFI.count({
       where: {
         project: { status: { in: ["ACTIVE", "ONHOLD"] } },
+        ...getRoleVisibilityFilter(role),
         rfiresponse: { none: {} },
       },
     });
@@ -161,14 +158,8 @@ export const DashBoradData = async (
     const clientSidePendingSubmittals = await prisma.submittals.count({
       where: {
         project: { status: { in: ["ACTIVE", "ONHOLD"] } },
-        currentVersion: {
-          responses: {
-            some: {
-              parentResponseId: null,
-              status: SubResStatus.ACTION_REQUIRED,
-            },
-          },
-        },
+        bfaStatus: false,
+        ...getRoleVisibilityFilter(role),
       },
     });
 

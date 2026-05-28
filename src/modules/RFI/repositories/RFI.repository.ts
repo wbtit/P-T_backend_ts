@@ -6,6 +6,8 @@ import {
 import { generateProjectScopedSerial, SERIAL_PREFIX } from "../../../utils/serial.util";
 import { AppError } from "../../../config/utils/AppError";
 import { includes } from "zod";
+import { UserRole } from "@prisma/client";
+import { getRoleVisibilityFilter } from "../../../utils/roleFilter";
 
 export class RFIRepository{
     async create(data:CreateRFIDto,userId:string,isAproovedByAdmin:boolean){
@@ -52,7 +54,7 @@ export class RFIRepository{
         });
     }
 
-    async findPendingRFIsForClientAdmin(userId: string) {
+    async findPendingRFIsForClientAdmin(userId: string, role?: UserRole) {
 
      const fabricator = await prisma.fabricator.findFirst({
             where: {
@@ -75,7 +77,8 @@ export class RFIRepository{
           project: { status: { in: ["ACTIVE", "ONHOLD"] } },
           rfiresponse:{
             none:{}
-          }
+          },
+          ...getRoleVisibilityFilter(role),
         },
         include: {
         fabricator:{select:{
@@ -104,13 +107,14 @@ export class RFIRepository{
       })
     }
 
-    async findClientSidePendingRFIs() {
+    async findClientSidePendingRFIs(role?: UserRole) {
       return await prisma.rFI.findMany({
         where:{
           project: { status: { in: ["ACTIVE", "ONHOLD"] } },
           rfiresponse:{
             none:{}
-          }
+          },
+          ...getRoleVisibilityFilter(role),
         },
         include: {
           fabricator:{select:{
@@ -142,7 +146,7 @@ export class RFIRepository{
       })
     }
 
-    async findPendingRFIsForClient(userId: string){
+    async findPendingRFIsForClient(userId: string, role?: UserRole){
       return await prisma.rFI.findMany({
         where:{
           project:{
@@ -150,7 +154,8 @@ export class RFIRepository{
           },
           rfiresponse:{
             none:{}
-          }
+          },
+          ...getRoleVisibilityFilter(role),
         },include: {
         fabricator:{select:{
           fabName:true,
@@ -254,11 +259,12 @@ export class RFIRepository{
     }
     
     
-    async senderRFI(userId:string, projectId?: string){
+    async senderRFI(userId:string, projectId?: string, role?: UserRole){
         return await prisma.rFI.findMany({
       where: {
         sender_id: userId,
         ...(projectId ? { project_id: projectId } : {}),
+        ...getRoleVisibilityFilter(role),
       },
       include: {
         fabricator: true,
@@ -270,10 +276,11 @@ export class RFIRepository{
     });
     }
 
-    async inbox(userId:string,projectId:string){
+    async inbox(userId:string,projectId:string, role?: UserRole){
         return await prisma.rFI.findMany({
       where: {
         project_id: projectId,
+        ...getRoleVisibilityFilter(role),
         OR: [
           { recepient_id: userId },
           { multipleRecipients: { some: { id: userId } } },
@@ -300,10 +307,11 @@ export class RFIRepository{
     });
     }
 
-    async findByProject(projectId: string) {
+    async findByProject(projectId: string, role?: UserRole) {
         return await prisma.rFI.findMany({
       where: {
         project_id: projectId,
+        ...getRoleVisibilityFilter(role),
       },
       include: {
         fabricator: true,
@@ -326,9 +334,10 @@ export class RFIRepository{
       },
     });
     }
-    async findPendingRFIs(role: string){
+    async findPendingRFIs(role: string, userRole?: UserRole){
       return await prisma.rFI.findMany({
         where: {
+    ...getRoleVisibilityFilter(userRole),
     NOT: {
       rfiresponse: {
         some: {
@@ -353,7 +362,7 @@ export class RFIRepository{
       });
     }
 
-    async findPendingRFIsForDepartmentManager(managerId: string) {
+    async findPendingRFIsForDepartmentManager(managerId: string, role?: UserRole) {
       const manager = await prisma.user.findUnique({
         where: { id: managerId },
         select: { departmentId: true },
@@ -363,6 +372,7 @@ export class RFIRepository{
       return await prisma.rFI.findMany({
         where: {
           project: { departmentID: manager.departmentId },
+          ...getRoleVisibilityFilter(role),
           NOT: {
             rfiresponse: {
               some: {
@@ -387,10 +397,11 @@ export class RFIRepository{
       });
     }
 
-    async findPendingRFIsForProjectManager(managerId: string) {
+    async findPendingRFIsForProjectManager(managerId: string, role?: UserRole) {
       return await prisma.rFI.findMany({
         where: {
           project: { managerID: managerId },
+          ...getRoleVisibilityFilter(role),
           
             rfiresponse: {
               some: {
@@ -411,11 +422,12 @@ export class RFIRepository{
       });
     }
 
-    async findNewRFIsForProjectManager(managerId: string) {
+    async findNewRFIsForProjectManager(managerId: string, role?: UserRole) {
       return await prisma.rFI.findMany({
         where: {
           project: { managerID: managerId },
           rfiresponse: { none: {} },
+          ...getRoleVisibilityFilter(role),
         },
         include: {
           fabricator: true,

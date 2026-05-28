@@ -1,6 +1,8 @@
 import { SubmitalRepository,SubmittalVersionRepository } from "../repositories";
 import { CreateSubmittalsDto, UpdateSubmittalsDto } from "../dtos";
 import { AppError } from "../../../config/utils/AppError";
+import { computeSubmittalStatus } from "../utils/statusHelper";
+import { UserRole } from "@prisma/client";
 import { FileObject } from "../../../shared/fileType";
 import { Response } from "express";
 import { resolveUploadFilePath, streamFile } from "../../../utils/fileUtil";
@@ -66,34 +68,39 @@ export class SubmittalService {
     );
   }
 
-  async getClientSidePendingSubmittals() {
-    return await submittalRepo.getClientSidePendingSubmittals();
+  async getClientSidePendingSubmittals(role?: UserRole) {
+    const list = await submittalRepo.getClientSidePendingSubmittals(role);
+    return list.map(item => computeSubmittalStatus(item));
   }
 
-  async getPendingSubmittalsForClientAdmin(userId:string){
-    return await submittalRepo.getPendingSubmittalsForClientAdmin(userId);
+  async getPendingSubmittalsForClientAdmin(userId:string, role?: UserRole){
+    const list = await submittalRepo.getPendingSubmittalsForClientAdmin(userId, role);
+    return list.map(item => computeSubmittalStatus(item));
   }
 
-  async getPendingSubmittalsForClient(userId:string){
-    return await submittalRepo.getPendingSubmittalsForClient(userId);
+  async getPendingSubmittalsForClient(userId:string, role?: UserRole){
+    const list = await submittalRepo.getPendingSubmittalsForClient(userId, role);
+    return list.map(item => computeSubmittalStatus(item));
   }
 
-  async getPendingSubmittalsForProjectManager(userId: string) {
-    return await submittalRepo.getPendingSubmittalsForProjectManager(userId);
+  async getPendingSubmittalsForProjectManager(userId: string, role?: UserRole) {
+    const list = await submittalRepo.getPendingSubmittalsForProjectManager(userId, role);
+    return list.map(item => computeSubmittalStatus(item));
   }
 
-  async getPendingSubmittalsForDepartmentManager(userId: string) {
-    return await submittalRepo.getPendingSubmittalsForDepartmentManager(userId);
+  async getPendingSubmittalsForDepartmentManager(userId: string, role?: UserRole) {
+    const list = await submittalRepo.getPendingSubmittalsForDepartmentManager(userId, role);
+    return list.map(item => computeSubmittalStatus(item));
   }
 
   // ----------------------------------
   // GET SUBMITTAL (WITH FILTERED RESPONSES)
   // ----------------------------------
-  async getSubmittalById(id: string) {
+  async getSubmittalById(id: string, role?: UserRole) {
     const existing = await submittalRepo.findById(id);
     if (!existing) throw new AppError("Submittal not found", 404);
 
-    return {
+    return computeSubmittalStatus({
       ...existing,
       mileStones: Array.isArray((existing as any).mileStoneLinks) && (existing as any).mileStoneLinks.length > 0
         ? (existing as any).mileStoneLinks.map((link: any) => link.mileStone)
@@ -103,26 +110,30 @@ export class SubmittalService {
             resp => resp.parentResponseId === null
           )
         : [],
-    };
+    });
   }
 
-  async getPendingSubmittals() {
-    return submittalRepo.getPendingSubmittals();
+  async getPendingSubmittals(role?: UserRole) {
+    const list = await submittalRepo.getPendingSubmittals(role);
+    return list.map(item => computeSubmittalStatus(item));
   }
 
   // ----------------------------------
   // LISTS
   // ----------------------------------
-  async sent(userId: string, projectId?: string) {
-    return submittalRepo.sentSubmittals(userId, projectId);
+  async sent(userId: string, projectId?: string, role?: UserRole) {
+    const list = await submittalRepo.sentSubmittals(userId, projectId, role);
+    return list.map(item => computeSubmittalStatus(item));
   }
 
-  async received(userId: string, projectId?: string) {
-    return submittalRepo.receivedSubmittals(userId, projectId);
+  async received(userId: string, projectId?: string, role?: UserRole) {
+    const list = await submittalRepo.receivedSubmittals(userId, projectId, role);
+    return list.map(item => computeSubmittalStatus(item));
   }
 
-  async findByProject(projectId: string) {
-    return submittalRepo.findByProject(projectId);
+  async findByProject(projectId: string, role?: UserRole) {
+    const list = await submittalRepo.findByProject(projectId, role);
+    return list.map(item => computeSubmittalStatus(item));
   }
 
   // ----------------------------------

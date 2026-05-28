@@ -2,7 +2,8 @@ import prisma from "../../../config/database/client";
 import { CreateSubmittalsDto, UpdateSubmittalsDto } from "../dtos";
 import { generateProjectScopedSerial, SERIAL_PREFIX } from "../../../utils/serial.util";
 import { AppError } from "../../../config/utils/AppError";
-import { Prisma, SubResStatus } from "@prisma/client";
+import { Prisma, SubResStatus, UserRole } from "@prisma/client";
+import { getRoleVisibilityFilter } from "../../../utils/roleFilter";
 
 const ACTION_REQUIRED_FILTER = {
   some: {
@@ -168,14 +169,13 @@ export class SubmitalRepository {
   }
 
 
-  async getClientSidePendingSubmittals() {
+  async getClientSidePendingSubmittals(role?: UserRole) {
     return prisma.submittals.findMany({
       where: {
         project: { status: { in: ["ACTIVE", "ONHOLD"] } },
         currentVersionId: { not: null },
-        currentVersion: {
-          responses: ACTION_REQUIRED_FILTER,
-        },
+        bfaStatus: false,
+        ...getRoleVisibilityFilter(role),
       },
       include: {
         project: { select: { name: true } },
@@ -195,7 +195,7 @@ export class SubmitalRepository {
     });
   }
 
-async getPendingSubmittalsForClientAdmin(userId: string) {
+async getPendingSubmittalsForClientAdmin(userId: string, role?: UserRole) {
     const fabricators = await prisma.fabricator.findMany({
       where: {
         pointOfContact: {
@@ -213,9 +213,8 @@ async getPendingSubmittalsForClientAdmin(userId: string) {
         fabricator_id: { in: fabricatorIds },
         project: { status: { in: ["ACTIVE", "ONHOLD"] } },
         currentVersionId: { not: null },
-        currentVersion: {
-          responses: ACTION_REQUIRED_FILTER,
-        },
+        bfaStatus: false,
+        ...getRoleVisibilityFilter(role),
       },
       include: {
         project: { select: { name: true } },
@@ -234,15 +233,13 @@ async getPendingSubmittalsForClientAdmin(userId: string) {
     });
   }
 
-  async getPendingSubmittalsForClient(userId: string) {
+  async getPendingSubmittalsForClient(userId: string, role?: UserRole) {
     return prisma.submittals.findMany({
       where: {
-        
         project: { clientProjectManagers: { some: { id: userId } }, status: { not: "INACTIVE" } },
         currentVersionId: { not: null },
-        currentVersion: {
-          responses: ACTION_REQUIRED_FILTER,
-        },
+        bfaStatus: false,
+        ...getRoleVisibilityFilter(role),
       },
       include: {
         project: { select: { name: true } },
@@ -261,7 +258,7 @@ async getPendingSubmittalsForClientAdmin(userId: string) {
   }
 
 
-async getPendingSubmittalsForDepartmentManager(managerId: string) {
+async getPendingSubmittalsForDepartmentManager(managerId: string, role?: UserRole) {
   const manager = await prisma.user.findUnique({
     where: { id: managerId },
     select: { departmentId: true },
@@ -270,13 +267,11 @@ async getPendingSubmittalsForDepartmentManager(managerId: string) {
 
   return prisma.submittals.findMany({
     where: {
-      status: false,
+      bfaStatus: false,
       currentVersionId: { not: null },
+      ...getRoleVisibilityFilter(role),
       project: { departmentID: manager.departmentId,
        },
-      currentVersion: {
-        responses: ACTION_REQUIRED_FILTER,
-      }
     },
     include: {
       project: { select: { name: true } },
@@ -300,15 +295,13 @@ async getPendingSubmittalsForDepartmentManager(managerId: string) {
   });
 }
 
-async getPendingSubmittalsForProjectManager(managerId: string) {
+async getPendingSubmittalsForProjectManager(managerId: string, role?: UserRole) {
   return prisma.submittals.findMany({
     where: {
-      status: false,
+      bfaStatus: false,
       currentVersionId: { not: null },
+      ...getRoleVisibilityFilter(role),
       project: { managerID: managerId },
-      currentVersion: {
-        responses: ACTION_REQUIRED_FILTER,
-      }
     },
     include:{
       mileStoneBelongsTo: true,
@@ -391,11 +384,12 @@ async getPendingSubmittalsForProjectManager(managerId: string) {
   // -----------------------------
   // SENT SUBMITTALS
   // -----------------------------
-  async sentSubmittals(senderId: string, projectId?: string) {
+  async sentSubmittals(senderId: string, projectId?: string, role?: UserRole) {
     return prisma.submittals.findMany({
       where: {
         sender_id: senderId,
         ...(projectId ? { project_id: projectId } : {}),
+        ...getRoleVisibilityFilter(role),
       },
       include: {
         project: { select: { name: true } },
@@ -416,10 +410,11 @@ async getPendingSubmittalsForProjectManager(managerId: string) {
   // -----------------------------
   // RECEIVED SUBMITTALS
   // -----------------------------
-  async receivedSubmittals(recipientId: string, projectId?: string) {
+  async receivedSubmittals(recipientId: string, projectId?: string, role?: UserRole) {
     return prisma.submittals.findMany({
       where: {
         ...(projectId ? { project_id: projectId } : {}),
+        ...getRoleVisibilityFilter(role),
         OR: [
           { recepient_id: recipientId },
           { multipleRecipients: { some: { id: recipientId } } },
@@ -456,9 +451,9 @@ async getPendingSubmittalsForProjectManager(managerId: string) {
   // -----------------------------
   // BY PROJECT
   // -----------------------------
-  async findByProject(projectId: string) {
+  async findByProject(projectId: string, role?: UserRole) {
     return prisma.submittals.findMany({
-      where: { project_id: projectId },
+      where: { project_id: projectId, ...getRoleVisibilityFilter(role) },
       include: {
         project: { select: { name: true } },
         fabricator: true,
@@ -477,19 +472,19 @@ async getPendingSubmittalsForProjectManager(managerId: string) {
     });
   }
 
-  async getPendingSubmittals(){
+  async getPendingSubmittals(role?: UserRole){
     return prisma.submittals.findMany({
       where: {
-        status: false,
+        bfaStatus: false,
         currentVersionId: { not: null },
-        currentVersion: {
-          responses: ACTION_REQUIRED_FILTER,
-        }
-      },include:{
+        ...getRoleVisibilityFilter(role),
+      },
+      include:{
           project:{select:{name:true}},
           fabricator:{select:{fabName:true}},
           multipleRecipients:true,
           sender:true,
+          currentVersion: true,
           mileStoneBelongsTo: true,
           mileStoneLinks: {
             include: {

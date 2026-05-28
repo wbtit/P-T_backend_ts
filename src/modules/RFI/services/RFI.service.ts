@@ -9,6 +9,7 @@ import { AppError } from "../../../config/utils/AppError";
 import { FileObject } from "../../../shared/fileType";
 import { Response } from "express";
 import { resolveUploadFilePath, streamFile } from "../../../utils/fileUtil";
+import { UserRole } from "@prisma/client";
 
 const rfiRepo = new RFIRepository();
 
@@ -26,9 +27,10 @@ export class RFIService {
     return rfi;
   }
 
-  async getRfiById(id: string) {
+  async getRfiById(id: string, role?: UserRole) {
     const existing = await rfiRepo.findById(id);
     if (!existing) throw new AppError("RFI not found", 404);
+
     const filtered = {
       ...existing,
       rfiresponse: Array.isArray(existing.rfiresponse)
@@ -38,27 +40,27 @@ export class RFIService {
     return filtered;
   }
 
-  async sent(userId: string, projectId?: string) {
-    return await rfiRepo.senderRFI(userId, projectId);
+  async sent(userId: string, projectId?: string, role?: UserRole) {
+    return await rfiRepo.senderRFI(userId, projectId, role);
   }
 
-  async received(userId: string, projectId: string) {
-    return await rfiRepo.inbox(userId, projectId);
+  async received(userId: string, projectId: string, role?: UserRole) {
+    return await rfiRepo.inbox(userId, projectId, role);
   }
 
-  async findByProject(projectId: string) {
-    return await rfiRepo.findByProject(projectId);
+  async findByProject(projectId: string, role?: UserRole) {
+    return await rfiRepo.findByProject(projectId, role);
   }
 
-  async getPendingForClientAdmin(userId: string) {
-    return await rfiRepo.findPendingRFIsForClientAdmin(userId);
+  async getPendingForClientAdmin(userId: string, role?: UserRole) {
+    return await rfiRepo.findPendingRFIsForClientAdmin(userId, role);
   }
-  async getClientSidePendingRFIs() {
-    return await rfiRepo.findClientSidePendingRFIs();
+  async getClientSidePendingRFIs(role?: UserRole) {
+    return await rfiRepo.findClientSidePendingRFIs(role);
   }
 
-  async getPendingForClient(userId: string) {
-    return await rfiRepo.findPendingRFIsForClient(userId);
+  async getPendingForClient(userId: string, role?: UserRole) {
+    return await rfiRepo.findPendingRFIsForClient(userId, role);
   }
 
   async closeRfi(id: string) {
@@ -112,19 +114,19 @@ export class RFIService {
     return streamFile(res, filePath, fileObject.originalName);
   }
 
-  async getPendingRFIs(role: string) {
-    return await rfiRepo.findPendingRFIs(role);
+  async getPendingRFIs(role: string, userRole?: UserRole) {
+    return await rfiRepo.findPendingRFIs(role, userRole);
   }
 
-  async getPendingRFIsForProjectManager(managerId: string) {
-    return await rfiRepo.findPendingRFIsForProjectManager(managerId);
+  async getPendingRFIsForProjectManager(managerId: string, role?: UserRole) {
+    return await rfiRepo.findPendingRFIsForProjectManager(managerId, role);
   }
 
-  async getPendingRFIsForDepartmentManager(managerId: string) {
-    return await rfiRepo.findPendingRFIsForDepartmentManager(managerId);
+  async getPendingRFIsForDepartmentManager(managerId: string, role?: UserRole) {
+    return await rfiRepo.findPendingRFIsForDepartmentManager(managerId, role);
   }
 
-  async getNewRFIsForProjectManager(managerId: string) {
-    return await rfiRepo.findNewRFIsForProjectManager(managerId);
+  async getNewRFIsForProjectManager(managerId: string, role?: UserRole) {
+    return await rfiRepo.findNewRFIsForProjectManager(managerId, role);
   }
 }

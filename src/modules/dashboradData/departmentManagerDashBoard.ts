@@ -2,6 +2,7 @@ import { Response } from "express";
 import prisma from "../../config/database/client";
 import { AuthenticateRequest } from "../../middleware/authMiddleware";
 import { SubResStatus } from "@prisma/client";
+import { getRoleVisibilityFilter } from "../../utils/roleFilter";
 
 const DEPARTMENT_MANAGER_ALLOWED_ROLES = new Set(["DEPT_MANAGER", "ADMIN"]);
 
@@ -184,6 +185,7 @@ export const departmentManagerDashBoard = async (
       prisma.rFI.count({
         where: {
           project: { departmentID: departmentId },
+          ...getRoleVisibilityFilter(role),
           NOT: {
             rfiresponse: {
               some: {
@@ -199,6 +201,7 @@ export const departmentManagerDashBoard = async (
         where: {
           project: { departmentID: departmentId },
           rfiresponse: { none: {} },
+          ...getRoleVisibilityFilter(role),
         },
       }),
       prisma.changeOrder.count({
@@ -241,22 +244,16 @@ export const departmentManagerDashBoard = async (
       prisma.submittals.count({
         where: {
           project: { departmentID: departmentId },
-          status: false,
+          bfaStatus: false,
           currentVersionId: { not: null },
-          currentVersion: {
-            responses: {
-              some: {
-                parentResponseId: null,
-                status: SubResStatus.ACTION_REQUIRED,
-              }
-            }
-          },
+          ...getRoleVisibilityFilter(role),
         },
       }),
       prisma.rFI.count({
         where: {
           project: { departmentID: departmentId },
           rfiresponse: { none: {} },
+          ...getRoleVisibilityFilter(role),
         },
       }),
       prisma.changeOrder.count({
@@ -280,14 +277,8 @@ export const departmentManagerDashBoard = async (
       prisma.submittals.count({
         where: {
           project: { departmentID: departmentId },
-          currentVersion: {
-            responses: {
-              some: {
-                parentResponseId: null,
-                status: SubResStatus.ACTION_REQUIRED,
-              },
-            },
-          },
+          bfaStatus: false,
+          ...getRoleVisibilityFilter(role),
         },
       }),
       ]);
