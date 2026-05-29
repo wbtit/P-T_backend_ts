@@ -40,6 +40,11 @@ const authMiddleware = async (
     req.user = decoded;
     next();
   } catch (err: any) {
+    console.error("[Auth] Token verification failed:", {
+      message: err.message,
+      errorName: err.name,
+      token: token,
+    });
     if (err.name === 'TokenExpiredError') {
       throw new AppError('Token expired. Please log in again.', 401);
     }

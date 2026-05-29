@@ -1,16 +1,16 @@
 import { Router } from "express";
 import {
-    handleResetPassword,
     handleSignin,
-    handleSignup
+    handleSignup,
+    handleChangePassword
 } from './controllers'
 import { asyncHandler } from "../../../config/utils/asyncHandler"; 
 import validate from "../../../middleware/validate";
 import authMiddleware from "../../../middleware/authMiddleware";
 import { 
     signinSchema,
-    resetPasswordSchema,
-    publicSignupSchema
+    publicSignupSchema,
+    changePasswordSchema
  } from "./dtos";
 const router =Router();
 
@@ -28,12 +28,12 @@ router.post(
   asyncHandler(handleSignin)
 );
 
-// Reset password (protected)
+// Change password (protected)
 router.patch(
-  "/reset-password",
+  "/change-password",
   authMiddleware,
-  validate({ body: resetPasswordSchema }),
-  asyncHandler(handleResetPassword)
+  validate({ body: changePasswordSchema }),
+  asyncHandler(handleChangePassword)
 );
 
 

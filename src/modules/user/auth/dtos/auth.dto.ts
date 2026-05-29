@@ -41,9 +41,17 @@ export const publicSignupSchema = createUserSchema
     password: z.string().min(6),
   });
 
+export const forgotPasswordSchema = z.object({
+  username: z.string().min(1),
+});
+
 export const resetPasswordSchema = z.object({
-  id: z.string(),
   token: z.string(),
+  newPassword: z.string().min(6),
+});
+
+export const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1),
   newPassword: z.string().min(6),
 });
 
@@ -52,3 +60,4 @@ export const resetPasswordSchema = z.object({
 export type SignupInput = z.infer<typeof publicSignupSchema>;
 export type SigninInput = z.infer<typeof signinSchema>;
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
+export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;

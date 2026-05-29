@@ -9,7 +9,7 @@ import { generateToken, JWT_SECRET } from '../../../../config/utils/jwtutils'
 import { AppError } from '../../../../config/utils/AppError' 
 import { UserJwt } from '../../../../shared/types' 
 import {updatePassword}  from "../repositories"
-import { createUser,findUserByUsername } from '../../repository'
+import { createUser,findUserByUsername, findUserById, findUserByIdWithPassword } from '../../repository'
 
 type AuthUser = {
     id: string;
@@ -63,10 +63,40 @@ export const signin=async(data:SigninInput)=>{
     return { token,user:sanitizeUser(user)};
 }
 
+// REMOVED: Self-service password reset not required for this platform.
+// Admin handles password resets via PATCH /admin/users/:userId/reset-password
+/*
+export const forgotPassword = async (username: string) => {
+    const user = await findUserByUsername(username);
+    if (!user) throw new AppError('User not found', 404);
+
+    // TODO: Set PASSWORD_RESET_SECRET separately in process.env
+    const secret = process.env.PASSWORD_RESET_SECRET || JWT_SECRET;
+    const token = jwt.sign(
+        { userId: user.id, purpose: "password-reset" },
+        secret,
+        { expiresIn: "15m" }
+    );
+    return { token };
+};
+
 export const resetPassword=async(data:ResetPasswordInput)=>{
-    const decoded:UserJwt = jwt.verify(data.token,JWT_SECRET) as UserJwt
-    const user = await findUserByUsername(decoded.username);
-    if(!user) throw new AppError('Invalid token',401)
+    // TODO: Set PASSWORD_RESET_SECRET separately in process.env
+    const secret = process.env.PASSWORD_RESET_SECRET || JWT_SECRET;
+
+    let decoded: any;
+    try {
+        decoded = jwt.verify(data.token, secret);
+    } catch (err) {
+        throw new AppError('Invalid reset token', 400);
+    }
+
+    if (!decoded || decoded.purpose !== "password-reset") {
+        throw new AppError('Invalid reset token', 400);
+    }
+
+    const user = await findUserById(decoded.userId);
+    if(!user) throw new AppError('Invalid reset token', 400);
     
     const hashedPassword = await bcrypt.hash(data.newPassword,10);
     await updatePassword({
@@ -76,3 +106,20 @@ export const resetPassword=async(data:ResetPasswordInput)=>{
 
     return {message:"Password updated successfully"};
 }
+*/
+
+export const changePassword = async (userId: string, currentPassword: string, newPassword: string) => {
+    const user = await findUserByIdWithPassword(userId);
+    if (!user) throw new AppError("User not found", 404);
+
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) throw new AppError("Current password is incorrect", 400);
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await updatePassword({
+        id: user.id,
+        newPassword: hashedPassword
+    });
+
+    return { message: "Password updated successfully" };
+};

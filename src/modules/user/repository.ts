@@ -37,6 +37,10 @@ export const findUserById = async (id: string) => {
   });
 };
 
+export const findUserByIdWithPassword = async (id: string) => {
+  return prisma.user.findUnique({ where: { id } });
+};
+
 /**
  * Returns ALL users regardless of active status.
  * Used internally by admin-level queries.

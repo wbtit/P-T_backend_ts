@@ -1,6 +1,6 @@
 import { ModuleOpenApiDoc } from "../../openapi/types";
 import { zodRequestBody } from "../../openapi/zod";
-import { publicSignupSchema, resetPasswordSchema, signinSchema } from "./auth/dtos";
+import { publicSignupSchema, signinSchema, changePasswordSchema } from "./auth/dtos";
 import { UpdateUserSchema, createUserSchema } from "./dtos";
 
 export const userOpenApiDoc: ModuleOpenApiDoc = {
@@ -37,13 +37,13 @@ export const userOpenApiDoc: ModuleOpenApiDoc = {
         }
       },
     },
-    "/auth/reset-password": {
+    "/auth/change-password": {
       patch: {
         tags: ["User"],
-        summary: "PATCH /auth/reset-password",
-        operationId: "patch_user_auth_reset_password",
+        summary: "PATCH /auth/change-password",
+        operationId: "patch_user_auth_change_password",
         security: [{ bearerAuth: [] }],
-        requestBody: zodRequestBody(resetPasswordSchema),
+        requestBody: zodRequestBody(changePasswordSchema),
         responses: {
           "200": { description: "Success" },
           "400": { description: "Bad Request" },

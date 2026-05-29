@@ -10,6 +10,10 @@ type SchemaConfig = {
 
 const validate = (schemas: SchemaConfig) =>
   (req: Request, res: Response, next: NextFunction) => {
+    if (schemas.body && (req.body === undefined || req.body === null)) {
+      return res.status(400).json({ error: "Request body could not be parsed" });
+    }
+
     try {
       console.log("[Validation] Incoming request", {
         method: req.method,
@@ -21,18 +25,6 @@ const validate = (schemas: SchemaConfig) =>
       });
 
       if (schemas.body) {
-        // For multipart requests, req.body might not be fully populated yet
-        // or might be undefined if the multipart parsing failed
-        if (req.body === undefined && req.headers['content-type']?.includes('multipart/form-data')) {
-          // Skip body validation for multipart requests - let multer handle it
-          next();
-          return;
-        }
-
-        if (req.body === undefined) {
-          throw new AppError("Request body is required and must be valid JSON", 400);
-        }
-
         const parsed = schemas.body.safeParse(req.body);
         if (!parsed.success) {
           console.error("[Validation][Body] Failed", {

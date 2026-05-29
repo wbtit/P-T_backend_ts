@@ -45,12 +45,12 @@ router.get(
 router.put(
   "/:id",
   authMiddleware,
+  rfiUploads.array("files"),
+  scanUploadMiddleware,
   validate({
     params: z.object({ id: z.string() }),
     body: UpdateRFISchema,
   }),
-  rfiUploads.array("files"),
-  scanUploadMiddleware,
   rfiController.handleUpdateRfi.bind(rfiController)
 );
 
