@@ -33,7 +33,7 @@ export const createSubmittalsDto = z.object({
   project_id: z.string().uuid(),
   recepient_id: z.string().optional(),
   clientResponseStatus:z.enum(SubResStatus).optional(),
-  multipleRecipients: z.array(z.string().uuid()).optional(),
+  multipleRecipients: zStringArrayFromFormData,
   sender_id: z.string().uuid(),
 
   stage: z.enum(Stage).optional(),

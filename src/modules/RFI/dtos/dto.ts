@@ -5,12 +5,26 @@ const zBooleanString = z
   .union([z.boolean(), z.string()])
   .transform(val => val === true || val === "true");
 
+const zStringArrayFromFormData = z.preprocess((val) => {
+  if (val === undefined || val === null || val === "") return undefined;
+  if (Array.isArray(val)) return val;
+  if (typeof val === "string") {
+    try {
+      const parsed = JSON.parse(val);
+      if (Array.isArray(parsed)) return parsed;
+    } catch {
+      return [val];
+    }
+  }
+  return val;
+}, z.array(z.string().uuid()).optional());
+
 /* -------------------- RFI DTO -------------------- */
 export const RFISchema = z.object({
   fabricator_id: z.string(),
   project_id: z.string(),
   recepient_id: z.string().optional(),
-  multipleRecipients: z.array(z.string()).optional(),
+  multipleRecipients: zStringArrayFromFormData,
   status: zBooleanString,
   subject: z.string(),
   description: z.string(),

@@ -1,8 +1,12 @@
 import Redlock from "redlock";
-import redis from "../redis/redisClient";
+import Redis from "ioredis";
+
+// Instantiate an ioredis client specifically for redlock
+const redisUrl = process.env.REDIS_URL || "redis://127.0.0.1:6379";
+const redlockRedisClient = new Redis(redisUrl);
 
 const redlock = new Redlock(
-  [redis as any],
+  [redlockRedisClient],
   {
     // The expected clock drift; for more details see http://redis.io/topics/distlock
     driftFactor: 0.01, // time in ms
