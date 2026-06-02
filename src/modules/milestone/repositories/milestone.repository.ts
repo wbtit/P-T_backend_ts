@@ -247,6 +247,7 @@ export class MileStoneRepository{
         return await prisma.mileStone.findMany({
             where:{
                 mileStoneSubmittals:{none:{}},
+                legacySubmittals:{none:{}},
                 project: {
                     isDeleted: false,
                     status: { in: ["ACTIVE", "ONHOLD"] },
@@ -269,6 +270,7 @@ export class MileStoneRepository{
             where:{
                 fabricator_id:fabricatorId,
                 mileStoneSubmittals:{none:{}},
+                legacySubmittals:{none:{}},
                 project: {
                     isDeleted: false,
                     status: { in: ["ACTIVE", "ONHOLD"] },
@@ -294,8 +296,7 @@ export class MileStoneRepository{
                     status: { not: "INACTIVE" },
                 },
                 mileStoneSubmittals: { none: {} },
-               
-               
+                legacySubmittals: { none: {} },
             },
             include: {
                 project: { select: { name: true } },
@@ -317,7 +318,8 @@ export class MileStoneRepository{
                 isDeleted: false,
                 status: { in: ["ACTIVE", "ONHOLD"] },
             },
-            mileStoneSubmittals:{none:{}}
+            mileStoneSubmittals:{none:{}},
+            legacySubmittals:{none:{}},
         },
         include:{
             project:{select:{name:true}},
@@ -353,7 +355,8 @@ export class MileStoneRepository{
                 status: { in: ["ACTIVE", "ONHOLD"] },
             },
             CDApprovalDate:{not:null},
-            mileStoneSubmittals:{none:{}}
+            mileStoneSubmittals:{none:{}},
+            legacySubmittals:{none:{}},
         },
         include:{
             project:{select:{name:true}},
