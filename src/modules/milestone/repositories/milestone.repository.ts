@@ -63,6 +63,114 @@ export class MileStoneRepository{
             }
         })
     }
+    async getAllByFabricator(fabricatorId: string) {
+        return await prisma.mileStone.findMany({
+            where: {
+                fabricator_id: fabricatorId,
+                project: {
+                    isDeleted: false,
+                }
+            },
+            include:{
+                project:true,
+                Tasks:true,
+                fabricator:true,
+                mileStoneSubmittals: {
+                    include: {
+                        submittal: true,
+                    },
+                },
+                currentVersion: true,
+                versions: {
+                    orderBy: {
+                        versionNumber: "desc",
+                    },
+                },
+            }
+        })
+    }
+    async getAllForClient(clientId: string) {
+        return await prisma.mileStone.findMany({
+            where: {
+                project: {
+                    clientProjectManagers: { some: { id: clientId } },
+                    isDeleted: false,
+                }
+            },
+            include:{
+                project:true,
+                Tasks:true,
+                fabricator:true,
+                mileStoneSubmittals: {
+                    include: {
+                        submittal: true,
+                    },
+                },
+                currentVersion: true,
+                versions: {
+                    orderBy: {
+                        versionNumber: "desc",
+                    },
+                },
+            }
+        })
+    }
+    async getByProjectIdAndFabricator(projectId: string, fabricatorId: string) {
+        return await prisma.mileStone.findMany({
+            where: {
+                project_id: projectId,
+                fabricator_id: fabricatorId,
+                project: {
+                    isDeleted: false,
+                    status: { in: ["ACTIVE", "ONHOLD"] },
+                },
+            },
+            include:{
+                project:true,
+                Tasks:true,
+                fabricator:true,
+                mileStoneSubmittals: {
+                    include: {
+                        submittal: true,
+                    },
+                },
+                currentVersion: true,
+                versions: {
+                    orderBy: {
+                        versionNumber: "desc",
+                    },
+                },
+            }
+        })
+    }
+    async getByProjectIdAndClient(projectId: string, clientId: string) {
+        return await prisma.mileStone.findMany({
+            where: {
+                project_id: projectId,
+                project: {
+                    clientProjectManagers: { some: { id: clientId } },
+                    isDeleted: false,
+                    status: { in: ["ACTIVE", "ONHOLD"] },
+                },
+            },
+            include:{
+                project:true,
+                Tasks:true,
+                fabricator:true,
+                mileStoneSubmittals: {
+                    include: {
+                        submittal: true,
+                    },
+                },
+                currentVersion: true,
+                versions: {
+                    orderBy: {
+                        versionNumber: "desc",
+                    },
+                },
+            }
+        })
+    }
     async getById(id:string){
         return await prisma.mileStone.findUnique({
             where:{id},
@@ -156,6 +264,7 @@ export class MileStoneRepository{
         })
     }
     async getPendingSubmittalsByFabricator(fabricatorId:string){
+        if (!fabricatorId) return [];
         return await prisma.mileStone.findMany({
             where:{
                 fabricator_id:fabricatorId,

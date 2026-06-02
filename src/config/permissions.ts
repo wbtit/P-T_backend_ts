@@ -150,7 +150,8 @@ export const permissions: PermissionsConfig = {
   },
   'HUMAN_RESOURCE': {
     ...createDefaultRolePermissions(),
-    // CEO can mark specific permissions here
+    project: { create: false, read: true, update: false, delete: false },
+    tasks: { create: false, read: true, update: false, delete: false },
   },
   'VENDOR_ADMIN': {
     ...createDefaultRolePermissions(),

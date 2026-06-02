@@ -1,6 +1,7 @@
 import { AppError } from "../../../config/utils/AppError";
 import { CreateMileStoneDto,UpdateMileStoneDto } from "../dtos";
 import { MileStoneRepository, MileStoneVersionRepository } from "../repositories";
+import prisma from "../../../config/database/client";
 
 const mileStoneRepo= new MileStoneRepository();
 const mileStoneVersionRepo = new MileStoneVersionRepository();
@@ -33,8 +34,18 @@ export class MileStoneService{
         }
         return await mileStoneRepo.update(data, id);
     }
-    async getAll(){
-        return await mileStoneRepo.getAll()
+    async getAll(user?: any){
+        if (user?.role === "CLIENT_ADMIN") {
+            const fabricator = await prisma.fabricator.findFirst({
+                where: { pointOfContact: { some: { id: user.id } } }
+            });
+            if (!fabricator) return [];
+            return await mileStoneRepo.getAllByFabricator(fabricator.id);
+        }
+        if (user?.role === "CLIENT") {
+            return await mileStoneRepo.getAllForClient(user.id);
+        }
+        return await mileStoneRepo.getAll();
     }
     async updateCompletion(
         id:string,
@@ -61,10 +72,17 @@ export class MileStoneService{
     async getByProjectId(id:string,user:any){
         if(user.role === "CONNECTION_DESIGNER_ENGINEER" || user.role === "CONNECTION_DESIGNER_ADMIN"){
             return await mileStoneRepo.getByProjectIdForConnectionDesignerEngineer(id,user.id)
-        }else{
+        } else if (user.role === "CLIENT_ADMIN") {
+            const fabricator = await prisma.fabricator.findFirst({
+                where: { pointOfContact: { some: { id: user.id } } }
+            });
+            if (!fabricator) return [];
+            return await mileStoneRepo.getByProjectIdAndFabricator(id, fabricator.id);
+        } else if (user.role === "CLIENT") {
+            return await mileStoneRepo.getByProjectIdAndClient(id, user.id);
+        } else {
             return await mileStoneRepo.getByProject(id)
         }
-        
     }
     async delete(id:string){
         return await mileStoneRepo.delete(id)

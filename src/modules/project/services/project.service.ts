@@ -268,11 +268,11 @@ async expandProjectWbs(
       throw new AppError("User not found", 404);
     }
      let projects;
-     if(user.role==="ADMIN"|| user.role==="SYSTEM_ADMIN"|| user.role==="PROJECT_MANAGER_OFFICER"
-      || user.role==="DEPUTY_MANAGER"|| user.role==="OPERATION_EXECUTIVE" || user.role ==="ESTIMATION_HEAD"){
+      if(user.role==="ADMIN"|| user.role==="SYSTEM_ADMIN"|| user.role==="PROJECT_MANAGER_OFFICER"
+      || user.role==="DEPUTY_MANAGER"|| user.role==="OPERATION_EXECUTIVE" || user.role ==="ESTIMATION_HEAD" || user.role==="HUMAN_RESOURCE"){
         //all projects
         projects = await projectRepository.getAll();
-     }
+      }
      if(user.role==="PROJECT_MANAGER"|| user.role ==="TEAM_LEAD"){
       //only his project 
       projects = await projectRepository.getForProjectManager(user.id);

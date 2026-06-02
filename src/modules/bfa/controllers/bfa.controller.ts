@@ -3,6 +3,12 @@ import { AuthenticateRequest } from "../../../middleware/authMiddleware";
 import { AppError } from "../../../config/utils/AppError";
 import { BfaService } from "../services";
 import { mapUploadedFiles } from "../../uploads/fileUtil";
+import { notifyProjectStakeholdersByRole } from "../../../utils/notifyProjectStakeholders";
+import { buildRoleScopedNotification } from "../../../utils/stakeholderNotificationMessages";
+import { sendEmail, getEmailsByRoles } from "../../../services/mailServices/mailconfig";
+import { bfaHtmlContent } from "../../../services/mailServices/mailtemplates/bfaMailtemplate";
+import prisma from "../../../config/database/client";
+import { UserRole } from "@prisma/client";
 
 const bfaService = new BfaService();
 
@@ -17,6 +23,68 @@ export class BfaController {
     );
 
     const bfa = await bfaService.createBfa(req.body, uploadedFiles, user.id);
+
+    // Background non-blocking tasks
+    (async () => {
+      try {
+        const submittal = await prisma.submittals.findUnique({
+          where: { id: bfa.submittalID },
+          include: {
+            project: {
+              include: {
+                manager: true,
+              },
+            },
+          },
+        });
+
+        if (submittal && submittal.project_id) {
+          const projectId = submittal.project_id;
+          const projectName = submittal.project?.name || "N/A";
+          const submittalSubject = submittal.subject || "N/A";
+          const projectManagerEmail = submittal.project?.manager?.email;
+
+          // 1. Fetch internal emails
+          const internalRoles: UserRole[] = ["ADMIN", "DEPUTY_MANAGER", "OPERATION_EXECUTIVE"];
+          const otherEmails = await getEmailsByRoles(internalRoles);
+          const recipientEmails = Array.from(
+            new Set(
+              [projectManagerEmail, ...otherEmails].filter(Boolean) as string[]
+            )
+          );
+
+          // 2. Send email alert
+          if (recipientEmails.length > 0) {
+            await sendEmail({
+              to: recipientEmails.join(","),
+              subject: `New BFA Created - ${bfa.serialNo || ""}`,
+              html: bfaHtmlContent(bfa, projectName, submittalSubject),
+            });
+          }
+
+          // 3. Send system notification
+          const rolesToNotify: UserRole[] = ["ADMIN", "PROJECT_MANAGER", "DEPUTY_MANAGER", "OPERATION_EXECUTIVE"];
+          const bfaSerial = bfa.serialNo || "";
+
+          await notifyProjectStakeholdersByRole(projectId, rolesToNotify, (role) =>
+            buildRoleScopedNotification(role, {
+              type: "BFA_CREATED",
+              basePayload: { bfaId: bfa.id, timestamp: new Date() },
+              templates: {
+                creator: { title: "", message: "" },
+                external: { title: "BFA Created", message: `BFA '${bfaSerial}' was created.` },
+                oversight: { title: "BFA Created", message: `BFA '${bfaSerial}' was created for project monitoring.` },
+                internal: { title: "New BFA Created", message: `A new BFA '${bfaSerial}' was created.` },
+                default: { title: "BFA Created", message: `A new BFA '${bfaSerial}' was created.` },
+              },
+            }),
+            { excludeUserIds: [user.id] }
+          );
+        }
+      } catch (error) {
+        console.error("Error in handleCreateBfa background tasks:", error);
+      }
+    })();
 
     res.status(201).json({
       status: "success",

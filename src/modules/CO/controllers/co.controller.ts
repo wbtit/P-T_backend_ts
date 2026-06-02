@@ -4,7 +4,7 @@ import { AppError } from "../../../config/utils/AppError";
 import { COService } from "../services";
 import { mapUploadedFiles } from "../../uploads/fileUtil";
 import { notifyProjectStakeholdersByRole } from "../../../utils/notifyProjectStakeholders";
-import { sendEmail, getCCEmails } from "../../../services/mailServices/mailconfig";
+import { sendEmail, getCCEmails, getEmailsByRoles } from "../../../services/mailServices/mailconfig";
 import { coHtmlContent } from "../../../services/mailServices/mailtemplates/coMailtemplate";
 import { UserRole } from "@prisma/client";
 import prisma from "../../../config/database/client";
@@ -95,16 +95,32 @@ export class COController {
     // Background non-blocking tasks
     (async () => {
       try {
-        if (uniqueCoEmails.length > 0) {
-          const ccEmails = await getCCEmails();
-          await sendEmail({
-            to: uniqueCoEmails.join(","),
-            cc: ccEmails,
-            subject: coSubject,
-            html: coHtml,
-          });
+        const internalRoles: UserRole[] = ["ADMIN", "DEPUTY_MANAGER", "OPERATION_EXECUTIVE", "PROJECT_MANAGER_OFFICER"];
+        const internalEmails = await getEmailsByRoles(internalRoles);
+
+        if (co.isAproovedByAdmin === true) {
+          if (uniqueCoEmails.length > 0) {
+            await sendEmail({
+              to: uniqueCoEmails.join(","),
+              cc: internalEmails,
+              subject: coSubject,
+              html: coHtml,
+            });
+          }
+        } else {
+          if (internalEmails.length > 0) {
+            await sendEmail({
+              to: internalEmails.join(","),
+              subject: `[Pending Approval] ${coSubject}`,
+              html: coHtml,
+            });
+          }
         }
-        await notifyProjectStakeholdersByRole(co.project, CO_NOTIFY_ROLES, (role) =>
+        const rolesToNotify = co.isAproovedByAdmin === true
+          ? CO_NOTIFY_ROLES
+          : CO_NOTIFY_ROLES.filter((role) => !role.startsWith("CLIENT"));
+
+        await notifyProjectStakeholdersByRole(co.project, rolesToNotify, (role) =>
           buildRoleScopedNotification(role, {
             type: "CO_CREATED",
             basePayload: { coId: co.id, timestamp: new Date() },
@@ -177,6 +193,8 @@ async handlePendingCOsForClient(req: AuthenticateRequest, res: Response) {
       "co"
     );
 
+    const existingCo = await coService.findById(id);
+
     const updatedCo = await coService.updateCo(id, {
       ...req.body,
       files: uploadedFiles,
@@ -185,10 +203,54 @@ async handlePendingCOsForClient(req: AuthenticateRequest, res: Response) {
     const updaterId = req.user.id;
     const bodyStatus = req.body?.status;
 
+    const approvalWasGranted = !existingCo.isAproovedByAdmin && updatedCo.isAproovedByAdmin === true;
+
     // Background non-blocking tasks
     (async () => {
       try {
-        await notifyProjectStakeholdersByRole(updatedCo.project, CO_NOTIFY_ROLES, (role) =>
+        if (approvalWasGranted) {
+          const coAny = updatedCo as any;
+          const coEmails = [
+            ...(coAny.multipleRecipients?.map((r: any) => r.email).filter(Boolean) || []),
+            coAny.Recipients?.email,
+          ].filter(Boolean) as string[];
+          const uniqueCoEmails = Array.from(new Set(coEmails));
+          const coSubject = `Change Order ${updatedCo.changeOrderNumber || ""} - ${updatedCo.description || ""}`.trim();
+          const coHtml = coHtmlContent(coAny);
+
+          const internalRoles: UserRole[] = ["ADMIN", "DEPUTY_MANAGER", "OPERATION_EXECUTIVE", "PROJECT_MANAGER_OFFICER"];
+          const internalEmails = await getEmailsByRoles(internalRoles);
+
+          if (uniqueCoEmails.length > 0) {
+            await sendEmail({
+              to: uniqueCoEmails.join(","),
+              cc: internalEmails,
+              subject: coSubject,
+              html: coHtml,
+            });
+          }
+
+          await notifyProjectStakeholdersByRole(updatedCo.project, CO_NOTIFY_ROLES, (role) =>
+            buildRoleScopedNotification(role, {
+              type: "CO_CREATED",
+              basePayload: { coId: updatedCo.id, timestamp: new Date() },
+              templates: {
+                creator: { title: "", message: "" },
+                external: { title: "Change Order Received", message: updatedCoNumber ? `Change order '${updatedCoNumber}' was received for your action.` : "A change order was received for your action." },
+                oversight: { title: "Change Order Created / Sent", message: updatedCoNumber ? `Change order '${updatedCoNumber}' was created for monitoring.` : "A change order was created for monitoring." },
+                internal: { title: "New Change Order Created", message: updatedCoNumber ? `A new change order '${updatedCoNumber}' was created.` : "A new change order was created." },
+                default: { title: "Change Order Created / Sent", message: updatedCoNumber ? `Change order '${updatedCoNumber}' was created.` : "A new Change Order was created." },
+              },
+            }),
+            { excludeUserIds: [updaterId] }
+          );
+        }
+
+        const rolesToNotify = updatedCo.isAproovedByAdmin === true
+          ? CO_NOTIFY_ROLES
+          : CO_NOTIFY_ROLES.filter((role) => !role.startsWith("CLIENT"));
+
+        await notifyProjectStakeholdersByRole(updatedCo.project, rolesToNotify, (role) =>
           buildRoleScopedNotification(role, {
             type: "CO_UPDATED",
             basePayload: { coId: updatedCo.id, status: (updatedCo as any).status ?? bodyStatus ?? null, timestamp: new Date() },
@@ -474,6 +536,18 @@ async handlePendingCOsForClient(req: AuthenticateRequest, res: Response) {
     res.status(200).json({
       status: "success",
       data: pendingCOs,
+    });
+  }
+
+  async handleGetUnapprovedCOs(req: AuthenticateRequest, res: Response) {
+    if (req.user?.role === "CLIENT" || req.user?.role === "CLIENT_ADMIN") {
+      throw new AppError("Access denied", 403);
+    }
+    const { projectId } = req.query;
+    const cos = await coService.getUnapprovedCOs(projectId as string);
+    res.status(200).json({
+      status: "success",
+      data: cos,
     });
   }
 }

@@ -71,6 +71,24 @@ export const cOOpenApiDoc: ModuleOpenApiDoc = {
         }
       },
     },
+    "/changeOrder/unapproved": {
+      get: {
+        tags: ["ChangeOrder"],
+        summary: "GET /changeOrder/unapproved - Fetch unapproved change orders",
+        operationId: "get_CO_changeOrder_unapproved",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { in: "query", name: "projectId", required: false, schema: { type: "string" }, description: "Optional project ID to filter by" }
+        ],
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "403": { description: "Forbidden - Access Denied for CLIENT or CLIENT_ADMIN" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
     "/changeOrder/pending/clientSide": {
       get: {
         tags: ["ChangeOrder"],

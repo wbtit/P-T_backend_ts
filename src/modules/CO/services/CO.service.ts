@@ -202,4 +202,8 @@ export class COService {
   async newCOsForProjectManager(managerId: string) {
     return await corepo.findNewCOsForProjectManager(managerId);
   }
+
+  async getUnapprovedCOs(projectId?: string) {
+    return await corepo.findUnapprovedCOs(projectId);
+  }
 }

@@ -217,7 +217,8 @@ export class MileStoneController {
     });
   }
   async handleGetAll(req: Request, res: Response) {
-    const result = await mileStoneService.getAll();
+    const authReq = req as AuthenticateRequest;
+    const result = await mileStoneService.getAll(authReq.user);
 
     return res.status(200).json({
       message: "MileStones fetched successfully",
@@ -228,9 +229,32 @@ export class MileStoneController {
 
   async handleGetById(req: Request, res: Response) {
     const { id } = req.params;
+    const authReq = req as AuthenticateRequest;
+    const user = authReq.user;
     const result = await mileStoneService.getById(id);
 
     if (!result) throw new AppError("MileStone not found", 404);
+
+    if (user) {
+      if (user.role === "CLIENT_ADMIN") {
+        const fabricator = await prisma.fabricator.findFirst({
+          where: { pointOfContact: { some: { id: user.id } } }
+        });
+        if (!fabricator || result.fabricator_id !== fabricator.id) {
+          throw new AppError("Access denied", 403);
+        }
+      } else if (user.role === "CLIENT") {
+        const project = await prisma.project.findFirst({
+          where: {
+            id: result.project_id,
+            clientProjectManagers: { some: { id: user.id } }
+          }
+        });
+        if (!project) {
+          throw new AppError("Access denied", 403);
+        }
+      }
+    }
 
     return res.status(200).json({
       message: "MileStone fetched successfully",
@@ -286,7 +310,14 @@ export class MileStoneController {
         pointOfContact:{some:{id:id}}
       }
     })
-    const result= await mileStoneService.getPendingSubmittalsByFabricator(fabricator?.id!);
+    if (!fabricator) {
+      return res.status(200).json({
+        message: "No fabricator found for this client admin",
+        success: true,
+        data: [],
+      });
+    }
+    const result= await mileStoneService.getPendingSubmittalsByFabricator(fabricator.id);
 
     return res.status(200).json({
       message: "Pending submittals for fabricator fetched successfully",

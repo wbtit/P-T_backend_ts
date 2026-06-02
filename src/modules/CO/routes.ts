@@ -133,6 +133,12 @@ router.get(
   authMiddleware,
   coController.handlePendingCOs.bind(coController)
 );
+
+router.get(
+  "/unapproved",
+  authMiddleware,
+  coController.handleGetUnapprovedCOs.bind(coController)
+);
 // ===========================================================
 // CO TABLE ROUTES
 // ===========================================================

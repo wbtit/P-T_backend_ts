@@ -443,4 +443,21 @@ async findNewCOsForProjectManager(managerId: string) {
         },
     });
 }
+
+async findUnapprovedCOs(projectId?: string) {
+    return await prisma.changeOrder.findMany({
+        where: {
+            isAproovedByAdmin: { not: true },
+            ...(projectId ? { project: projectId } : {})
+        },
+        include: {
+            Project: true,
+            Recipients: true,
+            multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
+            senders: true,
+            CoRefersTo: true,
+        },
+        orderBy: { createdAt: "desc" }
+    });
+}
 }
