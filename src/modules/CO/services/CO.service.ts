@@ -22,7 +22,7 @@ export class COService {
       where:{id:userId}
     })
     let co;
-    const approval = (cuurUser?.role==="ADMIN" || cuurUser?.role==="PROJECT_MANAGER");
+    const approval = (cuurUser?.role==="ADMIN");
     co = await corepo.create(data, userId, approval);
 
     // 🔑 Create initial version (v1)

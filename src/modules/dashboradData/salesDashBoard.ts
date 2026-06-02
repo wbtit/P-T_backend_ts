@@ -42,7 +42,7 @@ export const salesDashBoard = async (
       inPipelineRFQs,
       respondedRFQs,
       convertedToProjects,
-      rfqsWithBidPrice,
+      bidPriceDecimalSumAggregate,
       totalProjectsFromSales,
       activeProjectsFromSales,
       completedProjectsFromSales,
@@ -80,9 +80,9 @@ export const salesDashBoard = async (
           project: { isNot: null },
         },
       }),
-      prisma.rFQ.findMany({
+      prisma.rFQ.aggregate({
         where: rfqWhere,
-        select: { bidPrice: true },
+        _sum: { bidPriceDecimal: true },
       }),
       prisma.project.count({
         where: {
@@ -148,10 +148,7 @@ export const salesDashBoard = async (
      prisma.fabricator.count()
     ]);
 
-    const totalBidPrice = rfqsWithBidPrice.reduce(
-      (sum, row) => sum + parseBidPrice(row.bidPrice),
-      0
-    );
+    const totalBidPrice = Number(bidPriceDecimalSumAggregate._sum.bidPriceDecimal ?? 0);
     const avgBidPrice =
       totalRFQs > 0 ? Number((totalBidPrice / totalRFQs).toFixed(2)) : 0;
 

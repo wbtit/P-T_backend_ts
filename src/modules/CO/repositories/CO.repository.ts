@@ -178,9 +178,8 @@ export class CORepository {
                 sentOn:true,
                 files:true,
                 recipients:true,
-                project:true
-                
-                
+                project:true,
+                isAproovedByAdmin:true
             }
         })
     }

@@ -189,12 +189,12 @@ const downloadShare = async (req: Request, res: Response) => {
       resolvedPath: filePath,
     });
 
-    if (!filePath) {
+    if (!filePath || !fs.existsSync(filePath)) {
       console.error("[downloadShare] File missing on server after resolution:", {
         uploadBaseDir: UPLOAD_BASE_DIR,
         file,
       });
-      return res.status(404).json({ message: "File missing on server" });
+      return res.status(404).json({ error: "File not found" });
     }
 
     const stat = fs.statSync(filePath);
@@ -220,10 +220,11 @@ const downloadShare = async (req: Request, res: Response) => {
       stream.destroy();
     });
 
+    // Handle stream errors (disk read failure, NAS disconnect etc.)
     stream.on("error", (err) => {
-      console.error("Stream error:", err);
+      console.error("Stream error in shareLink:", err);
       if (!res.headersSent) {
-        res.status(500).json({ message: "Error reading file" });
+        res.status(500).json({ error: "File could not be read" });
       }
     });
 

@@ -37,6 +37,13 @@ export class CoResponseController {
     const { coId } = req.params;
     const { changeOrderVersionId } = req.body;
 
+    if (req.user?.role === "CLIENT" || req.user?.role === "CLIENT_ADMIN") {
+      const co = await prisma.changeOrder.findUnique({ where: { id: coId } });
+      if (!co || co.isAproovedByAdmin !== true) {
+        throw new AppError("You do not have permission to respond to this change order until it is approved", 403);
+      }
+    }
+
     // map uploaded files (if any)
     const uploadedFiles = mapUploadedFiles(
       (req.files as Express.Multer.File[]) || [],
@@ -186,8 +193,16 @@ export class CoResponseController {
 
   // GET CO RESPONSE BY ID
   async handleGetResponseById(req: Request, res: Response) {
+    const authReq = req as AuthenticateRequest;
     const { id } = req.params;
     const response = await coResponseService.getResponseById(id);
+
+    if (authReq.user?.role === "CLIENT" || authReq.user?.role === "CLIENT_ADMIN") {
+      const co = response?.CoId ? await prisma.changeOrder.findUnique({ where: { id: response.CoId } }) : null;
+      if (!co || co.isAproovedByAdmin !== true) {
+        throw new AppError("You do not have permission to view this response until it is approved", 403);
+      }
+    }
 
     res.status(200).json({
       status: "success",
@@ -197,7 +212,16 @@ export class CoResponseController {
 
   // GET all responses by CO ID
   async handleGetResponsesByCoId(req: Request, res: Response) {
+    const authReq = req as AuthenticateRequest;
     const { coId } = req.params;
+
+    if (authReq.user?.role === "CLIENT" || authReq.user?.role === "CLIENT_ADMIN") {
+      const co = await prisma.changeOrder.findUnique({ where: { id: coId } });
+      if (!co || co.isAproovedByAdmin !== true) {
+        throw new AppError("You do not have permission to view responses for this change order until it is approved", 403);
+      }
+    }
+
     const responses = await coResponseService.findByCoId(coId);
 
     res.status(200).json({
@@ -208,7 +232,17 @@ export class CoResponseController {
 
   // GET a specific file metadata from response
   async handleGetFile(req: Request, res: Response) {
+    const authReq = req as AuthenticateRequest;
     const { responseId, fileId } = req.params;
+    const response = await coResponseService.getResponseById(responseId);
+
+    if (authReq.user?.role === "CLIENT" || authReq.user?.role === "CLIENT_ADMIN") {
+      const co = response?.CoId ? await prisma.changeOrder.findUnique({ where: { id: response.CoId } }) : null;
+      if (!co || co.isAproovedByAdmin !== true) {
+        throw new AppError("You do not have permission to view files for this response until it is approved", 403);
+      }
+    }
+
     const file = await coResponseService.getFile(responseId, fileId);
 
     res.status(200).json({
@@ -219,7 +253,17 @@ export class CoResponseController {
 
   // STREAM file from response
   async handleViewFile(req: Request, res: Response) {
+    const authReq = req as AuthenticateRequest;
     const { responseId, fileId } = req.params;
+    const response = await coResponseService.getResponseById(responseId);
+
+    if (authReq.user?.role === "CLIENT" || authReq.user?.role === "CLIENT_ADMIN") {
+      const co = response?.CoId ? await prisma.changeOrder.findUnique({ where: { id: response.CoId } }) : null;
+      if (!co || co.isAproovedByAdmin !== true) {
+        throw new AppError("You do not have permission to view files for this response until it is approved", 403);
+      }
+    }
+
     await coResponseService.viewFile(responseId, fileId, res);
   }
 }

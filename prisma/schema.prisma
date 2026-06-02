@@ -657,6 +657,7 @@ model RFQ {
   projectName    String
   location       String?   @default("")
   bidPrice       String?
+  bidPriceDecimal Decimal?  @map("bid_price_decimal")
   MTOManual      Boolean?  @default(false)
   isMTOStickModel  Boolean?  @default(false)
   MTOValue String?   @default("")

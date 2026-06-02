@@ -33,6 +33,14 @@ export const CreateRfqSchema = z.object({
   projectName: z.string().min(2).max(100),
   location: z.string().max(100).optional(),
   bidPrice: z.string().optional(),
+  bidPriceDecimal: z.string()
+    .optional()
+    .transform((val) => {
+      if (!val || val.trim() === '') return undefined;
+      const parsed = parseFloat(val.replace(/[^0-9.]/g, ''));
+      if (isNaN(parsed)) throw new Error('Invalid bid price');
+      return new Prisma.Decimal(parsed);
+    }),
   fabricatorId: z.string(),
   senderId: z.string().optional(),
   MTOManual: zBooleanString.optional(),

@@ -234,7 +234,11 @@ async handlePendingCOsForClient(req: AuthenticateRequest, res: Response) {
     const { id } = req.user;
     const { projectId } = req.params;
 
-    const cos = await coService.sentCos(id, projectId);
+    let cos = await coService.sentCos(id, projectId);
+    if (req.user?.role === "CLIENT" || req.user?.role === "CLIENT_ADMIN") {
+      cos = cos.filter(co => co.isAproovedByAdmin === true);
+    }
+
     res.status(200).json({
       status: "success",
       data: cos,
@@ -303,6 +307,13 @@ async handlePendingCOsForClient(req: AuthenticateRequest, res: Response) {
     const { coId } = req.params;
     const { changeOrderVersionId } = req.query;
 
+    if (req.user?.role === "CLIENT" || req.user?.role === "CLIENT_ADMIN") {
+      const co = await coService.findById(coId);
+      if (co?.isAproovedByAdmin !== true) {
+        throw new AppError("You do not have permission to view this change order table until it is approved", 403);
+      }
+    }
+
     const coRows = await coService.getCoTableByCoId(coId, id, changeOrderVersionId as string);
     res.status(200).json({
       status: "success",
@@ -313,8 +324,17 @@ async handlePendingCOsForClient(req: AuthenticateRequest, res: Response) {
   // ------------------- FILE HANDLING -------------------
 
   async handleGetFile(req: Request, res: Response) {
+    const authReq = req as AuthenticateRequest;
     const { coId, fileId } = req.params;
     const { versionId } = req.query;
+
+    if (authReq.user?.role === "CLIENT" || authReq.user?.role === "CLIENT_ADMIN") {
+      const co = await coService.findById(coId);
+      if (co?.isAproovedByAdmin !== true) {
+        throw new AppError("You do not have permission to view files for this change order until it is approved", 403);
+      }
+    }
+
     const file = await coService.getFile(coId, fileId, versionId as string);
     res.status(200).json({
       status: "success",
@@ -323,7 +343,16 @@ async handlePendingCOsForClient(req: AuthenticateRequest, res: Response) {
   }
 
   async handleViewFile(req: Request, res: Response) {
+    const authReq = req as AuthenticateRequest;
     const { coId, fileId, versionId } = req.params;
+
+    if (authReq.user?.role === "CLIENT" || authReq.user?.role === "CLIENT_ADMIN") {
+      const co = await coService.findById(coId);
+      if (co?.isAproovedByAdmin !== true) {
+        throw new AppError("You do not have permission to view files for this change order until it is approved", 403);
+      }
+    }
+
     await coService.viewFile(coId, fileId, res, versionId);
   }
   async handlePendingCOs(req: AuthenticateRequest, res: Response) {

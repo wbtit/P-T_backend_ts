@@ -11,7 +11,7 @@ export function streamFile(res: Response, fileObject: FileObject) {
     const filePath = path.join(__dirname, fileObject.path);
 
     if (!fs.existsSync(filePath)) {
-      return res.status(404).json({ message: "File not found on server" });
+      return res.status(404).json({ error: "File not found" });
     }
 
     const mimeType = mime.getType(filePath) || "application/octet-stream";
@@ -23,6 +23,15 @@ export function streamFile(res: Response, fileObject: FileObject) {
     );
 
     const fileStream = fs.createReadStream(filePath);
+
+    // Handle stream errors (disk read failure, NAS disconnect etc.)
+    fileStream.on("error", (err) => {
+      console.error("Stream error in fileBuilder:", err);
+      if (!res.headersSent) {
+        res.status(500).json({ error: "File could not be read" });
+      }
+    });
+
     fileStream.pipe(res);
   } catch (error) {
     console.error("File Streaming Error:", error);

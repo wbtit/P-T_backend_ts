@@ -2,14 +2,8 @@ import corn from "node-cron";
 import prisma from "../config/database/client";
 import { secondsBetween } from "../modules/workingHours/utils/calculateSecs";
 
-
 const MAX_SESSION_HOURS = 14; // Choose 8–12 hours depending on policy
 const MAX_SESSION_MS = MAX_SESSION_HOURS * 60 * 60 * 1000;
-
-
-
-
-
 
 export async function autoCloseStaleTasks() {
     const now = new Date();
@@ -25,13 +19,24 @@ export async function autoCloseStaleTasks() {
         }
     });
 
+    if (staleTasks.length === 0) return;
+
+    // Import sendNotification dynamically to avoid circular import
+    const { sendNotification } = await import("../utils/sendNotification");
+
+    const taskIds = staleTasks.map(t => t.id);
+
+    // Batch fetch the earliest working hour session for all tasks in one query
+    const firstSessions = await prisma.workingHours.findMany({
+        where: { task_id: { in: taskIds } },
+        orderBy: { started_at: "asc" },
+        distinct: ["task_id"],
+    });
+
+    const firstSessionMap = new Map(firstSessions.map(s => [s.task_id, s]));
+
     for (const task of staleTasks) {
-        const firstSession = await prisma.workingHours.findFirst({
-            where: {
-                task_id: task.id,
-            },
-            orderBy: { started_at: "asc" }
-        });
+        const firstSession = firstSessionMap.get(task.id);
 
         if (!firstSession) continue;
 
@@ -60,8 +65,6 @@ export async function autoCloseStaleTasks() {
                 timestamp: new Date()
             };
 
-            // Import sendNotification dynamically to avoid circular import
-            const { sendNotification } = await import("../utils/sendNotification");
             await sendNotification(task.user_id, warningPayload);
 
             // Mark warning as sent
@@ -96,14 +99,31 @@ export async function forceCloseStaleTasks() {
         }
     });
 
+    if (tasksToForceClose.length === 0) return;
+
+    const forceTaskIds = tasksToForceClose.map(t => t.id);
+
+    // Batch fetch all active sessions in one query
+    const activeSessions = await prisma.workingHours.findMany({
+        where: {
+            task_id: { in: forceTaskIds },
+            ended_at: null
+        }
+    });
+
+    const activeSessionMap = new Map(activeSessions.map(s => [s.task_id, s]));
+
+    // Batch fetch all first sessions
+    const forceFirstSessions = await prisma.workingHours.findMany({
+        where: { task_id: { in: forceTaskIds } },
+        orderBy: { started_at: "asc" },
+        distinct: ["task_id"],
+    });
+
+    const forceFirstSessionMap = new Map(forceFirstSessions.map(s => [s.task_id, s]));
+
     for (const task of tasksToForceClose) {
-        // Find active session
-        const activeSession = await prisma.workingHours.findFirst({
-            where: {
-                task_id: task.id,
-                ended_at: null,
-            }
-        });
+        const activeSession = activeSessionMap.get(task.id);
 
         if (!activeSession) continue;
 
@@ -137,10 +157,7 @@ export async function forceCloseStaleTasks() {
             }
         });
 
-        const firstSession = await prisma.workingHours.findFirst({
-            where: { task_id: task.id },
-            orderBy: { started_at: "asc" }
-        });
+        const firstSession = forceFirstSessionMap.get(task.id);
 
         await prisma.taskAlert.create({
             data: {
