@@ -20,7 +20,7 @@ export class ChatRepository{
         })
     }
     async addMembersToGroup(memberIds:string[],groupId:string){
-        return await Promise.all(
+        return await prisma.$transaction(
         memberIds.map((id) =>
           prisma.groupUser.create({
             data: {

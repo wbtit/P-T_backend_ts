@@ -18,7 +18,13 @@ export async function notifyUsers(userIds: string[], payload: any): Promise<void
   const uniqueUserIds = Array.from(new Set(userIds.filter(Boolean)));
   if (!uniqueUserIds.length) return;
 
-  await Promise.all(uniqueUserIds.map((userId) => sendNotification(userId, payload)));
+  await Promise.all(
+    uniqueUserIds.map((userId) =>
+      sendNotification(userId, payload).catch((err) =>
+        console.error(`Notification failed for ${userId}`, err)
+      )
+    )
+  );
 }
 
 export async function notifyByRoles(roles: UserRole[], payload: any): Promise<void> {

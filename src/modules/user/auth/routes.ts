@@ -3,7 +3,7 @@ import {
     handleSignin,
     handleSignup,
     handleChangePassword
-} from './controllers'
+} from './controllers';
 import { asyncHandler } from "../../../config/utils/asyncHandler"; 
 import validate from "../../../middleware/validate";
 import authMiddleware from "../../../middleware/authMiddleware";
@@ -12,7 +12,11 @@ import {
     publicSignupSchema,
     changePasswordSchema
  } from "./dtos";
-const router =Router();
+
+import challengeRoutes from "./routes/challenge.routes";
+import analyticsRoutes from "./routes/analytics.routes";
+
+const router = Router();
 
 // Register
 router.post(
@@ -36,5 +40,8 @@ router.patch(
   asyncHandler(handleChangePassword)
 );
 
+// RBA Integration Sub-routes
+router.use("/", challengeRoutes);
+router.use("/analytics", analyticsRoutes);
 
 export default router;

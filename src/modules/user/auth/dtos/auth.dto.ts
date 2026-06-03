@@ -56,8 +56,14 @@ export const changePasswordSchema = z.object({
 });
 
 
+export const verifyChallengeSchema = z.object({
+  otp: z.string().length(6),
+  challengeToken: z.string(),
+});
+
 // Export TS types
 export type SignupInput = z.infer<typeof publicSignupSchema>;
 export type SigninInput = z.infer<typeof signinSchema>;
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
+export type VerifyChallengeInput = z.infer<typeof verifyChallengeSchema>;

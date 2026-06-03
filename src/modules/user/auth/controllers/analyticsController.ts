@@ -1,0 +1,421 @@
+import { Response } from "express";
+import { AuthenticateRequest } from "../../../../middleware/authMiddleware";
+import prisma from "../../../../config/database/client";
+import { AppError } from "../../../../config/utils/AppError";
+
+// GET /auth/analytics/admin
+export const getAdminAnalytics = async (req: AuthenticateRequest, res: Response) => {
+  const now = new Date();
+  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+  const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
+  const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+  // 1. Total login attempts last 30 days
+  const totalAttempts30Days = await prisma.loginAttempt.count({
+    where: {
+      createdAt: {
+        gte: thirtyDaysAgo,
+      },
+    },
+  });
+
+  // 2. Count breakdown by status: ALLOWED, CHALLENGED, BLOCKED
+  const breakdownRaw = await prisma.loginAttempt.groupBy({
+    by: ["status"],
+    where: {
+      createdAt: {
+        gte: thirtyDaysAgo,
+      },
+    },
+    _count: {
+      id: true,
+    },
+  });
+
+  const statusBreakdown = {
+    ALLOWED: 0,
+    CHALLENGED: 0,
+    BLOCKED: 0,
+  };
+
+  for (const item of breakdownRaw) {
+    if (item.status in statusBreakdown) {
+      statusBreakdown[item.status as keyof typeof statusBreakdown] = item._count.id;
+    }
+  }
+
+  // 3. Top 10 countries from LoginAttempt
+  const topCountriesRaw = await prisma.loginAttempt.groupBy({
+    by: ["country"],
+    where: {
+      createdAt: {
+        gte: thirtyDaysAgo,
+      },
+      country: {
+        not: null,
+      },
+    },
+    _count: {
+      id: true,
+    },
+    orderBy: {
+      _count: {
+        id: "desc",
+      },
+    },
+    take: 10,
+  });
+
+  const topCountries = topCountriesRaw.map((item) => ({
+    country: item.country || "Unknown",
+    count: item._count.id,
+  }));
+
+  // 4. Suspicious users: userId with >5 distinct IPs in last 24h
+  const recentAttempts = await prisma.loginAttempt.findMany({
+    where: {
+      createdAt: {
+        gte: twentyFourHoursAgo,
+      },
+      userId: {
+        not: null,
+      },
+    },
+    select: {
+      userId: true,
+      ip: true,
+      user: {
+        select: {
+          username: true,
+          email: true,
+        },
+      },
+    },
+  });
+
+  const userIpsMap: Record<string, { username: string; email: string | null; ips: Set<string> }> = {};
+  for (const attempt of recentAttempts) {
+    if (!attempt.userId) continue;
+    if (!userIpsMap[attempt.userId]) {
+      userIpsMap[attempt.userId] = {
+        username: attempt.user?.username || "unknown",
+        email: attempt.user?.email || null,
+        ips: new Set<string>(),
+      };
+    }
+    userIpsMap[attempt.userId].ips.add(attempt.ip);
+  }
+
+  const suspiciousUsers = Object.entries(userIpsMap)
+    .filter(([_, data]) => data.ips.size > 3)
+    .map(([userId, data]) => ({
+      userId,
+      username: data.username,
+      email: data.email,
+      distinctIpCount: data.ips.size,
+      ips: Array.from(data.ips),
+    }));
+
+  // 5. Daily login counts for last 14 days
+  const dailyAttempts = await prisma.loginAttempt.findMany({
+    where: {
+      createdAt: {
+        gte: fourteenDaysAgo,
+      },
+    },
+    select: {
+      createdAt: true,
+    },
+  });
+
+  const dailyLoginCounts: Record<string, number> = {};
+  for (let i = 0; i < 14; i++) {
+    const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+    const dateStr = d.toISOString().split("T")[0];
+    dailyLoginCounts[dateStr] = 0;
+  }
+
+  for (const attempt of dailyAttempts) {
+    const dateStr = attempt.createdAt.toISOString().split("T")[0];
+    if (dailyLoginCounts[dateStr] !== undefined) {
+      dailyLoginCounts[dateStr]++;
+    }
+  }
+
+  const dailyLogins = Object.entries(dailyLoginCounts)
+    .map(([date, count]) => ({ date, count }))
+    .sort((a, b) => a.date.localeCompare(b.date));
+
+  // 6. Challenge completion rate: APPROVED count / total CHALLENGED count
+  const totalChallenges = await prisma.ipChallenge.count();
+  const approvedChallenges = await prisma.ipChallenge.count({
+    where: {
+      action: "APPROVED",
+    },
+  });
+  const challengeCompletionRate = totalChallenges > 0 ? approvedChallenges / totalChallenges : 0;
+
+  res.status(200).json({
+    success: true,
+    data: {
+      totalAttempts30Days,
+      statusBreakdown,
+      topCountries,
+      suspiciousUsers,
+      dailyLogins,
+      challengeCompletionRate,
+    },
+  });
+};
+
+// GET /auth/analytics/me
+export const getMyLoginHistory = async (req: AuthenticateRequest, res: Response) => {
+  if (!req.user) {
+    throw new AppError("Unauthorized", 401);
+  }
+  const userId = req.user.id;
+  const now = new Date();
+
+  // 1. Last 20 LoginAttempts for the authenticated user
+  const loginAttempts = await prisma.loginAttempt.findMany({
+    where: { userId },
+    orderBy: { createdAt: "desc" },
+    take: 20,
+    select: {
+      ip: true,
+      city: true,
+      country: true,
+      status: true,
+      userAgent: true,
+      createdAt: true,
+      challenges: {
+        select: {
+          challengeContext: true,
+        },
+      },
+    },
+  });
+
+  const formattedHistory = loginAttempts.map((attempt) => ({
+    ip: attempt.ip,
+    city: attempt.city,
+    country: attempt.country,
+    status: attempt.status,
+    userAgent: attempt.userAgent,
+    createdAt: attempt.createdAt,
+    challengeContext: attempt.challenges[0]?.challengeContext || null,
+  }));
+
+  // 2. List of active TrustedDevices: UserTrustedIp where isActive=true AND expiresAt > now()
+  const activeTrustedDevices = await prisma.userTrustedIp.findMany({
+    where: {
+      userId,
+      isActive: true,
+      expiresAt: {
+        gt: now,
+      },
+    },
+    select: {
+      id: true,
+      ipAddress: true,
+      city: true,
+      country: true,
+      deviceFingerprint: true,
+      createdAt: true,
+      lastUsedAt: true,
+      expiresAt: true,
+    },
+  });
+
+  res.status(200).json({
+    success: true,
+    data: {
+      loginHistory: formattedHistory,
+      activeTrustedDevices,
+    },
+  });
+};
+
+// GET /auth/analytics/user/:userId
+export const getUserRbaAnalytics = async (req: AuthenticateRequest, res: Response) => {
+  const { userId } = req.params;
+  const now = new Date();
+
+  // Verify the target user exists
+  const targetUser = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      username: true,
+      email: true,
+      firstName: true,
+      lastName: true,
+      role: true,
+    },
+  });
+
+  if (!targetUser) {
+    throw new AppError("Target user not found", 404);
+  }
+
+  // 1. Last 50 LoginAttempts for the target user (Admins get a longer history)
+  const loginAttempts = await prisma.loginAttempt.findMany({
+    where: { userId },
+    orderBy: { createdAt: "desc" },
+    take: 50,
+    select: {
+      ip: true,
+      city: true,
+      country: true,
+      status: true,
+      userAgent: true,
+      createdAt: true,
+      challenges: {
+        select: {
+          challengeContext: true,
+        },
+      },
+    },
+  });
+
+  const formattedHistory = loginAttempts.map((attempt) => ({
+    ip: attempt.ip,
+    city: attempt.city,
+    country: attempt.country,
+    status: attempt.status,
+    userAgent: attempt.userAgent,
+    createdAt: attempt.createdAt,
+    challengeContext: attempt.challenges[0]?.challengeContext || null,
+  }));
+
+  // 2. Active TrustedDevices for target user
+  const activeTrustedDevices = await prisma.userTrustedIp.findMany({
+    where: {
+      userId,
+      isActive: true,
+      expiresAt: {
+        gt: now,
+      },
+    },
+    select: {
+      id: true,
+      ipAddress: true,
+      city: true,
+      country: true,
+      deviceFingerprint: true,
+      createdAt: true,
+      lastUsedAt: true,
+      expiresAt: true,
+    },
+  });
+
+  res.status(200).json({
+    success: true,
+    data: {
+      user: targetUser,
+      loginHistory: formattedHistory,
+      activeTrustedDevices,
+    },
+  });
+};
+
+// GET /auth/analytics/ip-changes
+export const getIpChangeAnalytics = async (req: AuthenticateRequest, res: Response) => {
+  const now = new Date();
+  const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+  // 1. Fetch all active users
+  const activeUsers = await prisma.user.findMany({
+    where: { isActive: true },
+    select: {
+      id: true,
+      username: true,
+      email: true,
+      firstName: true,
+      lastName: true,
+    },
+  });
+
+  const usersWithIpChanges: any[] = [];
+
+  // 2. Identify users whose current IP is different from their previous IP
+  for (const user of activeUsers) {
+    const attempts = await prisma.loginAttempt.findMany({
+      where: { userId: user.id, status: "ALLOWED" },
+      orderBy: { createdAt: "desc" },
+      take: 2,
+    });
+
+    if (attempts.length === 2 && attempts[0].ip !== attempts[1].ip) {
+      usersWithIpChanges.push({
+        user,
+        currentLogin: {
+          ip: attempts[0].ip,
+          city: attempts[0].city,
+          country: attempts[0].country,
+          createdAt: attempts[0].createdAt,
+          loginAttemptId: attempts[0].id,
+        },
+        previousLogin: {
+          ip: attempts[1].ip,
+          city: attempts[1].city,
+          country: attempts[1].country,
+          createdAt: attempts[1].createdAt,
+        },
+      });
+    }
+  }
+
+  // 3. Find active admins, deputy managers, operation executives, and HR users
+  const rolesToNotify = ["ADMIN", "DEPUTY_MANAGER", "OPERATION_EXECUTIVE", "HUMAN_RESOURCE"] as any[];
+  const recipientIds = await prisma.user.findMany({
+    where: {
+      role: { in: rolesToNotify },
+      isActive: true,
+    },
+    select: { id: true },
+  });
+  const adminIds = recipientIds.map((u) => u.id);
+
+  // 4. Fetch notifications from the last 7 days to avoid duplicate alert emails/sockets
+  const existingNotifications = await prisma.notification.findMany({
+    where: {
+      userID: { in: adminIds },
+      createdAt: { gte: sevenDaysAgo },
+    },
+    select: { payload: true },
+  });
+
+  const notifiedAttemptIds = new Set<string>();
+  for (const notif of existingNotifications) {
+    const payloadObj = notif.payload as any;
+    if (payloadObj && typeof payloadObj === "object" && payloadObj.loginAttemptId) {
+      notifiedAttemptIds.add(payloadObj.loginAttemptId);
+    }
+  }
+
+  // 5. Send notification to the designated roles for any new IP changes
+  const { notifyByRoles } = await import("../../../../utils/notifyByRole");
+
+  for (const change of usersWithIpChanges) {
+    if (!notifiedAttemptIds.has(change.currentLogin.loginAttemptId)) {
+      const payload = {
+        title: "User IP Change Detected",
+        message: `Security Alert: User ${change.user.username} (${change.user.firstName} ${change.user.lastName}) logged in from IP ${change.currentLogin.ip} (${change.currentLogin.city || "Unknown"}, ${change.currentLogin.country || "Unknown"}). Their previous login IP was ${change.previousLogin.ip} (${change.previousLogin.city || "Unknown"}, ${change.previousLogin.country || "Unknown"}).`,
+        entityType: "user",
+        entityId: change.user.id,
+        loginAttemptId: change.currentLogin.loginAttemptId,
+      };
+
+      // Notify the specified roles
+      await notifyByRoles(rolesToNotify, payload);
+    }
+  }
+
+  res.status(200).json({
+    success: true,
+    data: {
+      usersWithIpChanges,
+    },
+  });
+};

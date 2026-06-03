@@ -5,6 +5,7 @@ import { sendNotification } from "../../../utils/sendNotification";
 import { notifyProjectStakeholdersByRole } from "../../../utils/notifyProjectStakeholders";
 import { UserRole } from "@prisma/client";
 import { buildRoleScopedNotification } from "../../../utils/stakeholderNotificationMessages";
+import { invalidateDashboardCache, invalidationPatterns } from "../../../utils/dashboardCache";
 
 export class TaskService {
   private taskRepository: TaskRepository;
@@ -33,6 +34,13 @@ export class TaskService {
       data
     );
     const task = await this.taskRepository.create(data, managerId);
+
+    try {
+      await invalidateDashboardCache(invalidationPatterns.onTaskChange);
+    } catch (err) {
+      console.error("Failed to invalidate cache on task create:", err);
+    }
+
     const taskIdForBg = task.id;
     const userIdForBg = task.user_id;
     const taskNameForBg = task.name;
@@ -93,7 +101,9 @@ export class TaskService {
         try {
           await Promise.all(
             dupRecipients.map((recipientUser) =>
-              sendNotification(recipientUser.id, dupPayload)
+              sendNotification(recipientUser.id, dupPayload).catch((err) =>
+                console.error(`Notification failed for ${recipientUser.id}`, err)
+              )
             )
           );
         } catch (error) {
@@ -132,6 +142,12 @@ export class TaskService {
       throw new AppError("Task not found", 404);
     }
     const updatedTask = await this.taskRepository.update(id, data, updatedBy);
+
+    try {
+      await invalidateDashboardCache(invalidationPatterns.onTaskChange);
+    } catch (err) {
+      console.error("Failed to invalidate cache on task update:", err);
+    }
     if (data.status) {
     const updStatus = data.status;
     const updTaskId = updatedTask.id;
@@ -181,6 +197,13 @@ export class TaskService {
       throw new AppError("Task not found", 404);
     }
     await this.taskRepository.delete(id);
+
+    try {
+      await invalidateDashboardCache(invalidationPatterns.onTaskChange);
+    } catch (err) {
+      console.error("Failed to invalidate cache on task delete:", err);
+    }
+
     return { message: "Task deleted successfully" };
   } 
 

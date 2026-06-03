@@ -3,130 +3,138 @@ import { AuthenticateRequest } from "../../middleware/authMiddleware";
 import { Response } from "express";
 import { SubResStatus } from "@prisma/client";
 import { getRoleVisibilityFilter } from "../../utils/roleFilter";
+import { getCachedDashboard, dashboardKeys } from "../../utils/dashboardCache";
 
 export const clientAdminDashBoard = async (req: AuthenticateRequest, res: Response) => {
   try {
     const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized", success: false });
+    }
 
-   
-    const fabricators = await prisma.fabricator.findMany({
-      where: {
-        pointOfContact: {
-          some: { id: userId, role: "CLIENT_ADMIN" },
-        },
-      },
-      select: { id: true },
-    });
-
-    const fabricatorIds = fabricators.map((f) => f.id);
-
-   
-    const [
-      projectStats,
-      totalProjects,
-      newRFI,
-      pendingChangeOrders,
-      pendingRFQ,
-      pendingSubmittals,
-      totalRFI,
-      totalRFQ,
-      totalSubmittals,
-    ] = await Promise.all([
-      prisma.project.groupBy({
-        by: ["status"],
-        _count: { _all: true },
-        where: {
-          status: { not: "INACTIVE" },
-          fabricatorID: { in: fabricatorIds },
-        },
-      }),
-
-      prisma.project.count({
-        where: {
-          status: { not: "INACTIVE" },
-          fabricatorID: { in: fabricatorIds },
-        },
-      }),
-
-      prisma.rFI.count({
-        where: {
-          project: { status: { in: ["ACTIVE", "ONHOLD"] } },
-          fabricator_id: { in: fabricatorIds },
-          rfiresponse: { none: {} },
-          ...getRoleVisibilityFilter(req.user?.role),
-        },
-      }),
-
-      prisma.changeOrder.count({
-        where: {
-          Project: {
-            status: { in: ["ACTIVE", "ONHOLD"] },
-            fabricatorID: { in: fabricatorIds }
-          },
-          coResponses: { none: {} },
-          isAproovedByAdmin: true,
-        },
-      }),
-      prisma.rFQ.count({
-        where: {
-          project: { status: { in: ["ACTIVE", "ONHOLD"] } },
-          fabricatorId: { in: fabricatorIds },
-          responses: {
-            some: {
-              parentResponseId: null,
-              childResponses: { none: {} },
+    const response = await getCachedDashboard(
+      dashboardKeys.clientAdmin(userId),
+      async () => {
+        const fabricators = await prisma.fabricator.findMany({
+          where: {
+            pointOfContact: {
+              some: { id: userId, role: "CLIENT_ADMIN" },
             },
           },
-        },
-      }),
+          select: { id: true },
+        });
 
-     
-      prisma.submittals.count({
-        where: {
-          project: { status: { in: ["ACTIVE", "ONHOLD"] } },
-          fabricator_id: { in: fabricatorIds },
-          bfaStatus: false,
-          ...getRoleVisibilityFilter(req.user?.role),
-        },
-      }),
+        const fabricatorIds = fabricators.map((f) => f.id);
 
-      prisma.rFI.count({
-        where: { project: { status: { in: ["ACTIVE", "ONHOLD"] } }, fabricator_id: { in: fabricatorIds }, ...getRoleVisibilityFilter(req.user?.role) },
-      }),
+        const [
+          projectStats,
+          totalProjects,
+          newRFI,
+          pendingChangeOrders,
+          pendingRFQ,
+          pendingSubmittals,
+          totalRFI,
+          totalRFQ,
+          totalSubmittals,
+        ] = await Promise.all([
+          prisma.project.groupBy({
+            by: ["status"],
+            _count: { _all: true },
+            where: {
+              status: { not: "INACTIVE" },
+              fabricatorID: { in: fabricatorIds },
+            },
+          }),
 
-      prisma.rFQ.count({
-        where: { project: { status: { in: ["ACTIVE", "ONHOLD"] } }, fabricatorId: { in: fabricatorIds } },
-      }),
+          prisma.project.count({
+            where: {
+              status: { not: "INACTIVE" },
+              fabricatorID: { in: fabricatorIds },
+            },
+          }),
 
-      prisma.submittals.count({
-        where: { project: { status: { in: ["ACTIVE", "ONHOLD"] } }, fabricator_id: { in: fabricatorIds }, ...getRoleVisibilityFilter(req.user?.role) },
-      }),
-    ]);
+          prisma.rFI.count({
+            where: {
+              project: { status: { in: ["ACTIVE", "ONHOLD"] } },
+              fabricator_id: { in: fabricatorIds },
+              rfiresponse: { none: {} },
+              ...getRoleVisibilityFilter(req.user?.role),
+            },
+          }),
 
-    const response: Record<string, any> = {
-      totalActiveProjects: 0,
-      totalCompleteProject: 0,
-      totalOnHoldProject: 0,
-      totalProjects,
-      pendingRFI: newRFI,
-      pendingChangeOrders,
-      pendingRFQ,
-      pendingSubmittals,
-      totalRFI,
-      totalRFQ,
-      totalSubmittals,
-    };
+          prisma.changeOrder.count({
+            where: {
+              Project: {
+                status: { in: ["ACTIVE", "ONHOLD"] },
+                fabricatorID: { in: fabricatorIds }
+              },
+              coResponses: { none: {} },
+              isAproovedByAdmin: true,
+            },
+          }),
+          prisma.rFQ.count({
+            where: {
+              project: { status: { in: ["ACTIVE", "ONHOLD"] } },
+              fabricatorId: { in: fabricatorIds },
+              responses: {
+                some: {
+                  parentResponseId: null,
+                  childResponses: { none: {} },
+                },
+              },
+            },
+          }),
 
-    const statusMap: Record<string, keyof typeof response> = {
-      ACTIVE: "totalActiveProjects",
-      COMPLETE: "totalCompleteProject",
-      ONHOLD: "totalOnHoldProject",
-    };
+          prisma.submittals.count({
+            where: {
+              project: { status: { in: ["ACTIVE", "ONHOLD"] } },
+              fabricator_id: { in: fabricatorIds },
+              bfaStatus: false,
+              ...getRoleVisibilityFilter(req.user?.role),
+            },
+          }),
 
-    projectStats.forEach(({ status, _count }) => {
-      const key = statusMap[status];
-      if (key) response[key] = _count._all;
-    });
+          prisma.rFI.count({
+            where: { project: { status: { in: ["ACTIVE", "ONHOLD"] } }, fabricator_id: { in: fabricatorIds }, ...getRoleVisibilityFilter(req.user?.role) },
+          }),
+
+          prisma.rFQ.count({
+            where: { project: { status: { in: ["ACTIVE", "ONHOLD"] } }, fabricatorId: { in: fabricatorIds } },
+          }),
+
+          prisma.submittals.count({
+            where: { project: { status: { in: ["ACTIVE", "ONHOLD"] } }, fabricator_id: { in: fabricatorIds }, ...getRoleVisibilityFilter(req.user?.role) },
+          }),
+        ]);
+
+        const responseObj: Record<string, any> = {
+          totalActiveProjects: 0,
+          totalCompleteProject: 0,
+          totalOnHoldProject: 0,
+          totalProjects,
+          pendingRFI: newRFI,
+          pendingChangeOrders,
+          pendingRFQ,
+          pendingSubmittals,
+          totalRFI,
+          totalRFQ,
+          totalSubmittals,
+        };
+
+        const statusMap: Record<string, keyof typeof responseObj> = {
+          ACTIVE: "totalActiveProjects",
+          COMPLETE: "totalCompleteProject",
+          ONHOLD: "totalOnHoldProject",
+        };
+
+        projectStats.forEach(({ status, _count }) => {
+          const key = statusMap[status];
+          if (key) responseObj[key] = _count._all;
+        });
+
+        return responseObj;
+      }
+    );
 
     return res.status(200).json({
       message: "CLIENT_ADMIN Dashboard data fetched successfully",
@@ -135,6 +143,6 @@ export const clientAdminDashBoard = async (req: AuthenticateRequest, res: Respon
     });
   } catch (error) {
     console.error("Error in clientAdminDashBoard:", error);
-    return res.status(500).json({ message: "Internal Server Error" });
+    return res.status(500).json({ message: "Internal Server Error", success: false });
   }
 };

@@ -17,6 +17,7 @@ import {
   updateUserProfilePic,
 } from "./repository";
 import { cleandata } from "../../config/utils/cleanDataObject";
+import { invalidateDashboardCache, invalidationPatterns } from "../../utils/dashboardCache";
 
 export class UserService {
   async create(data: createUserInput) {
@@ -25,6 +26,13 @@ export class UserService {
 
     const hashedPassword = await bcrypt.hash(env.DEFAULT_PASSWORD, 10);
     const user = await createUser({ ...data, password: hashedPassword });
+    
+    try {
+      await invalidateDashboardCache(invalidationPatterns.onUserChange);
+    } catch (err) {
+      console.error("Failed to invalidate cache on user create:", err);
+    }
+
     return { user };
   }
 
@@ -38,12 +46,26 @@ export class UserService {
     const cleanData = cleandata(data);
     const user = await updateUser(id, cleanData);
     if (!user) throw new AppError("Failed to update user", 404);
+
+    try {
+      await invalidateDashboardCache(invalidationPatterns.onUserChange);
+    } catch (err) {
+      console.error("Failed to invalidate cache on user update:", err);
+    }
+
     return { user };
   }
 
   async delete(id: string) {
     const user = await deleteUser(id);
     if (!user) throw new AppError("Failed to delete user", 404);
+
+    try {
+      await invalidateDashboardCache(invalidationPatterns.onUserChange);
+    } catch (err) {
+      console.error("Failed to invalidate cache on user deactivate:", err);
+    }
+
     return { user };
   }
 

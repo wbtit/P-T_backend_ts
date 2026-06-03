@@ -4,6 +4,7 @@ import { AuthenticateRequest } from "../../middleware/authMiddleware";
 import { UserRole } from "@prisma/client";
 import { computeSubmittalStatus } from "../submittals/utils/statusHelper";
 import { getRoleVisibilityFilter } from "../../utils/roleFilter";
+import { getCachedDashboard, dashboardKeys } from "../../utils/dashboardCache";
 
 const CLIENT_ROLES: UserRole[] = [
   "CLIENT",
@@ -29,109 +30,116 @@ export const operationExecutiveDashBoard = async (
       return res.status(403).json({ message: "Access denied", success: false });
     }
 
-    const twoWeeksAgo = new Date();
-    twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
+    const response = await getCachedDashboard(
+      dashboardKeys.operationExecutive(userId),
+      async () => {
+        const twoWeeksAgo = new Date();
+        twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
 
-    const [projectStatsRaw, totalProjects, delayedClientRFIs, submittals, rfqsForRecipient] =
-      await Promise.all([
-        prisma.project.groupBy({
-          by: ["status"],
-          _count: { _all: true },
-        }),
-        prisma.project.count(),
-        prisma.rFI.findMany({
-          where: {
-            date: { lte: twoWeeksAgo },
-            recepients: {
-              role: { in: CLIENT_ROLES },
-            },
-            rfiresponse: { none: {} },
-            ...getRoleVisibilityFilter(role),
-          },
-          select: {
-            id: true,
-            serialNo: true,
-            subject: true,
-            date: true,
-            project: { select: { id: true, name: true } },
-            sender: {
-              select: { id: true, firstName: true, middleName: true, lastName: true },
-            },
-            recepients: {
-              select: { id: true, firstName: true, middleName: true, lastName: true, role: true },
-            },
-          },
-          orderBy: { date: "asc" },
-        }),
-        prisma.submittals.findMany({
-          where: getRoleVisibilityFilter(role),
-          select: {
-            id: true,
-            serialNo: true,
-            subject: true,
-            stage: true,
-            status: true,
-            bfaStatus: true,
-            date: true,
-            currentVersionId: true,
-            currentVersion: {
-              select: {
-                createdAt: true,
+        const [projectStatsRaw, totalProjects, delayedClientRFIs, submittals, rfqsForRecipient] =
+          await Promise.all([
+            prisma.project.groupBy({
+              by: ["status"],
+              _count: { _all: true },
+            }),
+            prisma.project.count(),
+            prisma.rFI.findMany({
+              where: {
+                date: { lte: twoWeeksAgo },
+                recepients: {
+                  role: { in: CLIENT_ROLES },
+                },
+                rfiresponse: { none: {} },
+                ...getRoleVisibilityFilter(role),
               },
-            },
-            project: { select: { id: true, name: true } },
-            sender: { select: { id: true, firstName: true, middleName: true, lastName: true } },
-            recepients: {
-              select: { id: true, firstName: true, middleName: true, lastName: true },
-            },
-          },
-          orderBy: { date: "desc" },
-          take: 200,
-        }),
-        prisma.rFQ.findMany({
-          where: { recipientId: userId },
-          select: {
-            id: true,
-            serialNo: true,
-            projectName: true,
-            projectNumber: true,
-            subject: true,
-            status: true,
-            wbtStatus: true,
-            createdAt: true,
-            sender: {
-              select: { id: true, firstName: true, middleName: true, lastName: true },
-            },
-          },
-          orderBy: { createdAt: "desc" },
-        }),
-      ]);
+              select: {
+                id: true,
+                serialNo: true,
+                subject: true,
+                date: true,
+                project: { select: { id: true, name: true } },
+                sender: {
+                  select: { id: true, firstName: true, middleName: true, lastName: true },
+                },
+                recepients: {
+                  select: { id: true, firstName: true, middleName: true, lastName: true, role: true },
+                },
+              },
+              orderBy: { date: "asc" },
+            }),
+            prisma.submittals.findMany({
+              where: getRoleVisibilityFilter(role),
+              select: {
+                id: true,
+                serialNo: true,
+                subject: true,
+                stage: true,
+                status: true,
+                bfaStatus: true,
+                date: true,
+                currentVersionId: true,
+                currentVersion: {
+                  select: {
+                    createdAt: true,
+                  },
+                },
+                project: { select: { id: true, name: true } },
+                sender: { select: { id: true, firstName: true, middleName: true, lastName: true } },
+                recepients: {
+                  select: { id: true, firstName: true, middleName: true, lastName: true },
+                },
+              },
+              orderBy: { date: "desc" },
+              take: 200,
+            }),
+            prisma.rFQ.findMany({
+              where: { recipientId: userId },
+              select: {
+                id: true,
+                serialNo: true,
+                projectName: true,
+                projectNumber: true,
+                subject: true,
+                status: true,
+                wbtStatus: true,
+                createdAt: true,
+                sender: {
+                  select: { id: true, firstName: true, middleName: true, lastName: true },
+                },
+              },
+              orderBy: { createdAt: "desc" },
+            }),
+          ]);
 
-    const projectStats: Record<string, number> = {
-      totalProjects,
-      ACTIVE: 0,
-      COMPLETE: 0,
-      ONHOLD: 0,
-      INACTIVE: 0,
-      DELAY: 0,
-      ASSIGNED: 0,
-    };
+        const projectStats: Record<string, number> = {
+          totalProjects,
+          ACTIVE: 0,
+          COMPLETE: 0,
+          ONHOLD: 0,
+          INACTIVE: 0,
+          DELAY: 0,
+          ASSIGNED: 0,
+        };
 
-    projectStatsRaw.forEach(({ status, _count }) => {
-      projectStats[status] = _count._all;
-    });
+        projectStatsRaw.forEach(({ status, _count }) => {
+          projectStats[status] = _count._all;
+        });
+
+        return {
+          projectStats,
+          projectTrackingActions: {
+            rfiClientNoResponseOverTwoWeeks: delayedClientRFIs,
+            submittalsTracking: submittals.map(submittal => computeSubmittalStatus(submittal)),
+            rfqsWhereRecipientIsMe: rfqsForRecipient,
+          },
+        };
+      }
+    );
 
     return res.status(200).json({
       message: "Operation executive dashboard data fetched successfully",
       success: true,
-      data: {
-        projectStats,
-        projectTrackingActions: {
-          rfiClientNoResponseOverTwoWeeks: delayedClientRFIs,
-          submittalsTracking: submittals.map(submittal => computeSubmittalStatus(submittal)),
-          rfqsWhereRecipientIsMe: rfqsForRecipient,
-        },
-      },
+      data: response,
     });
   } catch (error) {
     console.error("Error in operationExecutiveDashBoard:", error);

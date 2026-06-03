@@ -3,6 +3,7 @@ import prisma from "../../config/database/client";
 import { AuthenticateRequest } from "../../middleware/authMiddleware";
 import { SubResStatus } from "@prisma/client";
 import { getRoleVisibilityFilter } from "../../utils/roleFilter";
+import { getCachedDashboard, dashboardKeys } from "../../utils/dashboardCache";
 
 const DEPARTMENT_MANAGER_ALLOWED_ROLES = new Set(["DEPT_MANAGER", "ADMIN"]);
 
@@ -40,361 +41,369 @@ export const departmentManagerDashBoard = async (
     }
 
     const departmentId = manager.departmentId;
-    const now = new Date();
-    const period = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(
-      2,
-      "0"
-    )}`;
 
-    const [
-      department,
-      totalTeams,
-      totalProjects,
-      projectStatusRaw,
-      totalTasks,
-      completedTasks,
-      taskStatusRaw,
-      measOverall,
-      biasOverall,
-      epsOverall,
-      measCurrent,
-      biasCurrent,
-      epsCurrent,
-      topEmployeesCurrentRaw,
-      topManagersCurrentRaw,
-      pendingRFI,
-      newRFI,
-      pendingChangeOrders,
-      newChangeOrders,
-      newRFQ,
-      pendingRFQ,
-      pendingSubmittals,
-      clientSidePendingRFI,
-      clientSidePendingChangeOrders,
-      clientSidePendingRFQ,
-      clientSidePendingSubmittals,
-    ] = await Promise.all([
-      prisma.department.findUnique({
-        where: { id: departmentId },
-        select: { id: true, name: true },
-      }),
-      prisma.team.count({ where: { departmentID: departmentId, isDeleted: false } }),
-      prisma.project.count({ where: { departmentID: departmentId } }),
-      prisma.project.groupBy({
-        by: ["status"],
-        _count: { _all: true },
-        where: { departmentID: departmentId },
-      }),
-      prisma.task.count({ where: { departmentId } }),
-      prisma.task.count({ where: { departmentId, status: "COMPLETED" } }),
-      prisma.task.groupBy({
-        by: ["status"],
-        _count: { _all: true },
-        where: { departmentId },
-      }),
-      prisma.managerEstimationScore.aggregate({
-        where: { project: { departmentID: departmentId } },
-        _avg: { score: true },
-        _min: { score: true },
-        _max: { score: true },
-        _count: { _all: true },
-      }),
-      prisma.managerBiasRecord.aggregate({
-        where: {
-          OR: [
-            { project: { departmentID: departmentId } },
-            { manager: { departmentId } },
-          ],
-        },
-        _avg: { biasScore: true },
-        _min: { biasScore: true },
-        _max: { biasScore: true },
-        _count: { _all: true },
-      }),
-      prisma.employeePerformanceScore.aggregate({
-        where: { employee: { departmentId } },
-        _avg: { score: true },
-        _min: { score: true },
-        _max: { score: true },
-        _count: { _all: true },
-      }),
-      prisma.managerEstimationScore.aggregate({
-        where: { period, project: { departmentID: departmentId } },
-        _avg: { score: true },
-        _min: { score: true },
-        _max: { score: true },
-        _count: { _all: true },
-      }),
-      prisma.managerBiasRecord.aggregate({
-        where: {
-          period,
-          OR: [
-            { project: { departmentID: departmentId } },
-            { manager: { departmentId } },
-          ],
-        },
-        _avg: { biasScore: true },
-        _min: { biasScore: true },
-        _max: { biasScore: true },
-        _count: { _all: true },
-      }),
-      prisma.employeePerformanceScore.aggregate({
-        where: { period, employee: { departmentId } },
-        _avg: { score: true },
-        _min: { score: true },
-        _max: { score: true },
-        _count: { _all: true },
-      }),
-      prisma.employeePerformanceScore.findMany({
-        where: { period, employee: { departmentId } },
-        select: {
-          employeeId: true,
-          score: true,
-          employee: {
-            select: { firstName: true, middleName: true, lastName: true, email: true },
-          },
-        },
-        orderBy: { score: "desc" },
-        take: 5,
-      }),
-      (async () => {
-        const grouped = await prisma.managerEstimationScore.groupBy({
-          by: ["managerId"],
-          where: { period, project: { departmentID: departmentId } },
-          _avg: { score: true },
-          orderBy: { _avg: { score: "desc" } },
-          take: 5,
-        });
+    const response = await getCachedDashboard(
+      dashboardKeys.departmentManager(userId),
+      async () => {
+        const now = new Date();
+        const period = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(
+          2,
+          "0"
+        )}`;
 
-        if (grouped.length === 0) return [];
+        const [
+          department,
+          totalTeams,
+          totalProjects,
+          projectStatusRaw,
+          totalTasks,
+          completedTasks,
+          taskStatusRaw,
+          measOverall,
+          biasOverall,
+          epsOverall,
+          measCurrent,
+          biasCurrent,
+          epsCurrent,
+          topEmployeesCurrentRaw,
+          topManagersCurrentRaw,
+          pendingRFI,
+          newRFI,
+          pendingChangeOrders,
+          newChangeOrders,
+          newRFQ,
+          pendingRFQ,
+          pendingSubmittals,
+          clientSidePendingRFI,
+          clientSidePendingChangeOrders,
+          clientSidePendingRFQ,
+          clientSidePendingSubmittals,
+        ] = await Promise.all([
+          prisma.department.findUnique({
+            where: { id: departmentId },
+            select: { id: true, name: true },
+          }),
+          prisma.team.count({ where: { departmentID: departmentId, isDeleted: false } }),
+          prisma.project.count({ where: { departmentID: departmentId } }),
+          prisma.project.groupBy({
+            by: ["status"],
+            _count: { _all: true },
+            where: { departmentID: departmentId },
+          }),
+          prisma.task.count({ where: { departmentId } }),
+          prisma.task.count({ where: { departmentId, status: "COMPLETED" } }),
+          prisma.task.groupBy({
+            by: ["status"],
+            _count: { _all: true },
+            where: { departmentId },
+          }),
+          prisma.managerEstimationScore.aggregate({
+            where: { project: { departmentID: departmentId } },
+            _avg: { score: true },
+            _min: { score: true },
+            _max: { score: true },
+            _count: { _all: true },
+          }),
+          prisma.managerBiasRecord.aggregate({
+            where: {
+              OR: [
+                { project: { departmentID: departmentId } },
+                { manager: { departmentId } },
+              ],
+            },
+            _avg: { biasScore: true },
+            _min: { biasScore: true },
+            _max: { biasScore: true },
+            _count: { _all: true },
+          }),
+          prisma.employeePerformanceScore.aggregate({
+            where: { employee: { departmentId } },
+            _avg: { score: true },
+            _min: { score: true },
+            _max: { score: true },
+            _count: { _all: true },
+          }),
+          prisma.managerEstimationScore.aggregate({
+            where: { period, project: { departmentID: departmentId } },
+            _avg: { score: true },
+            _min: { score: true },
+            _max: { score: true },
+            _count: { _all: true },
+          }),
+          prisma.managerBiasRecord.aggregate({
+            where: {
+              period,
+              OR: [
+                { project: { departmentID: departmentId } },
+                { manager: { departmentId } },
+              ],
+            },
+            _avg: { biasScore: true },
+            _min: { biasScore: true },
+            _max: { biasScore: true },
+            _count: { _all: true },
+          }),
+          prisma.employeePerformanceScore.aggregate({
+            where: { period, employee: { departmentId } },
+            _avg: { score: true },
+            _min: { score: true },
+            _max: { score: true },
+            _count: { _all: true },
+          }),
+          prisma.employeePerformanceScore.findMany({
+            where: { period, employee: { departmentId } },
+            select: {
+              employeeId: true,
+              score: true,
+              employee: {
+                select: { firstName: true, middleName: true, lastName: true, email: true },
+              },
+            },
+            orderBy: { score: "desc" },
+            take: 5,
+          }),
+          (async () => {
+            const grouped = await prisma.managerEstimationScore.groupBy({
+              by: ["managerId"],
+              where: { period, project: { departmentID: departmentId } },
+              _avg: { score: true },
+              orderBy: { _avg: { score: "desc" } },
+              take: 5,
+            });
 
-        const managerIds = grouped.map((g) => g.managerId);
-        const managersData = await prisma.user.findMany({
-          where: { id: { in: managerIds } },
-          select: { id: true, firstName: true, middleName: true, lastName: true, email: true },
-        });
+            if (grouped.length === 0) return [];
 
-        const managerMap = new Map(managersData.map((m) => [m.id, m]));
+            const managerIds = grouped.map((g) => g.managerId);
+            const managersData = await prisma.user.findMany({
+              where: { id: { in: managerIds } },
+              select: { id: true, firstName: true, middleName: true, lastName: true, email: true },
+            });
 
-        return grouped.map((g) => ({
-          managerId: g.managerId,
-          score: g._avg.score ?? 0,
-          manager: managerMap.get(g.managerId)!,
+            const managerMap = new Map(managersData.map((m) => [m.id, m]));
+
+            return grouped.map((g) => ({
+              managerId: g.managerId,
+              score: g._avg.score ?? 0,
+              manager: managerMap.get(g.managerId)!,
+            }));
+          })(),
+          prisma.rFI.count({
+            where: {
+              project: { departmentID: departmentId },
+              ...getRoleVisibilityFilter(role),
+              NOT: {
+                rfiresponse: {
+                  some: {
+                    childResponses: {
+                      some: { wbtStatus: "COMPLETE" },
+                    },
+                  },
+                },
+              },
+            },
+          }),
+          prisma.rFI.count({
+            where: {
+              project: { departmentID: departmentId },
+              rfiresponse: { none: {} },
+              ...getRoleVisibilityFilter(role),
+            },
+          }),
+          prisma.changeOrder.count({
+            where: {
+              Project: { departmentID: departmentId },
+              NOT: {
+                coResponses: {
+                  some: {
+                    childResponses: {
+                      some: { Status: "ACCEPT" },
+                    },
+                  },
+                },
+              },
+            },
+          }),
+          prisma.changeOrder.count({
+            where: {
+              Project: { departmentID: departmentId },
+              coResponses: { none: {} },
+            },
+          }),
+          prisma.rFQ.count({
+            where: {
+              project: { departmentID: departmentId },
+              responses: { none: {} },
+            },
+          }),
+          prisma.rFQ.count({
+            where: {
+              project: { departmentID: departmentId },
+              responses: {
+                some: {
+                  parentResponseId: null,
+                  childResponses: { every: { status: "RECEIVED" } },
+                },
+              },
+            },
+          }),
+          prisma.submittals.count({
+            where: {
+              project: { departmentID: departmentId },
+              bfaStatus: false,
+              currentVersionId: { not: null },
+              ...getRoleVisibilityFilter(role),
+            },
+          }),
+          prisma.rFI.count({
+            where: {
+              project: { departmentID: departmentId },
+              rfiresponse: { none: {} },
+              ...getRoleVisibilityFilter(role),
+            },
+          }),
+          prisma.changeOrder.count({
+            where: {
+              Project: { departmentID: departmentId },
+              coResponses: { none: {} },
+              isAproovedByAdmin: true,
+            },
+          }),
+          prisma.rFQ.count({
+            where: {
+              project: { departmentID: departmentId },
+              responses: {
+                some: {
+                  parentResponseId: null,
+                  childResponses: { none: {} },
+                },
+              },
+            },
+          }),
+          prisma.submittals.count({
+            where: {
+              project: { departmentID: departmentId },
+              bfaStatus: false,
+              ...getRoleVisibilityFilter(role),
+            },
+          }),
+        ]);
+
+        const projectStatusDistribution = projectStatusRaw.map((item) => ({
+          status: item.status,
+          count: item._count._all,
         }));
-      })(),
-      prisma.rFI.count({
-        where: {
-          project: { departmentID: departmentId },
-          ...getRoleVisibilityFilter(role),
-          NOT: {
-            rfiresponse: {
-              some: {
-                childResponses: {
-                  some: { wbtStatus: "COMPLETE" },
-                },
-              },
+
+        const taskStatusDistribution = taskStatusRaw.map((item) => ({
+          status: item.status,
+          count: item._count._all,
+        }));
+
+        const topEmployeesCurrent = topEmployeesCurrentRaw.map((item) => ({
+          employeeId: item.employeeId,
+          employeeName: [item.employee.firstName, item.employee.middleName, item.employee.lastName]
+            .filter(Boolean)
+            .join(" "),
+          email: item.employee.email ?? "",
+          score: item.score,
+        }));
+
+        const topManagersCurrent = topManagersCurrentRaw.map((item) => ({
+          managerId: item.managerId,
+          managerName: [item.manager.firstName, item.manager.middleName, item.manager.lastName]
+            .filter(Boolean)
+            .join(" "),
+          email: item.manager.email ?? "",
+          score: item.score,
+        }));
+
+        return {
+          manager: {
+            id: manager.id,
+            name: [manager.firstName, manager.middleName, manager.lastName]
+              .filter(Boolean)
+              .join(" "),
+          },
+          department: {
+            id: department?.id ?? departmentId,
+            name: department?.name ?? "Unknown Department",
+          },
+          peopleOverview: {
+            totalTeams,
+          },
+          workOverview: {
+            totalProjects,
+            totalTasks,
+            completedTasks,
+            pendingTasks: totalTasks - completedTasks,
+            projectStatusDistribution,
+            taskStatusDistribution,
+            pendingActions: {
+              pendingRFI,
+              newRFI,
+              pendingChangeOrders,
+              newChangeOrders,
+              newRFQ,
+              pendingRFQ,
+              pendingSubmittals,
+            },
+            clientSidePendingActions: {
+              rfi: clientSidePendingRFI,
+              changeOrders: clientSidePendingChangeOrders,
+              rfq: clientSidePendingRFQ,
+              submittals: clientSidePendingSubmittals,
             },
           },
-        },
-      }),
-      prisma.rFI.count({
-        where: {
-          project: { departmentID: departmentId },
-          rfiresponse: { none: {} },
-          ...getRoleVisibilityFilter(role),
-        },
-      }),
-      prisma.changeOrder.count({
-        where: {
-          Project: { departmentID: departmentId },
-          NOT: {
-            coResponses: {
-              some: {
-                childResponses: {
-                  some: { Status: "ACCEPT" },
-                },
-              },
+          scoreSummary: {
+            period,
+            measOverall: {
+              totalRecords: measOverall._count._all,
+              avgScore: measOverall._avg.score ?? 0,
+              minScore: measOverall._min.score ?? 0,
+              maxScore: measOverall._max.score ?? 0,
+            },
+            measCurrentMonth: {
+              totalRecords: measCurrent._count._all,
+              avgScore: measCurrent._avg.score ?? 0,
+              minScore: measCurrent._min.score ?? 0,
+              maxScore: measCurrent._max.score ?? 0,
+            },
+            biasOverall: {
+              totalRecords: biasOverall._count._all,
+              avgScore: biasOverall._avg.biasScore ?? 0,
+              minScore: biasOverall._min.biasScore ?? 0,
+              maxScore: biasOverall._max.biasScore ?? 0,
+            },
+            biasCurrentMonth: {
+              totalRecords: biasCurrent._count._all,
+              avgScore: biasCurrent._avg.biasScore ?? 0,
+              minScore: biasCurrent._min.biasScore ?? 0,
+              maxScore: biasCurrent._max.biasScore ?? 0,
+            },
+            epsOverall: {
+              totalRecords: epsOverall._count._all,
+              avgScore: epsOverall._avg.score ?? 0,
+              minScore: epsOverall._min.score ?? 0,
+              maxScore: epsOverall._max.score ?? 0,
+            },
+            epsCurrentMonth: {
+              totalRecords: epsCurrent._count._all,
+              avgScore: epsCurrent._avg.score ?? 0,
+              minScore: epsCurrent._min.score ?? 0,
+              maxScore: epsCurrent._max.score ?? 0,
             },
           },
-        },
-      }),
-      prisma.changeOrder.count({
-        where: {
-          Project: { departmentID: departmentId },
-          coResponses: { none: {} },
-        },
-      }),
-      prisma.rFQ.count({
-        where: {
-          project: { departmentID: departmentId },
-          responses: { none: {} },
-        },
-      }),
-      prisma.rFQ.count({
-        where: {
-          project: { departmentID: departmentId },
-          responses: {
-            some: {
-              parentResponseId: null,
-              childResponses: { every: { status: "RECEIVED" } },
-            },
+          rankings: {
+            topManagersCurrent,
+            topEmployeesCurrent,
           },
-        },
-      }),
-      prisma.submittals.count({
-        where: {
-          project: { departmentID: departmentId },
-          bfaStatus: false,
-          currentVersionId: { not: null },
-          ...getRoleVisibilityFilter(role),
-        },
-      }),
-      prisma.rFI.count({
-        where: {
-          project: { departmentID: departmentId },
-          rfiresponse: { none: {} },
-          ...getRoleVisibilityFilter(role),
-        },
-      }),
-      prisma.changeOrder.count({
-        where: {
-          Project: { departmentID: departmentId },
-          coResponses: { none: {} },
-          isAproovedByAdmin: true,
-        },
-      }),
-      prisma.rFQ.count({
-        where: {
-          project: { departmentID: departmentId },
-          responses: {
-            some: {
-              parentResponseId: null,
-              childResponses: { none: {} },
-            },
-          },
-        },
-      }),
-      prisma.submittals.count({
-        where: {
-          project: { departmentID: departmentId },
-          bfaStatus: false,
-          ...getRoleVisibilityFilter(role),
-        },
-      }),
-      ]);
-
-    const projectStatusDistribution = projectStatusRaw.map((item) => ({
-      status: item.status,
-      count: item._count._all,
-    }));
-
-    const taskStatusDistribution = taskStatusRaw.map((item) => ({
-      status: item.status,
-      count: item._count._all,
-    }));
-
-    const topEmployeesCurrent = topEmployeesCurrentRaw.map((item) => ({
-      employeeId: item.employeeId,
-      employeeName: [item.employee.firstName, item.employee.middleName, item.employee.lastName]
-        .filter(Boolean)
-        .join(" "),
-      email: item.employee.email ?? "",
-      score: item.score,
-    }));
-
-    const topManagersCurrent = topManagersCurrentRaw.map((item) => ({
-      managerId: item.managerId,
-      managerName: [item.manager.firstName, item.manager.middleName, item.manager.lastName]
-        .filter(Boolean)
-        .join(" "),
-      email: item.manager.email ?? "",
-      score: item.score,
-    }));
+        };
+      }
+    );
 
     return res.status(200).json({
       message: "Department manager dashboard data fetched successfully",
       success: true,
-      data: {
-        manager: {
-          id: manager.id,
-          name: [manager.firstName, manager.middleName, manager.lastName]
-            .filter(Boolean)
-            .join(" "),
-        },
-        department: {
-          id: department?.id ?? departmentId,
-          name: department?.name ?? "Unknown Department",
-        },
-        peopleOverview: {
-          totalTeams,
-        },
-        workOverview: {
-          totalProjects,
-          totalTasks,
-          completedTasks,
-          pendingTasks: totalTasks - completedTasks,
-          projectStatusDistribution,
-          taskStatusDistribution,
-          pendingActions: {
-            pendingRFI,
-            newRFI,
-            pendingChangeOrders,
-            newChangeOrders,
-            newRFQ,
-            pendingRFQ,
-            pendingSubmittals,
-          },
-          clientSidePendingActions: {
-            rfi: clientSidePendingRFI,
-            changeOrders: clientSidePendingChangeOrders,
-            rfq: clientSidePendingRFQ,
-            submittals: clientSidePendingSubmittals,
-          },
-        },
-        scoreSummary: {
-          period,
-          measOverall: {
-            totalRecords: measOverall._count._all,
-            avgScore: measOverall._avg.score ?? 0,
-            minScore: measOverall._min.score ?? 0,
-            maxScore: measOverall._max.score ?? 0,
-          },
-          measCurrentMonth: {
-            totalRecords: measCurrent._count._all,
-            avgScore: measCurrent._avg.score ?? 0,
-            minScore: measCurrent._min.score ?? 0,
-            maxScore: measCurrent._max.score ?? 0,
-          },
-          biasOverall: {
-            totalRecords: biasOverall._count._all,
-            avgScore: biasOverall._avg.biasScore ?? 0,
-            minScore: biasOverall._min.biasScore ?? 0,
-            maxScore: biasOverall._max.biasScore ?? 0,
-          },
-          biasCurrentMonth: {
-            totalRecords: biasCurrent._count._all,
-            avgScore: biasCurrent._avg.biasScore ?? 0,
-            minScore: biasCurrent._min.biasScore ?? 0,
-            maxScore: biasCurrent._max.biasScore ?? 0,
-          },
-          epsOverall: {
-            totalRecords: epsOverall._count._all,
-            avgScore: epsOverall._avg.score ?? 0,
-            minScore: epsOverall._min.score ?? 0,
-            maxScore: epsOverall._max.score ?? 0,
-          },
-          epsCurrentMonth: {
-            totalRecords: epsCurrent._count._all,
-            avgScore: epsCurrent._avg.score ?? 0,
-            minScore: epsCurrent._min.score ?? 0,
-            maxScore: epsCurrent._max.score ?? 0,
-          },
-        },
-        rankings: {
-          topManagersCurrent,
-          topEmployeesCurrent,
-        },
-      },
+      data: response,
     });
   } catch (error) {
     console.error("Error in departmentManagerDashBoard:", error);

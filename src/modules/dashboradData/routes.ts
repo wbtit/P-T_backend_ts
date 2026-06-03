@@ -43,7 +43,7 @@ router.get(
 router.get(
   "/operationExecutive",
   authMiddleware,
-  asyncHandler(DashBoradData)
+  asyncHandler(operationExecutiveDashBoard)
 );
 
 export default router;

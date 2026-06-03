@@ -163,7 +163,13 @@ export async function notifyRfqStakeholdersByRole(
       const payload = payloadBuilder(role, { rfq, recipientIds: filteredRecipientIds });
       if (!payload) return;
 
-      await Promise.all(filteredRecipientIds.map((userId) => sendNotification(userId, payload)));
+      await Promise.all(
+        filteredRecipientIds.map((userId) =>
+          sendNotification(userId, payload).catch((err) =>
+            console.error(`Notification failed for ${userId}`, err)
+          )
+        )
+      );
     })
   );
 }

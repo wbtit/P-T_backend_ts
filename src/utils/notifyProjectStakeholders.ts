@@ -256,7 +256,11 @@ export async function notifyProjectStakeholdersByRole(
       });
 
       await Promise.all(
-        filteredRecipientIds.map((userId) => sendNotification(userId, enrichedPayload))
+        filteredRecipientIds.map((userId) =>
+          sendNotification(userId, enrichedPayload).catch((err) =>
+            console.error(`Notification failed for ${userId}`, err)
+          )
+        )
       );
     })
   );

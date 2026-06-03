@@ -13,6 +13,7 @@ import {
   generateProjectScopedSerial,
   SERIAL_PREFIX,
 } from "../../../utils/serial.util";
+import { invalidateDashboardCache, invalidationPatterns } from "../../../utils/dashboardCache";
 
 
 const rfqrepo= new RFQRepository();
@@ -99,6 +100,13 @@ export class RFQService {
         throw error;
       }
     }
+
+    try {
+      await invalidateDashboardCache(invalidationPatterns.onRFQChange);
+    } catch (err) {
+      console.error("Failed to invalidate cache on RFQ create:", err);
+    }
+
     return { newRfq: rfq };
   }
 
@@ -107,6 +115,13 @@ export class RFQService {
         if(!existing) throw new AppError('RFQ not found', 404);
 
         const rfq = await rfqrepo.update(id,data);
+
+        try {
+          await invalidateDashboardCache(invalidationPatterns.onRFQChange);
+        } catch (err) {
+          console.error("Failed to invalidate cache on RFQ update:", err);
+        }
+
         return rfq;
     }
     async getRfqById(
@@ -169,10 +184,22 @@ export class RFQService {
         return await rfqrepo.findPendingRFQsForClient(userId);
     }
     async closeRfq(id:string){
-        return await rfqrepo.closeRfq(id);
+        const rfq = await rfqrepo.closeRfq(id);
+        try {
+          await invalidateDashboardCache(invalidationPatterns.onRFQChange);
+        } catch (err) {
+          console.error("Failed to invalidate cache on RFQ close:", err);
+        }
+        return rfq;
     }
     async deleteRFQ(id:string){
-        return await rfqrepo.deleteRFQ(id);
+        const rfq = await rfqrepo.deleteRFQ(id);
+        try {
+          await invalidateDashboardCache(invalidationPatterns.onRFQChange);
+        } catch (err) {
+          console.error("Failed to invalidate cache on RFQ delete:", err);
+        }
+        return rfq;
     }
     async getRFQOfConnectionEngineer(userId:string){
         return await rfqrepo.getRFQOfConnectionEngineer(userId);

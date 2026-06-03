@@ -1,6 +1,6 @@
 import { ModuleOpenApiDoc } from "../../openapi/types";
 import { zodRequestBody } from "../../openapi/zod";
-import { publicSignupSchema, signinSchema, changePasswordSchema } from "./auth/dtos";
+import { publicSignupSchema, signinSchema, changePasswordSchema, verifyChallengeSchema } from "./auth/dtos";
 import { UpdateUserSchema, createUserSchema } from "./dtos";
 
 export const userOpenApiDoc: ModuleOpenApiDoc = {
@@ -48,6 +48,84 @@ export const userOpenApiDoc: ModuleOpenApiDoc = {
           "200": { description: "Success" },
           "400": { description: "Bad Request" },
           "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
+    "/auth/verify-challenge": {
+      post: {
+        tags: ["User"],
+        summary: "POST /auth/verify-challenge",
+        description: "Verify the OTP challenge token to trust the current IP and device fingerprint.",
+        operationId: "post_user_auth_verify_challenge",
+        requestBody: zodRequestBody(verifyChallengeSchema),
+        responses: {
+          "200": { description: "Success - issues authentication JWT" },
+          "400": { description: "Bad Request - invalid OTP" },
+          "401": { description: "Unauthorized - challenge expired or invalid token" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
+    "/auth/analytics/admin": {
+      get: {
+        tags: ["User"],
+        summary: "GET /auth/analytics/admin",
+        description: "Retrieve risk-based authentication metrics for administrators.",
+        operationId: "get_user_auth_analytics_admin",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": { description: "Success" },
+          "401": { description: "Unauthorized" },
+          "403": { description: "Forbidden" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
+    "/auth/analytics/me": {
+      get: {
+        tags: ["User"],
+        summary: "GET /auth/analytics/me",
+        description: "Retrieve login history and trusted devices for the currently logged in user.",
+        operationId: "get_user_auth_analytics_me",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": { description: "Success" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
+    "/auth/analytics/user/{userId}": {
+      get: {
+        tags: ["User"],
+        summary: "GET /auth/analytics/user/{userId}",
+        description: "Retrieve risk-based authentication tracking data (login history and trusted devices) for a specific user.",
+        operationId: "get_user_auth_analytics_user_id",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { in: "path", name: "userId", required: true, schema: { type: "string" } }
+        ],
+        responses: {
+          "200": { description: "Success" },
+          "401": { description: "Unauthorized" },
+          "403": { description: "Forbidden - Admin privilege required" },
+          "404": { description: "User not found" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
+    "/auth/analytics/ip-changes": {
+      get: {
+        tags: ["User"],
+        summary: "GET /auth/analytics/ip-changes",
+        description: "Retrieve users whose current login IP differs from their previous login IP and issue notification alerts to designated management and HR roles.",
+        operationId: "get_user_auth_analytics_ip_changes",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": { description: "Success" },
+          "401": { description: "Unauthorized" },
+          "403": { description: "Forbidden - Admin privilege required" },
           "500": { description: "Internal Server Error" }
         }
       },

@@ -4,13 +4,13 @@ import { SubmitalRepository } from "../submittals/repositories";
 import { AuthenticateRequest } from "../../middleware/authMiddleware";
 import { SubResStatus } from "@prisma/client";
 import { getRoleVisibilityFilter } from "../../utils/roleFilter";
+import { getCachedDashboard, dashboardKeys } from "../../utils/dashboardCache";
 
 export const projectManagerDashBoard = async (
   req: AuthenticateRequest,
   res: Response
 ) => {
   try {
-    const submittalRepo = new SubmitalRepository();
     const { role, id: userId } = req.user ?? {};
 
     if (!role || !userId) {
@@ -21,192 +21,196 @@ export const projectManagerDashBoard = async (
       return res.status(403).json({ message: "Access denied", success: false });
     }
 
-    const now = new Date();
+    const response = await getCachedDashboard(
+      dashboardKeys.projectManager(userId),
+      async () => {
+        const submittalRepo = new SubmitalRepository();
+        const now = new Date();
 
-    const managerFilter = {
-      managerID: userId,
-    };
+        const managerFilter = {
+          managerID: userId,
+        };
 
-    const [
-      projectStats,
-      totalProjects,
-      totalTasks,
-      completedTasks,
-      overdueTasks,
-      pendingRFI,
-      newRFI,
-      pendingChangeOrders,
-      newChangeOrders,
-      pendingRFQ,
-      newRFQ,
-      pendingSubmittalsList,
-      totalTeamMembers,
-      clientSidePendingRFI,
-      clientSidePendingChangeOrders,
-      clientSidePendingRFQ,
-      clientSidePendingSubmittals,
-    ] = await Promise.all([
-      prisma.project.groupBy({
-        by: ["status"],
-        _count: { _all: true },
-        where: managerFilter,
-      }),
-      prisma.project.count({ where: managerFilter }),
-      prisma.task.count({
-        where: {
-          project: managerFilter,
-        },
-      }),
-      prisma.task.count({
-        where: {
-          project: managerFilter,
-          status: "COMPLETED",
-        },
-      }),
-      prisma.task.count({
-        where: {
-          project: managerFilter,
-          status: { not: "COMPLETED" },
-          due_date: { lt: now },
-        },
-      }),
-      prisma.rFI.count({
-        where: {
-          project: managerFilter,
-          ...getRoleVisibilityFilter(role),
-            rfiresponse: {
-              some: {
-                childResponses: {
-                  none: {},
+        const [
+          projectStats,
+          totalProjects,
+          totalTasks,
+          completedTasks,
+          overdueTasks,
+          pendingRFI,
+          newRFI,
+          pendingChangeOrders,
+          newChangeOrders,
+          pendingRFQ,
+          newRFQ,
+          pendingSubmittalsList,
+          totalTeamMembers,
+          clientSidePendingRFI,
+          clientSidePendingChangeOrders,
+          clientSidePendingRFQ,
+          clientSidePendingSubmittals,
+        ] = await Promise.all([
+          prisma.project.groupBy({
+            by: ["status"],
+            _count: { _all: true },
+            where: managerFilter,
+          }),
+          prisma.project.count({ where: managerFilter }),
+          prisma.task.count({
+            where: {
+              project: managerFilter,
+            },
+          }),
+          prisma.task.count({
+            where: {
+              project: managerFilter,
+              status: "COMPLETED",
+            },
+          }),
+          prisma.task.count({
+            where: {
+              project: managerFilter,
+              status: { not: "COMPLETED" },
+              due_date: { lt: now },
+            },
+          }),
+          prisma.rFI.count({
+            where: {
+              project: managerFilter,
+              ...getRoleVisibilityFilter(role),
+              rfiresponse: {
+                some: {
+                  childResponses: {
+                    none: {},
+                  },
                 },
               },
             },
-          
-        },
-      }),
-      prisma.rFI.count({
-        where: {
-          project: managerFilter,
-          rfiresponse: { none: {} },
-          ...getRoleVisibilityFilter(role),
-        },
-      }),
-      prisma.changeOrder.count({
-        where: {
-          Project: managerFilter,
-          
-            coResponses: {
-              some: {
-                childResponses: {
-                  none:{},
+          }),
+          prisma.rFI.count({
+            where: {
+              project: managerFilter,
+              rfiresponse: { none: {} },
+              ...getRoleVisibilityFilter(role),
+            },
+          }),
+          prisma.changeOrder.count({
+            where: {
+              Project: managerFilter,
+              coResponses: {
+                some: {
+                  childResponses: {
+                    none: {},
+                  },
                 },
               },
             },
-          
-        },
-      }),
-      prisma.changeOrder.count({
-        where: {
-          Project: managerFilter,
-          coResponses: { none: {} },
-        },
-      }),
-      prisma.rFQ.count({
-        where: {
-          project: managerFilter,
-          responses: {
-            some: {
-              childResponses: { none: {} },
+          }),
+          prisma.changeOrder.count({
+            where: {
+              Project: managerFilter,
+              coResponses: { none: {} },
             },
-          },
-        },
-      }),
-      prisma.rFQ.count({
-        where: {
-          project: managerFilter,
-          responses: { none: {} },
-        },
-      }),
-      submittalRepo.getPendingSubmittalsForProjectManager(userId, role),
-      prisma.teamMember.count({
-        where: {
-          team: {
-            project: {
-              some: managerFilter,
+          }),
+          prisma.rFQ.count({
+            where: {
+              project: managerFilter,
+              responses: {
+                some: {
+                  childResponses: { none: {} },
+                },
+              },
             },
-          },
-        },
-      }),
-      prisma.rFI.count({
-        where: {
-          project: { managerID: userId, status: { in: ["ACTIVE", "ONHOLD"] } },
-          rfiresponse: { none: {} },
-          ...getRoleVisibilityFilter(role),
-        },
-      }),
-      prisma.changeOrder.count({
-        where: {
-          Project: { managerID: userId, status: { in: ["ACTIVE", "ONHOLD"] } },
-          coResponses: { none: {} },
-          isAproovedByAdmin: true,
-        },
-      }),
-      prisma.rFQ.count({
-        where: {
-          project: { managerID: userId, status: { in: ["ACTIVE", "ONHOLD"] } },
-          responses: {
-            some: {
-              parentResponseId: null,
-              childResponses: { none: {} },
+          }),
+          prisma.rFQ.count({
+            where: {
+              project: managerFilter,
+              responses: { none: {} },
             },
-          },
-        },
-      }),
-      prisma.submittals.count({
-        where: {
-          project: { managerID: userId, status: { in: ["ACTIVE", "ONHOLD"] } },
-          bfaStatus: false,
-          ...getRoleVisibilityFilter(role),
-        },
-      }),
-    ]);
+          }),
+          submittalRepo.getPendingSubmittalsForProjectManager(userId, role),
+          prisma.teamMember.count({
+            where: {
+              team: {
+                project: {
+                  some: managerFilter,
+                },
+              },
+            },
+          }),
+          prisma.rFI.count({
+            where: {
+              project: { managerID: userId, status: { in: ["ACTIVE", "ONHOLD"] } },
+              rfiresponse: { none: {} },
+              ...getRoleVisibilityFilter(role),
+            },
+          }),
+          prisma.changeOrder.count({
+            where: {
+              Project: { managerID: userId, status: { in: ["ACTIVE", "ONHOLD"] } },
+              coResponses: { none: {} },
+              isAproovedByAdmin: true,
+            },
+          }),
+          prisma.rFQ.count({
+            where: {
+              project: { managerID: userId, status: { in: ["ACTIVE", "ONHOLD"] } },
+              responses: {
+                some: {
+                  parentResponseId: null,
+                  childResponses: { none: {} },
+                },
+              },
+            },
+          }),
+          prisma.submittals.count({
+            where: {
+              project: { managerID: userId, status: { in: ["ACTIVE", "ONHOLD"] } },
+              bfaStatus: false,
+              ...getRoleVisibilityFilter(role),
+            },
+          }),
+        ]);
 
-    const response: Record<string, any> = {
-      totalProjects,
-      totalActiveProjects: 0,
-      totalCompleteProject: 0,
-      totalOnHoldProject: 0,
-      totalTasks,
-      completedTasks,
-      pendingTasks: totalTasks - completedTasks,
-      overdueTasks,
-      taskCompletionRate:
-        totalTasks === 0 ? 0 : Number(((completedTasks / totalTasks) * 100).toFixed(2)),
-      totalTeamMembers,
-      pendingRFI,
-      newRFI,
-      pendingChangeOrders,
-      newChangeOrders,
+        const resObj: Record<string, any> = {
+          totalProjects,
+          totalActiveProjects: 0,
+          totalCompleteProject: 0,
+          totalOnHoldProject: 0,
+          totalTasks,
+          completedTasks,
+          pendingTasks: totalTasks - completedTasks,
+          overdueTasks,
+          taskCompletionRate:
+            totalTasks === 0 ? 0 : Number(((completedTasks / totalTasks) * 100).toFixed(2)),
+          totalTeamMembers,
+          pendingRFI,
+          newRFI,
+          pendingChangeOrders,
+          newChangeOrders,
+          pendingSubmittals: pendingSubmittalsList.length,
+          clientSidePendingActions: {
+            rfi: clientSidePendingRFI,
+            changeOrders: clientSidePendingChangeOrders,
+            rfq: clientSidePendingRFQ,
+            submittals: clientSidePendingSubmittals,
+          }
+        };
 
+        const statusMap: Record<string, keyof typeof resObj> = {
+          ACTIVE: "totalActiveProjects",
+          COMPLETE: "totalCompleteProject",
+          ONHOLD: "totalOnHoldProject",
+        };
 
-      pendingSubmittals: pendingSubmittalsList.length,
-      clientSidePendingActions: {
-        rfi: clientSidePendingRFI,
-        changeOrders: clientSidePendingChangeOrders,
-        rfq: clientSidePendingRFQ,
-        submittals: clientSidePendingSubmittals,
+        projectStats.forEach(({ status, _count }) => {
+          const key = statusMap[status];
+          if (key) resObj[key] = _count._all;
+        });
+
+        return resObj;
       }
-      };
-    const statusMap: Record<string, keyof typeof response> = {
-      ACTIVE: "totalActiveProjects",
-      COMPLETE: "totalCompleteProject",
-      ONHOLD: "totalOnHoldProject",
-    };
-
-    projectStats.forEach(({ status, _count }) => {
-      const key = statusMap[status];
-      if (key) response[key] = _count._all;
-    });
+    );
 
     return res.status(200).json({
       message: "Project manager dashboard data fetched successfully",

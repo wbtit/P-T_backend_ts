@@ -2199,19 +2199,21 @@ model CoordinationDrawingResponse {
 }
 
 model UserTrustedIp {
-  id         String   @id @default(cuid())
-  userId     String   @db.Uuid
-  ipAddress  String
-  country    String?
-  city       String?
-  label      String?
-  createdAt  DateTime @default(now())
-  lastUsedAt DateTime @default(now())
-  isActive   Boolean  @default(true)
+  id                String   @id @default(cuid())
+  userId            String   @db.Uuid
+  ipAddress         String
+  country           String?
+  city              String?
+  label             String?
+  createdAt         DateTime @default(now())
+  lastUsedAt        DateTime @default(now())
+  expiresAt         DateTime
+  isActive          Boolean  @default(true)
+  deviceFingerprint String   @default("")
 
   user User @relation("UserTrustedIps", fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, ipAddress])
+  @@unique([userId, ipAddress, deviceFingerprint])
   @@map("user_trusted_ip")
 }
 
@@ -2239,15 +2241,18 @@ model LoginAttempt {
 }
 
 model IpChallenge {
-  id             String            @id @default(cuid())
-  userId         String            @db.Uuid
-  ipAddress      String
-  tokenHash      String            @unique
-  loginAttemptId String?
-  expiresAt      DateTime
-  usedAt         DateTime?
-  action         IpChallengeAction @default(PENDING)
-  createdAt      DateTime          @default(now())
+  id               String            @id @default(cuid())
+  userId           String            @db.Uuid
+  ipAddress        String
+  tokenHash        String            @unique
+  otpHash          String
+  otpSalt          String
+  challengeContext String
+  loginAttemptId   String?
+  expiresAt        DateTime
+  usedAt           DateTime?
+  action           IpChallengeAction @default(PENDING)
+  createdAt        DateTime          @default(now())
 
   user         User          @relation("UserIpChallenges", fields: [userId], references: [id], onDelete: Cascade)
   loginAttempt LoginAttempt? @relation("LoginAttemptChallenges", fields: [loginAttemptId], references: [id], onDelete: SetNull)

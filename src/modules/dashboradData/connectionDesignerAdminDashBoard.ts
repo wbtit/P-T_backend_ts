@@ -3,6 +3,7 @@ import { Status } from "@prisma/client";
 import prisma from "../../config/database/client";
 import { AuthenticateRequest } from "../../middleware/authMiddleware";
 import { getRoleVisibilityFilter } from "../../utils/roleFilter";
+import { getCachedDashboard, dashboardKeys } from "../../utils/dashboardCache";
 
 const CONNECTION_DESIGNER_ADMIN_ALLOWED_ROLES = new Set([
   "CONNECTION_DESIGNER_ADMIN",
@@ -48,6 +49,7 @@ const needsCompanyAttention = (
   return latestResponse.user?.connectionDesignerId !== connectionDesignerId;
 };
 
+
 export const connectionDesignerAdminDashBoard = async (
   req: AuthenticateRequest,
   res: Response
@@ -81,167 +83,54 @@ export const connectionDesignerAdminDashBoard = async (
       });
     }
 
-    const projectBaseWhere = {
-      connectionDesignerID: connectionDesignerId,
-      isDeleted: false,
-    } as const;
-
-    const activeProjectWhere = {
-      ...projectBaseWhere,
-      status: { in: [Status.ACTIVE, Status.ONHOLD] },
-    };
-
-    const [
-      projectStats,
-      totalProjects,
-      activeEmployeeCount,
-      rfisRequiringReview,
-      cosRequiringReview,
-      rfqsRequiringReview,
-      submittalsRequiringReview,
-    ] = await Promise.all([
-      prisma.project.groupBy({
-        by: ["status"],
-        _count: { _all: true },
-        where: projectBaseWhere,
-      }),
-      prisma.project.count({
-        where: projectBaseWhere,
-      }),
-      prisma.user.count({
-        where: {
-          connectionDesignerId,
-          isActive: true,
-        },
-      }),
-      prisma.rFI.findMany({
-        where: {
-          project: activeProjectWhere,
-          ...getRoleVisibilityFilter(role),
-          OR: [
-            { recepients: { connectionDesignerId } },
-            { multipleRecipients: { some: { connectionDesignerId } } },
-          ],
-          
-        },
-        select: {
-          id: true,
-          rfiresponse: {
-            where: { parentResponseId: null },
-            select: {
-              createdAt: true,
-              user: {
-                select: {
-                  connectionDesignerId: true,
-                },
-              },
-              childResponses: {
-                select: {
-                  createdAt: true,
-                  user: {
-                    select: {
-                      connectionDesignerId: true,
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-      }),
-      prisma.changeOrder.findMany({
-        where: {
-          Project: activeProjectWhere,
-          OR: [
-            { Recipients: { connectionDesignerId } },
-            { multipleRecipients: { some: { connectionDesignerId } } },
-          ],
-        },
-        select: {
-          id: true,
-          coResponses: {
-            where: { parentResponseId: null },
-            select: {
-              createdAt: true,
-              user: {
-                select: {
-                  connectionDesignerId: true,
-                },
-              },
-              childResponses: {
-                select: {
-                  createdAt: true,
-                  user: {
-                    select: {
-                      connectionDesignerId: true,
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-      }),
-      prisma.rFQ.findMany({
-        where: {
-          connectionDesignerRFQ: {
-            some: { id: connectionDesignerId },
-          },
+    const response = await getCachedDashboard(
+      dashboardKeys.connectionDesignerAdmin(userId),
+      async () => {
+        const projectBaseWhere = {
+          connectionDesignerID: connectionDesignerId,
           isDeleted: false,
-          status: {
-            notIn: ["AWARDED", "REJECTED"],
-          },
-        },
-        select: {
-          id: true,
-          responses: {
-            where: { parentResponseId: null },
-            select: {
-              createdAt: true,
-              user: {
-                select: {
-                  connectionDesignerId: true,
-                },
-              },
-              childResponses: {
-                select: {
-                  createdAt: true,
-                  user: {
-                    select: {
-                      connectionDesignerId: true,
-                    },
-                  },
-                },
-              },
-            },
-          },
-          CDQuotas: {
+        } as const;
+
+        const activeProjectWhere = {
+          ...projectBaseWhere,
+          status: { in: [Status.ACTIVE, Status.ONHOLD] },
+        };
+
+        const [
+          projectStats,
+          totalProjects,
+          activeEmployeeCount,
+          rfisRequiringReview,
+          cosRequiringReview,
+          rfqsRequiringReview,
+          submittalsRequiringReview,
+        ] = await Promise.all([
+          prisma.project.groupBy({
+            by: ["status"],
+            _count: { _all: true },
+            where: projectBaseWhere,
+          }),
+          prisma.project.count({
+            where: projectBaseWhere,
+          }),
+          prisma.user.count({
             where: {
               connectionDesignerId,
-              isDeleted: false,
+              isActive: true,
+            },
+          }),
+          prisma.rFI.findMany({
+            where: {
+              project: activeProjectWhere,
+              ...getRoleVisibilityFilter(role),
+              OR: [
+                { recepients: { connectionDesignerId } },
+                { multipleRecipients: { some: { connectionDesignerId } } },
+              ],
             },
             select: {
               id: true,
-            },
-          },
-        },
-      }),
-      prisma.submittals.findMany({
-        where: {
-          project: activeProjectWhere,
-          currentVersionId: { not: null },
-          bfaStatus: false,
-          ...getRoleVisibilityFilter(role),
-          OR: [
-            { recepients: { connectionDesignerId } },
-            { multipleRecipients: { some: { connectionDesignerId } } },
-          ],
-        },
-        select: {
-          id: true,
-          currentVersion: {
-            select: {
-              responses: {
+              rfiresponse: {
                 where: { parentResponseId: null },
                 select: {
                   createdAt: true,
@@ -263,51 +152,170 @@ export const connectionDesignerAdminDashBoard = async (
                 },
               },
             },
-          },
-        },
-      }),
-    ]);
+          }),
+          prisma.changeOrder.findMany({
+            where: {
+              Project: activeProjectWhere,
+              OR: [
+                { Recipients: { connectionDesignerId } },
+                { multipleRecipients: { some: { connectionDesignerId } } },
+              ],
+            },
+            select: {
+              id: true,
+              coResponses: {
+                where: { parentResponseId: null },
+                select: {
+                  createdAt: true,
+                  user: {
+                    select: {
+                      connectionDesignerId: true,
+                    },
+                  },
+                  childResponses: {
+                    select: {
+                      createdAt: true,
+                      user: {
+                        select: {
+                          connectionDesignerId: true,
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          }),
+          prisma.rFQ.findMany({
+            where: {
+              connectionDesignerRFQ: {
+                some: { id: connectionDesignerId },
+              },
+              isDeleted: false,
+              status: {
+                notIn: ["AWARDED", "REJECTED"],
+              },
+            },
+            select: {
+              id: true,
+              responses: {
+                where: { parentResponseId: null },
+                select: {
+                  createdAt: true,
+                  user: {
+                    select: {
+                      connectionDesignerId: true,
+                    },
+                  },
+                  childResponses: {
+                    select: {
+                      createdAt: true,
+                      user: {
+                        select: {
+                          connectionDesignerId: true,
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+              CDQuotas: {
+                where: {
+                  connectionDesignerId,
+                  isDeleted: false,
+                },
+                select: {
+                  id: true,
+                },
+              },
+            },
+          }),
+          prisma.submittals.findMany({
+            where: {
+              project: activeProjectWhere,
+              currentVersionId: { not: null },
+              bfaStatus: false,
+              ...getRoleVisibilityFilter(role),
+              OR: [
+                { recepients: { connectionDesignerId } },
+                { multipleRecipients: { some: { connectionDesignerId } } },
+              ],
+            },
+            select: {
+              id: true,
+              currentVersion: {
+                select: {
+                  responses: {
+                    where: { parentResponseId: null },
+                    select: {
+                      createdAt: true,
+                      user: {
+                        select: {
+                          connectionDesignerId: true,
+                        },
+                      },
+                      childResponses: {
+                        select: {
+                          createdAt: true,
+                          user: {
+                            select: {
+                              connectionDesignerId: true,
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          }),
+        ]);
 
-    const pendingRFI = rfisRequiringReview.filter((item) =>
-      needsCompanyAttention(item.rfiresponse, connectionDesignerId)
-    ).length;
+        const pendingRFI = rfisRequiringReview.filter((item) =>
+          needsCompanyAttention(item.rfiresponse, connectionDesignerId)
+        ).length;
 
-    const pendingChangeOrders = cosRequiringReview.filter((item) =>
-      needsCompanyAttention(item.coResponses, connectionDesignerId)
-    ).length;
+        const pendingChangeOrders = cosRequiringReview.filter((item) =>
+          needsCompanyAttention(item.coResponses, connectionDesignerId)
+        ).length;
 
-    const pendingRFQ = rfqsRequiringReview.filter((item) => {
-      if (item.responses.length === 0) {
-        return item.CDQuotas.length === 0;
+        const pendingRFQ = rfqsRequiringReview.filter((item) => {
+          if (item.responses.length === 0) {
+            return item.CDQuotas.length === 0;
+          }
+
+          return needsCompanyAttention(item.responses, connectionDesignerId);
+        }).length;
+
+        const pendingSubmittals = submittalsRequiringReview.length;
+
+        const resObj = {
+          totalActiveProjects: 0,
+          totalCompleteProject: 0,
+          totalOnHoldProject: 0,
+          totalProjects,
+          activeEmployeeCount,
+          pendingRFI,
+          pendingChangeOrders,
+          pendingRFQ,
+          pendingSubmittals,
+        };
+
+        const statusMap: Record<string, keyof typeof resObj> = {
+          ACTIVE: "totalActiveProjects",
+          COMPLETE: "totalCompleteProject",
+          ONHOLD: "totalOnHoldProject",
+        };
+
+        projectStats.forEach(({ status, _count }) => {
+          const key = statusMap[status];
+          if (key) resObj[key] = _count._all;
+        });
+
+        return resObj;
       }
-
-      return needsCompanyAttention(item.responses, connectionDesignerId);
-    }).length;
-
-    const pendingSubmittals = submittalsRequiringReview.length;
-
-    const response = {
-      totalActiveProjects: 0,
-      totalCompleteProject: 0,
-      totalOnHoldProject: 0,
-      totalProjects,
-      activeEmployeeCount,
-      pendingRFI,
-      pendingChangeOrders,
-      pendingRFQ,
-      pendingSubmittals,
-    };
-
-    const statusMap: Record<string, keyof typeof response> = {
-      ACTIVE: "totalActiveProjects",
-      COMPLETE: "totalCompleteProject",
-      ONHOLD: "totalOnHoldProject",
-    };
-
-    projectStats.forEach(({ status, _count }) => {
-      const key = statusMap[status];
-      if (key) response[key] = _count._all;
-    });
+    );
 
     return res.status(200).json({
       message: "Connection designer admin dashboard data fetched successfully",

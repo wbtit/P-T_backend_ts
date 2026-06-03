@@ -19,6 +19,7 @@ import { handleStageChange } from "../utils/handleStageChange";
 import { handleEndDateChange } from "../utils/handleEndDateChange";
 import { recomputeProjectBundleTotals } from "../WBS/utils/recomputeBundleTotals";
 import { ensureCheckingWbsForBundle } from "../WBS/utils/ensureCheckingWbs";
+import { invalidateDashboardCache, invalidationPatterns } from "../../../utils/dashboardCache";
 
 
  const projectRepository = new ProjectRepository();
@@ -32,6 +33,11 @@ import { ensureCheckingWbsForBundle } from "../WBS/utils/ensureCheckingWbs";
        throw new AppError("Project with this number already exists", 409);
      }
      const project = await projectRepository.create(data,userId);
+     try {
+       await invalidateDashboardCache(invalidationPatterns.onProjectChange);
+     } catch (err) {
+       console.error("Failed to invalidate cache on project create:", err);
+     }
      return project;
    }
 
@@ -109,6 +115,12 @@ import { ensureCheckingWbsForBundle } from "../WBS/utils/ensureCheckingWbs";
       id,
       data
     );
+
+    try {
+      await invalidateDashboardCache(invalidationPatterns.onProjectChange);
+    } catch (err) {
+      console.error("Failed to invalidate cache on project update:", err);
+    }
 
     return project;
   });
@@ -259,6 +271,11 @@ async expandProjectWbs(
        throw new AppError("Project not found", 404);
      }
      const project = await projectRepository.delete(data);
+     try {
+       await invalidateDashboardCache(invalidationPatterns.onProjectChange);
+     } catch (err) {
+       console.error("Failed to invalidate cache on project delete:", err);
+     }
      return project;
    }
 
