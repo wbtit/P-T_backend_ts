@@ -8,6 +8,14 @@ export class CommentService{
     async create(data:commentDto,user_id:string){
         const comment = await commentRepo.create(data,user_id);
 
+        // Step 2 - Auto-mark comment author as read
+        await prisma.commentRead.create({
+            data: {
+                commentId: comment.id,
+                userId: user_id
+            }
+        });
+
         // Background task comment notification
         (async () => {
             try {
@@ -32,7 +40,7 @@ export class CommentService{
 
                         const creatorName = commentCreator 
                             ? `${commentCreator.firstName} ${commentCreator.lastName}` 
-                            : "A user";
+                             : "A user";
 
                         // Set of unique recipient user IDs
                         const recipients = new Set<string>();
@@ -72,6 +80,16 @@ export class CommentService{
 
                             for (const recipientId of recipients) {
                                 await sendNotification(recipientId, notificationPayload);
+
+                                // Step 5 - Emit real-time comment notification via Socket.IO
+                                if ((globalThis as any).io) {
+                                    (globalThis as any).io.to(`user:${recipientId}`).emit('new_task_comment', {
+                                        taskId: comment.task_id,
+                                        commentId: comment.id,
+                                        authorId: user_id,
+                                        preview: comment.data.substring(0, 100)
+                                    });
+                                }
                             }
                         }
                     }
@@ -83,13 +101,70 @@ export class CommentService{
 
         return comment;
     }
+
     async update(id:string){
         return await commentRepo.update(id);
     }
+
     async findByTask(id:string){
         return await commentRepo.getByTaskId(id);
     }
+
     async findByUserId(id:string){
-        return await commentRepo.getByUserId(id)
+        return await commentRepo.getByUserId(id);
+    }
+
+    // Step 3 - Function 1: getUnreadCommentsForUser (Employee View)
+    async getUnreadCommentsForUser(userId: string) {
+        const MANAGER_ROLES = [
+            'ADMIN', 'SYSTEM_ADMIN', 'DEPT_MANAGER', 'DEPUTY_MANAGER',
+            'PROJECT_MANAGER', 'PROJECT_MANAGER_OFFICER', 'TEAM_LEAD', 'ESTIMATION_HEAD'
+        ];
+
+        return await prisma.comment.findMany({
+            where: {
+                task: { user_id: userId },
+                user: { role: { in: MANAGER_ROLES as any } },
+                reads: { none: { userId } }
+            },
+            include: {
+                user: { select: { id: true, username: true, role: true } },
+                task: { select: { id: true, name: true, serialNo: true } }
+            },
+            orderBy: { created_on: 'desc' }
+        });
+    }
+
+    // Step 3 - Function 2: getUnreadCommentsForManager (Manager View)
+    async getUnreadCommentsForManager(managerId: string) {
+        const MANAGER_ROLES = [
+            'ADMIN', 'SYSTEM_ADMIN', 'DEPT_MANAGER', 'DEPUTY_MANAGER',
+            'PROJECT_MANAGER', 'PROJECT_MANAGER_OFFICER', 'TEAM_LEAD', 'ESTIMATION_HEAD'
+        ];
+
+        return await prisma.comment.findMany({
+            where: {
+                OR: [
+                    { task: { created_by: managerId } },
+                    { task: { project: { managerID: managerId } } }
+                ],
+                user: { role: { notIn: MANAGER_ROLES as any } },
+                reads: { none: { userId: managerId } }
+            },
+            include: {
+                user: { select: { id: true, username: true, role: true } },
+                task: { select: { id: true, name: true, serialNo: true } }
+            },
+            orderBy: { created_on: 'desc' }
+        });
+    }
+
+    // Step 3 - Function 3: markCommentsAsRead
+    async markCommentsAsRead(userId: string, commentIds: string[]) {
+        const result = await prisma.commentRead.createMany({
+            data: commentIds.map(commentId => ({ commentId, userId })),
+            skipDuplicates: true
+        });
+        return { marked: result.count };
     }
 }

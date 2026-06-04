@@ -3,6 +3,7 @@ import { ChallengeContext } from "../deviceFingerprintService";
 
 export interface SendChallengeEmailInput {
   email: string;
+  username: string;
   otp: string;
   ipAddress: string;
   city?: string | null;
@@ -12,6 +13,7 @@ export interface SendChallengeEmailInput {
 
 export async function sendChallengeEmail({
   email,
+  username,
   otp,
   ipAddress,
   city,
@@ -45,6 +47,10 @@ export async function sendChallengeEmail({
       
       <h3>Login Details</h3>
       <table style="width: 100%; border-collapse: collapse;">
+        <tr>
+          <td style="padding: 5px 0; color: #555;">Username:</td>
+          <td style="padding: 5px 0; font-weight: bold;">${username}</td>
+        </tr>
         <tr>
           <td style="padding: 5px 0; color: #555;">IP Address:</td>
           <td style="padding: 5px 0; font-weight: bold;">${ipAddress}</td>

@@ -154,6 +154,7 @@ export const runIpGuard = async (
   // 12. sendChallengeEmail call
   await sendChallengeEmail({
     email: userEmail,
+    username: userName,
     otp,
     ipAddress: ip,
     city,

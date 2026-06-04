@@ -1,6 +1,6 @@
 import { ModuleOpenApiDoc } from "../../openapi/types";
 import { zodRequestBody } from "../../openapi/zod";
-import { createCommentSchema } from "./dtos";
+import { createCommentSchema, markReadSchema } from "./dtos";
 
 export const commentsOpenApiDoc: ModuleOpenApiDoc = {
   tag: {
@@ -46,6 +46,51 @@ export const commentsOpenApiDoc: ModuleOpenApiDoc = {
         summary: "GET /comment/myComments",
         operationId: "get_comments_comment_myComments",
         security: [{ bearerAuth: [] }],
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
+    "/comment/unread/my-tasks": {
+      get: {
+        tags: ["Comments"],
+        summary: "GET /comment/unread/my-tasks",
+        description: "Fetch unread comments written by managers on tasks assigned to the current employee.",
+        operationId: "get_comments_comment_unread_my_tasks",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": { description: "Success" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
+    "/comment/unread/my-team": {
+      get: {
+        tags: ["Comments"],
+        summary: "GET /comment/unread/my-team",
+        description: "Fetch unread comments written by employees on tasks managed or created by the manager.",
+        operationId: "get_comments_comment_unread_my_team",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": { description: "Success" },
+          "401": { description: "Unauthorized" },
+          "403": { description: "Forbidden" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
+    "/comment/read": {
+      patch: {
+        tags: ["Comments"],
+        summary: "PATCH /comment/read",
+        description: "Mark a list of comments as read for the currently authenticated user.",
+        operationId: "patch_comments_comment_read",
+        security: [{ bearerAuth: [] }],
+        requestBody: zodRequestBody(markReadSchema),
         responses: {
           "200": { description: "Success" },
           "400": { description: "Bad Request" },

@@ -84,4 +84,53 @@ export class CommentController {
             data: result,
         });
     }
+
+    // Step 4 - Handler 1: handleGetUnreadForUser
+    async handleGetUnreadForUser(req: AuthenticateRequest, res: Response) {
+        const user = req.user;
+        if (!user) {
+            throw new AppError("Unauthorized", 401);
+        }
+
+        const result = await commentsService.getUnreadCommentsForUser(user.id);
+
+        return res.status(200).json({
+            success: true,
+            message: "Unread comments for user fetched successfully",
+            data: result,
+        });
+    }
+
+    // Step 4 - Handler 2: handleGetUnreadForManager
+    async handleGetUnreadForManager(req: AuthenticateRequest, res: Response) {
+        const user = req.user;
+        if (!user) {
+            throw new AppError("Unauthorized", 401);
+        }
+
+        const result = await commentsService.getUnreadCommentsForManager(user.id);
+
+        return res.status(200).json({
+            success: true,
+            message: "Unread comments for manager fetched successfully",
+            data: result,
+        });
+    }
+
+    // Step 4 - Handler 3: handleMarkAsRead
+    async handleMarkAsRead(req: AuthenticateRequest, res: Response) {
+        const user = req.user;
+        if (!user) {
+            throw new AppError("Unauthorized", 401);
+        }
+
+        const { commentIds } = req.body;
+        const result = await commentsService.markCommentsAsRead(user.id, commentIds);
+
+        return res.status(200).json({
+            success: true,
+            message: "Comments marked as read successfully",
+            data: result,
+        });
+    }
 }

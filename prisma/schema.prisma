@@ -425,6 +425,7 @@ model User {
   loginAttempts LoginAttempt[]  @relation("UserLoginAttempts")
   ipChallenges  IpChallenge[]   @relation("UserIpChallenges")
   sessions      UserSession[]   @relation("UserSessions")
+  commentReads  CommentRead[]   @relation("userCommentReads")
 
   @@index([email])
   @@index([phone])
@@ -1329,6 +1330,7 @@ model Comment {
   acknowledgedTime DateTime?
 
   //Relations   
+  reads            CommentRead[]   @relation("commentReads")
 
   estimationTaskId String?         @db.Uuid
   estimationTask   EstimationTask? @relation("estComment", fields: [estimationTaskId], references: [id], onDelete: Cascade)
@@ -1338,6 +1340,21 @@ model Comment {
   @@index([task_id])
   @@index([user_id])
   @@map("comment")
+}
+
+model CommentRead {
+  id          String   @id @default(uuid()) @db.Uuid
+  commentId   String   @db.Uuid
+  userId      String   @db.Uuid
+  readAt      DateTime @default(now())
+
+  comment     Comment  @relation("commentReads", fields: [commentId], references: [id], onDelete: Cascade)
+  user        User     @relation("userCommentReads", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([commentId, userId])
+  @@index([userId])
+  @@index([commentId])
+  @@map("comment_read")
 }
 
 model Estimation {
