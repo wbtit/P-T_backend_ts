@@ -83,11 +83,29 @@ import {
             return team;
         }
         async update(data: UpdateTeamInput) {
+            const { id, name, managerID, managerId, departmentID, departmentId } = data;
+            
+            const updateData: any = {};
+            
+            if (name !== undefined) {
+                updateData.name = name;
+            }
+
+            const targetManagerId = managerID || managerId;
+            if (targetManagerId !== undefined) {
+                updateData.manager = { connect: { id: targetManagerId } };
+            }
+
+            const targetDepartmentId = departmentID || departmentId;
+            if (targetDepartmentId !== undefined) {
+                updateData.department = { connect: { id: targetDepartmentId } };
+            }
+
             const team = await prisma.team.update({
                 where: {
-                    id: data.id
+                    id: id
                 },
-                data: data,
+                data: updateData,
                 include:{
                     department:true,
                     members:true,

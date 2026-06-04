@@ -263,7 +263,23 @@ export class TaskRepository {
         const tasks = await prisma.task.findMany({
             include: {
                 taskcomment:{
-                    select:{acknowledged:true}
+                    select:{
+                        id: true,
+                        data: true,
+                        created_on: true,
+                        acknowledged: true,
+                        acknowledgedTime: true,
+                        file: true,
+                        user: {
+                            select: {
+                                id: true,
+                                firstName: true,
+                                middleName: true,
+                                lastName: true,
+                                username: true
+                            }
+                        }
+                    }
                 },
                 project: {
 

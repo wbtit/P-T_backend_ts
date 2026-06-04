@@ -32,9 +32,17 @@ export const UpdateRoleSchema=z.object({
     newRole:z.string()
 })
 
+export const UpdateTeamSchema=z.object({
+    name:z.string().min(2).max(100).optional(),
+    managerID:z.string().optional(),
+    managerId:z.string().optional(),
+    departmentID:z.string().optional(),
+    departmentId:z.string().optional()
+})
+
 export type CreateTeamInput=z.infer<typeof CreateTeamSchema>;
 export type GetTeamInput={id:string};
-export type UpdateTeamInput=Partial<CreateTeamInput>&{id:string};
+export type UpdateTeamInput=z.infer<typeof UpdateTeamSchema>&{id:string};
 export type DeleteTeamInput={id:string};
 
 export type AddTeamMembersInput=z.infer<typeof AddTeamMembersSchema>;

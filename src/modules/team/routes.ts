@@ -2,7 +2,7 @@ import { Router } from "express";
 import authMiddleware from "../../middleware/authMiddleware";
 import validate from "../../middleware/validate";
 import { TeamController } from "./controllers";
-import { CreateTeamSchema } from "./dtos";
+import { CreateTeamSchema, UpdateTeamSchema } from "./dtos";
 import z from "zod";
 import { TeamMemberRole } from "@prisma/client";
 
@@ -16,36 +16,36 @@ router.post("/",
      teamController.create.bind(teamController));
     
 router.post("/addMembers/:role",
-    authMiddleware,
-    validate({params:z.object({role:z.string()})}),
-    teamController.addTeamMembers.bind(teamController));
+     authMiddleware,
+     validate({params:z.object({role:z.string()})}),
+     teamController.addTeamMembers.bind(teamController));
 
 router.put("/updateRole/:id",
-    authMiddleware,
-    validate({params:z.object({id:z.string()})}),
-    teamController.updateTeamRole.bind(teamController));
+     authMiddleware,
+     validate({params:z.object({id:z.string()})}),
+     teamController.updateTeamRole.bind(teamController));
 
 router.delete("/removeMembers",
-    authMiddleware,
-    validate({body:z.object({
-        teamId:z.string(),
-        userId:z.string()
-    })}),
-    teamController.removeTeamMembers.bind(teamController));
+     authMiddleware,
+     validate({body:z.object({
+         teamId:z.string(),
+         userId:z.string()
+     })}),
+     teamController.removeTeamMembers.bind(teamController));
 
 router.get("/:id", 
-    authMiddleware, 
-    validate({params:z.object({id:z.string()})}), 
-    teamController.getById.bind(teamController));
+     authMiddleware, 
+     validate({params:z.object({id:z.string()})}), 
+     teamController.getById.bind(teamController));
 
 router.get("/", 
-    authMiddleware, 
-    teamController.getAll.bind(teamController));
+     authMiddleware, 
+     teamController.getAll.bind(teamController));
 
 router.put("/:id", 
-    authMiddleware, 
-    validate({params:z.object({id:z.string()})}), 
-    teamController.update.bind(teamController));
+     authMiddleware, 
+     validate({params:z.object({id:z.string()}), body: UpdateTeamSchema}), 
+     teamController.update.bind(teamController));
 
 router.delete("/:id", 
     authMiddleware, 
