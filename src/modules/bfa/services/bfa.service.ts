@@ -1,6 +1,7 @@
 import { BfaRepository } from "../repositories";
 import { CreateBfaDto, UpdateBfaDto } from "../dtos";
 import { AppError } from "../../../config/utils/AppError";
+import { NotFoundError } from "../../../utils/errors";
 import { FileObject } from "../../../shared/fileType";
 import { Response } from "express";
 import { resolveUploadFilePath, streamFile } from "../../../utils/fileUtil";
@@ -42,7 +43,7 @@ export class BfaService {
   async getBfaBySubmittalId(submittalId: string) {
     const bfa = await bfaRepo.findBySubmittalId(submittalId);
     if (!bfa) {
-      throw new AppError("BFA not found for the given submittal", 404);
+      throw new NotFoundError("BFA not found for the given submittal");
     }
     return bfa;
   }

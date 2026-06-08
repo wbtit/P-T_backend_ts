@@ -8,6 +8,8 @@ export const globalErrorHandler = (
   next: NextFunction
 ) => {
   const isDev = process.env.NODE_ENV === "development";
+  const statusCode = (err as any).statusCode;
+  const is4xx = typeof statusCode === "number" && statusCode >= 400 && statusCode < 500;
 
   // 🧩 Structured error log for terminal
   console.error("========== 🌋 ERROR LOG START ==========");
@@ -15,7 +17,9 @@ export const globalErrorHandler = (
   console.error("📍 Route:", req.method, req.originalUrl);
   console.error("👤 User:", (req as any).user?.id || "Unauthenticated");
   console.error("💬 Message:", err.message);
-  console.error("📄 Stack:", err.stack);
+  if (!is4xx) {
+    console.error("📄 Stack:", err.stack);
+  }
   if ((err as any).errors) {
     console.error(
       "🧾 Validation Errors:",
@@ -24,9 +28,9 @@ export const globalErrorHandler = (
   }
   console.error("========== 🌋 ERROR LOG END ============\n");
 
-  // 🔹 Handle custom AppError
-  if (err instanceof AppError) {
-    return res.status(err.statusCode).json({
+  // 🔹 Handle custom error classes with statusCode
+  if (typeof statusCode === "number") {
+    return res.status(statusCode).json({
       status: "error",
       message: err.message,
       ...(isDev && { stack: err.stack }),

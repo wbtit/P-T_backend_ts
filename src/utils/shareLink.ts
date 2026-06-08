@@ -146,12 +146,10 @@ const createShareLink = async (req: Request, res: Response) => {
 const downloadShare = async (req: Request, res: Response) => {
   try {
     const { token } = req.params;
-    console.error("[downloadShare] Incoming token:", token);
 
     const share = await prisma.fileShareLink.findUnique({
       where: { token },
     });
-    console.error("[downloadShare] Share row:", share);
 
     if (!share) return res.status(404).json({ message: "Invalid link" });
 
@@ -167,27 +165,13 @@ const downloadShare = async (req: Request, res: Response) => {
     const row = await model.findUnique({
       where: { id: share.parentId },
     });
-    console.error("[downloadShare] Parent row found:", {
-      parentTable: share.parentTable,
-      parentId: share.parentId,
-      hasFiles: Array.isArray(row?.files),
-      filesCount: Array.isArray(row?.files) ? row.files.length : 0,
-    });
 
     if (!row) return res.status(404).json({ message: "Parent record not found" });
 
     const file = (row.files || []).find((f: FileObj) => f.id === share.fileId);
-    console.error("[downloadShare] Matched file object:", file);
     if (!file) return res.status(404).json({ message: "File not found in record" });
 
     const filePath = resolveUploadFilePath(file);
-    console.error("[downloadShare] Resolved file path:", {
-      uploadBaseDir: UPLOAD_BASE_DIR,
-      requestedFileId: share.fileId,
-      storedPath: file.path,
-      storedFilename: file.filename,
-      resolvedPath: filePath,
-    });
 
     if (!filePath || !fs.existsSync(filePath)) {
       console.error("[downloadShare] File missing on server after resolution:", {
@@ -199,12 +183,6 @@ const downloadShare = async (req: Request, res: Response) => {
 
     const stat = fs.statSync(filePath);
     const mimeType = mime.getType(filePath) || "application/octet-stream";
-    console.error("[downloadShare] Streaming file:", {
-      filePath,
-      size: stat.size,
-      mimeType,
-      originalName: file.originalName,
-    });
 
     // IMPORTANT HEADERS
     res.setHeader("Content-Type", mimeType);

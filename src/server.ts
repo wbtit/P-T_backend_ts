@@ -131,7 +131,9 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   console.error("🕒 Time:", new Date().toISOString());
   console.error("📍 Route:", req.method, req.originalUrl);
   console.error("💬 Message:", message);
-  console.error("📄 Stack:", err.stack);
+  if (status >= 500) {
+    console.error("📄 Stack:", err.stack);
+  }
   if (err.errors) {
     console.error("🧾 Validation Errors:", JSON.stringify(err.errors, null, 2));
   }

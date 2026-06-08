@@ -6,6 +6,7 @@ import {
   CotableRowInput,
 } from "../dtos";
 import { AppError } from "../../../config/utils/AppError";
+import { NotFoundError } from "../../../utils/errors";
 import { FileObject } from "../../../shared/fileType";
 import { Response } from "express";
 import { resolveUploadFilePath, streamFile } from "../../../utils/fileUtil";
@@ -101,7 +102,7 @@ export class COService {
   async getByProjectId(projectId: string) {
     const cos = await corepo.getByProjectId(projectId);
     if (!cos || cos.length === 0)
-      throw new AppError("No Change Orders found for this project", 404);
+      throw new NotFoundError("No Change Orders found for this project");
 
     return cos;
   }

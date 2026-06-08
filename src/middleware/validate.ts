@@ -15,15 +15,6 @@ const validate = (schemas: SchemaConfig) =>
     }
 
     try {
-      console.log("[Validation] Incoming request", {
-        method: req.method,
-        path: req.originalUrl,
-        contentType: req.headers["content-type"],
-        body: req.body,
-        params: req.params,
-        query: req.query,
-      });
-
       if (schemas.body) {
         const parsed = schemas.body.safeParse(req.body);
         if (!parsed.success) {

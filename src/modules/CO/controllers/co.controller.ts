@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { AuthenticateRequest } from "../../../middleware/authMiddleware";
 import { AppError } from "../../../config/utils/AppError";
+import { ForbiddenError } from "../../../utils/errors";
 import { COService } from "../services";
 import { mapUploadedFiles } from "../../uploads/fileUtil";
 import { notifyProjectStakeholdersByRole } from "../../../utils/notifyProjectStakeholders";
@@ -419,7 +420,7 @@ async handlePendingCOsForClient(req: AuthenticateRequest, res: Response) {
   }
   async handlePendingCOs(req: AuthenticateRequest, res: Response) {
     if (req.user?.role === "CLIENT" || req.user?.role === "CLIENT_ADMIN") {
-      throw new AppError("Access denied", 403);
+      throw new ForbiddenError("Access denied");
     }
     const cos = await coService.pendingCOs();
     res.status(200).json({

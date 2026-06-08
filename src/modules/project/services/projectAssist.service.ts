@@ -1,6 +1,7 @@
 import { includes } from "zod";
 import prisma from "../../../config/database/client";
 import { AppError } from "../../../config/utils/AppError";
+import { ForbiddenError } from "../../../utils/errors";
 import { UserJwt } from "../../../shared/types";
 
 const MAX_ACTIVE_ASSISTS = 2;
@@ -45,7 +46,7 @@ export class ProjectAssistService {
   private async assertProjectManager(projectId: string, actorId: string) {
     const project = await this.getProjectOrThrow(projectId);
     if (project.managerID !== actorId) {
-      throw new AppError("Only the project manager can manage project assists", 403);
+      throw new ForbiddenError("Only the project manager can manage project assists");
     }
     return project;
   }
