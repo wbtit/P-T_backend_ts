@@ -6,6 +6,7 @@ import prisma from "../../../config/database/client";
 import { notifyProjectStakeholders, notifyProjectStakeholdersByRole } from "../../../utils/notifyProjectStakeholders";
 import { UserRole } from "@prisma/client";
 import { buildRoleScopedNotification } from "../../../utils/stakeholderNotificationMessages";
+import { getRoleVisibilityFilter } from "../../../utils/roleFilter";
 
 const mileStoneService = new MileStoneService();
 const MILESTONE_NOTIFY_ROLES: UserRole[] = [
@@ -236,6 +237,11 @@ export class MileStoneController {
     if (!result) throw new AppError("MileStone not found", 404);
 
     if (user) {
+      const filter = getRoleVisibilityFilter(user.role);
+      if (filter.isConnectionDesign !== undefined && result.isConnectionDesign !== filter.isConnectionDesign) {
+        throw new AppError("Access denied", 403);
+      }
+
       if (user.role === "CLIENT_ADMIN") {
         const fabricator = await prisma.fabricator.findFirst({
           where: { pointOfContact: { some: { id: user.id } } }
@@ -295,7 +301,8 @@ export class MileStoneController {
   }
 
   async handleGetPendingSubmittals(req:Request,res:Response){
-    const result= await mileStoneService.getPendingSubmittals();
+    const authReq = req as AuthenticateRequest;
+    const result= await mileStoneService.getPendingSubmittals(authReq.user?.role);
 
     return res.status(200).json({
       message: "Pending submittals fetched successfully",
@@ -317,7 +324,7 @@ export class MileStoneController {
         data: [],
       });
     }
-    const result= await mileStoneService.getPendingSubmittalsByFabricator(fabricator.id);
+    const result= await mileStoneService.getPendingSubmittalsByFabricator(fabricator.id, req.user?.role);
 
     return res.status(200).json({
       message: "Pending submittals for fabricator fetched successfully",
@@ -328,7 +335,7 @@ export class MileStoneController {
 
   async handleGetPendingSubmittalsProjectManager(req:AuthenticateRequest,res:Response){
     const id = req.user?.id;
-    const result= await mileStoneService.getPendingSubmittalsProjectManager(id!);
+    const result= await mileStoneService.getPendingSubmittalsProjectManager(id!, req.user?.role);
 
     return res.status(200).json({
       message: "Pending submittals for project manager fetched successfully",
@@ -341,7 +348,7 @@ export class MileStoneController {
 
   async handleGetPendingSubmittalsByClient(req:AuthenticateRequest,res:Response){
     const id = req.user?.id;
-    const result= await mileStoneService.getPendingSubmittalsByClient(id!);
+    const result= await mileStoneService.getPendingSubmittalsByClient(id!, req.user?.role);
 
     return res.status(200).json({
       message: "Pending submittals for client admin fetched successfully",
@@ -358,6 +365,7 @@ async handleGetPendingSubmittalsByConnectionDesignerEngineer(req:AuthenticateReq
   const result= await mileStoneService.getPendingSubmittalsByConnectionDesignerEngineer({
     userId: userId!,
     connectionDesignerId,
+    role: req.user?.role,
   });
 
   return res.status(200).json({

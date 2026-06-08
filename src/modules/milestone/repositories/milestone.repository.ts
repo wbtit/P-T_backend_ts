@@ -3,6 +3,8 @@ import { cleandata } from "../../../config/utils/cleanDataObject";
 import { CreateMileStoneDto,UpdateMileStoneDto } from "../dtos";
 import { generateProjectScopedSerial, SERIAL_PREFIX } from "../../../utils/serial.util";
 import { AppError } from "../../../config/utils/AppError";
+import { getRoleVisibilityFilter } from "../../../utils/roleFilter";
+import { UserRole } from "@prisma/client";
 
 export class MileStoneRepository{
     async create(data:CreateMileStoneDto){
@@ -43,8 +45,9 @@ export class MileStoneRepository{
             data:{completeionPercentage:completionPercentage}
         })
     }   
-    async getAll(){
+    async getAll(role?: UserRole){
         return await prisma.mileStone.findMany({
+            where: getRoleVisibilityFilter(role),
             include:{
                 project:true,
                 Tasks:true,
@@ -63,13 +66,14 @@ export class MileStoneRepository{
             }
         })
     }
-    async getAllByFabricator(fabricatorId: string) {
+    async getAllByFabricator(fabricatorId: string, role?: UserRole) {
         return await prisma.mileStone.findMany({
             where: {
                 fabricator_id: fabricatorId,
                 project: {
                     isDeleted: false,
-                }
+                },
+                ...getRoleVisibilityFilter(role),
             },
             include:{
                 project:true,
@@ -89,13 +93,14 @@ export class MileStoneRepository{
             }
         })
     }
-    async getAllForClient(clientId: string) {
+    async getAllForClient(clientId: string, role?: UserRole) {
         return await prisma.mileStone.findMany({
             where: {
                 project: {
                     clientProjectManagers: { some: { id: clientId } },
                     isDeleted: false,
-                }
+                },
+                ...getRoleVisibilityFilter(role),
             },
             include:{
                 project:true,
@@ -115,7 +120,7 @@ export class MileStoneRepository{
             }
         })
     }
-    async getByProjectIdAndFabricator(projectId: string, fabricatorId: string) {
+    async getByProjectIdAndFabricator(projectId: string, fabricatorId: string, role?: UserRole) {
         return await prisma.mileStone.findMany({
             where: {
                 project_id: projectId,
@@ -124,6 +129,7 @@ export class MileStoneRepository{
                     isDeleted: false,
                     status: { in: ["ACTIVE", "ONHOLD"] },
                 },
+                ...getRoleVisibilityFilter(role),
             },
             include:{
                 project:true,
@@ -143,7 +149,7 @@ export class MileStoneRepository{
             }
         })
     }
-    async getByProjectIdAndClient(projectId: string, clientId: string) {
+    async getByProjectIdAndClient(projectId: string, clientId: string, role?: UserRole) {
         return await prisma.mileStone.findMany({
             where: {
                 project_id: projectId,
@@ -152,6 +158,7 @@ export class MileStoneRepository{
                     isDeleted: false,
                     status: { in: ["ACTIVE", "ONHOLD"] },
                 },
+                ...getRoleVisibilityFilter(role),
             },
             include:{
                 project:true,
@@ -216,13 +223,14 @@ export class MileStoneRepository{
             where:{id}
         })
     }
-    async getByProject(id:string){
+    async getByProject(id:string, role?: UserRole){
         return await prisma.mileStone.findMany({
             where:{project_id:id,
                 project:{
                     isDeleted: false,
                     status: { in: ["ACTIVE", "ONHOLD"] },
                 },
+                ...getRoleVisibilityFilter(role),
             },
             include:{
                 project:true,
@@ -243,7 +251,7 @@ export class MileStoneRepository{
         })
     }
 
-    async getPendingSubmittals(){
+    async getPendingSubmittals(role?: UserRole){
         return await prisma.mileStone.findMany({
             where:{
                 mileStoneSubmittals:{none:{}},
@@ -252,6 +260,7 @@ export class MileStoneRepository{
                     isDeleted: false,
                     status: { in: ["ACTIVE", "ONHOLD"] },
                 },
+                ...getRoleVisibilityFilter(role),
             },
             include:{
                 project:{select:{name:true}},
@@ -264,7 +273,7 @@ export class MileStoneRepository{
             }
         })
     }
-    async getPendingSubmittalsByFabricator(fabricatorId:string){
+    async getPendingSubmittalsByFabricator(fabricatorId:string, role?: UserRole){
         if (!fabricatorId) return [];
         return await prisma.mileStone.findMany({
             where:{
@@ -275,6 +284,7 @@ export class MileStoneRepository{
                     isDeleted: false,
                     status: { in: ["ACTIVE", "ONHOLD"] },
                 },
+                ...getRoleVisibilityFilter(role),
             },
             include:{
                 project:{select:{name:true}},
@@ -287,7 +297,7 @@ export class MileStoneRepository{
             }
         })
     }
-    async getPendingSubmittalsForClient(clientId: string) {
+    async getPendingSubmittalsForClient(clientId: string, role?: UserRole) {
         return await prisma.mileStone.findMany({
             where: {
                 project:{
@@ -297,6 +307,7 @@ export class MileStoneRepository{
                 },
                 mileStoneSubmittals: { none: {} },
                 legacySubmittals: { none: {} },
+                ...getRoleVisibilityFilter(role),
             },
             include: {
                 project: { select: { name: true } },
@@ -310,7 +321,7 @@ export class MileStoneRepository{
         });
     }
 
- async getPendingSubmittalsForProjectManager(managerId:string){
+ async getPendingSubmittalsForProjectManager(managerId:string, role?: UserRole){
     return await prisma.mileStone.findMany({
         where:{
             project:{
@@ -320,6 +331,7 @@ export class MileStoneRepository{
             },
             mileStoneSubmittals:{none:{}},
             legacySubmittals:{none:{}},
+            ...getRoleVisibilityFilter(role),
         },
         include:{
             project:{select:{name:true}},
@@ -335,9 +347,10 @@ export class MileStoneRepository{
 
  async getPendingSubmittalsForConnectionDesignerEngineer(params:{
     userId:string,
-    connectionDesignerId?:string | null
+    connectionDesignerId?:string | null,
+    role?: UserRole
  }){
-    const { userId, connectionDesignerId } = params;
+    const { userId, connectionDesignerId, role } = params;
     return await prisma.mileStone.findMany({
         where:{
             project:{
@@ -357,6 +370,7 @@ export class MileStoneRepository{
             CDApprovalDate:{not:null},
             mileStoneSubmittals:{none:{}},
             legacySubmittals:{none:{}},
+            ...getRoleVisibilityFilter(role),
         },
         include:{
             project:{select:{name:true}},
@@ -371,7 +385,7 @@ export class MileStoneRepository{
  }
 
 
- async getByProjectIdForConnectionDesignerEngineer(projectId:string, connectionDesignerId:string){
+ async getByProjectIdForConnectionDesignerEngineer(projectId:string, connectionDesignerId:string, role?: UserRole){
     return await prisma.mileStone.findMany({
         where:{
             project_id:projectId,
@@ -388,6 +402,7 @@ export class MileStoneRepository{
                 status: { in: ["ACTIVE", "ONHOLD"] },
             },
             CDApprovalDate:{not:null},
+            ...getRoleVisibilityFilter(role),
         },
         include:{
             project:{select:{name:true}},
