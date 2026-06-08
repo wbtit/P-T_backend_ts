@@ -487,6 +487,7 @@ import { generateProjectSerial } from "../../../utils/serial.util";
     return await prisma.project.findMany({
       where:{
         isDeleted: false,
+        isAwarded: true,
         status: { not: "INACTIVE" },
         fabricator:{ pointOfContact: { some: { id: clientAdminId } } },
       },
@@ -523,6 +524,7 @@ import { generateProjectSerial } from "../../../utils/serial.util";
    async getProjectsForClient(clientId: string){
     return await prisma.project.findMany({
       where:{
+        isAwarded: true,
         status: { not: "INACTIVE" },
         clientProjectManagers: { some: { id: clientId } }
        

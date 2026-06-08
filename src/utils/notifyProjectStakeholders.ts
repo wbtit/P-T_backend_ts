@@ -71,6 +71,11 @@ export async function getProjectStakeholderRecipients(
     return { project: null, recipientsByRole: new Map() };
   }
 
+  // Intercept and prevent any notifications to external stakeholders if the project is not officially awarded
+  if (project.isAwarded === false) {
+    roles = roles.filter(role => !role.startsWith('CLIENT') && !role.startsWith('VENDOR'));
+  }
+
   const recipientsByRole = new Map<UserRole, Set<string>>();
   const addRecipient = (role: UserRole, userId?: string | null) => {
     if (!userId) return;

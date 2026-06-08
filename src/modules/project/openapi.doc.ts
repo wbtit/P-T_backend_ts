@@ -208,6 +208,25 @@ export const projectOpenApiDoc: ModuleOpenApiDoc = {
         }
       },
     },
+    "/project/projects/{id}/award": {
+      patch: {
+        tags: ["Project"],
+        summary: "Award a pre-awarded project",
+        description: "Promote a pre-awarded project to active/awarded state, making it visible to client stakeholders and dispatching initial project creation notifications.",
+        operationId: "patch_project_project_projects_id_award",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { in: "path", name: "id", required: true, schema: { type: "string" } },
+        ],
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "404": { description: "Project not found" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
     "/project/projects/{projectId}/bundles": {
       get: {
         tags: ["Project"],

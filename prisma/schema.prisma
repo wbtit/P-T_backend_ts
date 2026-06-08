@@ -816,6 +816,7 @@ model Project {
   IFCompletionPercentage   Float     @default(0.0)
   IFACompletionAlertSent   Boolean   @default(false)
   IFCCompletionAlertSent   Boolean   @default(false)
+  isAwarded                Boolean   @default(true)
 
   //Relations
   clientProjectManagers   User[]                   @relation("clientProjectManagerProjects")

@@ -168,6 +168,7 @@ export const CreateProjectSchema = z.object({
 
   mailReminder: zBooleanString,
   submissionMailReminder: zBooleanString,
+  isAwarded: zBooleanString,
 });
 
 // UPDATE SCHEMA (partial)

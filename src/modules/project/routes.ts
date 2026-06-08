@@ -61,6 +61,8 @@ asyncHandler(projectController.handleDeleteProject.bind(projectController)));
 
 router.get("/projects", authMiddleware, asyncHandler(projectController.handleGetAllProjects.bind(projectController)));
 
+router.patch("/projects/:id/award", authMiddleware, validate({params:z.object({id:z.string()})}), asyncHandler(projectController.handleAwardProject.bind(projectController)));
+
 router.get("/projects/:projectId/files/:fileId", authMiddleware,validate({params:z.object({projectId:z.string(),fileId:z.string()})}), 
 asyncHandler(projectController.handleGetFile.bind(projectController)));
 

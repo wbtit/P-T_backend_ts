@@ -116,14 +116,21 @@ export class RFIController {
     (async () => {
       try {
         if (uniqueEmails.length > 0) {
-          const ccEmails = await getCCEmails();
-          await sendEmail({
-            html: rfihtmlContent(newrfi),
-            to: uniqueEmails.join(","),
-            cc: ccEmails,
-            subject: newrfi.subject,
-            text: newrfi.description,
+          const projectInfo = await prisma.project.findUnique({
+            where: { id: req.body.project_id },
+            select: { isAwarded: true }
           });
+          
+          if (projectInfo?.isAwarded !== false) {
+            const ccEmails = await getCCEmails();
+            await sendEmail({
+              html: rfihtmlContent(newrfi),
+              to: uniqueEmails.join(","),
+              cc: ccEmails,
+              subject: newrfi.subject,
+              text: newrfi.description,
+            });
+          }
         }
         await notifyProjectStakeholdersByRole(newrfi.project_id, RFI_NOTIFY_ROLES, (role) =>
           buildRoleScopedNotification(role, {

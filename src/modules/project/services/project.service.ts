@@ -126,6 +126,33 @@ import { invalidateDashboardCache, invalidationPatterns } from "../../../utils/d
   });
 }
 
+  async awardProject(id: string) {
+    const existing = await prisma.project.findUnique({
+      where: { id },
+    });
+
+    if (!existing) {
+      throw new AppError("Project not found", 404);
+    }
+
+    if (existing.isAwarded) {
+      return existing;
+    }
+
+    const project = await prisma.project.update({
+      where: { id },
+      data: { isAwarded: true },
+    });
+
+    try {
+      await invalidateDashboardCache(invalidationPatterns.onProjectChange);
+    } catch (err) {
+      console.error("Failed to invalidate cache on project award:", err);
+    }
+
+    return project;
+  }
+
 
 async expandProjectWbs(
   projectId: string,

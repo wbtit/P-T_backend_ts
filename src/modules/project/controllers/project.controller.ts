@@ -61,7 +61,11 @@ export class ProjectController {
         // Background non-blocking tasks
         (async () => {
           try {
-            await notifyProjectStakeholdersByRole(project.id, PROJECT_CREATED_ROLES, (role) =>
+            const rolesToNotify = project.isAwarded === false 
+              ? PROJECT_CREATED_ROLES.filter(r => !r.startsWith('CLIENT') && !r.startsWith('VENDOR')) 
+              : PROJECT_CREATED_ROLES;
+              
+            await notifyProjectStakeholdersByRole(project.id, rolesToNotify, (role) =>
               buildRoleScopedNotification(role, {
                 type: "PROJECT_CREATED",
                 basePayload: { projectId: project.id, timestamp: new Date() },
@@ -183,6 +187,15 @@ export class ProjectController {
             message: 'Project not found'
           });
         }
+        
+        const user = (req as AuthenticateRequest).user;
+        if (user && user.role.startsWith('CLIENT') && project.isAwarded === false) {
+           return res.status(404).json({
+            status: 'error',
+            message: 'Project not found'
+          });
+        }
+
         res.status(200).json({
           status: 'success',
           data: project
@@ -223,6 +236,38 @@ export class ProjectController {
         res.status(204).json({
           status: 'success',
           data: null
+        });
+    }
+
+    async handleAwardProject(req: Request, res: Response) {
+        const { id } = req.params;
+        const project = await projectService.awardProject(id);
+
+        // Background non-blocking tasks to notify client/vendor stakeholders
+        (async () => {
+          try {
+            const clientVendorRoles = PROJECT_CREATED_ROLES.filter(r => r.startsWith('CLIENT') || r.startsWith('VENDOR'));
+            await notifyProjectStakeholdersByRole(project.id, clientVendorRoles, (role) =>
+              buildRoleScopedNotification(role, {
+                type: "PROJECT_CREATED",
+                basePayload: { projectId: project.id, timestamp: new Date() },
+                templates: {
+                  creator: { title: "", message: "" },
+                  external: { title: "Project Received", message: `Project '${project.name}' was assigned and shared with you.` },
+                  oversight: { title: "Project Created", message: `Project '${project.name}' was created and is available for monitoring.` },
+                  internal: { title: "New Project Created", message: `Project '${project.name}' was created.` },
+                  default: { title: "Project Created", message: `Project '${project.name}' was created.` },
+                },
+              })
+            );
+          } catch (error) {
+            console.error("Error in handleAwardProject background tasks:", error);
+          }
+        })();
+
+        res.status(200).json({
+          status: 'success',
+          data: project
         });
     }
 
