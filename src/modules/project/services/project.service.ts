@@ -323,7 +323,7 @@ async expandProjectWbs(
      }  
      if(user.role==="DEPT_MANAGER"){
       //only of his department
-      projects = await projectRepository.getForDepartmentManager(user.departmentId!);
+      projects = await projectRepository.getForDepartmentManager(user.departmentId!, user.id);
      }
      if(user.role==="CONNECTION_DESIGNER_ADMIN"){
       if (!user.connectionDesignerId) {

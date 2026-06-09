@@ -384,9 +384,14 @@ import { generateProjectSerial } from "../../../utils/serial.util";
      });
      return updateLog;
    }
-   async getForProjectManager(projectManagerId: string) {
-      return await prisma.project.findMany({
-       where: { managerID:projectManagerId },
+    async getForProjectManager(projectManagerId: string) {
+       return await prisma.project.findMany({
+        where: {
+          OR: [
+            { managerID: projectManagerId },
+            { assists: { some: { userId: projectManagerId, isActive: true } } }
+          ]
+        },
        include:{
         stageHistory:true,
         fabricator:{select:{
@@ -417,9 +422,14 @@ import { generateProjectSerial } from "../../../utils/serial.util";
      });
    }
 
-   async getForDepartmentManager(departmentId: string) {
-      return await prisma.project.findMany({
-       where: { departmentID:departmentId },
+    async getForDepartmentManager(departmentId: string, userId?: string) {
+       return await prisma.project.findMany({
+        where: {
+          OR: [
+            { departmentID: departmentId },
+            ...(userId ? [{ assists: { some: { userId, isActive: true } } }] : [])
+          ]
+        },
        include:{
         stageHistory:true,
         fabricator:{select:{
@@ -562,8 +572,11 @@ import { generateProjectSerial } from "../../../utils/serial.util";
 
 async getForStaff(staffId: string) {
   return await prisma.project.findMany({
-    where:{
-      tasks:{some:{user_id:staffId}}
+    where: {
+      OR: [
+        { tasks: { some: { user_id: staffId } } },
+        { assists: { some: { userId: staffId, isActive: true } } }
+      ]
     },
     include:{
         stageHistory:true,
