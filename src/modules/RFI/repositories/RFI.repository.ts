@@ -55,25 +55,22 @@ export class RFIRepository{
     }
 
     async findPendingRFIsForClientAdmin(userId: string, role?: UserRole) {
-
-     const fabricator = await prisma.fabricator.findFirst({
+      const fabricators = await prisma.fabricator.findMany({
             where: {
                 pointOfContact: {
                     some: {
                         id: userId,
                         role: "CLIENT_ADMIN"
                     }
-                },
-                project: { some: { status: { in: ["ACTIVE", "ONHOLD"] } } }
+                }
             },
-            
-        })
-        if (!fabricator) {
-            throw new Error("Fabricator not found for the client admin");
-        }
+            select: { id: true }
+      });
+      const fabricatorIds = fabricators.map(f => f.id);
+
       return await prisma.rFI.findMany({
         where:{
-          fabricator_id:fabricator.id,
+          fabricator_id: { in: fabricatorIds },
           project: { status: { in: ["ACTIVE", "ONHOLD"] } },
           rfiresponse:{
             none:{}

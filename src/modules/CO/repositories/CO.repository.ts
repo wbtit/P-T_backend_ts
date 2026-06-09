@@ -95,7 +95,7 @@ export class CORepository {
     }
 
     async findPendingCOsForClientAdmin(userId:string){
-      const fabricator = await prisma.fabricator.findFirst({
+      const fabricators = await prisma.fabricator.findMany({
             where: {
                 pointOfContact: {
                     some: {
@@ -103,20 +103,21 @@ export class CORepository {
                         role: "CLIENT_ADMIN"
                     }
                 }
-            }
-        })
+            },
+            select: { id: true }
+        });
+        const fabricatorIds = fabricators.map(f => f.id);
+        
         return await prisma.changeOrder.findMany({
           where:{
-                Project: { status: { in: ["ACTIVE", "ONHOLD"] } },
-                Recipients:{FabricatorPointOfContacts:{
-                        some:{
-                            id:fabricator?.id,
-                        }
-                    }},
-                    coResponses:{none:{}},
-                    isAproovedByAdmin: true
+                Project: {
+                    fabricatorID: { in: fabricatorIds },
+                    status: { in: ["ACTIVE", "ONHOLD"] }
                 },
-                include:{
+                coResponses:{none:{}},
+                isAproovedByAdmin: true
+          },
+          include:{
             coResponses:{include:{childResponses:true}},
             Project:true,
             Recipients:true,
@@ -143,10 +144,41 @@ export class CORepository {
             senders:true,
             CoRefersTo:true,
           }
-      })
+       })
     }
         
     async recivedCos(userId:string, projectId?: string){
+        const user = await prisma.user.findUnique({
+            where: { id: userId },
+            select: { role: true }
+        });
+        if (user?.role === "CLIENT_ADMIN") {
+            const fabricators = await prisma.fabricator.findMany({
+                where: {
+                    pointOfContact: {
+                        some: { id: userId, role: "CLIENT_ADMIN" }
+                    }
+                },
+                select: { id: true }
+            });
+            const fabricatorIds = fabricators.map(f => f.id);
+            return await prisma.changeOrder.findMany({
+                where: {
+                    ...(projectId ? { project: projectId } : {}),
+                    Project: {
+                        fabricatorID: { in: fabricatorIds }
+                    },
+                    isAproovedByAdmin: true
+                },
+                include: {
+                    Recipients: true,
+                    multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
+                    senders: true,
+                    Project: true,
+                }
+            });
+        }
+
         return await prisma.changeOrder.findMany({
             where:{
                 ...(projectId ? { project: projectId } : {}),
@@ -165,6 +197,41 @@ export class CORepository {
         })
     }
     async sentCos(userId:string, projectId?: string){
+        const user = await prisma.user.findUnique({
+            where: { id: userId },
+            select: { role: true }
+        });
+        if (user?.role === "CLIENT_ADMIN") {
+            const fabricators = await prisma.fabricator.findMany({
+                where: {
+                    pointOfContact: {
+                        some: { id: userId, role: "CLIENT_ADMIN" }
+                    }
+                },
+                select: { id: true }
+            });
+            const fabricatorIds = fabricators.map(f => f.id);
+            return await prisma.changeOrder.findMany({
+                where: {
+                    ...(projectId ? { project: projectId } : {}),
+                    Project: {
+                        fabricatorID: { in: fabricatorIds }
+                    },
+                },
+                select:{
+                    id:true,
+                    remarks:true,
+                    description:true,
+                    changeOrderNumber:true,
+                    sentOn:true,
+                    files:true,
+                    recipients:true,
+                    project:true,
+                    isAproovedByAdmin:true
+                }
+            });
+        }
+
         return await prisma.changeOrder.findMany({
             where:{
                 sender:userId,

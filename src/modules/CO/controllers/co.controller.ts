@@ -196,6 +196,31 @@ async handlePendingCOsForClient(req: AuthenticateRequest, res: Response) {
 
     const existingCo = await coService.findById(id);
 
+    if (req.user?.role === "CLIENT_ADMIN") {
+      const fabricators = await prisma.fabricator.findMany({
+        where: {
+          pointOfContact: {
+            some: { id: req.user.id, role: "CLIENT_ADMIN" },
+          },
+        },
+        select: { id: true },
+      });
+      const fabricatorIds = fabricators.map((f) => f.id);
+      if (!fabricatorIds.includes(existingCo.Project.fabricatorID)) {
+        throw new AppError("Access denied: This change order does not belong to your fabricator", 403);
+      }
+    } else if (req.user?.role === "CLIENT") {
+      const project = await prisma.project.findFirst({
+        where: {
+          id: existingCo.project,
+          clientProjectManagers: { some: { id: req.user.id } }
+        }
+      });
+      if (!project) {
+        throw new AppError("Access denied: You are not assigned to this project", 403);
+      }
+    }
+
     const updatedCo = await coService.updateCo(id, {
       ...req.body,
       files: uploadedFiles,
@@ -326,6 +351,31 @@ async handlePendingCOsForClient(req: AuthenticateRequest, res: Response) {
 
     if ((req.user?.role === "CLIENT" || req.user?.role === "CLIENT_ADMIN") && co.isAproovedByAdmin !== true) {
       throw new AppError("You do not have permission to view this change order until it is approved", 403);
+    }
+
+    if (req.user?.role === "CLIENT_ADMIN") {
+      const fabricators = await prisma.fabricator.findMany({
+        where: {
+          pointOfContact: {
+            some: { id: req.user.id, role: "CLIENT_ADMIN" },
+          },
+        },
+        select: { id: true },
+      });
+      const fabricatorIds = fabricators.map((f) => f.id);
+      if (!fabricatorIds.includes(co.Project.fabricatorID)) {
+        throw new AppError("Access denied: This change order does not belong to your fabricator", 403);
+      }
+    } else if (req.user?.role === "CLIENT") {
+      const project = await prisma.project.findFirst({
+        where: {
+          id: co.project,
+          clientProjectManagers: { some: { id: req.user.id } }
+        }
+      });
+      if (!project) {
+        throw new AppError("Access denied: You are not assigned to this project", 403);
+      }
     }
 
     res.status(200).json({

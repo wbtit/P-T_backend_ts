@@ -38,9 +38,36 @@ export class CoResponseController {
     const { changeOrderVersionId } = req.body;
 
     if (req.user?.role === "CLIENT" || req.user?.role === "CLIENT_ADMIN") {
-      const co = await prisma.changeOrder.findUnique({ where: { id: coId } });
+      const co = await prisma.changeOrder.findUnique({
+        where: { id: coId },
+        include: { Project: true }
+      });
       if (!co || co.isAproovedByAdmin !== true) {
         throw new AppError("You do not have permission to respond to this change order until it is approved", 403);
+      }
+      if (req.user?.role === "CLIENT_ADMIN") {
+        const fabricators = await prisma.fabricator.findMany({
+          where: {
+            pointOfContact: {
+              some: { id: req.user.id, role: "CLIENT_ADMIN" },
+            },
+          },
+          select: { id: true },
+        });
+        const fabricatorIds = fabricators.map((f) => f.id);
+        if (!fabricatorIds.includes(co.Project.fabricatorID)) {
+          throw new AppError("Access denied: This change order does not belong to your fabricator", 403);
+        }
+      } else {
+        const project = await prisma.project.findFirst({
+          where: {
+            id: co.project,
+            clientProjectManagers: { some: { id: req.user.id } }
+          }
+        });
+        if (!project) {
+          throw new AppError("Access denied: You are not assigned to this project", 403);
+        }
       }
     }
 
