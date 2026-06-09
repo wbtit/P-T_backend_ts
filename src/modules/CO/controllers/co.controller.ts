@@ -221,8 +221,14 @@ async handlePendingCOsForClient(req: AuthenticateRequest, res: Response) {
       }
     }
 
+    const allowedApprovalRoles = ["ADMIN", "DEPUTY_MANAGER", "OPERATION_EXECUTIVE", "PROJECT_MANAGER_OFFICER"];
+    const updatePayload = { ...req.body };
+    if (!allowedApprovalRoles.includes(req.user?.role || "")) {
+      delete updatePayload.isAproovedByAdmin;
+    }
+
     const updatedCo = await coService.updateCo(id, {
-      ...req.body,
+      ...updatePayload,
       files: uploadedFiles,
     }, userId);
     const updatedCoNumber = updatedCo.changeOrderNumber?.trim();
