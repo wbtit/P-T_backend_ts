@@ -92,6 +92,19 @@ const getEmailsByRoles = async (roles: UserRole[]): Promise<string[]> => {
   return Array.from(new Set(users.map((user) => user.email!).filter(Boolean)));
 };
 
+export const stripHtml = (html: string): string => {
+  if (!html) return "";
+  return html
+    .replace(/<[^>]*>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .trim();
+};
+
 const sendEmail = async ({ to, cc, subject, text, html }: SendEmailInput) => {
   if (process.env.NODE_ENV !== 'production') {
     console.log('Email sending disabled in development environment');
@@ -110,7 +123,7 @@ const sendEmail = async ({ to, cc, subject, text, html }: SendEmailInput) => {
       from: "wbt.itdev@gmail.com",
       to: sanitizedRecipients.to,
       cc: sanitizedRecipients.cc.length ? sanitizedRecipients.cc : undefined,
-      subject,
+      subject: stripHtml(subject),
       text,
       html,
     });

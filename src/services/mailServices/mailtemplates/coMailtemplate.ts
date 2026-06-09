@@ -70,7 +70,6 @@ export const coHtmlContent = (co: any) => {
           <!-- Body Content -->
           <tr>
             <td class="content-body" style="padding: 40px 30px; color: #333333; line-height: 1.6;">
-              <p style="color: #888888; margin: 0 0 20px 0;">Date: ${co.sentOn ? new Date(co.sentOn).toDateString() : new Date().toDateString()}</p>
               <div style="font-size: 18px; font-weight: bold; margin: 0 0 20px 0;">Change Order: ${co.changeOrderNumber || "N/A"}</div>
               <p style="margin: 0 0 20px 0;">You have been notified about a <strong>Change Order</strong>. Please find the details below:</p>
 
@@ -85,21 +84,14 @@ export const coHtmlContent = (co: any) => {
                   <td valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333;">${co.Project?.name || "N/A"}</td>
                 </tr>
                 <tr>
-                  <td width="140" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #888888; font-weight: bold; font-size: 14px;">Description</td>
-                  <td valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333;">${co.description || "N/A"}</td>
-                </tr>
-                <tr>
-                  <td width="140" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #888888; font-weight: bold; font-size: 14px;">Remarks</td>
+                  <td width="140" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #888888; font-weight: bold; font-size: 14px;">Subject</td>
                   <td valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333;">${co.remarks || "N/A"}</td>
                 </tr>
                 <tr>
                   <td width="140" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #888888; font-weight: bold; font-size: 14px;">Stage</td>
                   <td valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333;">${co.stage || "N/A"}</td>
                 </tr>
-                <tr>
-                  <td width="140" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #888888; font-weight: bold; font-size: 14px;">Status</td>
-                  <td valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333;">${co.status || "N/A"}</td>
-                </tr>
+
                 <tr>
                   <td width="140" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #888888; font-weight: bold; font-size: 14px;">Sender</td>
                   <td valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333;">${[co.senders?.firstName, co.senders?.lastName].filter(Boolean).join(" ") || co.senders?.username || "N/A"}</td>

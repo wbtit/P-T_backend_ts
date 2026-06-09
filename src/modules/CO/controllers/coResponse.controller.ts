@@ -167,11 +167,9 @@ export class CoResponseController {
                 intro: `A new ${parentRespId ? "reply" : "response"} has been added to the Change Order thread in Project Station. Please review the latest update below:`,
                 details: [
                   { label: "CO Number", value: coMailContext.changeOrderNumber || "N/A" },
-                  { label: "Reference", value: coMailContext.serialNo || "N/A" },
                   { label: "Project", value: coMailContext.Project?.name || "N/A" },
                   { label: "Stage", value: coMailContext.stage },
                   { label: "Response By", value: responderName },
-                  { label: "Status", value: response.Status },
                   { label: "Description", value: response.description || "N/A" },
                   { label: "Response Date", value: new Date(response.createdAt).toDateString() },
                 ],

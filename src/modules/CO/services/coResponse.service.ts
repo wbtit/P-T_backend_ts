@@ -6,7 +6,7 @@ import { resolveUploadFilePath, streamFile } from "../../../utils/fileUtil";
 import { Response } from "express";
 import prisma from "../../../config/database/client";
 import changeOrderInvoiceRequestTemplate from "../../../services/mailServices/mailtemplates/changeOrderApprovedInvoice";
-import { getCCEmails, sendEmail } from "../../../services/mailServices/mailconfig";
+import { getCCEmails, sendEmail, stripHtml } from "../../../services/mailServices/mailconfig";
 
 const coResponseRepo = new CoResponseRepository();
 
@@ -50,7 +50,7 @@ export class CoResponseService {
         const mailOptions={
                 to:process.env.PMO_EMAIL,
                 cc: ccEmails,
-                subject:`Raise Invoice for the ChangeOrder : ${changeOrder.description}`,
+                subject:`Raise Invoice for the ChangeOrder : ${stripHtml(changeOrder.remarks)}`,
                 html:changeOrderInvoiceRequestTemplate(
                   changeOrder.Project.name,
                   changeOrder.changeOrderNumber,

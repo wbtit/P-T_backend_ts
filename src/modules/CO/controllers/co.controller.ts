@@ -5,7 +5,7 @@ import { ForbiddenError } from "../../../utils/errors";
 import { COService } from "../services";
 import { mapUploadedFiles } from "../../uploads/fileUtil";
 import { notifyProjectStakeholdersByRole } from "../../../utils/notifyProjectStakeholders";
-import { sendEmail, getCCEmails, getEmailsByRoles } from "../../../services/mailServices/mailconfig";
+import { sendEmail, getCCEmails, getEmailsByRoles, stripHtml } from "../../../services/mailServices/mailconfig";
 import { coHtmlContent } from "../../../services/mailServices/mailtemplates/coMailtemplate";
 import { UserRole } from "@prisma/client";
 import prisma from "../../../config/database/client";
@@ -89,7 +89,7 @@ export class COController {
     ].filter(Boolean) as string[];
     const uniqueCoEmails = Array.from(new Set(coEmails));
     const creatorId = id;
-    const coSubject = `Change Order ${co.changeOrderNumber || ""} - ${co.description || ""}`.trim();
+    const coSubject = `Change Order ${co.changeOrderNumber || ""} - ${stripHtml(co.remarks) || ""}`.trim();
     const coHtml = coHtmlContent(coAny);
     const coNumberForMeta = co.changeOrderNumber?.trim();
 
@@ -247,7 +247,7 @@ async handlePendingCOsForClient(req: AuthenticateRequest, res: Response) {
             coAny.Recipients?.email,
           ].filter(Boolean) as string[];
           const uniqueCoEmails = Array.from(new Set(coEmails));
-          const coSubject = `Change Order ${updatedCo.changeOrderNumber || ""} - ${updatedCo.description || ""}`.trim();
+          const coSubject = `Change Order ${updatedCo.changeOrderNumber || ""} - ${stripHtml(updatedCo.remarks) || ""}`.trim();
           const coHtml = coHtmlContent(coAny);
 
           const internalRoles: UserRole[] = ["ADMIN", "DEPUTY_MANAGER", "OPERATION_EXECUTIVE", "PROJECT_MANAGER_OFFICER"];
