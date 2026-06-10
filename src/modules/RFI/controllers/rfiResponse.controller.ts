@@ -132,8 +132,6 @@ export class RFIResponseController {
                 details: [
                   { label: "Project", value: rfiMailContext.project?.name || "N/A" },
                   { label: "Response By", value: responderName },
-                  { label: "Response State", value: response.responseState },
-                  { label: "WBT Status", value: response.wbtStatus },
                   { label: "Reason", value: response.reason || "N/A" },
                   { label: "Response Date", value: new Date(response.createdAt).toDateString() },
                 ],

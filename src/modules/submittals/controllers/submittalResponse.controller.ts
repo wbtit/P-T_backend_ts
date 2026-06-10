@@ -170,8 +170,6 @@ export class SubmittalResponseController {
                   { label: "Stage", value: submittalMailContext.stage },
                   { label: "Version", value: `v${submittalMailContext.currentVersion?.versionNumber || 1}` },
                   { label: "Response By", value: responderName },
-                  { label: "Status", value: response.status },
-                  { label: "WBT Status", value: response.wbtStatus },
                   { label: "Description", value: response.description || "N/A" },
                   { label: "Reason", value: response.reason || "N/A" },
                   { label: "Response Date", value: new Date(response.createdAt).toDateString() },
