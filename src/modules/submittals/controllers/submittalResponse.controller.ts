@@ -9,6 +9,7 @@ import prisma from "../../../config/database/client";
 import { UserRole } from "@prisma/client";
 import { buildRoleScopedNotification } from "../../../utils/stakeholderNotificationMessages";
 import { responseMailTemplate } from "../../../services/mailServices/mailtemplates/responseMailTemplate";
+import { getFabricatorNameForUser } from "../../../services/mailServices/mailtemplates/footerHelper";
 import {
   formatParticipantName,
   sendResponseParticipantMail,
@@ -148,6 +149,8 @@ export class SubmittalResponseController {
           const responseLabel = parentRespId ? "Submittal Reply" : "Submittal Response";
           const responderName = formatParticipantName(responder);
 
+          const fabricatorName = (await getFabricatorNameForUser(responderId, req.user?.role)) || undefined;
+
           await sendResponseParticipantMail({
             sender: submittalMailContext.sender,
             primaryRecipient: submittalMailContext.recepients,
@@ -177,6 +180,7 @@ export class SubmittalResponseController {
                 responderName,
                 responderDesignation: responder.designation,
                 ctaLabel: "Login to View Submittal",
+                fabricatorName,
               }),
           });
         }

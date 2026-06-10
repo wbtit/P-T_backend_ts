@@ -10,6 +10,7 @@ import { coHtmlContent } from "../../../services/mailServices/mailtemplates/coMa
 import { UserRole } from "@prisma/client";
 import prisma from "../../../config/database/client";
 import { buildRoleScopedNotification } from "../../../utils/stakeholderNotificationMessages";
+import { getFabricatorNameForUser } from "../../../services/mailServices/mailtemplates/footerHelper";
 
 const coService = new COService();
 const CO_NOTIFY_ROLES: UserRole[] = [
@@ -90,7 +91,8 @@ export class COController {
     const uniqueCoEmails = Array.from(new Set(coEmails));
     const creatorId = id;
     const coSubject = `Change Order ${co.changeOrderNumber || ""} - ${stripHtml(co.remarks) || ""}`.trim();
-    const coHtml = coHtmlContent(coAny);
+    const fabricatorName = (await getFabricatorNameForUser(id, req.user?.role)) || undefined;
+    const coHtml = coHtmlContent(coAny, fabricatorName);
     const coNumberForMeta = co.changeOrderNumber?.trim();
 
     // Background non-blocking tasks
@@ -248,7 +250,8 @@ async handlePendingCOsForClient(req: AuthenticateRequest, res: Response) {
           ].filter(Boolean) as string[];
           const uniqueCoEmails = Array.from(new Set(coEmails));
           const coSubject = `Change Order ${updatedCo.changeOrderNumber || ""} - ${stripHtml(updatedCo.remarks) || ""}`.trim();
-          const coHtml = coHtmlContent(coAny);
+          const fabricatorName = (await getFabricatorNameForUser(updaterId, req.user?.role)) || undefined;
+          const coHtml = coHtmlContent(coAny, fabricatorName);
 
           const internalRoles: UserRole[] = ["ADMIN", "DEPUTY_MANAGER", "OPERATION_EXECUTIVE", "PROJECT_MANAGER_OFFICER"];
           const internalEmails = await getEmailsByRoles(internalRoles);

@@ -12,6 +12,7 @@ import { sendNotification } from "../../../utils/sendNotification";
 import { buildRoleScopedNotification } from "../../../utils/stakeholderNotificationMessages";
 import prisma from "../../../config/database/client";
 import { getRoleVisibilityFilter } from "../../../utils/roleFilter";
+import { getFabricatorNameForUser } from "../../../services/mailServices/mailtemplates/footerHelper";
 
 const rfiService = new RFIService();
 const projectAssistService = new ProjectAssistService();
@@ -122,9 +123,10 @@ export class RFIController {
           });
           
           if (projectInfo?.isAwarded !== false) {
+            const fabricatorName = (await getFabricatorNameForUser(creatorId, actorRole)) || undefined;
             const ccEmails = await getCCEmails();
             await sendEmail({
-              html: rfihtmlContent(newrfi),
+              html: rfihtmlContent(newrfi, fabricatorName),
               to: uniqueEmails.join(","),
               cc: ccEmails,
               subject: newrfi.subject,

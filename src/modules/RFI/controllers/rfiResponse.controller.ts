@@ -8,6 +8,7 @@ import prisma from "../../../config/database/client";
 import { UserRole } from "@prisma/client";
 import { buildRoleScopedNotification } from "../../../utils/stakeholderNotificationMessages";
 import { responseMailTemplate } from "../../../services/mailServices/mailtemplates/responseMailTemplate";
+import { getFabricatorNameForUser } from "../../../services/mailServices/mailtemplates/footerHelper";
 import {
   formatParticipantName,
   sendResponseParticipantMail,
@@ -112,6 +113,8 @@ export class RFIResponseController {
           const responseLabel = parentRespId ? "RFI Reply" : "RFI Response";
           const responderName = formatParticipantName(responder);
 
+          const fabricatorName = (await getFabricatorNameForUser(responderId, req.user?.role)) || undefined;
+
           await sendResponseParticipantMail({
             sender: rfiMailContext.sender,
             primaryRecipient: rfiMailContext.recepients,
@@ -138,6 +141,7 @@ export class RFIResponseController {
                 responderName,
                 responderDesignation: responder.designation,
                 ctaLabel: "Login to View RFI",
+                fabricatorName,
               }),
           });
         }

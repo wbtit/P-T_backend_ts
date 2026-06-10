@@ -8,6 +8,7 @@ import { buildRoleScopedNotification } from "../../../../utils/stakeholderNotifi
 import prisma from "../../../../config/database/client";
 import { notifyMtoClientEstimatorsForRfq } from "../../../../utils/notifyMtoClientEstimators";
 import { responseMailTemplate } from "../../../../services/mailServices/mailtemplates/responseMailTemplate";
+import { getFabricatorNameForUser } from "../../../../services/mailServices/mailtemplates/footerHelper";
 import {
     formatParticipantName,
     sendResponseParticipantMail,
@@ -101,6 +102,8 @@ export class RfqResponseController {
             // Background non-blocking tasks
             (async () => {
                 try {
+                    const fabricatorName = (await getFabricatorNameForUser(userId || "", req.user?.role)) || undefined;
+
                     await sendResponseParticipantMail({
                         sender: rfqMailContext.sender,
                         primaryRecipient: rfqMailContext.recipient,
@@ -124,6 +127,7 @@ export class RfqResponseController {
                                 responderName,
                                 responderDesignation: responder.designation,
                                 ctaLabel: "Login to View RFQ",
+                                fabricatorName,
                             }),
                     });
 

@@ -169,8 +169,10 @@ export class RFQController {
               ? uniqueEmails 
               : Array.from(new Set([...uniqueEmails, ...internalGroupEmails]));
 
+            const fabricatorName = !isInternalCreator ? (senderFabricator?.fabName || undefined) : undefined;
+
             await sendEmail({
-              html: rfqhtmlContent(newrfq),
+              html: rfqhtmlContent(newrfq, fabricatorName),
               to: standardMailTo.join(","),
               subject: newrfq.subject,
               text: newrfq.description,

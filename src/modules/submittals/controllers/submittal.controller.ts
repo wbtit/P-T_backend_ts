@@ -13,6 +13,7 @@ import { ProjectAssistService } from "../../project/services/projectAssist.servi
 import { sendNotification } from "../../../utils/sendNotification";
 import prisma from "../../../config/database/client";
 import { buildRoleScopedNotification } from "../../../utils/stakeholderNotificationMessages";
+import { getFabricatorNameForUser } from "../../../services/mailServices/mailtemplates/footerHelper";
 
 const submittalService = new SubmittalService();
 const projectAssistService = new ProjectAssistService();
@@ -125,12 +126,13 @@ export class SubmittalController {
     (async () => {
       try {
         if (uniqueSubmittalEmails.length > 0) {
+          const fabricatorName = (await getFabricatorNameForUser(userId, role)) || undefined;
           const ccEmails = await getCCEmails();
           await sendEmail({
             to: uniqueSubmittalEmails.join(","),
             cc: ccEmails,
             subject: submittal.subject,
-            html: submittalhtmlContent(submittal),
+            html: submittalhtmlContent(submittal, fabricatorName),
           });
         }
         await notifyProjectStakeholdersByRole(submittal.project_id, SUBMITTAL_NOTIFY_ROLES, (role) =>

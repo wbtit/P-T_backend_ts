@@ -1,4 +1,6 @@
-export const coHtmlContent = (co: any) => {
+import { getFooterHtml, getFooterSignatureHtml } from "./footerHelper";
+
+export const coHtmlContent = (co: any, fabricatorName?: string) => {
   // Build greeting from all recipients
   const allRecipients: { firstName?: string; lastName?: string; username?: string }[] = [
     ...(co.multipleRecipients || []),
@@ -126,23 +128,10 @@ export const coHtmlContent = (co: any) => {
                 </tr>
               </table>
 
-              <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-top: 30px;">
-                <tr>
-                  <td class="signature-details" valign="top" style="border-left: 1px solid #e0e0e0; padding-left: 20px; color: #777777; font-size: 14px;">
-                    <strong style="color: #333333; font-size: 16px;">${co.senders?.username || "Project Station"}</strong><br />
-                    ${co.senders?.designation || "N/A"}<br />
-                    Whiteboard Engineering | <a href="https://whiteboardtec.com" style="color: #8cc63f; text-decoration: none;">whiteboardtec.com</a>
-                  </td>
-                </tr>
-              </table>
+              ${getFooterSignatureHtml(fabricatorName)}
             </td>
           </tr>
-          <!-- Footer -->
-          <tr>
-            <td bgcolor="#f4f4f4" style="padding: 20px; text-align: center; font-size: 12px; color: #999999;">
-              © ${new Date().getFullYear()} Whiteboard Engineering. All Rights Reserved.
-            </td>
-          </tr>
+          ${getFooterHtml(fabricatorName)}
         </table>
         <!--[if gte mso 9]>
         </td>

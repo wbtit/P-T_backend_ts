@@ -8,6 +8,7 @@ import prisma from "../../../config/database/client";
 import { UserRole } from "@prisma/client";
 import { buildRoleScopedNotification } from "../../../utils/stakeholderNotificationMessages";
 import { responseMailTemplate } from "../../../services/mailServices/mailtemplates/responseMailTemplate";
+import { getFabricatorNameForUser } from "../../../services/mailServices/mailtemplates/footerHelper";
 import {
   formatParticipantName,
   sendResponseParticipantMail,
@@ -151,6 +152,8 @@ export class CoResponseController {
           const responseLabel = parentRespId ? "Change Order Reply" : "Change Order Response";
           const responderName = formatParticipantName(responder);
 
+          const fabricatorName = (await getFabricatorNameForUser(responderId, req.user?.role)) || undefined;
+
           await sendResponseParticipantMail({
             sender: coMailContext.senders,
             primaryRecipient: coMailContext.Recipients,
@@ -177,6 +180,7 @@ export class CoResponseController {
                 responderName,
                 responderDesignation: responder.designation,
                 ctaLabel: "Login to View Change Order",
+                fabricatorName,
               }),
           });
         }

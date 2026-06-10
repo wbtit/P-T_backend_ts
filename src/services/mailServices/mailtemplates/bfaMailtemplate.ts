@@ -1,4 +1,7 @@
-export const bfaHtmlContent = (bfa: any, projectName: string, submittalSubject: string) => {
+import { getFooterSignatureHtml } from "./footerHelper";
+
+export const bfaHtmlContent = (bfa: any, projectName: string, submittalSubject: string, fabricatorName?: string) => {
+  const companyName = fabricatorName && fabricatorName.trim() ? fabricatorName : "Whiteboard Technologies Pvt Ltd";
   return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
 <head>
@@ -93,19 +96,7 @@ export const bfaHtmlContent = (bfa: any, projectName: string, submittalSubject: 
           <!-- Footer Signature -->
           <tr>
             <td bgcolor="#fafafa" style="padding: 30px; border-top: 1px solid #e8e8e8;">
-              <table border="0" cellpadding="0" cellspacing="0" width="100%">
-                <tr>
-                  <td class="signature-logo" width="30%" valign="middle" style="padding-right: 20px;">
-                    <img src="https://res.cloudinary.com/dp7yxzrgw/image/upload/v1753685727/logos/whiteboardtec-logo_oztrhh.png" alt="Whiteboard Signature Logo" width="130" border="0" style="display: block; width: 130px; max-width: 130px;" />
-                  </td>
-                  <td class="signature-details" width="70%" valign="middle" style="border-left: 2px solid #e8e8e8; padding-left: 20px; font-size: 12px; color: #777777; line-height: 1.5; text-align: left;">
-                    <strong>WHITEBOARD TECHNOLOGIES</strong><br />
-                    10915 N. Sterling Avenue, Suite B-2,<br />
-                    Tampa, FL 33612<br />
-                    <a href="https://whiteboardtec.com" target="_blank" style="color: #1a73e8; text-decoration: none;">whiteboardtec.com</a>
-                  </td>
-                </tr>
-              </table>
+              ${getFooterSignatureHtml(companyName)}
             </td>
           </tr>
         </table>

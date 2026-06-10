@@ -1,4 +1,4 @@
-// Templates/ifaCompletionInvoiceTemplate.ts
+import { getFooterHtml, getFooterSignatureHtml } from "./footerHelper";
 
 export function ifaCompletionInvoiceTemplate(project: any, fabricator: any) {
   return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -86,22 +86,10 @@ export function ifaCompletionInvoiceTemplate(project: any, fabricator: any) {
                 </tr>
               </table>
 
-              <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-top: 30px;">
-                <tr>
-                  <td class="signature-details" valign="top" style="border-left: 1px solid #e0e0e0; padding-left: 20px; color: #777777; font-size: 14px;">
-                    <strong style="color: #333333; font-size: 16px;">Project Station</strong><br />
-                    Whiteboard Technologies LLC | <a href="https://whiteboardtec.com" style="color: #8cc63f; text-decoration: none;">whiteboardtec.com</a>
-                  </td>
-                </tr>
-              </table>
+              ${getFooterSignatureHtml()}
             </td>
           </tr>
-          <!-- Footer -->
-          <tr>
-            <td bgcolor="#f4f4f4" style="padding: 20px; text-align: center; font-size: 12px; color: #999999;">
-              © ${new Date().getFullYear()} Whiteboard Engineering. All Rights Reserved.
-            </td>
-          </tr>
+          ${getFooterHtml()}
         </table>
         <!--[if gte mso 9]>
         </td>

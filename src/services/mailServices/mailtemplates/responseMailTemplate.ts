@@ -1,3 +1,5 @@
+import { getFooterHtml, getFooterSignatureHtml } from "./footerHelper";
+
 type ResponseMailDetail = {
   label: string;
   value?: string | number | null;
@@ -14,6 +16,7 @@ type ResponseMailTemplateInput = {
   responderName: string;
   responderDesignation?: string | null;
   ctaLabel: string;
+  fabricatorName?: string;
 };
 
 const safeValue = (value?: string | number | null) =>
@@ -30,6 +33,7 @@ export const responseMailTemplate = ({
   responderName,
   responderDesignation,
   ctaLabel,
+  fabricatorName,
 }: ResponseMailTemplateInput) => `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
 <head>
@@ -131,27 +135,10 @@ export const responseMailTemplate = ({
                 </tr>
               </table>
 
-              <p style="margin: 0 0 15px 0;">Thanks &amp; Regards,</p>
-
-              <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-top: 30px;">
-                <tr>
-                  <td class="signature-logo" width="120" valign="top" style="padding-right: 20px;">
-                    <img src="https://res.cloudinary.com/dp7yxzrgw/image/upload/v1753685727/logos/whiteboardtec-logo_oztrhh.png" alt="Logo" width="100" border="0" style="display: block; width: 100px;" />
-                  </td>
-                  <td class="signature-details" valign="top" style="border-left: 1px solid #e0e0e0; padding-left: 20px; color: #777777; font-size: 14px;">
-                    <strong style="color: #333333; font-size: 16px;">${safeValue(responderName)}</strong><br />
-                    ${safeValue(responderDesignation || "N/A")}<br />
-                    Whiteboard Engineering | <a href="https://whiteboardtec.com" style="color: #8cc63f; text-decoration: none;">whiteboardtec.com</a>
-                  </td>
-                </tr>
-              </table>
+              ${getFooterSignatureHtml(fabricatorName)}
             </td>
           </tr>
-          <tr>
-            <td bgcolor="#f4f4f4" style="padding: 20px; text-align: center; font-size: 12px; color: #999999;">
-              © ${new Date().getFullYear()} Whiteboard Engineering. All Rights Reserved.
-            </td>
-          </tr>
+          ${getFooterHtml(fabricatorName)}
         </table>
         <!--[if gte mso 9]>
         </td>

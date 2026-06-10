@@ -9,6 +9,7 @@ import { sendEmail, getEmailsByRoles } from "../../../services/mailServices/mail
 import { bfaHtmlContent } from "../../../services/mailServices/mailtemplates/bfaMailtemplate";
 import prisma from "../../../config/database/client";
 import { UserRole } from "@prisma/client";
+import { getFabricatorNameForUser } from "../../../services/mailServices/mailtemplates/footerHelper";
 
 const bfaService = new BfaService();
 
@@ -54,13 +55,14 @@ export class BfaController {
           );
 
           // 2. Send email alert
-          if (recipientEmails.length > 0) {
-            await sendEmail({
-              to: recipientEmails.join(","),
-              subject: `New BFA Created - ${bfa.serialNo || ""}`,
-              html: bfaHtmlContent(bfa, projectName, submittalSubject),
-            });
-          }
+            if (recipientEmails.length > 0) {
+              const fabricatorName = (await getFabricatorNameForUser(user.id, user.role)) || undefined;
+              await sendEmail({
+                to: recipientEmails.join(","),
+                subject: `New BFA Created - ${bfa.serialNo || ""}`,
+                html: bfaHtmlContent(bfa, projectName, submittalSubject, fabricatorName),
+              });
+            }
 
           // 3. Send system notification
           const rolesToNotify: UserRole[] = ["ADMIN", "PROJECT_MANAGER", "DEPUTY_MANAGER", "OPERATION_EXECUTIVE"];
