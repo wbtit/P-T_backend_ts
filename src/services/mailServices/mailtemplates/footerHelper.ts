@@ -11,26 +11,31 @@ const CLIENT_ROLES: Set<UserRole> = new Set([
 ]);
 
 export function getFooterHtml(fabricatorName?: string | null): string {
-  const companyName = fabricatorName && fabricatorName.trim() ? fabricatorName : "Whiteboard Technologies Pvt Ltd";
   return `<!-- Footer -->
           <tr>
             <td bgcolor="#f4f4f4" style="padding: 20px; text-align: center; font-size: 12px; color: #999999;">
-              © ${new Date().getFullYear()} ${companyName}. All Rights Reserved.
+              © ${new Date().getFullYear()} Whiteboard Technologies Pvt Ltd. All Rights Reserved.
             </td>
           </tr>`;
 }
 
 export function getFooterSignatureHtml(fabricatorName?: string | null): string {
   return `
-              <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-top: 30px;">
-                <tr>
-                  <td class="signature-details" valign="top" style="border-left: 1px solid #e0e0e0; padding-left: 20px; color: #777777; font-size: 14px;">
-                    <a href="https://ps.whiteboardtec.com/" style="color: #8cc63f; text-decoration: none; font-weight: bold;">Project Station</a>
-                    &nbsp;&nbsp;|&nbsp;&nbsp;
-                    <a href="https://www.whiteboardtec.com/" style="color: #8cc63f; text-decoration: none; font-weight: bold;">Whiteboard Technologies</a>
-                  </td>
-                </tr>
-              </table>`;
+    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-top: 30px;">
+      <tr>
+        <td align="center" style="padding-bottom: 10px;">
+          <img src="https://res.cloudinary.com/dp7yxzrgw/image/upload/v1753685727/logos/whiteboardtec-logo_oztrhh.png"
+               alt="Whiteboard Logo" width="170" border="0" style="display: block; width: 150px; max-width: 150px;" />
+        </td>
+      </tr>
+      <tr>
+        <td align="center" class="signature-details" valign="top" style="color: #777777; font-size: 14px;">
+          <a href="https://ps.whiteboardtec.com/" style="color: #8cc63f; text-decoration: none; font-weight: bold;">Project Station</a>
+          &nbsp;&nbsp;|&nbsp;&nbsp;
+          <a href="https://www.whiteboardtec.com/" style="color: #8cc63f; text-decoration: none; font-weight: bold;">Whiteboard Technologies</a>
+        </td>
+      </tr>
+    </table>`;
 }
 
 /**
