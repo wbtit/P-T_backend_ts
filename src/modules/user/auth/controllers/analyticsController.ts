@@ -71,11 +71,12 @@ export const getAdminAnalytics = async (req: AuthenticateRequest, res: Response)
     count: item._count.id,
   }));
 
-  // 4. Suspicious users: userId with >5 distinct IPs in last 24h
+  // 4. Suspicious users: userId with >1 distinct IP in last 7 days
+  const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
   const recentAttempts = await prisma.loginAttempt.findMany({
     where: {
       createdAt: {
-        gte: twentyFourHoursAgo,
+        gte: sevenDaysAgo,
       },
       userId: {
         not: null,
@@ -84,36 +85,60 @@ export const getAdminAnalytics = async (req: AuthenticateRequest, res: Response)
     select: {
       userId: true,
       ip: true,
+      status: true,
+      createdAt: true,
       user: {
         select: {
           username: true,
           email: true,
+          role: true,
         },
       },
     },
   });
 
-  const userIpsMap: Record<string, { username: string; email: string | null; ips: Set<string> }> = {};
+  const userIpsMap: Record<string, { username: string; email: string | null; role: string | null; hasAllowed: boolean; ipStats: Record<string, { firstSeenAt: Date; lastSeenAt: Date }> }> = {};
   for (const attempt of recentAttempts) {
     if (!attempt.userId) continue;
     if (!userIpsMap[attempt.userId]) {
       userIpsMap[attempt.userId] = {
         username: attempt.user?.username || "unknown",
         email: attempt.user?.email || null,
-        ips: new Set<string>(),
+        role: attempt.user?.role || null,
+        hasAllowed: false,
+        ipStats: {},
       };
     }
-    userIpsMap[attempt.userId].ips.add(attempt.ip);
+    
+    if (attempt.status === "ALLOWED") {
+      userIpsMap[attempt.userId].hasAllowed = true;
+    }
+
+    const ipData = userIpsMap[attempt.userId].ipStats[attempt.ip];
+    if (!ipData) {
+      userIpsMap[attempt.userId].ipStats[attempt.ip] = {
+        firstSeenAt: attempt.createdAt,
+        lastSeenAt: attempt.createdAt,
+      };
+    } else {
+      if (attempt.createdAt < ipData.firstSeenAt) ipData.firstSeenAt = attempt.createdAt;
+      if (attempt.createdAt > ipData.lastSeenAt) ipData.lastSeenAt = attempt.createdAt;
+    }
   }
 
   const suspiciousUsers = Object.entries(userIpsMap)
-    .filter(([_, data]) => data.ips.size > 3)
+    .filter(([_, data]) => data.hasAllowed && Object.keys(data.ipStats).length > 1)
     .map(([userId, data]) => ({
       userId,
       username: data.username,
       email: data.email,
-      distinctIpCount: data.ips.size,
-      ips: Array.from(data.ips),
+      role: data.role,
+      distinctIpCount: Object.keys(data.ipStats).length,
+      ips: Object.entries(data.ipStats).map(([ip, stats]) => ({
+        ipAddress: ip,
+        firstSeenAt: stats.firstSeenAt,
+        lastSeenAt: stats.lastSeenAt,
+      })),
     }));
 
   // 5. Daily login counts for last 14 days
@@ -164,6 +189,7 @@ export const getAdminAnalytics = async (req: AuthenticateRequest, res: Response)
       suspiciousUsers,
       dailyLogins,
       challengeCompletionRate,
+      sharedCredentialSuspectCount: suspiciousUsers.length,
     },
   });
 };
@@ -416,6 +442,119 @@ export const getIpChangeAnalytics = async (req: AuthenticateRequest, res: Respon
     success: true,
     data: {
       usersWithIpChanges,
+    },
+  });
+};
+
+
+// GET /auth/analytics/shared-credential-suspects
+export const getSharedCredentialSuspects = async (req: AuthenticateRequest, res: Response) => {
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+  const attempts = await prisma.loginAttempt.findMany({
+    where: {
+      status: "ALLOWED",
+      createdAt: {
+        gte: thirtyDaysAgo,
+      },
+      userId: {
+        not: null,
+      },
+    },
+    select: {
+      userId: true,
+      ip: true,
+      city: true,
+      country: true,
+      createdAt: true,
+      user: {
+        select: {
+          username: true,
+          email: true,
+          role: true,
+        },
+      },
+    },
+    orderBy: {
+      createdAt: 'asc'
+    }
+  });
+
+  const userMap: Record<string, {
+    username: string;
+    email: string | null;
+    role: string | null;
+    totalLogins: number;
+    ipStats: Record<string, {
+      ipAddress: string;
+      city: string | null;
+      country: string | null;
+      firstSeenAt: Date;
+      lastSeenAt: Date;
+      loginCount: number;
+    }>;
+  }> = {};
+
+  for (const attempt of attempts) {
+    if (!attempt.userId) continue;
+
+    if (!userMap[attempt.userId]) {
+      userMap[attempt.userId] = {
+        username: attempt.user?.username || "unknown",
+        email: attempt.user?.email || null,
+        role: attempt.user?.role || null,
+        totalLogins: 0,
+        ipStats: {},
+      };
+    }
+
+    const userData = userMap[attempt.userId];
+    userData.totalLogins++;
+
+    if (!userData.ipStats[attempt.ip]) {
+      userData.ipStats[attempt.ip] = {
+        ipAddress: attempt.ip,
+        city: attempt.city,
+        country: attempt.country,
+        firstSeenAt: attempt.createdAt,
+        lastSeenAt: attempt.createdAt,
+        loginCount: 1,
+      };
+    } else {
+      const ipData = userData.ipStats[attempt.ip];
+      ipData.loginCount++;
+      if (attempt.createdAt < ipData.firstSeenAt) ipData.firstSeenAt = attempt.createdAt;
+      if (attempt.createdAt > ipData.lastSeenAt) ipData.lastSeenAt = attempt.createdAt;
+    }
+  }
+
+  const suspects = Object.entries(userMap)
+    .filter(([_, data]) => Object.keys(data.ipStats).length > 1)
+    .map(([userId, data]) => {
+      const ipsArray = Object.values(data.ipStats).sort((a, b) => a.firstSeenAt.getTime() - b.firstSeenAt.getTime());
+      
+      // firstFlaggedAt is the first time they logged in from their SECOND IP
+      const firstFlaggedAt = ipsArray.length > 1 ? ipsArray[1].firstSeenAt : ipsArray[0].firstSeenAt;
+
+      return {
+        userId,
+        username: data.username,
+        email: data.email,
+        role: data.role,
+        distinctIpCount: ipsArray.length,
+        ips: ipsArray,
+        totalLogins: data.totalLogins,
+        firstFlaggedAt,
+      };
+    })
+    .sort((a, b) => b.distinctIpCount - a.distinctIpCount);
+
+  res.status(200).json({
+    success: true,
+    data: {
+      suspects,
+      total: suspects.length,
+      generatedAt: new Date(),
     },
   });
 };

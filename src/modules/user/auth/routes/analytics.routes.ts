@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { getAdminAnalytics, getMyLoginHistory, getUserRbaAnalytics, getIpChangeAnalytics } from "../controllers/analyticsController";
+import { getAdminAnalytics, getMyLoginHistory, getUserRbaAnalytics, getIpChangeAnalytics, getSharedCredentialSuspects } from "../controllers/analyticsController";
 import { asyncHandler } from "../../../../config/utils/asyncHandler";
 import authMiddleware from "../../../../middleware/authMiddleware";
 import roleMiddleware from "../../../../middleware/roleMiddleware";
@@ -17,5 +17,8 @@ router.get("/user/:userId", authMiddleware, roleMiddleware(["ADMIN","DEPUTY_MANA
 
 // GET /auth/analytics/ip-changes -> Admin role required to inspect users whose IP has changed
 router.get("/ip-changes", authMiddleware, roleMiddleware(["ADMIN","DEPUTY_MANAGER","OPERATION_EXECUTIVE","HUMAN_RESOURCE"]), asyncHandler(getIpChangeAnalytics));
+
+// GET /auth/analytics/shared-credential-suspects -> Admin role required to inspect users who might be sharing credentials
+router.get("/shared-credential-suspects", authMiddleware, roleMiddleware(["ADMIN","DEPUTY_MANAGER","OPERATION_EXECUTIVE","HUMAN_RESOURCE"]), asyncHandler(getSharedCredentialSuspects));
 
 export default router;

@@ -34,18 +34,19 @@ export const handleSignin = async (req: Request, res: Response) => {
     }
 
     // 2. IP extracted with x-forwarded-for split on comma, index [0]
-    const xForwardedFor = req.headers["x-forwarded-for"];
-    let ip = "";
-    if (typeof xForwardedFor === "string") {
-        ip = xForwardedFor.split(",")[0].trim();
-    } else if (Array.isArray(xForwardedFor)) {
-        ip = xForwardedFor[0].trim();
+    const forwarded = req.headers['x-forwarded-for'];
+    let ip: string;
+    if (typeof forwarded === 'string') {
+      ip = forwarded.split(',')[0].trim();
+    } else if (Array.isArray(forwarded)) {
+      ip = forwarded[0].trim();
     } else {
-        ip = req.socket.remoteAddress || req.ip || "";
+      ip = req.ip || req.socket?.remoteAddress || '';
     }
 
-    if (ip === "::1" || ip === "::ffff:127.0.0.1") {
-        ip = "127.0.0.1";
+    // Normalize IPv6 loopback to IPv4
+    if (ip === '::1' || ip === '::ffff:127.0.0.1') {
+      ip = '127.0.0.1';
     }
 
     // 3. UA extracted from req.headers['user-agent']
