@@ -338,6 +338,8 @@ model User {
   isActive             Boolean  @default(true) @map("is_active")
   isFirstLogin         Boolean  @default(true) @map("is_firstLogin")
   tokenVersion         Int      @default(0)
+  lastWorkingDay       DateTime?
+  reason               String?  @default("")
   updatedAt            DateTime @updatedAt
   createdAt            DateTime @default(now())
 

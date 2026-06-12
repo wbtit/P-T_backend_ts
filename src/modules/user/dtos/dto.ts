@@ -42,7 +42,10 @@ export const createUserSchema = z.object({
   role: z.enum(UserRole),
   departmentId: z.string().nullable().optional(),
   fabricatorId:z.string().optional(),
-  connectionDesignerId:z.string().optional()
+  connectionDesignerId:z.string().optional(),
+  lastWorkingDay: z.coerce.date().nullable().optional(),
+  reason: z.string().nullable().optional(),
+  isActive: z.boolean().optional()
 });
 
 export const UpdateUserSchema=createUserSchema.partial()

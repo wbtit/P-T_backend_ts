@@ -518,7 +518,11 @@ async findUnapprovedCOs(projectId?: string) {
             ...(projectId ? { project: projectId } : {})
         },
         include: {
-            Project: true,
+            Project: {
+                include: {
+                    fabricator: true
+                }
+            },
             Recipients: true,
             multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
             senders: true,
