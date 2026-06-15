@@ -5,3 +5,4 @@ export * from "./repositories"
 
 export {default as CDroutes} from "./routes"
 export {default as CDQroutes} from "./cdq.routes"
+export {default as CDQRroutes} from "./cdqr.routes"

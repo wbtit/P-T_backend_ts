@@ -17,6 +17,12 @@ datasource db {
 // ENUMS
 // ===========================================================
 
+enum QuotaResponseStatus {
+  IN_REVIEW
+  AWARDED
+  REJECTED
+}
+
 enum UserRole {
   STAFF
   VENDOR
@@ -542,9 +548,34 @@ model ConnectionDesignerQuota {
   connectionDesigner ConnectionDesigner @relation("connectionDesignerQuotas", fields: [connectionDesignerId], references: [id])
   rfq                RFQ?               @relation("referRFQs", fields: [rfqId], references: [id])
   awardedProjects    Project?           @relation("awardedQuota")
+  responses          ConnectionDesignerQuotaResponse[] @relation("quotaResponses")
 
   @@index([connectionDesignerId])
   @@map("connection_designer_quota")
+}
+
+model ConnectionDesignerQuotaResponse {
+  id                   String                   @id @default(uuid()) @db.Uuid
+  quotaId              String                   @db.Uuid
+  parentId             String?                  @db.Uuid
+
+  mainSteelPrice       Float?                   @map("main_steel_price")
+  miscSteelPrice       Float?                   @map("misc_steel_price")
+  description          String?                  @default("")
+  status               QuotaResponseStatus      @default(IN_REVIEW)
+
+  createdAt            DateTime                 @default(now())
+  updatedAt            DateTime                 @updatedAt
+  isDeleted            Boolean                  @default(false)
+
+  // Relations
+  quota                ConnectionDesignerQuota  @relation("quotaResponses", fields: [quotaId], references: [id])
+  parentResponse       ConnectionDesignerQuotaResponse? @relation("ResponseChain", fields: [parentId], references: [id])
+  childResponses       ConnectionDesignerQuotaResponse[] @relation("ResponseChain")
+
+  @@index([quotaId])
+  @@index([parentId])
+  @@map("connection_designer_quota_response")
 }
 
 model Vendor {

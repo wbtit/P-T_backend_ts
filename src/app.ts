@@ -19,6 +19,7 @@ import { invoiceRoutes } from "./modules/invoice";
 import {RFQRoutes} from "./modules/RFQ"
 import { CDroutes } from "./modules/connectionDesign";
 import { CDQroutes } from "./modules/connectionDesign";
+import { CDQRroutes } from "./modules/connectionDesign";
 import { estimationTaskRoutes } from "./modules/estimation";
 import { RFIRoutes} from "./modules/RFI"
 import { SbmittalRoutes} from "./modules/submittals"
@@ -62,6 +63,7 @@ routes.use("/client",ClientRoutes)
 routes.use("/invoice",invoiceRoutes)
 routes.use("/connectionDesign",CDroutes)
 routes.use("/connectionDesignerQuota",CDQroutes)
+routes.use("/CDQuotaResponse", CDQRroutes)
 routes.use("/submittal",SbmittalRoutes)
 routes.use("/bfa", bfaRoutes)
 routes.use("/analytics/scores",analyticsScoresRouter)

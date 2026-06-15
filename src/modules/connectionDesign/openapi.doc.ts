@@ -1,6 +1,7 @@
 import { ModuleOpenApiDoc } from "../../openapi/types";
 import { genericRequestBody, zodRequestBody } from "../../openapi/zod";
 import { ConnectionDesignerSchema, ConnectionDesignerQuotaSchema, updateConnectionDesignerQuotaSchema, updateConnectionDesignerSchema } from "./dtos";
+import { CreateConnectionDesignerQuotaResponseSchema, UpdateConnectionDesignerQuotaResponseSchema } from "./dtos/connectionDesignerQuotaResponse.dto";
 
 export const connectionDesignOpenApiDoc: ModuleOpenApiDoc = {
   tag: {
@@ -294,6 +295,100 @@ export const connectionDesignOpenApiDoc: ModuleOpenApiDoc = {
           "500": { description: "Internal Server Error" }
         }
       },
+    },
+    "/CDQuotaResponse": {
+      post: {
+        tags: ["ConnectionDesign"],
+        summary: "POST /CDQuotaResponse",
+        operationId: "post_CDQuotaResponse",
+        security: [{ bearerAuth: [] }],
+        requestBody: zodRequestBody(CreateConnectionDesignerQuotaResponseSchema),
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
+    "/CDQuotaResponse/all": {
+      get: {
+        tags: ["ConnectionDesign"],
+        summary: "GET /CDQuotaResponse/all",
+        operationId: "get_CDQuotaResponse_all",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
+    "/CDQuotaResponse/{id}": {
+      get: {
+        tags: ["ConnectionDesign"],
+        summary: "GET /CDQuotaResponse/{id}",
+        operationId: "get_CDQuotaResponse_id",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { in: "path", name: "id", required: true, schema: { type: "string", format: "uuid" } },
+        ],
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+      put: {
+        tags: ["ConnectionDesign"],
+        summary: "PUT /CDQuotaResponse/{id}",
+        operationId: "put_CDQuotaResponse_id",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { in: "path", name: "id", required: true, schema: { type: "string", format: "uuid" } },
+        ],
+        requestBody: zodRequestBody(UpdateConnectionDesignerQuotaResponseSchema),
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+      delete: {
+        tags: ["ConnectionDesign"],
+        summary: "DELETE /CDQuotaResponse/{id}",
+        operationId: "delete_CDQuotaResponse_id",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { in: "path", name: "id", required: true, schema: { type: "string", format: "uuid" } },
+        ],
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      }
+    },
+    "/CDQuotaResponse/quota/{quotaId}": {
+      get: {
+        tags: ["ConnectionDesign"],
+        summary: "GET /CDQuotaResponse/quota/{quotaId}",
+        operationId: "get_CDQuotaResponse_quota_quotaId",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { in: "path", name: "quotaId", required: true, schema: { type: "string", format: "uuid" } },
+        ],
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      }
     },
   }
 };
