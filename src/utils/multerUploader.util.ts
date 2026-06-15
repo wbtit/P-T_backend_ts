@@ -4,6 +4,8 @@ import path from "path";
 import fs from "fs";
 import { UPLOAD_BASE_DIR } from "./fileUtil";
 import { Request, Response, NextFunction } from "express";
+import { buildProjectFilePath, buildRfqFilePath, getUploaderCategory } from "./fileStorageHelper";
+import { UserRole } from "@prisma/client";
 
 export interface FileMeta {
   originalName: string;
@@ -184,11 +186,16 @@ function trackUploadedFile(file: Express.Multer.File, fileMap: Record<string, Fi
   (file as any).destination = (file as any).destination || path.dirname(fullPath);
 }
 
-function createDiskStorage(uploadDir: string) {
+function createDiskStorage(uploadDir: string | ((req: Request) => string)) {
   return multer.diskStorage({
-    destination: (_req, _file, cb) => {
-      ensureUploadDir(uploadDir);
-      cb(null, uploadDir);
+    destination: (req, _file, cb) => {
+      try {
+        const dir = typeof uploadDir === 'function' ? uploadDir(req) : uploadDir;
+        ensureUploadDir(dir);
+        cb(null, dir);
+      } catch (err) {
+        cb(err as Error, "");
+      }
     },
     filename: (_req, file, cb) => {
       const ext = path.extname(file.originalname).toLowerCase();
@@ -197,12 +204,17 @@ function createDiskStorage(uploadDir: string) {
   });
 }
 
-function createFieldDiskStorage(uploadDirsByField: Record<string, string>, fallbackDir: string) {
+function createFieldDiskStorage(uploadDirsByField: Record<string, string | ((req: Request) => string)>, fallbackDir: string | ((req: Request) => string)) {
   return multer.diskStorage({
-    destination: (_req, file, cb) => {
-      const uploadDir = uploadDirsByField[file.fieldname] ?? fallbackDir;
-      ensureUploadDir(uploadDir);
-      cb(null, uploadDir);
+    destination: (req, file, cb) => {
+      try {
+        const fieldDir = uploadDirsByField[file.fieldname] ?? fallbackDir;
+        const uploadDir = typeof fieldDir === 'function' ? fieldDir(req) : fieldDir;
+        ensureUploadDir(uploadDir);
+        cb(null, uploadDir);
+      } catch (err) {
+        cb(err as Error, "");
+      }
     },
     filename: (_req, file, cb) => {
       const ext = path.extname(file.originalname).toLowerCase();
@@ -266,11 +278,12 @@ function validateFile(
 // -----------------------------------------------------------------------------
 // Post-upload processing
 // -----------------------------------------------------------------------------
-async function processMemoryUploadedFiles(req: Request, uploadDir: string, fileMap: Record<string, FileMeta>) {
+async function processMemoryUploadedFiles(req: Request, uploadDir: string | ((req: Request) => string), fileMap: Record<string, FileMeta>) {
   const allFiles = flattenUploadedFiles(req);
   if (allFiles.length === 0) return;
 
-  ensureUploadDir(uploadDir);
+  const resolvedDir = typeof uploadDir === 'function' ? uploadDir(req) : uploadDir;
+  ensureUploadDir(resolvedDir);
   const { fileTypeFromBuffer } = await getFileType();
 
   for (const file of allFiles) {
@@ -294,17 +307,17 @@ async function processMemoryUploadedFiles(req: Request, uploadDir: string, fileM
     }
 
     const filename = `${uuidv4()}${ext}`;
-    const fullPath = path.join(uploadDir, filename);
+    const fullPath = path.join(resolvedDir, filename);
     fs.writeFileSync(fullPath, file.buffer);
 
     (file as any).filename = filename;
     (file as any).path = fullPath;
-    (file as any).destination = uploadDir;
+    (file as any).destination = resolvedDir;
     trackUploadedFile(file, fileMap);
   }
 }
 
-async function processStreamUploadedFiles(req: Request, _uploadDir: string, fileMap: Record<string, FileMeta>) {
+async function processStreamUploadedFiles(req: Request, _uploadDir: string | ((req: Request) => string), fileMap: Record<string, FileMeta>) {
   const allFiles = flattenUploadedFiles(req);
   if (allFiles.length === 0) return;
 
@@ -347,11 +360,11 @@ function compose(middlewares: any[]) {
 
 function createUploader(
   storage: multer.StorageEngine,
-  uploadDir: string,
+  uploadDir: string | ((req: Request) => string),
   fileMap: Record<string, FileMeta>,
   maxSizeBytes: number,
   allowedExtensions: string[] | undefined,
-  processor: (req: Request, uploadDir: string, fileMap: Record<string, FileMeta>) => Promise<void>
+  processor: (req: Request, uploadDir: string | ((req: Request) => string), fileMap: Record<string, FileMeta>) => Promise<void>
 ) {
   const uploader = multer({
     storage,
@@ -397,7 +410,7 @@ function createUploader(
 }
 
 export function createMemoryUploader(
-  uploadDir: string,
+  uploadDir: string | ((req: Request) => string),
   fileMap: Record<string, FileMeta>,
   maxSizeBytes: number,
   allowedExtensions?: string[]
@@ -413,7 +426,7 @@ export function createMemoryUploader(
 }
 
 export function createStreamUploader(
-  uploadDir: string,
+  uploadDir: string | ((req: Request) => string),
   fileMap: Record<string, FileMeta>,
   maxSizeBytes: number,
   allowedExtensions?: string[]
@@ -434,6 +447,60 @@ export const createMulterUploader = createMemoryUploader;
 // Uploaders for each module
 // -----------------------------------------------------------------------------
 
+
+/**
+ * Multer destination for project-context uploads (RFI, Submittal, CO, etc.)
+ * Requires query params: fabricatorName, projectName
+ * Optional query param: projectCode
+ */
+export function projectUploadDestination(req: Request): string {
+  const { fabricatorName, projectName, projectCode } = req.query as Record<string, string>
+
+  if (!fabricatorName) throw new Error("fabricatorName query param is required for upload")
+  if (!projectName) throw new Error("projectName query param is required for upload")
+
+  const role = (req as any).user?.role as UserRole
+  const category = getUploaderCategory(role)
+
+  // Return directory only (no filename) — multer appends filename
+  const fullPath = buildProjectFilePath({
+    fabricatorName,
+    projectCode: projectCode || null,
+    projectName,
+    category,
+    filename: "",   // empty — multer handles filename
+  })
+
+  // Strip trailing slash from the directory portion
+  return path.join(UPLOAD_BASE_DIR, fullPath.replace(/\/$/, ""))
+}
+
+/**
+ * Multer destination for RFQ uploads.
+ * Requires query params: fabricatorName, rfqProjectName
+ * Optional query param: rfqSerialNo
+ */
+export function rfqUploadDestination(req: Request): string {
+  const { fabricatorName, rfqProjectName, rfqSerialNo } = req.query as Record<string, string>
+
+  if (!fabricatorName) throw new Error("fabricatorName query param is required for upload")
+  if (!rfqProjectName) throw new Error("rfqProjectName query param is required for upload")
+
+  const role = (req as any).user?.role as UserRole
+  const category = getUploaderCategory(role)
+
+  const fullPath = buildRfqFilePath({
+    fabricatorName,
+    rfqSerialNo: rfqSerialNo || null,
+    rfqProjectName,
+    category,
+    filename: "",
+  })
+
+  return path.join(UPLOAD_BASE_DIR, fullPath.replace(/\/$/, ""))
+}
+
+
 export const fabricatorDataMap: Record<string, FileMeta> = {};
 export const fabricatorsUploads = createStreamUploader(path.join(UPLOAD_BASE_DIR, "fabricators"), fabricatorDataMap, SIZE_LIMITS.ZIP);
 
@@ -444,10 +511,10 @@ export const rfqCDAttachmentsMap: Record<string, FileMeta> = {};
 const rfqBaseUploader = multer({
   storage: createFieldDiskStorage(
     {
-      files: path.join(UPLOAD_BASE_DIR, "rfq"),
-      CDAttachments: path.join(UPLOAD_BASE_DIR, "rfqCDAttachments"),
+      files: rfqUploadDestination,
+      CDAttachments: rfqUploadDestination,
     },
-    path.join(UPLOAD_BASE_DIR, "rfq")
+    rfqUploadDestination
   ),
   limits: { fileSize: SIZE_LIMITS.ZIP },
   fileFilter: (req, file, cb) => validateFile(req, file, cb),
@@ -463,10 +530,10 @@ export const rfqCombinedUploads = compose([
       const files = req.files as { [fieldname: string]: Express.Multer.File[] };
       if (files) {
         if (files.files) {
-          await processStreamUploadedFiles({ ...req, files: files.files } as any, path.join(UPLOAD_BASE_DIR, "rfq"), rfqDataMap);
+          await processStreamUploadedFiles({ ...req, files: files.files } as any, rfqUploadDestination, rfqDataMap);
         }
         if (files.CDAttachments) {
-          await processStreamUploadedFiles({ ...req, files: files.CDAttachments } as any, path.join(UPLOAD_BASE_DIR, "rfqCDAttachments"), rfqCDAttachmentsMap);
+          await processStreamUploadedFiles({ ...req, files: files.CDAttachments } as any, rfqUploadDestination, rfqCDAttachmentsMap);
         }
       }
       next();
@@ -476,15 +543,15 @@ export const rfqCombinedUploads = compose([
   }
 ]);
 
-export const rfqUploads = createStreamUploader(path.join(UPLOAD_BASE_DIR, "rfq"), rfqDataMap, SIZE_LIMITS.ZIP);
+export const rfqUploads = createStreamUploader(rfqUploadDestination, rfqDataMap, SIZE_LIMITS.ZIP);
 export const rfqResponseMap: Record<string, FileMeta> = {};
-export const rfqResponseUploads = createStreamUploader(path.join(UPLOAD_BASE_DIR, "rfqresponse"), rfqResponseMap, SIZE_LIMITS.ZIP);
+export const rfqResponseUploads = createStreamUploader(rfqUploadDestination, rfqResponseMap, SIZE_LIMITS.ZIP);
 
 export const rfqFollowUpMap: Record<string, FileMeta> = {};
-export const rfqFollowUpUploads = createStreamUploader(path.join(UPLOAD_BASE_DIR, "rfqfollowup"), rfqFollowUpMap, SIZE_LIMITS.ZIP);
+export const rfqFollowUpUploads = createStreamUploader(rfqUploadDestination, rfqFollowUpMap, SIZE_LIMITS.ZIP);
 
 export const projectDataMap: Record<string, FileMeta> = {};
-export const projectUploads = createStreamUploader(path.join(UPLOAD_BASE_DIR, "project"), projectDataMap, SIZE_LIMITS.ZIP);
+export const projectUploads = createStreamUploader(projectUploadDestination, projectDataMap, SIZE_LIMITS.ZIP);
 
 export const estimationDataMap: Record<string, FileMeta> = {};
 export const estimationUploads = createStreamUploader(path.join(UPLOAD_BASE_DIR, "estimations"), estimationDataMap, SIZE_LIMITS.ZIP);
@@ -496,35 +563,35 @@ export const estimationResponseMap: Record<string, FileMeta> = {};
 export const estimationResponseUploads = createStreamUploader(path.join(UPLOAD_BASE_DIR, "estimationresponse"), estimationResponseMap, SIZE_LIMITS.ZIP);
 
 export const rfiDataMap: Record<string, FileMeta> = {};
-export const rfiUploads = createStreamUploader(path.join(UPLOAD_BASE_DIR, "rfi"), rfiDataMap, SIZE_LIMITS.ZIP);
+export const rfiUploads = createStreamUploader(projectUploadDestination, rfiDataMap, SIZE_LIMITS.ZIP);
 
 export const rfiResponseDataMap: Record<string, FileMeta> = {};
-export const rfiResponseUploads = createStreamUploader(path.join(UPLOAD_BASE_DIR, "rfiresponse"), rfiResponseDataMap, SIZE_LIMITS.ZIP);
+export const rfiResponseUploads = createStreamUploader(projectUploadDestination, rfiResponseDataMap, SIZE_LIMITS.ZIP);
 
 export const submittalsDataMap: Record<string, FileMeta> = {};
-export const submittalUploads = createStreamUploader(path.join(UPLOAD_BASE_DIR, "submittals"), submittalsDataMap, SIZE_LIMITS.ZIP);
+export const submittalUploads = createStreamUploader(projectUploadDestination, submittalsDataMap, SIZE_LIMITS.ZIP);
 
 export const bfaDataMap: Record<string, FileMeta> = {};
-export const bfaUploads = createStreamUploader(path.join(UPLOAD_BASE_DIR, "bfa"), bfaDataMap, SIZE_LIMITS.ZIP);
+export const bfaUploads = createStreamUploader(projectUploadDestination, bfaDataMap, SIZE_LIMITS.ZIP);
 
 
 export const submittalsResDataMap: Record<string, FileMeta> = {};
-export const submittalResponseUploads = createStreamUploader(path.join(UPLOAD_BASE_DIR, "submittalsresponse"), submittalsResDataMap, SIZE_LIMITS.ZIP);
+export const submittalResponseUploads = createStreamUploader(projectUploadDestination, submittalsResDataMap, SIZE_LIMITS.ZIP);
 
 export const mileStoneResponseDataMap: Record<string, FileMeta> = {};
 export const mileStoneResponseUploads = createStreamUploader(path.join(UPLOAD_BASE_DIR, "milestoneresponse"), mileStoneResponseDataMap, SIZE_LIMITS.ZIP);
 
 export const coDataMap: Record<string, FileMeta> = {};
-export const coUploads = createStreamUploader(path.join(UPLOAD_BASE_DIR, "changeorder"), coDataMap, SIZE_LIMITS.ZIP);
+export const coUploads = createStreamUploader(projectUploadDestination, coDataMap, SIZE_LIMITS.ZIP);
 
 export const coResponseDataMap: Record<string, FileMeta> = {};
-export const coResponseUploads = createStreamUploader(path.join(UPLOAD_BASE_DIR, "coresponse"), coResponseDataMap, SIZE_LIMITS.ZIP);
+export const coResponseUploads = createStreamUploader(projectUploadDestination, coResponseDataMap, SIZE_LIMITS.ZIP);
 
 export const designDrawingsDataMap: Record<string, FileMeta> = {};
-export const designUploads = createStreamUploader(path.join(UPLOAD_BASE_DIR, "designdrawings"), designDrawingsDataMap, SIZE_LIMITS.ZIP);
+export const designUploads = createStreamUploader(projectUploadDestination, designDrawingsDataMap, SIZE_LIMITS.ZIP);
 
 export const designDrawingResponseDataMap: Record<string, FileMeta> = {};
-export const designResponseUploads = createStreamUploader(path.join(UPLOAD_BASE_DIR, "designdrawingresponse"), designDrawingResponseDataMap, SIZE_LIMITS.ZIP);
+export const designResponseUploads = createStreamUploader(projectUploadDestination, designDrawingResponseDataMap, SIZE_LIMITS.ZIP);
 
 export const projectProgressReportDataMap: Record<string, FileMeta> = {};
 export const projectProgressReportUploads = createStreamUploader(path.join(UPLOAD_BASE_DIR, "projectprogressreport"), projectProgressReportDataMap, SIZE_LIMITS.ZIP);
@@ -533,10 +600,10 @@ export const projectProgressReportResponseDataMap: Record<string, FileMeta> = {}
 export const projectProgressReportResponseUploads = createStreamUploader(path.join(UPLOAD_BASE_DIR, "projectprogressreportresponse"), projectProgressReportResponseDataMap, SIZE_LIMITS.ZIP);
 
 export const coordinationDrawingDataMap: Record<string, FileMeta> = {};
-export const coordinationDrawingUploads = createStreamUploader(path.join(UPLOAD_BASE_DIR, "coordinationdrawing"), coordinationDrawingDataMap, SIZE_LIMITS.ZIP);
+export const coordinationDrawingUploads = createStreamUploader(projectUploadDestination, coordinationDrawingDataMap, SIZE_LIMITS.ZIP);
 
 export const coordinationDrawingResponseDataMap: Record<string, FileMeta> = {};
-export const coordinationDrawingResponseUploads = createStreamUploader(path.join(UPLOAD_BASE_DIR, "coordinationdrawingresponse"), coordinationDrawingResponseDataMap, SIZE_LIMITS.ZIP);
+export const coordinationDrawingResponseUploads = createStreamUploader(projectUploadDestination, coordinationDrawingResponseDataMap, SIZE_LIMITS.ZIP);
 
 export const connectionDesignerDataMap: Record<string, FileMeta> = {}
 export const connectionDesignerUploads = createStreamUploader(path.join(UPLOAD_BASE_DIR, "connectiondesigners"), connectionDesignerDataMap, SIZE_LIMITS.ZIP);
@@ -547,7 +614,6 @@ export const connectionDesignerFilesUploads = createStreamUploader(path.join(UPL
 export const connectionDesignerCertificatesmap: Record<string, FileMeta> = {}
 export const connectionDesignerCertificatesUploads = createStreamUploader(path.join(UPLOAD_BASE_DIR, "connectiondesignerscertificates"), connectionDesignerCertificatesmap, SIZE_LIMITS.ZIP);
 
-// Specialized combined uploader for Connection Designer
 const cdBaseUploader = multer({
   storage: createFieldDiskStorage(
     {
@@ -626,18 +692,18 @@ export const vendorCombinedUploads = compose([
 ]);
 
 export const notesDataMap: Record<string, FileMeta> = {}
-export const notesUploads = createStreamUploader(path.join(UPLOAD_BASE_DIR, "notes"), notesDataMap, SIZE_LIMITS.ZIP);
+export const notesUploads = createStreamUploader(projectUploadDestination, notesDataMap, SIZE_LIMITS.ZIP);
 
 export const teamMeetingNotesDataMap: Record<string, FileMeta> = {};
 export const teamMeetingNotesUploads = createStreamUploader(
-  path.join(UPLOAD_BASE_DIR, "team-meeting-notes"),
+  projectUploadDestination,
   teamMeetingNotesDataMap,
   SIZE_LIMITS.ZIP
 );
 
 export const teamMeetingNotesResponsesDataMap: Record<string, FileMeta> = {};
 export const teamMeetingNotesResponsesUploads = createStreamUploader(
-  path.join(UPLOAD_BASE_DIR, "team-meeting-notes-responses"),
+  projectUploadDestination,
   teamMeetingNotesResponsesDataMap,
   SIZE_LIMITS.ZIP
 );
