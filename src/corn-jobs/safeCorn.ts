@@ -9,6 +9,7 @@ import {runMonthlyEPS } from "./runMonthlyEPS";
 import { runMonthlyTES } from "./runMonthlyTES";
 import { sendFollowUpReminders } from "./sendFollowUpReminders";
 import { runPMOComplition } from "./pmoComplition";
+import { processCDFileRetention } from "./cdFileRetention";
 import redlock from "../config/redlock";
 import { Lock } from "redlock";
 import logger from "../utils/logger";
@@ -321,6 +322,21 @@ async function sendFollowUp() {
   }
 }
 
+// CD File Retention
+async function safeCDFileRetention() {
+  const lockKey = 111222011; // unique key
+  const lock = await acquireLock(lockKey);
+  if (!lock) return logger.info("CD File Retention already running elsewhere.");
+
+  try {
+    await processCDFileRetention();
+  } catch (err) {
+    logger.error({ err }, "CD File Retention job failed");
+  } finally {
+    await releaseLock(lock);
+  }
+}
+
 // ───────────────────────────────
 // CRON SCHEDULER (Every minute)
 // ───────────────────────────────
@@ -384,6 +400,14 @@ if (process.env.ENABLE_CRON === "true") {
     () => void safePMOComplition(),
     { timezone: "Asia/Kolkata" }
   );
+
+// CD File Retention
+  nodeCron.schedule(
+    "0 1 * * *", // Runs every day at 1:00 AM
+    () => void safeCDFileRetention(),
+    { timezone: "Asia/Kolkata" }
+  );
+
   logger.info(" Scheduler started for reminders with Redis lock protection.");
 } else {
   logger.info("⏸ Cron jobs are disabled for this environment.");
