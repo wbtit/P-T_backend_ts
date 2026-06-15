@@ -82,8 +82,9 @@ export class ConnectionDesignerQuotaRepository {
       where: { id: input.id },
       data: {
         bidprice: safeData.bidprice,
-        estimatedHours: safeData.estimatedHours,
-        weeks: safeData.weeks,
+        mainSteelPrice: safeData.mainSteelPrice,
+        miscSteelPrice: safeData.miscSteelPrice,
+        description: safeData.description,
         files: safeData.files ?? undefined,
         approvalStatus:
           safeData.approvalStatus !== undefined ? safeData.approvalStatus : undefined,

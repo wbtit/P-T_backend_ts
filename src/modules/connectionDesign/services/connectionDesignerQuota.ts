@@ -25,9 +25,7 @@ export class ConnectionDesignerQuotaService {
   // Create Quota
   // -----------------------------------------------------------------------
   async createQuota(data: CreateConnectionDesignerQuotaInput) {
-    if (!data.estimatedHours) {
-      throw new AppError("estimatedHours is required", 400);
-    }
+
     if (!data.rfqId) {
       throw new AppError("rfqId is required for quota serial generation", 400);
     }

@@ -9,8 +9,9 @@ export const ConnectionDesignerQuotaSchema = z.object({
   connectionDesignerId: z.string(),
   rfqId: z.string().nullable().optional(),
   bidprice: z.string().optional(),
-  estimatedHours: z.string(),
-  weeks: z.string(),
+  mainSteelPrice: z.coerce.number().optional(),
+  miscSteelPrice: z.coerce.number().optional(),
+  description: z.string().optional(),
   files: z
     .union([z.array(z.any()), z.literal(null)])
     .transform((val) => (val === null ? Prisma.JsonNull : val))

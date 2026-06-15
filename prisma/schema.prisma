@@ -527,8 +527,9 @@ model ConnectionDesignerQuota {
   connectionDesignerId String    @db.Uuid
   rfqId                String?   @db.Uuid
   bidprice             String?
-  estimatedHours       String
-  weeks                String
+  mainSteelPrice       Float?   @map("main_steel_price")
+  miscSteelPrice       Float?   @map("misc_steel_price")
+  description           String?   @default("") 
   files                Json?     @default("[]")
   approvalStatus       Boolean   @default(false)
   approvalDate         DateTime?
