@@ -14,6 +14,21 @@ export class WbsLineItemTemplateService {
    */
   async create(input: CreateWbsLineItemTemplateInput) {
     return prisma.$transaction(async (tx) => {
+      const wbsTemplate = await tx.wbsTemplate.findUnique({
+        where: { id: input.wbsTemplateId },
+      });
+
+      if (!wbsTemplate) {
+        throw new AppError("Provided WBS template ID does not exist", 404);
+      }
+
+      if (!wbsTemplate.isActive) {
+        throw new AppError("Cannot add line item to an inactive WBS template version", 400);
+      }
+
+      // If the template is already used in a project, modifying it directly
+      // might affect existing projects unless we version bump it here too.
+      // For now, we allow creation but guard against non-existent templates.
       return repo.create(tx, input);
     });
   }
