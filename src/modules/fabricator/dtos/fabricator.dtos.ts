@@ -25,6 +25,7 @@ export const CreateFabricatorSchema=z.object({
     fabricatPercentage:z.coerce.number().optional(),
     approvalPercentage:z.coerce.number().optional(),
     paymenTDueDate:z.coerce.number().optional(),
+    COPerHourPrice:z.coerce.number().optional(),
     SAC:z.string().optional(),
     currencyType:z.string().optional(),
     accountId:z.string().optional(),

@@ -79,6 +79,7 @@ export class FabricatorRepository {
         fabricatPercentage: data.fabricatPercentage,
         approvalPercentage: data.approvalPercentage,
         paymenTDueDate: data.paymenTDueDate,
+        COPerHourPrice: data.COPerHourPrice,
         files: data.files ?? [],
         accountId: data.accountId ?? null,
         currencyType: data.currencyType,

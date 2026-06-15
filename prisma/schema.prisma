@@ -463,6 +463,7 @@ model Fabricator {
   fabName            String          @unique @default("")
   website            String?         @default("")
   drive              String?         @default("")
+  COPerHourPrice       Float?        @default(0.0)
   SAC                String          @default("")
   fabricatPercentage Float           @default(0.0)
   approvalPercentage Float           @default(0.0)
