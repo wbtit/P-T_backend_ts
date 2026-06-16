@@ -611,6 +611,9 @@ export const connectionDesignerUploads = createStreamUploader(path.join(UPLOAD_B
 export const connectionDesignerFilesMap: Record<string, FileMeta> = {}
 export const connectionDesignerFilesUploads = createStreamUploader(path.join(UPLOAD_BASE_DIR, "connectiondesignerQuotation"), connectionDesignerFilesMap, SIZE_LIMITS.ZIP);
 
+export const connectionDesignerQuotaResponseMap: Record<string, FileMeta> = {}
+export const connectionDesignerQuotaResponseUploads = createStreamUploader(path.join(UPLOAD_BASE_DIR, "cdquotaresponse"), connectionDesignerQuotaResponseMap, SIZE_LIMITS.ZIP);
+
 export const connectionDesignerCertificatesmap: Record<string, FileMeta> = {}
 export const connectionDesignerCertificatesUploads = createStreamUploader(path.join(UPLOAD_BASE_DIR, "connectiondesignerscertificates"), connectionDesignerCertificatesmap, SIZE_LIMITS.ZIP);
 

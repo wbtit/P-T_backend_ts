@@ -4,6 +4,7 @@ import validate from "../../middleware/validate";
 import { asyncHandler } from "../../config/utils/asyncHandler";
 import authMiddleware from "../../middleware/authMiddleware";
 import z from "zod";
+import { connectionDesignerQuotaResponseUploads } from "../../utils/multerUploader.util";
 
 import {
   CreateConnectionDesignerQuotaResponseSchema,
@@ -16,6 +17,7 @@ const responseCtrl = new ConnectionDesignerQuotaResponseController();
 router.post(
   "/",
   authMiddleware,
+  connectionDesignerQuotaResponseUploads.array("files", 50),
   validate({ body: CreateConnectionDesignerQuotaResponseSchema }),
   asyncHandler(responseCtrl.handleCreateResponse.bind(responseCtrl))
 );
@@ -43,6 +45,7 @@ router.get(
 router.put(
   "/:id",
   authMiddleware,
+  connectionDesignerQuotaResponseUploads.array("files", 50),
   validate({
     params: z.object({ id: z.string().uuid() }),
     body: UpdateConnectionDesignerQuotaResponseSchema,
