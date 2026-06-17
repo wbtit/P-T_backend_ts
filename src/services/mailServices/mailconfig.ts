@@ -63,7 +63,7 @@ const getCCEmails = async (): Promise<string[]> => {
   const users = await prisma.user.findMany({
     where: {
       role: {
-        in: ['ADMIN', 'DEPUTY_MANAGER', 'OPERATION_EXECUTIVE']
+        in: ['ADMIN', 'DEPUTY_MANAGER', 'OPERATION_EXECUTIVE', 'PROJECT_MANAGER', 'DEPT_MANAGER']
       },
       isActive: true,
       email: {
