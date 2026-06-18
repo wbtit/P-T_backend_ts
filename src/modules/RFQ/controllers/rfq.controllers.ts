@@ -5,6 +5,7 @@ import { RFQService } from "../services/rfq.service";
 import { mapUploadedFiles } from "../../uploads/fileUtil";
 import { sendEmail, getCCEmails, getEmailsByRoles } from "../../../services/mailServices/mailconfig";
 import { rfqhtmlContent } from "../../../services/mailServices/mailtemplates/rfqMailtemplate";
+import { cdRfqHtmlContent } from "../../../services/mailServices/mailtemplates/cdRfqMailTemplate";
 import { notifyRfqStakeholdersByRole } from "../../../utils/notifyRfqStakeholders";
 import { UserRole } from "@prisma/client";
 import prisma from "../../../config/database/client";
@@ -161,6 +162,27 @@ export class RFQController {
                 : Promise.resolve(null),
             ]);
             const isInternalCreator = INTERNAL_RFQ_CREATOR_ROLES.has(role as UserRole);
+            const fabricatorName = !isInternalCreator ? (senderFabricator?.fabName || undefined) : undefined;
+
+            if (req.body.ConnectionDesignerIds && req.body.ConnectionDesignerIds.length > 0) {
+              const cdEngineers = await prisma.user.findMany({
+                where: {
+                  connectionDesignerId: { in: req.body.ConnectionDesignerIds },
+                  role: "CONNECTION_DESIGNER_ENGINEER"
+                },
+                select: { email: true }
+              });
+              const cdEmails = cdEngineers.map(e => e.email).filter(Boolean) as string[];
+              if (cdEmails.length > 0) {
+                const uniqueCdEmails = Array.from(new Set(cdEmails));
+                await sendEmail({
+                  html: cdRfqHtmlContent(newrfq, fabricatorName),
+                  to: uniqueCdEmails.join(","),
+                  subject: `RFQ Connection Design Assignment: ${newrfq.project?.name || newrfq.projectName || "N/A"} - ${newrfq.subject}`,
+                  text: `You have been assigned as a Connection Designer for RFQ: ${newrfq.subject}`
+                });
+              }
+            }
 
             // 1. STANDARD RFQ MAIL (Old Template)
             // For internal creators, send standard mail to Client only.
@@ -168,8 +190,6 @@ export class RFQController {
             const standardMailTo = isInternalCreator 
               ? uniqueEmails 
               : Array.from(new Set([...uniqueEmails, ...internalGroupEmails]));
-
-            const fabricatorName = !isInternalCreator ? (senderFabricator?.fabName || undefined) : undefined;
 
             await sendEmail({
               html: rfqhtmlContent(newrfq, fabricatorName),
@@ -276,6 +296,26 @@ export class RFQController {
         // Background non-blocking tasks
         (async () => {
           try {
+            if (req.body.ConnectionDesignerIds && req.body.ConnectionDesignerIds.length > 0) {
+              const cdEngineers = await prisma.user.findMany({
+                where: {
+                  connectionDesignerId: { in: req.body.ConnectionDesignerIds },
+                  role: "CONNECTION_DESIGNER_ENGINEER"
+                },
+                select: { email: true }
+              });
+              const cdEmails = cdEngineers.map(e => e.email).filter(Boolean) as string[];
+              if (cdEmails.length > 0) {
+                const uniqueCdEmails = Array.from(new Set(cdEmails));
+                await sendEmail({
+                  html: cdRfqHtmlContent(rfq),
+                  to: uniqueCdEmails.join(","),
+                  subject: `RFQ Connection Design Assignment: ${rfq.project?.name || rfq.projectName || "N/A"} - ${rfq.subject}`,
+                  text: `You have been assigned as a Connection Designer for RFQ: ${rfq.subject}`
+                });
+              }
+            }
+
             await notifyRfqStakeholdersByRole(rfq.id, RFQ_NOTIFY_ROLES, (role) => {
               const currentStatus = (rfq as any).status ?? bodyStatus;
               if (currentStatus === "APPROVED" && ["CLIENT", "CLIENT_ADMIN", "CLIENT_PROJECT_COORDINATOR"].includes(role)) {

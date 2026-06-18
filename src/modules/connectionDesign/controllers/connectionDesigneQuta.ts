@@ -4,6 +4,10 @@ import { AppError } from "../../../config/utils/AppError";
 
 import { ConnectionDesignerQuotaService } from "../services";
 import { mapUploadedFiles } from "../../uploads/fileUtil";
+import { getEmailsByRoles, sendEmail } from "../../../services/mailServices/mailconfig";
+import { UserRole } from "@prisma/client";
+import { cdQuotaSubmittedHtmlContent } from "../../../services/mailServices/mailtemplates/cdQuotaSubmittedMailTemplate";
+import prisma from "../../../config/database/client";
 
 export class ConnectionDesignerQuotaController {
   quotaService = new ConnectionDesignerQuotaService();
@@ -27,6 +31,31 @@ export class ConnectionDesignerQuotaController {
       createdById: userId,
       ...(uploadedFiles.length > 0 ? { files: uploadedFiles } : {}),
     });
+
+    // Background task for sending email to internal roles
+    (async () => {
+      try {
+        const INTERNAL_ROLES: UserRole[] = ["ADMIN", "OPERATION_EXECUTIVE", "DEPUTY_MANAGER", "DEPT_MANAGER"];
+        const internalEmails = await getEmailsByRoles(INTERNAL_ROLES);
+
+        if (internalEmails.length > 0) {
+          const quotaWithRfq = await prisma.connectionDesignerQuota.findUnique({
+            where: { id: quota.id },
+            include: { rfq: { include: { project: true } }, connectionDesigner: true }
+          });
+
+          if (quotaWithRfq) {
+            await sendEmail({
+              to: internalEmails,
+              subject: `Connection Designer Quota Submitted: ${quotaWithRfq.rfq?.subject || "N/A"}`,
+              html: cdQuotaSubmittedHtmlContent(quotaWithRfq)
+            });
+          }
+        }
+      } catch (error) {
+        console.error("Error sending CD quota submitted email:", error);
+      }
+    })();
 
     return res.status(201).json({
       message: "Connection Designer Quota created successfully",
