@@ -2,7 +2,8 @@ import { Router } from "express";
 import {
     handleSignin,
     handleSignup,
-    handleChangePassword
+    handleChangePassword,
+    handleLogout
 } from './controllers';
 import { asyncHandler } from "../../../config/utils/asyncHandler"; 
 import validate from "../../../middleware/validate";
@@ -30,6 +31,13 @@ router.post(
   "/login",
   validate({ body: signinSchema }),
   asyncHandler(handleSignin)
+);
+
+// Logout (protected)
+router.post(
+  "/logout",
+  authMiddleware,
+  asyncHandler(handleLogout)
 );
 
 // Change password (protected)

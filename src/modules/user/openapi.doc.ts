@@ -23,6 +23,21 @@ export const userOpenApiDoc: ModuleOpenApiDoc = {
         }
       },
     },
+    "/auth/logout": {
+      post: {
+        tags: ["User"],
+        summary: "POST /auth/logout",
+        description: "Logs out the user and automatically pauses all their active tasks.",
+        operationId: "post_user_auth_logout",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": { description: "Success - user logged out and active tasks paused" },
+          "401": { description: "Unauthorized" },
+          "404": { description: "User not found" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
     "/auth/register": {
       post: {
         tags: ["User"],

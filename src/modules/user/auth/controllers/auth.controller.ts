@@ -6,6 +6,9 @@ import prisma from "../../../../config/database/client";
 import bcrypt from "bcrypt-ts";
 import { runIpGuard } from "../services/ipGuardService";
 import { generateToken } from "../../../../config/utils/jwtutils";
+import { WHService } from "../../../workingHours/services/wh.services";
+
+const whService = new WHService();
 
 const sanitizeUser = <T extends { password?: string }>(user: T): Omit<T, "password"> => {
     const { password, ...safeUser } = user;
@@ -95,4 +98,20 @@ export const handleChangePassword = async (req: AuthenticateRequest, res: Respon
     const { currentPassword, newPassword } = req.body;
     const result = await AuthService.changePassword(req.user.id, currentPassword, newPassword);
     res.status(200).json({ success: true, data: result });
+};
+
+export const handleLogout = async (req: AuthenticateRequest, res: Response) => {
+    if (!req.user) {
+        throw new AppError("User not found", 404);
+    }
+    
+    // Pause all active tasks for the user upon logout
+    await whService.pauseAllTasksForUser(req.user.id);
+    
+    // Here you might invalidate the token if there is a blacklist, 
+    // but typically we just ask the client to drop it.
+    res.status(200).json({
+        success: true,
+        message: "Logged out successfully and active tasks paused."
+    });
 };

@@ -38,6 +38,32 @@ export class WHService {
     });
         return wh;
     }
+
+    async pauseAllTasksForUser(userId: string) {
+        const activeSessions = await prisma.workingHours.findMany({
+            where: {
+                user_id: userId,
+                ended_at: null
+            }
+        });
+
+        const now = new Date();
+        for (const session of activeSessions) {
+            const duration = secondsBetween(session.started_at, now);
+            await whRepository.closeSession({
+                id: session.id,
+                ended_at: now,
+                duration_seconds: duration
+            });
+            
+            if (session.task_id) {
+                await prisma.task.update({
+                    where: { id: session.task_id },
+                    data: { status: "BREAK" }
+                });
+            }
+        }
+    }
     async resumeTask(findData: FindWhDTO,userId:string,taskId:string) {
         const active = await whRepository.findFirst(findData);
         if (active) {
