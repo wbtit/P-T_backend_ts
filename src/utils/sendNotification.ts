@@ -14,9 +14,12 @@ export const sendNotification = async (userId: string, payload: any) => {
       ? payload 
       : await enrichNotificationPayloadWithProject(payload);
 
-    // Get all active socket connections for the user from Redis
-    const socketIds = await redis.sMembers(`socket:${userId}`);
-    const userIsOnline = Array.isArray(socketIds) && socketIds.length > 0;
+    // Get all active socket connections for the user using Redis Adapter native method
+    let userIsOnline = false;
+    if ((globalThis as any).io) {
+      const activeSockets = await (globalThis as any).io.in(`user:${userId}`).fetchSockets();
+      userIsOnline = activeSockets.length > 0;
+    }
 
     let delivered = false;
 

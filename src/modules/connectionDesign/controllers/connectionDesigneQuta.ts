@@ -8,6 +8,7 @@ import { getEmailsByRoles, sendEmail } from "../../../services/mailServices/mail
 import { UserRole } from "@prisma/client";
 import { cdQuotaSubmittedHtmlContent } from "../../../services/mailServices/mailtemplates/cdQuotaSubmittedMailTemplate";
 import prisma from "../../../config/database/client";
+import { sendNotification } from "../../../utils/sendNotification";
 
 export class ConnectionDesignerQuotaController {
   quotaService = new ConnectionDesignerQuotaService();
@@ -36,20 +37,39 @@ export class ConnectionDesignerQuotaController {
     (async () => {
       try {
         const INTERNAL_ROLES: UserRole[] = ["ADMIN", "OPERATION_EXECUTIVE", "DEPUTY_MANAGER", "DEPT_MANAGER"];
-        const internalEmails = await getEmailsByRoles(INTERNAL_ROLES);
+        
+        const internalUsers = await prisma.user.findMany({
+          where: { role: { in: INTERNAL_ROLES }, isActive: true },
+          select: { id: true, email: true }
+        });
 
-        if (internalEmails.length > 0) {
+        const internalEmails = Array.from(new Set(internalUsers.map(u => u.email).filter(Boolean))) as string[];
+
+        if (internalUsers.length > 0) {
           const quotaWithRfq = await prisma.connectionDesignerQuota.findUnique({
             where: { id: quota.id },
             include: { rfq: { include: { project: true } }, connectionDesigner: true }
           });
 
           if (quotaWithRfq) {
-            await sendEmail({
-              to: internalEmails,
-              subject: `Connection Designer Quota Submitted: ${quotaWithRfq.rfq?.subject || "N/A"}`,
-              html: cdQuotaSubmittedHtmlContent(quotaWithRfq)
-            });
+            if (internalEmails.length > 0) {
+              await sendEmail({
+                to: internalEmails,
+                subject: `Connection Designer Quota Submitted: ${quotaWithRfq.rfq?.subject || "N/A"}`,
+                html: cdQuotaSubmittedHtmlContent(quotaWithRfq)
+              });
+            }
+
+            for (const user of internalUsers) {
+              await sendNotification(user.id, {
+                type: "rfq",
+                title: "CD Quota Submitted",
+                message: `Connection Designer ${quotaWithRfq.connectionDesigner?.name || ""} submitted a quota for RFQ: ${quotaWithRfq.rfq?.subject || "N/A"}`,
+                rfqId: quotaWithRfq.rfqId,
+                projectId: (quotaWithRfq.rfq as any)?.projectId || (quotaWithRfq.rfq as any)?.project_id || undefined,
+                projectName: quotaWithRfq.rfq?.project?.name || (quotaWithRfq.rfq as any)?.projectName || "N/A"
+              });
+            }
           }
         }
       } catch (error) {

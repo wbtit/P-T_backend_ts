@@ -10,6 +10,7 @@ import { notifyRfqStakeholdersByRole } from "../../../utils/notifyRfqStakeholder
 import { UserRole } from "@prisma/client";
 import prisma from "../../../config/database/client";
 import { buildRoleScopedNotification } from "../../../utils/stakeholderNotificationMessages";
+import { sendNotification } from "../../../utils/sendNotification";
 import {
   notifyMtoClientEstimatorsForRfq,
   notifyMtoClientEstimatorsForRfqStatus,
@@ -170,7 +171,7 @@ export class RFQController {
                   connectionDesignerId: { in: req.body.ConnectionDesignerIds },
                   role: "CONNECTION_DESIGNER_ENGINEER"
                 },
-                select: { email: true }
+                select: { id: true, email: true }
               });
               const cdEmails = cdEngineers.map(e => e.email).filter(Boolean) as string[];
               if (cdEmails.length > 0) {
@@ -180,6 +181,17 @@ export class RFQController {
                   to: uniqueCdEmails.join(","),
                   subject: `RFQ Connection Design Assignment: ${newrfq.project?.name || newrfq.projectName || "N/A"} - ${newrfq.subject}`,
                   text: `You have been assigned as a Connection Designer for RFQ: ${newrfq.subject}`
+                });
+              }
+
+              for (const cd of cdEngineers) {
+                await sendNotification(cd.id, {
+                  type: "rfq",
+                  title: "RFQ Assigned",
+                  message: `You have been assigned as a Connection Designer for RFQ: ${newrfq.subject}`,
+                  rfqId: newrfq.id,
+                  projectId: (newrfq as any).projectId || (newrfq as any).project_id || undefined,
+                  projectName: newrfq.project?.name || newrfq.projectName || "N/A"
                 });
               }
             }
@@ -302,7 +314,7 @@ export class RFQController {
                   connectionDesignerId: { in: req.body.ConnectionDesignerIds },
                   role: "CONNECTION_DESIGNER_ENGINEER"
                 },
-                select: { email: true }
+                select: { id: true, email: true }
               });
               const cdEmails = cdEngineers.map(e => e.email).filter(Boolean) as string[];
               if (cdEmails.length > 0) {
@@ -312,6 +324,17 @@ export class RFQController {
                   to: uniqueCdEmails.join(","),
                   subject: `RFQ Connection Design Assignment: ${(rfq as any).project?.name || (rfq as any).projectName || "N/A"} - ${rfq.subject}`,
                   text: `You have been assigned as a Connection Designer for RFQ: ${rfq.subject}`
+                });
+              }
+
+              for (const cd of cdEngineers) {
+                await sendNotification(cd.id, {
+                  type: "rfq",
+                  title: "RFQ Assigned",
+                  message: `You have been assigned as a Connection Designer for RFQ: ${rfq.subject}`,
+                  rfqId: rfq.id,
+                  projectId: (rfq as any).projectId || (rfq as any).project_id || undefined,
+                  projectName: (rfq as any).project?.name || (rfq as any).projectName || "N/A"
                 });
               }
             }
