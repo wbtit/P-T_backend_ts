@@ -316,8 +316,24 @@ for (const client of [pubClient, subClient, redis]) {
             if (userId) {
               const userLabel = await getSocketUserLabel(userId);
               const userKey = `socket:${userId}`;
+              
+              // Remove the socket mapping first
               await redis.sRem(userKey, socket.id);
               await redis.del(reverseKey);
+
+              // Check if this was the last socket connection for the user
+              const activeSockets = await redis.sMembers(userKey);
+              if (activeSockets.length === 0) {
+                console.log(`⏸️ Last socket disconnected for ${userLabel}. Pausing tasks...`);
+                try {
+                  const { WHService } = await import("../modules/workingHours/services/wh.services");
+                  const whService = new WHService();
+                  await whService.pauseAllTasksForUser(userId);
+                } catch (pauseErr) {
+                  console.error("❌ Failed to pause tasks on disconnect:", pauseErr);
+                }
+              }
+
               console.log(`🔌 Socket disconnected for ${userLabel} | reason: ${reason}`);
             } else {
               console.warn(`⚠️ No reverse mapping found for socket ${socket.id}`);
