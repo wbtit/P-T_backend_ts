@@ -139,13 +139,6 @@ for (const client of [pubClient, subClient, redis]) {
         const userLabel = await getSocketUserLabel(userId);
         console.log(`🔌 Socket connected for ${userLabel}`);
 
-        const userKey = `socket:${userId}`;
-        const reverseKey = `socketid:${socket.id}`;
-
-        await redis.sAdd(userKey, socket.id);
-
-        await redis.set(reverseKey, userId);
-
         socket.join(`user:${userId}`);
 
         /** ✅ Pending Notifications **/
@@ -200,11 +193,11 @@ for (const client of [pubClient, subClient, redis]) {
             });
             console.log(`📡 Sent private message to receiver room user:${receiverId}`);
 
-            // ✅ Check receiver sockets
-            const receiverSockets = await redis.sMembers(`socket:${receiverId}`);
-            console.log(`🔍 Receiver socket IDs:`, receiverSockets);
+            // ✅ Check receiver sockets natively via Redis Adapter
+            const receiverSockets = await io.in(`user:${receiverId}`).fetchSockets();
+            console.log(`🔍 Receiver active connections:`, receiverSockets.length);
 
-            if (!Array.isArray(receiverSockets) || receiverSockets.length === 0) {
+            if (receiverSockets.length === 0) {
               console.log("⚠️ Receiver appears offline, storing notification...");
               await prisma.notification.create({
                 data: {
@@ -278,10 +271,10 @@ for (const client of [pubClient, subClient, redis]) {
               const isTagged = taggedUserIds.includes(member.memberId);
               const payload = { ...message, content: decompressed, isTagged };
 
-              const memberSockets = await redis.sMembers(`socket:${member.memberId}`);
-              console.log(`🔍 Member ${member.memberId} sockets:`, memberSockets);
+              const memberSockets = await io.in(`user:${member.memberId}`).fetchSockets();
+              console.log(`🔍 Member ${member.memberId} active connections:`, memberSockets.length);
 
-              if (Array.isArray(memberSockets) && memberSockets.length > 0) {
+              if (memberSockets.length > 0) {
                 io.to(`user:${member.memberId}`).emit("receiveGroupMessage", payload);
                 console.log(`📡 Sent group message to member ${member.memberId}`);
               } else {
@@ -310,19 +303,14 @@ for (const client of [pubClient, subClient, redis]) {
         /** ----------------------- Disconnect ----------------------- **/
         socket.on("disconnect", async (reason) => {
           try {
-            const reverseKey = `socketid:${socket.id}`;
-            const userId = await redis.get(reverseKey);
-
+            const userId = socket.data.userId;
             if (userId) {
               const userLabel = await getSocketUserLabel(userId);
-              const userKey = `socket:${userId}`;
               
-              // Remove the socket mapping first
-              await redis.sRem(userKey, socket.id);
-              await redis.del(reverseKey);
-
-              // Check if this was the last socket connection for the user
-              const activeSockets = await redis.sMembers(userKey);
+              // Note: Upon disconnect, the socket has already left the room locally,
+              // but we need to check if there are OTHER sockets still in the room globally.
+              const activeSockets = await io.in(`user:${userId}`).fetchSockets();
+              
               if (activeSockets.length === 0) {
                 console.log(`⏸️ Last socket disconnected for ${userLabel}. Pausing tasks...`);
                 try {
@@ -335,8 +323,6 @@ for (const client of [pubClient, subClient, redis]) {
               }
 
               console.log(`🔌 Socket disconnected for ${userLabel} | reason: ${reason}`);
-            } else {
-              console.warn(`⚠️ No reverse mapping found for socket ${socket.id}`);
             }
           } catch (err) {
             console.error("❌ Error during disconnect cleanup:", err);

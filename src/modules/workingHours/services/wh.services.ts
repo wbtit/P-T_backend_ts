@@ -40,6 +40,7 @@ export class WHService {
     }
 
     async pauseAllTasksForUser(userId: string) {
+        console.log(`[WHService] Checking for active tasks to pause for user: ${userId}`);
         const activeSessions = await prisma.workingHours.findMany({
             where: {
                 user_id: userId,
@@ -47,9 +48,15 @@ export class WHService {
             }
         });
 
+        if (activeSessions.length === 0) {
+            console.log(`[WHService] No active tasks found for user: ${userId}`);
+            return;
+        }
+
         const now = new Date();
         for (const session of activeSessions) {
             const duration = secondsBetween(session.started_at, now);
+            console.log(`[WHService] Closing session ${session.id} for task ${session.task_id} (duration: ${duration}s)`);
             await whRepository.closeSession({
                 id: session.id,
                 ended_at: now,
@@ -57,12 +64,14 @@ export class WHService {
             });
             
             if (session.task_id) {
+                console.log(`[WHService] Updating task ${session.task_id} status to BREAK`);
                 await prisma.task.update({
                     where: { id: session.task_id },
                     data: { status: "BREAK" }
                 });
             }
         }
+        console.log(`[WHService] Successfully paused ${activeSessions.length} tasks for user: ${userId}`);
     }
     async resumeTask(findData: FindWhDTO,userId:string,taskId:string) {
         const active = await whRepository.findFirst(findData);
