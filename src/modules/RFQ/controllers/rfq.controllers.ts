@@ -310,7 +310,7 @@ export class RFQController {
                 await sendEmail({
                   html: cdRfqHtmlContent(rfq),
                   to: uniqueCdEmails.join(","),
-                  subject: `RFQ Connection Design Assignment: ${rfq.project?.name || rfq.projectName || "N/A"} - ${rfq.subject}`,
+                  subject: `RFQ Connection Design Assignment: ${(rfq as any).project?.name || (rfq as any).projectName || "N/A"} - ${rfq.subject}`,
                   text: `You have been assigned as a Connection Designer for RFQ: ${rfq.subject}`
                 });
               }
