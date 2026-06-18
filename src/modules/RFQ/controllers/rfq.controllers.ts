@@ -96,6 +96,20 @@ const needsCompanyAttention = (
     return latestResponse.user?.connectionDesignerId !== connectionDesignerId;
 };
 
+const parseStringArray = (val: any): string[] => {
+  if (!val) return [];
+  if (Array.isArray(val)) return val;
+  if (typeof val === "string") {
+    try {
+      const parsed = JSON.parse(val);
+      if (Array.isArray(parsed)) return parsed;
+    } catch {
+      return [val];
+    }
+  }
+  return [];
+};
+
 export class RFQController {
     async handleCreateRfq(req:AuthenticateRequest,res:Response){
     if (!req.user) {
@@ -165,11 +179,12 @@ export class RFQController {
             const isInternalCreator = INTERNAL_RFQ_CREATOR_ROLES.has(role as UserRole);
             const fabricatorName = !isInternalCreator ? (senderFabricator?.fabName || undefined) : undefined;
 
-            if (req.body.ConnectionDesignerIds && req.body.ConnectionDesignerIds.length > 0) {
+            const cdIds = parseStringArray(req.body.ConnectionDesignerIds);
+            if (cdIds.length > 0) {
               const cdEngineers = await prisma.user.findMany({
                 where: {
-                  connectionDesignerId: { in: req.body.ConnectionDesignerIds },
-                  role: "CONNECTION_DESIGNER_ENGINEER"
+                  connectionDesignerId: { in: cdIds },
+                  role: "CONNECTION_DESIGNER_ADMIN"
                 },
                 select: { id: true, email: true }
               });
@@ -308,11 +323,12 @@ export class RFQController {
         // Background non-blocking tasks
         (async () => {
           try {
-            if (req.body.ConnectionDesignerIds && req.body.ConnectionDesignerIds.length > 0) {
+            const cdIdsUpdate = parseStringArray(req.body.ConnectionDesignerIds);
+            if (cdIdsUpdate.length > 0) {
               const cdEngineers = await prisma.user.findMany({
                 where: {
-                  connectionDesignerId: { in: req.body.ConnectionDesignerIds },
-                  role: "CONNECTION_DESIGNER_ENGINEER"
+                  connectionDesignerId: { in: cdIdsUpdate },
+                  role: "CONNECTION_DESIGNER_ADMIN"
                 },
                 select: { id: true, email: true }
               });
