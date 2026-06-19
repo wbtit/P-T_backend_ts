@@ -306,22 +306,6 @@ for (const client of [pubClient, subClient, redis]) {
             const userId = socket.data.userId;
             if (userId) {
               const userLabel = await getSocketUserLabel(userId);
-              
-              // Note: Upon disconnect, the socket has already left the room locally,
-              // but we need to check if there are OTHER sockets still in the room globally.
-              const activeSockets = await io.in(`user:${userId}`).fetchSockets();
-              
-              if (activeSockets.length === 0) {
-                console.log(`⏸️ Last socket disconnected for ${userLabel}. Pausing tasks...`);
-                try {
-                  const { WHService } = await import("../modules/workingHours/services/wh.services");
-                  const whService = new WHService();
-                  await whService.pauseAllTasksForUser(userId);
-                } catch (pauseErr) {
-                  console.error("❌ Failed to pause tasks on disconnect:", pauseErr);
-                }
-              }
-
               console.log(`🔌 Socket disconnected for ${userLabel} | reason: ${reason}`);
             }
           } catch (err) {
