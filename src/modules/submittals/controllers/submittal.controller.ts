@@ -127,7 +127,7 @@ export class SubmittalController {
       try {
         if (uniqueSubmittalEmails.length > 0) {
           const fabricatorName = (await getFabricatorNameForUser(userId, role)) || undefined;
-          const ccEmails = await getCCEmails();
+          const ccEmails = await getCCEmails(submittal.project_id);
           await sendEmail({
             to: uniqueSubmittalEmails.join(","),
             cc: ccEmails,

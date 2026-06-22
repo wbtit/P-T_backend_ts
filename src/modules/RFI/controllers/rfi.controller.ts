@@ -124,7 +124,7 @@ export class RFIController {
           
           if (projectInfo?.isAwarded !== false) {
             const fabricatorName = (await getFabricatorNameForUser(creatorId, actorRole)) || undefined;
-            const ccEmails = await getCCEmails();
+            const ccEmails = await getCCEmails(newrfi.project_id);
             await sendEmail({
               html: rfihtmlContent(newrfi, fabricatorName),
               to: uniqueEmails.join(","),
