@@ -14,7 +14,7 @@ export const cdRfqHtmlContent = (newrfq: any, fabricatorName?: string) => {
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Project Station - RFQ Connection Designer Assignment</title>
+  <title>Project Station - RFQ Connection Designer</title>
   <!--[if gte mso 9]>
   <xml>
     <o:OfficeDocumentSettings>
@@ -74,21 +74,17 @@ export const cdRfqHtmlContent = (newrfq: any, fabricatorName?: string) => {
           <!-- Body Content -->
           <tr>
             <td class="content-body" style="padding: 40px 30px; color: #333333; line-height: 1.6;">
-              <div style="font-size: 18px; font-weight: bold; margin: 0 0 20px 0;">RFQ Connection Designer Assignment</div>
+              <div style="font-size: 18px; font-weight: bold; margin: 0 0 20px 0;">RFQ Connection Designer</div>
               <p style="margin: 0 0 20px 0;">You have been assigned as a Connection Designer for a <strong>Request for Quotation (RFQ)</strong>. Please find the details below:</p>
 
               <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 20px;">
                 <tr>
                   <td width="140" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #888888; font-weight: bold; font-size: 14px;">Sender</td>
-                  <td valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333;">${[newrfq.sender?.firstName, newrfq.sender?.lastName].filter(Boolean).join(" ") || newrfq.sender?.username || "N/A"}</td>
+                  <td valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333;">${fabricatorName || "N/A"}</td>
                 </tr>
                 <tr>
                   <td width="140" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #888888; font-weight: bold; font-size: 14px;">Due Date</td>
                   <td valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333;">${dueDate}</td>
-                </tr>
-                <tr>
-                  <td width="140" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #888888; font-weight: bold; font-size: 14px;">Date</td>
-                  <td valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333;">${newrfq.createdAt ? new Date(newrfq.createdAt).toDateString() : new Date().toDateString()}</td>
                 </tr>
               </table>
 

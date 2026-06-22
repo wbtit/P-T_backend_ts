@@ -78,12 +78,7 @@ export const cdQuotaSubmittedHtmlContent = (quota: any) => {
               <div style="font-size: 18px; font-weight: bold; margin: 0 0 20px 0;">Connection Designer Quota Submitted</div>
               <p style="margin: 0 0 20px 0;">A new quotation has been submitted by <strong>${cdName}</strong> for RFQ: <strong>${rfq?.subject || "N/A"}</strong>. Please review the details below:</p>
 
-              <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 20px;">
-                <tr>
-                  <td width="140" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #888888; font-weight: bold; font-size: 14px;">Date</td>
-                  <td valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333;">${quota.createdAt ? new Date(quota.createdAt).toDateString() : new Date().toDateString()}</td>
-                </tr>
-              </table>
+
 
               <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin: 30px 0;">
                 <tr>

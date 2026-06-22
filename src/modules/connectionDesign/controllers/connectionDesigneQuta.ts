@@ -36,7 +36,7 @@ export class ConnectionDesignerQuotaController {
     // Background task for sending email to internal roles
     (async () => {
       try {
-        const INTERNAL_ROLES: UserRole[] = ["ADMIN", "OPERATION_EXECUTIVE", "DEPUTY_MANAGER", "DEPT_MANAGER"];
+        const INTERNAL_ROLES: UserRole[] = ["ADMIN", "OPERATION_EXECUTIVE", "DEPUTY_MANAGER", "PROJECT_MANAGER_OFFICER"];
         
         const internalUsers = await prisma.user.findMany({
           where: { role: { in: INTERNAL_ROLES }, isActive: true },

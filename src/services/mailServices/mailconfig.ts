@@ -61,7 +61,7 @@ const sanitizeMailRecipients = async ({ to, cc }: Pick<SendEmailInput, "to" | "c
 
 const getCCEmails = async (projectId?: string): Promise<string[]> => {
   // Global roles that should always be CC'd
-  const globalRoles: UserRole[] = ['ADMIN', 'DEPUTY_MANAGER', 'OPERATION_EXECUTIVE'];
+  const globalRoles: UserRole[] = ['ADMIN', 'DEPUTY_MANAGER', 'OPERATION_EXECUTIVE', 'PROJECT_MANAGER_OFFICER'];
   
   const globalUsers = await prisma.user.findMany({
     where: {

@@ -104,6 +104,7 @@ const parseStringArray = (val: any): string[] => {
       const parsed = JSON.parse(val);
       if (Array.isArray(parsed)) return parsed;
     } catch {
+      if (val.includes(",")) return val.split(",").map(v => v.trim());
       return [val];
     }
   }
@@ -191,12 +192,16 @@ export class RFQController {
               const cdEmails = cdEngineers.map(e => e.email).filter(Boolean) as string[];
               if (cdEmails.length > 0) {
                 const uniqueCdEmails = Array.from(new Set(cdEmails));
-                await sendEmail({
-                  html: cdRfqHtmlContent(newrfq, fabricatorName),
-                  to: uniqueCdEmails.join(","),
-                  subject: `RFQ Connection Design Assignment: ${newrfq.project?.name || newrfq.projectName || "N/A"} - ${newrfq.subject}`,
-                  text: `You have been assigned as a Connection Designer for RFQ: ${newrfq.subject}`
-                });
+                const ccList = await getCCEmails();
+                for (const cdEmail of uniqueCdEmails) {
+                  await sendEmail({
+                    html: cdRfqHtmlContent(newrfq, fabricatorName),
+                    to: cdEmail,
+                    cc: ccList,
+                    subject: `RFQ Connection Design: ${newrfq.project?.name || newrfq.projectName || "N/A"} - ${newrfq.subject}`,
+                    text: `You have been assigned as a Connection Designer for RFQ: ${newrfq.subject}`
+                  });
+                }
               }
 
               for (const cd of cdEngineers) {
@@ -336,12 +341,16 @@ export class RFQController {
               const cdEmails = cdEngineers.map(e => e.email).filter(Boolean) as string[];
               if (cdEmails.length > 0) {
                 const uniqueCdEmails = Array.from(new Set(cdEmails));
-                await sendEmail({
-                  html: cdRfqHtmlContent(rfq),
-                  to: uniqueCdEmails.join(","),
-                  subject: `RFQ Connection Design Assignment: ${(rfq as any).project?.name || (rfq as any).projectName || "N/A"} - ${rfq.subject}`,
-                  text: `You have been assigned as a Connection Designer for RFQ: ${rfq.subject}`
-                });
+                const ccList = await getCCEmails();
+                for (const cdEmail of uniqueCdEmails) {
+                  await sendEmail({
+                    html: cdRfqHtmlContent(rfq),
+                    to: cdEmail,
+                    cc: ccList,
+                    subject: `RFQ Connection Design: ${(rfq as any).project?.name || (rfq as any).projectName || "N/A"} - ${rfq.subject}`,
+                    text: `You have been assigned as a Connection Designer for RFQ: ${rfq.subject}`
+                  });
+                }
               }
 
               for (const cd of cdEngineers) {
