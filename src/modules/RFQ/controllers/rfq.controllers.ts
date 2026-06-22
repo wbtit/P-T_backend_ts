@@ -256,6 +256,7 @@ export class RFQController {
                   creatorName,
                   projectName: newrfq.project?.name || newrfq.projectName || "N/A",
                   raisedAt,
+                  rfqId: newrfq.id,
                 }),
               });
             }

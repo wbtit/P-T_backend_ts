@@ -127,6 +127,7 @@ export class RfqResponseController {
                                 responderName,
                                 responderDesignation: responder.designation,
                                 ctaLabel: "Login to View RFQ",
+                                redirectUrl: `/rfq/${result.rfqId}`,
                                 fabricatorName,
                             }),
                     });

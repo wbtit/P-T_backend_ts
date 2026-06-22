@@ -178,6 +178,7 @@ export class SubmittalResponseController {
                 responderName,
                 responderDesignation: responder.designation,
                 ctaLabel: "Login to View Submittal",
+                redirectUrl: `/submittals/${submittalsId}`,
                 fabricatorName,
               }),
           });

@@ -180,6 +180,7 @@ export class CoResponseController {
                 responderName,
                 responderDesignation: responder.designation,
                 ctaLabel: "Login to View Change Order",
+                redirectUrl: `/co/${coId}`,
                 fabricatorName,
               }),
           });

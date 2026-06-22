@@ -4,6 +4,7 @@ type InternalRfqRaisedMailContext = {
   creatorName: string;
   projectName: string;
   raisedAt: Date;
+  rfqId?: string;
 };
 
 const formatDate = (date: Date) => date.toDateString();
@@ -20,6 +21,7 @@ export const internalRfqRaisedHtmlContent = ({
   creatorName,
   projectName,
   raisedAt,
+  rfqId,
 }: InternalRfqRaisedMailContext) => {
   const safeProjectName = projectName || "N/A";
   const headerProjectName =
@@ -30,7 +32,7 @@ export const internalRfqRaisedHtmlContent = ({
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Project Station - RFQ Raised Notification</title>
+  <title>Project Station - Internal RFQ Notification</title>
   <!--[if gte mso 9]>
   <xml>
     <o:OfficeDocumentSettings>
@@ -66,12 +68,16 @@ export const internalRfqRaisedHtmlContent = ({
         <td align="center" valign="top" width="600">
         <![endif]-->
         <table border="0" cellpadding="0" cellspacing="0" width="100%" class="email-container" style="max-width: 600px; background-color: #ffffff; border: 1px solid #e0e0e0;">
+          
+          <!-- Header -->
           <tr>
             <td bgcolor="#ffffff">
               <table border="0" cellpadding="0" cellspacing="0" width="100%">
                 <tr>
                   <td class="logo-container" width="30%" style="padding: 20px;">
-                    <img src="https://res.cloudinary.com/dp7yxzrgw/image/upload/v1753685727/logos/whiteboardtec-logo_oztrhh.png" alt="Whiteboard Logo" width="170" border="0" style="display: block; width: 150px; max-width: 150px;" />
+                    <img src="https://res.cloudinary.com/dp7yxzrgw/image/upload/v1753685727/logos/whiteboardtec-logo_oztrhh.png" 
+                         alt="Whiteboard Logo" width="170" border="0" 
+                         style="display: block; width: 150px; max-width: 150px;" />
                   </td>
                   <td class="project-name-container" width="70%" style="padding: 10px; color: #888888; font-weight: 600; font-size: 18px; text-align: left;">
                     Project Name: ${headerProjectName}
@@ -80,15 +86,24 @@ export const internalRfqRaisedHtmlContent = ({
               </table>
             </td>
           </tr>
+
+          <!-- Body Content -->
           <tr>
             <td class="content-body" style="padding: 40px 30px; color: #333333; line-height: 1.6;">
-              <div style="font-size: 18px; font-weight: bold; margin: 0 0 20px 0;">RFQ Raised Notification</div>
-              <p style="margin: 0 0 20px 0;">A new <strong>Request for Quotation (RFQ)</strong> has been raised internally. Please find the details below:</p>
+              <p style="color: #888888; margin: 0 0 20px 0;">Date: ${new Date().toDateString()}</p>
+
+              <p style="margin: 0 0 20px 0;">Hello,</p>
+              <p style="margin: 0 0 20px 0;">
+                This is an automated notification to inform you that a new <strong>Internal RFQ</strong> has been raised in Project Station.
+              </p>
 
               <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 20px;">
                 <tr>
+                  <td width="140" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #888888; font-weight: bold; font-size: 14px;">Project</td>
+                  <td valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333;">${safeProjectName}</td>
+                </tr>
+                <tr>
                   <td width="140" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #888888; font-weight: bold; font-size: 14px;">Raised By</td>
-                  <td valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333;">${creatorName}</td>
                 </tr>
                 <tr>
                   <td width="140" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #888888; font-weight: bold; font-size: 14px;">Date</td>

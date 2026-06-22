@@ -138,6 +138,7 @@ export class RFIResponseController {
                 responderName,
                 responderDesignation: responder.designation,
                 ctaLabel: "Login to View RFI",
+                redirectUrl: `/rfi/${rfiId}`,
                 fabricatorName,
               }),
           });

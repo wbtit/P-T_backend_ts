@@ -16,6 +16,7 @@ type ResponseMailTemplateInput = {
   responderName: string;
   responderDesignation?: string | null;
   ctaLabel: string;
+  redirectUrl?: string;
   fabricatorName?: string;
 };
 
@@ -33,6 +34,7 @@ export const responseMailTemplate = ({
   responderName,
   responderDesignation,
   ctaLabel,
+  redirectUrl,
   fabricatorName,
 }: ResponseMailTemplateInput) => `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
@@ -126,11 +128,12 @@ export const responseMailTemplate = ({
                 <tr>
                   <td align="center">
                     <!--[if mso]>
-                    <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="https://ps.whiteboardtec.com" style="height:50px;v-text-anchor:middle;width:240px;" arcsize="10%" stroke="f" fillcolor="#8cc63f">
+                    <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="https://ps.whiteboardtec.com${redirectUrl ? `/login?redirect=${redirectUrl}` : ''}" style="height:50px;v-text-anchor:middle;width:240px;" arcsize="10%" stroke="f" fillcolor="#8cc63f">
+                      <w:anchorlock/>
                       <center style="color:#ffffff;font-family:Arial,sans-serif;font-size:16px;font-weight:bold;">${ctaLabel}</center>
                     </v:roundrect>
                     <![endif]-->
-                    <a href="https://ps.whiteboardtec.com" style="background-color: #8cc63f; color: #ffffff; display: inline-block; font-family: Arial, sans-serif; font-size: 16px; font-weight: bold; line-height: 50px; text-align: center; text-decoration: none; width: 240px; -webkit-text-size-adjust: none; border-radius: 5px; mso-hide: all;">${ctaLabel}</a>
+                    <a href="https://ps.whiteboardtec.com${redirectUrl ? `/login?redirect=${redirectUrl}` : ''}" style="background-color: #8cc63f; color: #ffffff; display: inline-block; font-family: Arial, sans-serif; font-size: 16px; font-weight: bold; line-height: 50px; text-align: center; text-decoration: none; width: 240px; -webkit-text-size-adjust: none; border-radius: 5px; mso-hide: all;">${ctaLabel}</a>
                   </td>
                 </tr>
               </table>
