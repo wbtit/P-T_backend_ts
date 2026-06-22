@@ -131,9 +131,8 @@ export class RFIResponseController {
                 intro: `A new ${parentRespId ? "reply" : "response"} has been added to the RFI thread in Project Station. Please find the latest details below:`,
                 details: [
                   { label: "Project", value: rfiMailContext.project?.name || "N/A" },
+                  { label: "Status", value: rfiMailContext.status ? "Open" : "Closed" },
                   { label: "Response By", value: responderName },
-                  { label: "Reason", value: response.reason || "N/A" },
-                  { label: "Response Date", value: new Date(response.createdAt).toDateString() },
                 ],
                 involvedRecipients: involvedNames,
                 responderName,
