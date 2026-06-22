@@ -116,6 +116,7 @@ export class RFIResponseController {
           const fabricatorName = (await getFabricatorNameForUser(responderId, req.user?.role)) || undefined;
 
           await sendResponseParticipantMail({
+            projectId: rfiMailContext.project_id,
             sender: rfiMailContext.sender,
             primaryRecipient: rfiMailContext.recepients,
             multipleRecipients: rfiMailContext.multipleRecipients,

@@ -12,7 +12,7 @@ export default async function sendIFCCompletionAlertPMO(project:any,fabricator:a
         return false;
     }
 
-    const ccEmails = await getCCEmails();
+    const ccEmails = await getCCEmails(project.id);
     const mailOptions={
         to:process.env.PMO_EMAIL,
         cc: ccEmails,

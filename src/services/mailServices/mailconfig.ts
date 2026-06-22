@@ -59,22 +59,50 @@ const sanitizeMailRecipients = async ({ to, cc }: Pick<SendEmailInput, "to" | "c
   };
 };
 
-const getCCEmails = async (): Promise<string[]> => {
-  const users = await prisma.user.findMany({
+const getCCEmails = async (projectId?: string): Promise<string[]> => {
+  // Global roles that should always be CC'd
+  const globalRoles: UserRole[] = ['ADMIN', 'DEPUTY_MANAGER', 'OPERATION_EXECUTIVE'];
+  
+  const globalUsers = await prisma.user.findMany({
     where: {
-      role: {
-        in: ['ADMIN', 'DEPUTY_MANAGER', 'OPERATION_EXECUTIVE', 'PROJECT_MANAGER', 'DEPT_MANAGER']
-      },
+      role: { in: globalRoles },
       isActive: true,
-      email: {
-        not: null
-      }
+      email: { not: null },
     },
-    select: {
-      email: true
-    }
+    select: { email: true }
   });
-  return users.map(user => user.email!).filter(email => email);
+  
+  let ccEmails = globalUsers.map(u => u.email!);
+
+  if (projectId) {
+    const project = await prisma.project.findUnique({
+      where: { id: projectId },
+      include: {
+        manager: { select: { email: true } },
+        department: {
+          include: {
+            managerIds: { select: { email: true, isActive: true } }
+          }
+        }
+      }
+    });
+
+    if (project) {
+      if (project.manager?.email) {
+        ccEmails.push(project.manager.email);
+      }
+      if (project.department?.managerIds) {
+        for (const deptManager of project.department.managerIds) {
+          if (deptManager.isActive && deptManager.email) {
+            ccEmails.push(deptManager.email);
+          }
+        }
+      }
+    }
+  }
+
+  // Remove duplicates
+  return Array.from(new Set(ccEmails));
 };
 
 const getEmailsByRoles = async (roles: UserRole[]): Promise<string[]> => {

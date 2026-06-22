@@ -152,6 +152,7 @@ export class SubmittalResponseController {
           const fabricatorName = (await getFabricatorNameForUser(responderId, req.user?.role)) || undefined;
 
           await sendResponseParticipantMail({
+            projectId: submittalMailContext.project_id,
             sender: submittalMailContext.sender,
             primaryRecipient: submittalMailContext.recepients,
             multipleRecipients: submittalMailContext.multipleRecipients,

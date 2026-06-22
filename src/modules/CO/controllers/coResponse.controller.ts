@@ -155,6 +155,7 @@ export class CoResponseController {
           const fabricatorName = (await getFabricatorNameForUser(responderId, req.user?.role)) || undefined;
 
           await sendResponseParticipantMail({
+            projectId: coMailContext.project,
             sender: coMailContext.senders,
             primaryRecipient: coMailContext.Recipients,
             multipleRecipients: coMailContext.multipleRecipients,

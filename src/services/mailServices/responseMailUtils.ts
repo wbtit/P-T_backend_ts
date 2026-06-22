@@ -24,6 +24,7 @@ type ResponseAudience = {
 };
 
 type SendResponseParticipantMailInput = ResolveAudienceInput & {
+  projectId?: string;
   subject: string;
   text?: string;
   buildHtml: (audience: ResponseAudience) => string;
@@ -116,6 +117,7 @@ const sanitizeCcEmails = (
 };
 
 export const sendResponseParticipantMail = async ({
+  projectId,
   sender,
   primaryRecipient,
   multipleRecipients,
@@ -136,7 +138,7 @@ export const sendResponseParticipantMail = async ({
   }
 
   const ccEmails = sanitizeCcEmails(
-    await getCCEmails(),
+    await getCCEmails(projectId),
     audience.toEmails,
     [responder?.email || ""]
   );

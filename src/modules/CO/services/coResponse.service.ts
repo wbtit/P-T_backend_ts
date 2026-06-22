@@ -46,7 +46,7 @@ export class CoResponseService {
       } else if (!process.env.PMO_EMAIL) {
         console.warn("PMO_EMAIL is not configured; skipping change order invoice alert");
       } else {
-        const ccEmails = await getCCEmails();
+        const ccEmails = await getCCEmails(changeOrder.project);
         const mailOptions={
                 to:process.env.PMO_EMAIL,
                 cc: ccEmails,

@@ -10,7 +10,7 @@ export default async function sendSubmissionReminder(project:any){
         return true;
     }
 
-    const ccEmails = await getCCEmails();
+    const ccEmails = await getCCEmails(project.id);
     const mailOptions={
         to:project.manager.email,
         cc: ccEmails,
