@@ -267,7 +267,8 @@ export class RFQController {
                   projectName: (newrfq as any).project?.name || (newrfq as any).projectName || "N/A",
                   raisedAt,
                   rfqId: newrfq.id,
-                  fabricatorName
+                  fabricatorName,
+                  dueDate: newrfq.estimationDate ?? newrfq.EstimationDate ?? newrfq.dueDate
                 }),
               });
             }
