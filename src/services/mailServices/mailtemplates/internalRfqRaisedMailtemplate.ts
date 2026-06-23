@@ -5,6 +5,7 @@ type InternalRfqRaisedMailContext = {
   projectName: string;
   raisedAt: Date;
   rfqId?: string;
+  fabricatorName?: string;
 };
 
 const formatDate = (date: Date) => date.toDateString();
@@ -22,6 +23,7 @@ export const internalRfqRaisedHtmlContent = ({
   projectName,
   raisedAt,
   rfqId,
+  fabricatorName,
 }: InternalRfqRaisedMailContext) => {
   const safeProjectName = projectName || "N/A";
   const headerProjectName =
@@ -80,7 +82,7 @@ export const internalRfqRaisedHtmlContent = ({
                          style="display: block; width: 150px; max-width: 150px;" />
                   </td>
                   <td class="project-name-container" width="70%" style="padding: 10px; color: #888888; font-weight: 600; font-size: 18px; text-align: left;">
-                    Project Name: ${headerProjectName}
+                    
                   </td>
                 </tr>
               </table>
@@ -90,8 +92,6 @@ export const internalRfqRaisedHtmlContent = ({
           <!-- Body Content -->
           <tr>
             <td class="content-body" style="padding: 40px 30px; color: #333333; line-height: 1.6;">
-              <p style="color: #888888; margin: 0 0 20px 0;">Date: ${new Date().toDateString()}</p>
-
               <p style="margin: 0 0 20px 0;">Hello,</p>
               <p style="margin: 0 0 20px 0;">
                 This is an automated notification to inform you that a new <strong>Internal RFQ</strong> has been raised in Project Station.
@@ -99,19 +99,8 @@ export const internalRfqRaisedHtmlContent = ({
 
               <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 20px;">
                 <tr>
-                  <td width="140" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #888888; font-weight: bold; font-size: 14px;">Project</td>
-                  <td valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333;">${safeProjectName}</td>
-                </tr>
-                <tr>
                   <td width="140" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #888888; font-weight: bold; font-size: 14px;">Raised By</td>
-                </tr>
-                <tr>
-                  <td width="140" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #888888; font-weight: bold; font-size: 14px;">Date</td>
-                  <td valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333;">${formatDate(raisedAt)}</td>
-                </tr>
-                <tr>
-                  <td width="140" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #888888; font-weight: bold; font-size: 14px;">Time</td>
-                  <td valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333;">${formatTime(raisedAt)}</td>
+                  <td valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333;">${fabricatorName || "N/A"}</td>
                 </tr>
               </table>
 
@@ -128,12 +117,12 @@ export const internalRfqRaisedHtmlContent = ({
                 <tr>
                   <td align="center">
                     <!--[if mso]>
-                    <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="https://ps.whiteboardtec.com" style="height:50px;v-text-anchor:middle;width:240px;" arcsize="10%" stroke="f" fillcolor="#8cc63f">
+                    <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="https://ps.whiteboardtec.com/login?redirect=/internal-rfq/${rfqId || ''}" style="height:50px;v-text-anchor:middle;width:240px;" arcsize="10%" stroke="f" fillcolor="#8cc63f">
                       <w:anchorlock/>
                       <center style="color:#ffffff;font-family:Arial,sans-serif;font-size:16px;font-weight:bold;">Login to View RFQ</center>
                     </v:roundrect>
                     <![endif]-->
-                    <a href="https://ps.whiteboardtec.com" style="background-color: #8cc63f; color: #ffffff; display: inline-block; font-family: Arial, sans-serif; font-size: 16px; font-weight: bold; line-height: 50px; text-align: center; text-decoration: none; width: 240px; -webkit-text-size-adjust: none; border-radius: 5px; mso-hide: all;">Login to View RFQ</a>
+                    <a href="https://ps.whiteboardtec.com/login?redirect=/internal-rfq/${rfqId || ''}" style="background-color: #8cc63f; color: #ffffff; display: inline-block; font-family: Arial, sans-serif; font-size: 16px; font-weight: bold; line-height: 50px; text-align: center; text-decoration: none; width: 240px; -webkit-text-size-adjust: none; border-radius: 5px; mso-hide: all;">Login to View RFQ</a>
                   </td>
                 </tr>
               </table>

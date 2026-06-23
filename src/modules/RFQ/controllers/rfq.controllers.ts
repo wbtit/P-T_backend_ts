@@ -162,7 +162,12 @@ export class RFQController {
                     },
                   })
                 : Promise.resolve(null),
-              newrfq.senderId
+              newrfq.fabricatorId
+                ? prisma.fabricator.findUnique({
+                    where: { id: newrfq.fabricatorId },
+                    select: { fabName: true },
+                  })
+                : newrfq.senderId
                 ? prisma.fabricator.findFirst({
                     where: {
                       OR: [
@@ -178,7 +183,7 @@ export class RFQController {
                 : Promise.resolve(null),
             ]);
             const isInternalCreator = INTERNAL_RFQ_CREATOR_ROLES.has(role as UserRole);
-            const fabricatorName = !isInternalCreator ? (senderFabricator?.fabName || undefined) : undefined;
+            const fabricatorName = senderFabricator?.fabName || undefined;
 
             const cdIds = parseStringArray(req.body.ConnectionDesignerIds);
             if (cdIds.length > 0) {
@@ -259,9 +264,10 @@ export class RFQController {
                 }),
                 html: internalRfqRaisedHtmlContent({
                   creatorName,
-                  projectName: newrfq.project?.name || newrfq.projectName || "N/A",
+                  projectName: (newrfq as any).project?.name || (newrfq as any).projectName || "N/A",
                   raisedAt,
                   rfqId: newrfq.id,
+                  fabricatorName
                 }),
               });
             }

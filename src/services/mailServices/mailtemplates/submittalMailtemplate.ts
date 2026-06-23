@@ -63,7 +63,7 @@ export const submittalhtmlContent = (submitals: any, fabricatorName?: string) =>
                     <img src="https://res.cloudinary.com/dp7yxzrgw/image/upload/v1753685727/logos/whiteboardtec-logo_oztrhh.png" alt="Whiteboard Logo" width="170" border="0" style="display: block; width: 150px; max-width: 150px;" />
                   </td>
                   <td class="project-name-container" width="70%" style="padding: 10px; color: #888888; font-weight: 600; font-size: 18px; text-align: left;">
-                    Project Name: ${submitals.project?.name?.toUpperCase() || "PROJECT NAME"}
+                    
                   </td>
                 </tr>
               </table>
