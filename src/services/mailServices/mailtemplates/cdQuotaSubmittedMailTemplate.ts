@@ -75,8 +75,8 @@ export const cdQuotaSubmittedHtmlContent = (quota: any) => {
           <!-- Body Content -->
           <tr>
             <td class="content-body" style="padding: 40px 30px; color: #333333; line-height: 1.6;">
-              <div style="font-size: 18px; font-weight: bold; margin: 0 0 20px 0;">Connection Designer Quota Submitted</div>
-              <p style="margin: 0 0 20px 0;">A new quotation has been submitted by <strong>${cdName}</strong> for RFQ: <strong>${rfq?.subject || "N/A"}</strong>. Please review the details below:</p>
+              <div style="font-size: 18px; font-weight: bold; margin: 0 0 20px 0;">Connection Designer Quotation Received</div>
+                <p style="margin: 0 0 20px 0;">A new quotation has been received from <strong>${cdName}</strong>. Please login in Task Matrix to review the quotation details.</p>
 
 
 

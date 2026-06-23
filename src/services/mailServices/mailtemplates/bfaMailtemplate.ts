@@ -61,24 +61,13 @@ export const bfaHtmlContent = (bfa: any, projectName: string, submittalSubject: 
           <!-- Body Content -->
           <tr>
             <td class="content-body" style="padding: 40px 30px; color: #333333; line-height: 1.6;">
-              <p style="margin: 0 0 20px 0;">You have been notified about a <strong>Back from Approval (BFA)</strong> creation. Please find the details below:</p>
+              <p style="margin: 0 0 20px 0;">You have been notified about <strong>Back from Approval (BFA)</strong> for the above mentioned project. Please find the details below:</p>
 
               <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 20px;">
-                <tr>
-                  <td width="200" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #888888; font-weight: bold; font-size: 14px;">Project Name</td>
-                  <td valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333;">${projectName || "N/A"}</td>
-                </tr>
+              
                 <tr>
                   <td width="200" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #888888; font-weight: bold; font-size: 14px;">Associated Submittal Subject</td>
                   <td valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333;">${submittalSubject || "N/A"}</td>
-                </tr>
-                <tr>
-                  <td width="200" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #888888; font-weight: bold; font-size: 14px;">Subject</td>
-                  <td valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333;">${bfa.subject || "N/A"}</td>
-                </tr>
-                <tr>
-                  <td width="200" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #888888; font-weight: bold; font-size: 14px;">Description</td>
-                  <td valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333;">${bfa.description || "N/A"}</td>
                 </tr>
                 <tr>
                   <td width="200" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #888888; font-weight: bold; font-size: 14px;">Status</td>

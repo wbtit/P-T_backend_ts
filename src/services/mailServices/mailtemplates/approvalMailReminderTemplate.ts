@@ -68,15 +68,14 @@ export function approvalReminderTemplate(projectName: string, approvalDate: stri
           <tr>
             <td class="content-body" style="padding: 40px 30px; color: #333333; line-height: 1.6;">
               <p style="color: #888888; margin: 0 0 20px 0;">Date: ${new Date().toString()}</p>
-              <div style="font-size: 18px; font-weight: bold; margin: 0 0 20px 0;">Subject: Project Approval Reminder - ${projectName}</div>
-              <p style="margin: 0 0 15px 0;">This is a friendly reminder about the upcoming <b>approval deadline</b> for your project on Project Station.</p>
+              <div style="font-size: 18px; font-weight: bold; margin: 0 0 20px 0;">Subject: Project Approval Reminder </div>
+              <p style="margin: 0 0 15px 0;">This is a friendly reminder about the upcoming <b>approval deadline</b> for your project on Project Station/Task Matrix.</p>
 
               <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin: 20px 0;">
-                <tr><td style="padding: 5px 0;"><strong>Project Name:</strong> ${projectName}</td></tr>
                 <tr><td style="padding: 5px 0;"><strong>Scheduled Approval Date:</strong> ${formattedDate}</td></tr>
               </table>
 
-              <p style="margin: 0 0 20px 0;">Please ensure all necessary materials and documentation are finalized and submitted for approval by this date.</p>
+              <p style="margin: 0 0 20px 0;">Please ensure all necessary documents/files are finalized and submitted for approval by the above mentioned date.</p>
 
               <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin: 30px 0 30px 0;">
                 <tr>

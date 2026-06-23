@@ -104,8 +104,16 @@ const parseStringArray = (val: any): string[] => {
       const parsed = JSON.parse(val);
       if (Array.isArray(parsed)) return parsed;
     } catch {
-      if (val.includes(",")) return val.split(",").map(v => v.trim());
-      return [val];
+      // Strip brackets if it looks like an array string but failed JSON parsing
+      let stripped = val.trim();
+      if (stripped.startsWith("[") && stripped.endsWith("]")) {
+        stripped = stripped.slice(1, -1);
+      }
+      
+      if (stripped.includes(",")) {
+        return stripped.split(",").map(v => v.replace(/^['"]|['"]$/g, '').trim()).filter(Boolean);
+      }
+      return [stripped.replace(/^['"]|['"]$/g, '').trim()].filter(Boolean);
     }
   }
   return [];
@@ -183,7 +191,14 @@ export class RFQController {
                 : Promise.resolve(null),
             ]);
             const isInternalCreator = INTERNAL_RFQ_CREATOR_ROLES.has(role as UserRole);
-            const fabricatorName = senderFabricator?.fabName || undefined;
+            let fabricatorName = senderFabricator?.fabName || undefined;
+            if (newrfq.fabricatorId) {
+              const fab = await prisma.fabricator.findUnique({
+                where: { id: newrfq.fabricatorId },
+                select: { fabName: true }
+              });
+              if (fab?.fabName) fabricatorName = fab.fabName;
+            }
 
             const cdIds = parseStringArray(req.body.ConnectionDesignerIds);
             if (cdIds.length > 0) {
@@ -192,21 +207,23 @@ export class RFQController {
                   connectionDesignerId: { in: cdIds },
                   role: "CONNECTION_DESIGNER_ADMIN"
                 },
-                select: { id: true, email: true }
+                select: { id: true, email: true, firstName: true, lastName: true }
               });
               const cdEmails = cdEngineers.map(e => e.email).filter(Boolean) as string[];
               if (cdEmails.length > 0) {
                 const uniqueCdEmails = Array.from(new Set(cdEmails));
                 const ccList = await getCCEmails();
-                for (const cdEmail of uniqueCdEmails) {
-                  await sendEmail({
-                    html: cdRfqHtmlContent(newrfq, fabricatorName),
-                    to: cdEmail,
-                    cc: ccList,
-                    subject: `RFQ Connection Design: ${newrfq.project?.name || newrfq.projectName || "N/A"} - ${newrfq.subject}`,
-                    text: `You have been assigned as a Connection Designer for RFQ: ${newrfq.subject}`
-                  });
-                }
+                await Promise.allSettled(
+                  uniqueCdEmails.map((cdEmail) =>
+                    sendEmail({
+                      html: cdRfqHtmlContent(newrfq, fabricatorName),
+                      to: cdEmail,
+                      cc: ccList,
+                      subject: `RFQ Connection Design: ${newrfq.project?.name || newrfq.projectName || "N/A"} - ${newrfq.subject}`,
+                      text: `You have been assigned as a Connection Designer for RFQ: ${newrfq.subject}`
+                    })
+                  )
+                );
               }
 
               for (const cd of cdEngineers) {
@@ -336,6 +353,27 @@ export class RFQController {
         // Background non-blocking tasks
         (async () => {
           try {
+            let fabricatorName: string | undefined = undefined;
+            if (rfq.fabricatorId) {
+              const fab = await prisma.fabricator.findUnique({
+                where: { id: rfq.fabricatorId },
+                select: { fabName: true }
+              });
+              fabricatorName = fab?.fabName || undefined;
+            } else if (rfq.senderId) {
+              const senderFab = await prisma.fabricator.findFirst({
+                where: {
+                  OR: [
+                    { pointOfContact: { some: { id: rfq.senderId } } },
+                    { wbtFabricatorPointOfContact: { some: { id: rfq.senderId } } },
+                    { createdById: rfq.senderId },
+                  ]
+                },
+                select: { fabName: true }
+              });
+              fabricatorName = senderFab?.fabName || undefined;
+            }
+
             const cdIdsUpdate = parseStringArray(req.body.ConnectionDesignerIds);
             if (cdIdsUpdate.length > 0) {
               const cdEngineers = await prisma.user.findMany({
@@ -343,21 +381,23 @@ export class RFQController {
                   connectionDesignerId: { in: cdIdsUpdate },
                   role: "CONNECTION_DESIGNER_ADMIN"
                 },
-                select: { id: true, email: true }
+                select: { id: true, email: true, firstName: true, lastName: true }
               });
               const cdEmails = cdEngineers.map(e => e.email).filter(Boolean) as string[];
               if (cdEmails.length > 0) {
                 const uniqueCdEmails = Array.from(new Set(cdEmails));
                 const ccList = await getCCEmails();
-                for (const cdEmail of uniqueCdEmails) {
-                  await sendEmail({
-                    html: cdRfqHtmlContent(rfq),
-                    to: cdEmail,
-                    cc: ccList,
-                    subject: `RFQ Connection Design: ${(rfq as any).project?.name || (rfq as any).projectName || "N/A"} - ${rfq.subject}`,
-                    text: `You have been assigned as a Connection Designer for RFQ: ${rfq.subject}`
-                  });
-                }
+                await Promise.allSettled(
+                  uniqueCdEmails.map((cdEmail) =>
+                    sendEmail({
+                      html: cdRfqHtmlContent(rfq, fabricatorName),
+                      to: cdEmail,
+                      cc: ccList,
+                      subject: `RFQ Connection Design: ${(rfq as any).project?.name || (rfq as any).projectName || "N/A"} - ${rfq.subject}`,
+                      text: `You have been assigned as a Connection Designer for RFQ: ${rfq.subject}`
+                    })
+                  )
+                );
               }
 
               for (const cd of cdEngineers) {

@@ -78,7 +78,7 @@ export const rfqhtmlContent = (newrfq: any, fabricatorName?: string) => {
                     <img src="https://res.cloudinary.com/dp7yxzrgw/image/upload/v1753685727/logos/whiteboardtec-logo_oztrhh.png" alt="Whiteboard Logo" width="170" border="0" style="display: block; width: 150px; max-width: 150px;" />
                   </td>
                   <td class="project-name-container" width="70%" style="padding: 10px; color: #888888; font-weight: 600; font-size: 18px; text-align: left;">
-                    
+                    Project Name: ${headerProjectName}
                   </td>
                 </tr>
               </table>
@@ -88,7 +88,7 @@ export const rfqhtmlContent = (newrfq: any, fabricatorName?: string) => {
           <tr>
             <td class="content-body" style="padding: 40px 30px; color: #333333; line-height: 1.6;">
               <div style="font-size: 18px; font-weight: bold; margin: 0 0 20px 0;">RFQ Notification</div>
-              <p style="margin: 0 0 20px 0;">You have been notified about a new <strong>Request for Quotation (RFQ)</strong>. Please find the details below:</p>
+              <p style="margin: 0 0 20px 0;">You have received a new <strong>Request for Quotation (RFQ)</strong>. Please find the details below:</p>
 
               <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 20px;">
                 <tr>

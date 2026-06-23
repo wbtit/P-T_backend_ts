@@ -73,25 +73,12 @@ export const coHtmlContent = (co: any, fabricatorName?: string) => {
           <tr>
             <td class="content-body" style="padding: 40px 30px; color: #333333; line-height: 1.6;">
               <div style="font-size: 18px; font-weight: bold; margin: 0 0 20px 0;">Change Order: ${co.changeOrderNumber || "N/A"}</div>
-              <p style="margin: 0 0 20px 0;">You have been notified about a <strong>Change Order</strong>. Please find the details below:</p>
+              <p style="margin: 0 0 20px 0;">You have received <strong>Change Order Request</strong> for above mentioned project. Please find the details below:</p>
 
               <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 20px;">
                 <tr>
-                  <td width="140" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #888888; font-weight: bold; font-size: 14px;">CO Number</td>
-                  <td valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333;">${co.changeOrderNumber || "N/A"}</td>
-                </tr>
-
-                <tr>
-                  <td width="140" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #888888; font-weight: bold; font-size: 14px;">Project</td>
-                  <td valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333;">${co.Project?.name || "N/A"}</td>
-                </tr>
-                <tr>
                   <td width="140" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #888888; font-weight: bold; font-size: 14px;">Subject</td>
                   <td valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333;">${co.remarks || "N/A"}</td>
-                </tr>
-                <tr>
-                  <td width="140" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #888888; font-weight: bold; font-size: 14px;">Stage</td>
-                  <td valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333;">${co.stage || "N/A"}</td>
                 </tr>
 
                 <tr>

@@ -63,7 +63,7 @@ export const submittalhtmlContent = (submitals: any, fabricatorName?: string) =>
                     <img src="https://res.cloudinary.com/dp7yxzrgw/image/upload/v1753685727/logos/whiteboardtec-logo_oztrhh.png" alt="Whiteboard Logo" width="170" border="0" style="display: block; width: 150px; max-width: 150px;" />
                   </td>
                   <td class="project-name-container" width="70%" style="padding: 10px; color: #888888; font-weight: 600; font-size: 18px; text-align: left;">
-                    
+                     Project Name: ${submitals.project?.name || "N/A"}
                   </td>
                 </tr>
               </table>
@@ -74,13 +74,9 @@ export const submittalhtmlContent = (submitals: any, fabricatorName?: string) =>
             <td class="content-body" style="padding: 40px 30px; color: #333333; line-height: 1.6;">
               <p style="color: #888888; margin: 0 0 20px 0;">Date: ${new Date().toDateString()}</p>
               <div style="font-size: 18px; font-weight: bold; margin: 0 0 20px 0;">Subject: ${submitals.subject || "Submittal Notification"}</div>
-              <p style="margin: 0 0 20px 0;">You have been notified about a new <strong>Submittal</strong>. Please find the details below:</p>
+              <p style="margin: 0 0 20px 0;">You have received a new <strong>Submittal</strong> for the above mentioned project. Please find the details below:</p>
 
               <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 20px;">
-                <tr>
-                  <td width="140" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #888888; font-weight: bold; font-size: 14px;">Project</td>
-                  <td valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333;">${submitals.project?.name || "N/A"}</td>
-                </tr>
                 <tr>
                   <td width="140" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #888888; font-weight: bold; font-size: 14px;">Stage</td>
                   <td valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333;">${submitals.stage || "N/A"}</td>
@@ -88,10 +84,6 @@ export const submittalhtmlContent = (submitals: any, fabricatorName?: string) =>
                 <tr>
                   <td width="140" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #888888; font-weight: bold; font-size: 14px;">Version</td>
                   <td valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333;">v${submitals.submittalVersion || 1}</td>
-                </tr>
-                <tr>
-                  <td width="140" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #888888; font-weight: bold; font-size: 14px;">Status</td>
-                  <td valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333;">${submitals.status ? "Approved" : "Pending"}</td>
                 </tr>
                 <tr>
                   <td width="140" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #888888; font-weight: bold; font-size: 14px;">Sender</td>
