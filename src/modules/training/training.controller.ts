@@ -34,12 +34,12 @@ export class TrainingController {
   };
 
   public approveTrainingRequest = async (req: AuthenticateRequest, res: Response) => {
-    const result = await this.trainingService.approveTrainingRequest(req.user!.id, req.params.requestId, req.body);
+    const result = await this.trainingService.approveTrainingRequest(req.user!, req.params.requestId, req.body);
     res.status(200).json({ status: "success", data: result });
   };
 
   public rejectTrainingRequest = async (req: AuthenticateRequest, res: Response) => {
-    const request = await this.trainingService.rejectTrainingRequest(req.user!.id, req.params.requestId, req.body);
+    const request = await this.trainingService.rejectTrainingRequest(req.user!, req.params.requestId, req.body);
     res.status(200).json({ status: "success", data: request });
   };
 

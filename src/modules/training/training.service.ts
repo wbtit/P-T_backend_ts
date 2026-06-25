@@ -49,30 +49,47 @@ export class TrainingService {
     return request;
   }
 
-  async approveTrainingRequest(approverId: string, requestId: string, data: { estimatedHours: string; dueDate: Date; name: string; description: string }) {
-    const request = await prisma.trainingRequest.findUnique({
+  async approveTrainingRequest(approver: { id: string, role: string, departmentId?: string | null }, requestId: string, data: { estimatedHours: string; dueDate: Date; name: string; description: string }) {
+    const requestWithScope = await prisma.trainingRequest.findUnique({
       where: { id: requestId },
-      include: { task: true }
+      include: { task: { include: { project: true } } }
     });
 
-    if (!request) throw new AppError("Training request not found", 404);
-    if (request.status !== "PENDING") throw new AppError("Training request is no longer PENDING", 409);
+    if (!requestWithScope) throw new AppError("Training request not found", 404);
+
+    const isScoped = 
+      (approver.role === "PROJECT_MANAGER" && requestWithScope.task.project.managerID === approver.id) ||
+      ((approver.role === "DEPT_MANAGER" || approver.role === "DEPUTY_MANAGER") && requestWithScope.task.departmentId === approver.departmentId) ||
+      (approver.role === "ADMIN" || approver.role === "OPERATION_EXECUTIVE");
+
+    if (!isScoped) {
+      throw new AppError("You are not authorized to act on this training request", 403);
+    }
 
     const result = await prisma.$transaction(async (tx) => {
+      const claimed = await tx.trainingRequest.updateMany({
+        where: { id: requestId, status: "PENDING" },
+        data: { status: "APPROVED", approvedById: approver.id, resolvedAt: new Date() }
+      });
+
+      if (claimed.count === 0) {
+        throw new AppError("Training request is no longer PENDING", 409);
+      }
+
       const newTask = await tx.task.create({
         data: {
           taskType: "TRAINING",
           trainingRequestId: requestId,
           name: data.name,
           description: data.description,
-          user_id: request.raisedById,
+          user_id: requestWithScope.raisedById,
           status: "ASSIGNED",
           due_date: data.dueDate,
           start_date: new Date(),
-          project_id: request.task.project_id,
-          departmentId: request.task.departmentId,
-          created_by: approverId,
-          priority: request.task.priority,
+          project_id: requestWithScope.task.project_id,
+          departmentId: requestWithScope.task.departmentId,
+          created_by: approver.id,
+          priority: requestWithScope.task.priority,
           Stage: "IFA" 
         }
       });
@@ -81,28 +98,25 @@ export class TrainingService {
         data: {
           taskId: newTask.id,
           allocatedHours: data.estimatedHours,
-          createdBy: approverId
+          createdBy: approver.id
         }
       });
 
       const updatedRequest = await tx.trainingRequest.update({
         where: { id: requestId },
         data: {
-          status: "APPROVED",
-          approvedById: approverId,
-          linkedTrainingTaskId: newTask.id,
-          resolvedAt: new Date()
+          linkedTrainingTaskId: newTask.id
         }
       });
 
       return { newTask, updatedRequest };
     });
 
-    await sendNotification(request.raisedById, {
+    await sendNotification(requestWithScope.raisedById, {
       type: "TRAINING_REQUEST_APPROVED",
       title: "Training Request Approved",
-      message: `Your training request for '${request.topic}' was approved and assigned.`,
-      requestId: request.id,
+      message: `Your training request for '${requestWithScope.topic}' was approved and assigned.`,
+      requestId: requestWithScope.id,
       taskId: result.newTask.id,
       timestamp: new Date()
     });
@@ -110,29 +124,46 @@ export class TrainingService {
     return result;
   }
 
-  async rejectTrainingRequest(approverId: string, requestId: string, data: { rejectionReason: string }) {
-    const request = await prisma.trainingRequest.findUnique({
-      where: { id: requestId }
-    });
-
-    if (!request) throw new AppError("Training request not found", 404);
-    if (request.status !== "PENDING") throw new AppError("Training request is no longer PENDING", 409);
-
-    const updatedRequest = await prisma.trainingRequest.update({
+  async rejectTrainingRequest(approver: { id: string, role: string, departmentId?: string | null }, requestId: string, data: { rejectionReason: string }) {
+    const requestWithScope = await prisma.trainingRequest.findUnique({
       where: { id: requestId },
-      data: {
-        status: "REJECTED",
-        approvedById: approverId,
-        rejectionReason: data.rejectionReason,
-        resolvedAt: new Date()
-      }
+      include: { task: { include: { project: true } } }
     });
 
-    await sendNotification(request.raisedById, {
+    if (!requestWithScope) throw new AppError("Training request not found", 404);
+
+    const isScoped = 
+      (approver.role === "PROJECT_MANAGER" && requestWithScope.task.project.managerID === approver.id) ||
+      ((approver.role === "DEPT_MANAGER" || approver.role === "DEPUTY_MANAGER") && requestWithScope.task.departmentId === approver.departmentId) ||
+      (approver.role === "ADMIN" || approver.role === "OPERATION_EXECUTIVE");
+
+    if (!isScoped) {
+      throw new AppError("You are not authorized to act on this training request", 403);
+    }
+
+    const updatedRequest = await prisma.$transaction(async (tx) => {
+      const claimed = await tx.trainingRequest.updateMany({
+        where: { id: requestId, status: "PENDING" },
+        data: {
+          status: "REJECTED",
+          approvedById: approver.id,
+          rejectionReason: data.rejectionReason,
+          resolvedAt: new Date()
+        }
+      });
+
+      if (claimed.count === 0) {
+        throw new AppError("Training request is no longer PENDING", 409);
+      }
+
+      return await tx.trainingRequest.findUnique({ where: { id: requestId } });
+    });
+
+    await sendNotification(requestWithScope.raisedById, {
       type: "TRAINING_REQUEST_REJECTED",
       title: "Training Request Rejected",
-      message: `Your training request for '${request.topic}' was rejected. Reason: ${data.rejectionReason}`,
-      requestId: request.id,
+      message: `Your training request for '${requestWithScope.topic}' was rejected. Reason: ${data.rejectionReason}`,
+      requestId: requestWithScope.id,
       timestamp: new Date()
     });
 
