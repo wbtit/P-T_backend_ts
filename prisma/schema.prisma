@@ -83,6 +83,18 @@ enum TaskStatus {
   WRONG_ALLOCATION
 }
 
+enum TaskType {
+  PROJECT
+  TRAINING
+}
+
+enum TrainingRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+
 enum WorkSegmentType {
   WORK
   REWORK
@@ -434,6 +446,10 @@ model User {
   ipChallenges  IpChallenge[]   @relation("UserIpChallenges")
   sessions      UserSession[]   @relation("UserSessions")
   commentReads  CommentRead[]   @relation("userCommentReads")
+
+  trainingRequestsRaised   TrainingRequest[] @relation("trainingRequestRaisedBy")
+  trainingRequestsApproved TrainingRequest[] @relation("trainingRequestApprovedBy")
+
 
   @@index([email])
   @@index([phone])
@@ -1271,6 +1287,10 @@ model Task {
   project_bundle_id      String?                           @db.Uuid
   updatedAt              DateTime                          @updatedAt
 
+  taskType          TaskType  @default(PROJECT)
+  trainingRequestId String?   @unique @db.Uuid
+
+
   //Relations
   taskcomment     Comment[]       @relation("taskcomment")
   project         Project         @relation("TaskBelongsToProject", fields: [project_id], references: [id])
@@ -1283,6 +1303,8 @@ model Task {
   alert           TaskAlert[]     @relation("taskAllocationAlerts")
   flags           TaskFlag[]      @relation("taskAllocationFlags")
   projectBundle   ProjectBundle?  @relation(fields: [project_bundle_id], references: [id])
+  trainingRequestTask      TrainingRequest[] @relation("trainingRequestTask")
+  trainingRequestLinkedTask TrainingRequest? @relation("trainingRequestLinkedTask")
 
   @@index([name])
   @@index([status])
@@ -1296,6 +1318,31 @@ model Task {
   @@index([Stage])
   @@map("task")
 }
+
+model TrainingRequest {
+  id                    String                 @id @default(uuid()) @db.Uuid
+  taskId                String                 @db.Uuid
+  raisedById            String                 @db.Uuid
+  topic                 String
+  reason                String
+  status                TrainingRequestStatus  @default(PENDING)
+  approvedById          String?                @db.Uuid
+  rejectionReason       String?
+  linkedTrainingTaskId  String?                @unique @db.Uuid
+  requestedAt           DateTime               @default(now())
+  resolvedAt            DateTime?
+
+  task               Task   @relation("trainingRequestTask", fields: [taskId], references: [id])
+  raisedBy           User   @relation("trainingRequestRaisedBy", fields: [raisedById], references: [id])
+  approvedBy         User?  @relation("trainingRequestApprovedBy", fields: [approvedById], references: [id])
+  linkedTrainingTask Task?  @relation("trainingRequestLinkedTask", fields: [linkedTrainingTaskId], references: [id])
+
+  @@index([taskId])
+  @@index([raisedById])
+  @@index([status])
+  @@map("training_request")
+}
+
 
 model TaskAllocation {
   id             String   @id @default(uuid()) @db.Uuid

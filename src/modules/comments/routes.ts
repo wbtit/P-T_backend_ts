@@ -9,14 +9,8 @@ import z from "zod";
 const commentCtrlr = new CommentController();
 const router = Router();
 
-// roleGuard definition as requested in constraints
-export const roleGuard = (roles: string[]) => 
-  (req: AuthenticateRequest, res: Response, next: NextFunction) => {
-    if (!req.user || !roles.includes(req.user.role)) {
-      return res.status(403).json({ message: "Forbidden" });
-    }
-    next();
-  };
+import { roleGuard } from "../../middleware/roleGuard";
+
 
 // Existing Routes
 router.post("/",

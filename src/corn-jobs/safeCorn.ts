@@ -10,14 +10,17 @@ import { runMonthlyTES } from "./runMonthlyTES";
 import { sendFollowUpReminders } from "./sendFollowUpReminders";
 import { runPMOComplition } from "./pmoComplition";
 import { processCDFileRetention } from "./cdFileRetention";
+import { checkTrainingRequestSLA } from "./checkTrainingRequestSLA";
 import redlock from "../config/redlock";
 import { Lock } from "redlock";
+
 import logger from "../utils/logger";
 
 // ───────────────────────────────
 // Redis Distributed Lock Helpers 
 // ───────────────────────────────
-async function acquireLock(lockKey: string | number): Promise<Lock | null> {
+export async function acquireLock(lockKey: string | number): Promise<Lock | null> {
+
   try {
     return await redlock.acquire([`lock:cron:${lockKey}`], 30000);
   } catch (err) {
@@ -26,7 +29,8 @@ async function acquireLock(lockKey: string | number): Promise<Lock | null> {
   }
 }
 
-async function releaseLock(lock: Lock): Promise<void> {
+export async function releaseLock(lock: Lock): Promise<void> {
+
   try {
     await lock.release();
   } catch (err) {
@@ -408,7 +412,15 @@ if (process.env.ENABLE_CRON === "true") {
     { timezone: "Asia/Kolkata" }
   );
 
+// checkTrainingRequestSLA
+  nodeCron.schedule(
+    "0 */4 * * *", // every 4 hours
+    () => void checkTrainingRequestSLA(),
+    { timezone: "Asia/Kolkata" }
+  );
+
   logger.info(" Scheduler started for reminders with Redis lock protection.");
+
 } else {
   logger.info("⏸ Cron jobs are disabled for this environment.");
 }

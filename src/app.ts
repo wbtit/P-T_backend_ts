@@ -38,8 +38,10 @@ import { teamMeetingNotesRoutes } from "./modules/teamMeetingNotes";
 import { default as ProjectProgressReportRoutes } from "./modules/projectProgressReport/routes";
 import { default as InvoiceWireTransferRoutes } from "./modules/invoiceWireTransfers/routes";
 import { default as CoordinationDrawingRoutes } from "./modules/coordinationDrawing/routes";
+import { trainingRoutes } from "./modules/training";
 
 const routes = express.Router();
+
 
 routes.use("/auth", AuthRoutes);
 routes.use("/user", userRouter);
@@ -80,5 +82,6 @@ routes.use("/teamMeetingNotes", teamMeetingNotesRoutes);
 routes.use("/projectProgressReport", ProjectProgressReportRoutes);
 routes.use("/invoiceWireTransfer", InvoiceWireTransferRoutes);
 routes.use("/coordinationDrawing", CoordinationDrawingRoutes);
+routes.use("/training", trainingRoutes);
 
 export default routes
