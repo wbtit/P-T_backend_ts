@@ -15,7 +15,7 @@ export class TrainingController {
 
   public getPendingRequests = async (req: AuthenticateRequest, res: Response) => {
     const { id, role, departmentId } = req.user!;
-    let whereClause: any = { status: "PENDING" };
+    let whereClause: any = { status: { in: ["PENDING", "AWAITING_DECISION"] } };
 
     if (role === "PROJECT_MANAGER") {
       whereClause.task = { project: { managerID: id } };
@@ -70,5 +70,24 @@ export class TrainingController {
         variancePercent
       }
     });
+  };
+
+  public suggestBatchableRequests = async (req: AuthenticateRequest, res: Response) => {
+    const { departmentId } = req.query;
+    if (!departmentId || typeof departmentId !== "string") {
+      throw new AppError("departmentId query parameter is required", 400);
+    }
+    const result = await this.trainingService.suggestBatchableRequests(req.user!.id, departmentId);
+    res.status(200).json({ status: "success", data: result });
+  };
+
+  public createTrainingBatch = async (req: AuthenticateRequest, res: Response) => {
+    const result = await this.trainingService.createTrainingBatch(req.user!, req.body);
+    res.status(201).json({ status: "success", data: result });
+  };
+
+  public completeTrainerSession = async (req: AuthenticateRequest, res: Response) => {
+    const result = await this.trainingService.completeTrainerSession(req.user!.id, req.params.batchId);
+    res.status(200).json(result);
   };
 }

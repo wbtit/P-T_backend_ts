@@ -7,9 +7,20 @@ import { TrainingService } from "./training.service";
 import { asyncHandler } from "../../config/utils/asyncHandler"; 
 import { AuthenticateRequest } from "../../middleware/authMiddleware";
 import { TrainingController } from "./training.controller";
+import { createTrainingBatchDto } from "./training.dto";
 
 const router = Router();
 const trainingController = new TrainingController();
+
+const validateUuidParam = (paramName: string) => {
+  return (req: import("express").Request, res: import("express").Response, next: import("express").NextFunction) => {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(req.params[paramName])) {
+      return res.status(400).json({ status: "error", message: `Invalid ${paramName} format` });
+    }
+    next();
+  };
+};
 
 
 const TRAINING_APPROVAL_ROLES = [
@@ -61,6 +72,39 @@ router.get(
   roleGuard(TRAINING_APPROVAL_ROLES),
   asyncHandler(async (req, res) => {
     await trainingController.getVariance(req as AuthenticateRequest, res);
+  })
+);
+
+router.get(
+  "/batches/suggest",
+  authMiddleware,
+  roleGuard(TRAINING_APPROVAL_ROLES),
+  asyncHandler(async (req, res) => {
+    const { departmentId } = req.query;
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!departmentId || typeof departmentId !== "string" || !uuidRegex.test(departmentId)) {
+      return res.status(400).json({ status: "error", message: "Invalid or missing departmentId" });
+    }
+    await trainingController.suggestBatchableRequests(req as AuthenticateRequest, res);
+  })
+);
+
+router.post(
+  "/batches",
+  authMiddleware,
+  roleGuard(TRAINING_APPROVAL_ROLES),
+  validate({ body: createTrainingBatchDto }),
+  asyncHandler(async (req, res) => {
+    await trainingController.createTrainingBatch(req as AuthenticateRequest, res);
+  })
+);
+
+router.patch(
+  "/batches/:batchId/complete",
+  authMiddleware,
+  validateUuidParam("batchId"),
+  asyncHandler(async (req, res) => {
+    await trainingController.completeTrainerSession(req as AuthenticateRequest, res);
   })
 );
 

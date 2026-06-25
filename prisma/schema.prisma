@@ -86,12 +86,21 @@ enum TaskStatus {
 enum TaskType {
   PROJECT
   TRAINING
+  TRAINER_SESSION
 }
 
 enum TrainingRequestStatus {
   PENDING
   APPROVED
   REJECTED
+  BATCHED
+  AWAITING_DECISION
+}
+
+enum BatchStatus {
+  FORMING
+  FINALIZED
+  TRAINING_DONE
 }
 
 
@@ -401,6 +410,7 @@ model User {
   multipleSubmittalsReceived   Submittals[]  @relation("SubmittalMultipleRecipients")
   multipleChangeOrdersReceived ChangeOrder[] @relation("ChangeOrderMultipleRecipients")
 
+  createdTrainingBatches          TrainingBatch[]                 @relation("batchCreatedBy")
   meetingsCreated                 Meeting[]                       @relation("MeetingCreatedBy")
   meetingAttendee                 MeetingAttendee[]               @relation("MeetingAttendeeUser")
   designDrawnBy                   DesignDrawings[]                @relation("designdrawingsuser")
@@ -474,6 +484,7 @@ model Department {
   teams      Team[]    @relation("DepartmentOfTeam")
   tasks      Task[]    @relation("TaskBelongsToDepartment")
   projects   Project[] @relation("projectDepartment")
+  trainingBatches TrainingBatch[]
 
   @@index([createdById])
   @@map("department")
@@ -1305,6 +1316,7 @@ model Task {
   projectBundle   ProjectBundle?  @relation(fields: [project_bundle_id], references: [id])
   trainingRequestTask      TrainingRequest[] @relation("trainingRequestTask")
   trainingRequestLinkedTask TrainingRequest? @relation("trainingRequestLinkedTask")
+  trainingBatchAsTrainer   TrainingBatch?    @relation("batchTrainerTask")
 
   @@index([name])
   @@index([status])
@@ -1337,10 +1349,34 @@ model TrainingRequest {
   approvedBy         User?  @relation("trainingRequestApprovedBy", fields: [approvedById], references: [id])
   linkedTrainingTask Task?  @relation("trainingRequestLinkedTask", fields: [linkedTrainingTaskId], references: [id])
 
+  batchId            String?       @db.Uuid
+  batch              TrainingBatch? @relation("batchRequests", fields: [batchId], references: [id])
+
   @@index([taskId])
   @@index([raisedById])
   @@index([status])
   @@map("training_request")
+}
+
+model TrainingBatch {
+  id             String       @id @default(uuid()) @db.Uuid
+  topic          String
+  departmentId   String       @db.Uuid
+  status         BatchStatus  @default(FORMING)
+  createdById    String       @db.Uuid
+  trainerTaskId  String?      @unique @db.Uuid
+  createdAt      DateTime     @default(now())
+  finalizedAt    DateTime?
+  trainingDoneAt DateTime?
+
+  requests    TrainingRequest[] @relation("batchRequests")
+  trainerTask Task?             @relation("batchTrainerTask", fields: [trainerTaskId], references: [id])
+  createdBy   User              @relation("batchCreatedBy", fields: [createdById], references: [id])
+  department  Department        @relation(fields: [departmentId], references: [id])
+
+  @@index([status])
+  @@index([departmentId])
+  @@map("training_batch")
 }
 
 
