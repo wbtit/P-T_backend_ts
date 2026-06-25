@@ -11,7 +11,6 @@ import { MileStoneRoutes } from "./modules/milestone";
 import { coRouter } from "./modules/CO";
 import {projectRoutes} from "./modules/project"
 import { NotificationRouter } from "./modules/notifications/routes";
-import {agentRoutes}  from "./modules/agent/router"
 import { departmentRoutes } from "./modules/department";
 import { chatRoutes } from "./modules/chatSystem";
 import { ClientRoutes } from "./modules/client";
@@ -59,7 +58,6 @@ routes.use("/rfq",RFQRoutes)
 routes.use("/rfi",RFIRoutes)
 routes.use("/project",projectRoutes)
 routes.use("/notifications",NotificationRouter)
-routes.use("/agent",agentRoutes)
 routes.use("/chat",chatRoutes)
 routes.use("/client",ClientRoutes)
 routes.use("/invoice",invoiceRoutes)
