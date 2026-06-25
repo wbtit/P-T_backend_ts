@@ -43,13 +43,14 @@ export async function calculateManagerEstimationScore(managerId:string,projectId
         completedTaskCountForManagerOnProject,
         completedTaskCountForManagerOnProjectInPeriod,
     ] = await Promise.all([
-        prisma.task.count({ where: { project_id: projectId } }),
-        prisma.task.count({ where: { project_id: projectId, status: "COMPLETED" } }),
+        prisma.task.count({ where: { project_id: projectId, taskType: "PROJECT" } }),
+        prisma.task.count({ where: { project_id: projectId, status: "COMPLETED", taskType: "PROJECT" } }),
         prisma.task.count({
             where: {
                 project_id: projectId,
                 status: "COMPLETED",
                 updatedAt: { gte: startDate, lt: endDate },
+                taskType: "PROJECT"
             },
         }),
         prisma.task.count({
@@ -57,6 +58,7 @@ export async function calculateManagerEstimationScore(managerId:string,projectId
                 project_id: projectId,
                 project: { managerID: managerId },
                 status: "COMPLETED",
+                taskType: "PROJECT"
             },
         }),
         prisma.task.count({
@@ -65,6 +67,7 @@ export async function calculateManagerEstimationScore(managerId:string,projectId
                 project: { managerID: managerId },
                 status: "COMPLETED",
                 updatedAt: { gte: startDate, lt: endDate },
+                taskType: "PROJECT"
             },
         }),
     ]);
@@ -81,7 +84,8 @@ export async function calculateManagerEstimationScore(managerId:string,projectId
         where:{
             project:{id:projectId,managerID:managerId},
             status:{in:["COMPLETED"]},
-            updatedAt:{gte:startDate,lt:endDate}
+            updatedAt:{gte:startDate,lt:endDate},
+            taskType: "PROJECT"
         },include:{
             allocationLog:true,
             workingHourTask:true
@@ -107,6 +111,7 @@ export async function calculateManagerEstimationScore(managerId:string,projectId
             where: {
                 project_id: projectId,
                 status: "COMPLETED",
+                taskType: "PROJECT"
             },
             select: {
                 id: true,

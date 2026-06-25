@@ -47,6 +47,7 @@ export async function calculateEPSForEmployee(employeeId: string, year: number, 
   const tasks = await prisma.task.findMany({
     where: {
       user_id: employeeId,
+      taskType: "PROJECT",
       OR: [
         { created_on: { gte: startDate, lt: endDate } },
         { updatedAt: { gte: startDate, lt: endDate } }, // includes completed or updates

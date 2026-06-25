@@ -12,6 +12,7 @@ export async function checkOverrunAlert() {
         where: {
             status: { in: ["IN_PROGRESS", "BREAK", "REWORK"] },
             overrunAlertSent: false,
+            taskType: "PROJECT",
         },
         include: {
             allocationLog: true,

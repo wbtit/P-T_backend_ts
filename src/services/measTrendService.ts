@@ -11,7 +11,8 @@ async function calculateMEASForMonth(managerId: string, projectId: string, year:
             project_id: projectId,
             project: { managerID: managerId },
             status: "COMPLETED",
-            updatedAt: { gte: startDate, lt: endDate }
+            updatedAt: { gte: startDate, lt: endDate },
+            taskType: "PROJECT"
         },
         include: {
             allocationLog: true,

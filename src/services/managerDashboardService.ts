@@ -28,7 +28,8 @@ export async function getManagerDashboardData(managerId: string, projectId: stri
         where: {
             project_id: projectId,
             project: { managerID: managerId },
-            status: "COMPLETED"
+            status: "COMPLETED",
+            taskType: "PROJECT"
         },
         include: {
             allocationLog: true,
@@ -79,7 +80,8 @@ export async function getManagerDashboardData(managerId: string, projectId: stri
         by: ["status"],
         where: {
             project_id: projectId,
-            project: { managerID: managerId }
+            project: { managerID: managerId },
+            taskType: "PROJECT"
         },
         _count: { id: true }
     });

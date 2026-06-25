@@ -12,6 +12,7 @@ export async function check75Alert() {
         where: {
             status: { in: ["IN_PROGRESS", "BREAK"] },
             seventyFiveAlertSent: false,
+            taskType: "PROJECT",
         },
         include: {
             allocationLog: true,

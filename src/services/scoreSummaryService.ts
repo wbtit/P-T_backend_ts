@@ -144,7 +144,7 @@ export async function getScoresSummary(
         select: { period: true, score: true },
       }),
       prisma.task.findMany({
-        where: { project_id: projectId },
+        where: { project_id: projectId, taskType: "PROJECT" },
         select: { user_id: true },
       }),
       prisma.team.findMany({

@@ -10,6 +10,7 @@ export async function calculateManagerBias(managerId: string, projectId?: string
             project: { managerID: managerId },
             ...(projectId ? { project_id: projectId } : {}),
             status: "COMPLETED",
+            taskType: "PROJECT"
         },
         include: {
             allocationLog: true,

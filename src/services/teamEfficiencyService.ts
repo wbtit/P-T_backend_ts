@@ -77,6 +77,7 @@ export async function calculateTeamEfficiencyForTeam(
   const tasks = await prisma.task.findMany({
     where: {
       user_id: { in: memberIds },
+      taskType: "PROJECT",
       OR: [
         { created_on: { gte: startDate, lt: endDate } },
         { updatedAt: { gte: startDate, lt: endDate } },
