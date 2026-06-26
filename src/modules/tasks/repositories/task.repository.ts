@@ -160,7 +160,7 @@ export class TaskRepository {
                 }
                 },
                 projectBundle: true,
-                allocationLog:{ select:{ allocatedHours:true } }
+                allocationLog:{ select:{ allocatedHours:true, history: true } }
             }
         });
         return task;
@@ -178,7 +178,7 @@ export class TaskRepository {
                 user: true,
                 department: true,
                 workingHourTask: true,
-                allocationLog:{ select:{ allocatedHours:true } }
+                allocationLog:{ select:{ allocatedHours:true, history: true } }
             }
         });
         return tasks;
@@ -209,7 +209,7 @@ export class TaskRepository {
                 user: true,
                 department: true,
                 workingHourTask: true,
-                allocationLog:{ select:{ allocatedHours:true } }
+                allocationLog:{ select:{ allocatedHours:true, history: true } }
             }
         });
         return tasks;
@@ -236,7 +236,7 @@ export class TaskRepository {
                 user: { select: { firstName: true, middleName: true, lastName: true } },
                 department: { select: { name: true } },
                 workingHourTask: true,
-                allocationLog:{ select:{ allocatedHours:true } }
+                allocationLog:{ select:{ allocatedHours:true, history: true } }
             }
         });
         return tasks;
@@ -253,7 +253,7 @@ export class TaskRepository {
                 user: true,
                 department: true,
                 workingHourTask: true,
-                allocationLog:{ select:{ allocatedHours:true } }
+                allocationLog:{ select:{ allocatedHours:true, history: true } }
             }
         });
         return tasks;
@@ -292,7 +292,7 @@ export class TaskRepository {
                 user: { select: { firstName: true, middleName: true, lastName: true } },
                 department: { select: { name: true } },
                 workingHourTask: true,
-                allocationLog:{ select:{ allocatedHours:true } },
+                allocationLog:{ select:{ allocatedHours:true, history: true } },
             projectBundle:{select:{bundleKey:true}}
                 
             }
@@ -382,7 +382,7 @@ export class TaskRepository {
                 user: true,
                 department: true,
                 workingHourTask: true,
-                allocationLog:{ select:{ allocatedHours:true } }
+                allocationLog:{ select:{ allocatedHours:true, history: true } }
             }
         })
     }
@@ -402,7 +402,7 @@ export class TaskRepository {
                         }
                     }
                 },
-                allocationLog:{ select:{ allocatedHours:true },
+                allocationLog:{ select:{ allocatedHours:true, history: true },
                 },
                 workingHourTask: true,
             }
