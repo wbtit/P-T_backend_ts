@@ -60,6 +60,7 @@ export function buildProjectFilePath(params: {
   projectCode: string | null
   projectName: string
   category: "external" | "internal"
+  entityName?: string
   filename: string
 }): string {
   const fabFolder = sanitizeFolderName(params.fabricatorName)
@@ -68,6 +69,9 @@ export function buildProjectFilePath(params: {
     ? `${sanitizeFolderName(params.projectCode)}_${sanitizeFolderName(params.projectName)}`
     : sanitizeFolderName(params.projectName)
 
+  if (params.entityName) {
+    return `${fabFolder}/${projectIdentifier}/${params.category}/${sanitizeFolderName(params.entityName)}/${params.filename}`
+  }
   return `${fabFolder}/${projectIdentifier}/${params.category}/${params.filename}`
 }
 

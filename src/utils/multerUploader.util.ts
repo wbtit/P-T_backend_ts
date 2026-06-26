@@ -453,26 +453,29 @@ export const createMulterUploader = createMemoryUploader;
  * Requires query params: fabricatorName, projectName
  * Optional query param: projectCode
  */
-export function projectUploadDestination(req: Request): string {
-  const { fabricatorName, projectName, projectCode } = req.query as Record<string, string>
+export function getProjectUploadDestination(entityName?: string) {
+  return function projectUploadDestination(req: Request): string {
+    const { fabricatorName, projectName, projectCode } = req.query as Record<string, string>
 
-  if (!fabricatorName) throw new Error("fabricatorName query param is required for upload")
-  if (!projectName) throw new Error("projectName query param is required for upload")
+    if (!fabricatorName) throw new Error("fabricatorName query param is required for upload")
+    if (!projectName) throw new Error("projectName query param is required for upload")
 
-  const role = (req as any).user?.role as UserRole
-  const category = getUploaderCategory(role)
+    const role = (req as any).user?.role as UserRole
+    const category = getUploaderCategory(role)
 
-  // Return directory only (no filename) — multer appends filename
-  const fullPath = buildProjectFilePath({
-    fabricatorName,
-    projectCode: projectCode || null,
-    projectName,
-    category,
-    filename: "",   // empty — multer handles filename
-  })
+    // Return directory only (no filename) — multer appends filename
+    const fullPath = buildProjectFilePath({
+      fabricatorName,
+      projectCode: projectCode || null,
+      projectName,
+      category,
+      entityName,
+      filename: "",   // empty — multer handles filename
+    })
 
-  // Strip trailing slash from the directory portion
-  return path.join(UPLOAD_BASE_DIR, fullPath.replace(/\/$/, ""))
+    // Strip trailing slash from the directory portion
+    return path.join(UPLOAD_BASE_DIR, fullPath.replace(/\/$/, ""))
+  }
 }
 
 /**
@@ -551,7 +554,7 @@ export const rfqFollowUpMap: Record<string, FileMeta> = {};
 export const rfqFollowUpUploads = createStreamUploader(rfqUploadDestination, rfqFollowUpMap, SIZE_LIMITS.ZIP);
 
 export const projectDataMap: Record<string, FileMeta> = {};
-export const projectUploads = createStreamUploader(projectUploadDestination, projectDataMap, SIZE_LIMITS.ZIP);
+export const projectUploads = createStreamUploader(getProjectUploadDestination("project"), projectDataMap, SIZE_LIMITS.ZIP);
 
 export const estimationDataMap: Record<string, FileMeta> = {};
 export const estimationUploads = createStreamUploader(path.join(UPLOAD_BASE_DIR, "estimations"), estimationDataMap, SIZE_LIMITS.ZIP);
@@ -563,35 +566,35 @@ export const estimationResponseMap: Record<string, FileMeta> = {};
 export const estimationResponseUploads = createStreamUploader(path.join(UPLOAD_BASE_DIR, "estimationresponse"), estimationResponseMap, SIZE_LIMITS.ZIP);
 
 export const rfiDataMap: Record<string, FileMeta> = {};
-export const rfiUploads = createStreamUploader(projectUploadDestination, rfiDataMap, SIZE_LIMITS.ZIP);
+export const rfiUploads = createStreamUploader(getProjectUploadDestination("rfi"), rfiDataMap, SIZE_LIMITS.ZIP);
 
 export const rfiResponseDataMap: Record<string, FileMeta> = {};
-export const rfiResponseUploads = createStreamUploader(projectUploadDestination, rfiResponseDataMap, SIZE_LIMITS.ZIP);
+export const rfiResponseUploads = createStreamUploader(getProjectUploadDestination("rfi_response"), rfiResponseDataMap, SIZE_LIMITS.ZIP);
 
 export const submittalsDataMap: Record<string, FileMeta> = {};
-export const submittalUploads = createStreamUploader(projectUploadDestination, submittalsDataMap, SIZE_LIMITS.ZIP);
+export const submittalUploads = createStreamUploader(getProjectUploadDestination("submittal"), submittalsDataMap, SIZE_LIMITS.ZIP);
 
 export const bfaDataMap: Record<string, FileMeta> = {};
-export const bfaUploads = createStreamUploader(projectUploadDestination, bfaDataMap, SIZE_LIMITS.ZIP);
+export const bfaUploads = createStreamUploader(getProjectUploadDestination("bfa"), bfaDataMap, SIZE_LIMITS.ZIP);
 
 
 export const submittalsResDataMap: Record<string, FileMeta> = {};
-export const submittalResponseUploads = createStreamUploader(projectUploadDestination, submittalsResDataMap, SIZE_LIMITS.ZIP);
+export const submittalResponseUploads = createStreamUploader(getProjectUploadDestination("submittal_response"), submittalsResDataMap, SIZE_LIMITS.ZIP);
 
 export const mileStoneResponseDataMap: Record<string, FileMeta> = {};
 export const mileStoneResponseUploads = createStreamUploader(path.join(UPLOAD_BASE_DIR, "milestoneresponse"), mileStoneResponseDataMap, SIZE_LIMITS.ZIP);
 
 export const coDataMap: Record<string, FileMeta> = {};
-export const coUploads = createStreamUploader(projectUploadDestination, coDataMap, SIZE_LIMITS.ZIP);
+export const coUploads = createStreamUploader(getProjectUploadDestination("change_order"), coDataMap, SIZE_LIMITS.ZIP);
 
 export const coResponseDataMap: Record<string, FileMeta> = {};
-export const coResponseUploads = createStreamUploader(projectUploadDestination, coResponseDataMap, SIZE_LIMITS.ZIP);
+export const coResponseUploads = createStreamUploader(getProjectUploadDestination("change_order_response"), coResponseDataMap, SIZE_LIMITS.ZIP);
 
 export const designDrawingsDataMap: Record<string, FileMeta> = {};
-export const designUploads = createStreamUploader(projectUploadDestination, designDrawingsDataMap, SIZE_LIMITS.ZIP);
+export const designUploads = createStreamUploader(getProjectUploadDestination("design_drawing"), designDrawingsDataMap, SIZE_LIMITS.ZIP);
 
 export const designDrawingResponseDataMap: Record<string, FileMeta> = {};
-export const designResponseUploads = createStreamUploader(projectUploadDestination, designDrawingResponseDataMap, SIZE_LIMITS.ZIP);
+export const designResponseUploads = createStreamUploader(getProjectUploadDestination("design_drawing_response"), designDrawingResponseDataMap, SIZE_LIMITS.ZIP);
 
 export const projectProgressReportDataMap: Record<string, FileMeta> = {};
 export const projectProgressReportUploads = createStreamUploader(path.join(UPLOAD_BASE_DIR, "projectprogressreport"), projectProgressReportDataMap, SIZE_LIMITS.ZIP);
@@ -600,10 +603,10 @@ export const projectProgressReportResponseDataMap: Record<string, FileMeta> = {}
 export const projectProgressReportResponseUploads = createStreamUploader(path.join(UPLOAD_BASE_DIR, "projectprogressreportresponse"), projectProgressReportResponseDataMap, SIZE_LIMITS.ZIP);
 
 export const coordinationDrawingDataMap: Record<string, FileMeta> = {};
-export const coordinationDrawingUploads = createStreamUploader(projectUploadDestination, coordinationDrawingDataMap, SIZE_LIMITS.ZIP);
+export const coordinationDrawingUploads = createStreamUploader(getProjectUploadDestination("coordination_drawing"), coordinationDrawingDataMap, SIZE_LIMITS.ZIP);
 
 export const coordinationDrawingResponseDataMap: Record<string, FileMeta> = {};
-export const coordinationDrawingResponseUploads = createStreamUploader(projectUploadDestination, coordinationDrawingResponseDataMap, SIZE_LIMITS.ZIP);
+export const coordinationDrawingResponseUploads = createStreamUploader(getProjectUploadDestination("coordination_drawing_response"), coordinationDrawingResponseDataMap, SIZE_LIMITS.ZIP);
 
 export const connectionDesignerDataMap: Record<string, FileMeta> = {}
 export const connectionDesignerUploads = createStreamUploader(path.join(UPLOAD_BASE_DIR, "connectiondesigners"), connectionDesignerDataMap, SIZE_LIMITS.ZIP);
@@ -695,18 +698,18 @@ export const vendorCombinedUploads = compose([
 ]);
 
 export const notesDataMap: Record<string, FileMeta> = {}
-export const notesUploads = createStreamUploader(projectUploadDestination, notesDataMap, SIZE_LIMITS.ZIP);
+export const notesUploads = createStreamUploader(getProjectUploadDestination("notes"), notesDataMap, SIZE_LIMITS.ZIP);
 
 export const teamMeetingNotesDataMap: Record<string, FileMeta> = {};
 export const teamMeetingNotesUploads = createStreamUploader(
-  projectUploadDestination,
+  getProjectUploadDestination("team_meeting_notes"),
   teamMeetingNotesDataMap,
   SIZE_LIMITS.ZIP
 );
 
 export const teamMeetingNotesResponsesDataMap: Record<string, FileMeta> = {};
 export const teamMeetingNotesResponsesUploads = createStreamUploader(
-  projectUploadDestination,
+  getProjectUploadDestination("team_meeting_notes_response"),
   teamMeetingNotesResponsesDataMap,
   SIZE_LIMITS.ZIP
 );
