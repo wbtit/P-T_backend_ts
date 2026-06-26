@@ -324,17 +324,42 @@ export class TaskRepository {
 
             // Only update allocation hours if duration is explicitly provided
             if (data.duration !== undefined) {
-                await tx.taskAllocation.upsert({
-                    where: { taskId: task.id },
-                    update: {
-                        allocatedHours: data.duration,
-                    },
-                    create: {
-                        taskId: task.id,
-                        allocatedHours: data.duration,
-                        createdBy: updatedBy,
-                    },
+                const existingAllocation = await tx.taskAllocation.findUnique({
+                    where: { taskId: task.id }
                 });
+
+                const historyLog = {
+                    allocatedHours: data.duration,
+                    updatedBy: updatedBy,
+                    updatedAt: new Date().toISOString()
+                };
+
+                if (existingAllocation) {
+                    let newHistory = [];
+                    if (Array.isArray(existingAllocation.history)) {
+                        newHistory = [...existingAllocation.history];
+                    } else if (existingAllocation.history) {
+                        newHistory = [existingAllocation.history];
+                    }
+                    newHistory.push(historyLog);
+                    
+                    await tx.taskAllocation.update({
+                        where: { taskId: task.id },
+                        data: {
+                            allocatedHours: data.duration,
+                            history: newHistory
+                        }
+                    });
+                } else {
+                    await tx.taskAllocation.create({
+                        data: {
+                            taskId: task.id,
+                            allocatedHours: data.duration,
+                            createdBy: updatedBy,
+                            history: [historyLog]
+                        }
+                    });
+                }
             }
             // Otherwise, keep existing allocation hours unchanged
 

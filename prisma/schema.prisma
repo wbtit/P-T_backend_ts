@@ -1386,6 +1386,7 @@ model TaskAllocation {
   allocatedHours String
   createdBy      String   @db.Uuid
   createdAt      DateTime @default(now())
+  history        Json?    @default("[]")
 
   task Task @relation("allocationLog", fields: [taskId], references: [id])
 }
