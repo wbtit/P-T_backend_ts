@@ -335,7 +335,7 @@ export class TaskRepository {
                 };
 
                 if (existingAllocation) {
-                    let newHistory = [];
+                    let newHistory: any[] = [];
                     if (Array.isArray(existingAllocation.history)) {
                         newHistory = [...existingAllocation.history];
                     } else if (existingAllocation.history) {

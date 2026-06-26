@@ -1,5 +1,4 @@
 import { ModuleOpenApiDoc, OpenApiPathItem } from "./types";
-import agent_doc from "../modules/agent/openapi.doc";
 import chatSystem_doc from "../modules/chatSystem/openapi.doc";
 import client_doc from "../modules/client/openapi.doc";
 import CO_doc from "../modules/CO/openapi.doc";
@@ -35,7 +34,6 @@ import vendors_doc from "../modules/vendors/openapi.doc";
 import workingHours_doc from "../modules/workingHours/openapi.doc";
 
 const moduleDocs: ModuleOpenApiDoc[] = [
-  agent_doc,
   chatSystem_doc,
   client_doc,
   CO_doc,
