@@ -1,3 +1,4 @@
+import prisma from "../../../config/database/client";
 import { AppError } from "../../../config/utils/AppError";
 import { TaskRepository } from "../repositories/task.repository";
 import { createTaskInput, updateTaskInput } from "../dtos";
@@ -120,6 +121,44 @@ export class TaskService {
     if (!task) {
       throw new AppError("Task not found", 404);
     }
+
+    if (task.taskType === "TRAINER_SESSION") {
+      const batch = await prisma.trainingBatch.findFirst({
+        where: { trainerTaskId: task.id },
+        include: {
+          requests: {
+            include: {
+              raisedBy: { 
+                select: { id: true, firstName: true, lastName: true } 
+              },
+              task: { 
+                select: { id: true, name: true, serialNo: true } 
+              }
+            }
+          }
+        }
+      });
+
+      if (batch) {
+        (task as any).trainingBatchContext = {
+          batchId: batch.id,
+          topic: batch.topic,
+          status: batch.status,
+          finalizedAt: batch.finalizedAt,
+          trainingDoneAt: batch.trainingDoneAt,
+          trainees: batch.requests.map((r: any) => ({
+            requestId: r.id,
+            requestStatus: r.status,
+            traineeId: r.raisedById,
+            traineeName: `${r.raisedBy.firstName} ${r.raisedBy.lastName || ''}`.trim(),
+            reasonForRequest: r.reason,
+            originalTaskName: r.task.name,
+            originalTaskSerialNo: r.task.serialNo
+          }))
+        };
+      }
+    }
+
     return task;
   }
   

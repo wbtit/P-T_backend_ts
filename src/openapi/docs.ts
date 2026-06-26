@@ -32,6 +32,7 @@ import uploads_doc from "../modules/uploads/openapi.doc";
 import user_doc from "../modules/user/openapi.doc";
 import vendors_doc from "../modules/vendors/openapi.doc";
 import workingHours_doc from "../modules/workingHours/openapi.doc";
+import training_doc from "../modules/training/openapi.doc";
 
 const moduleDocs: ModuleOpenApiDoc[] = [
   chatSystem_doc,
@@ -67,6 +68,7 @@ const moduleDocs: ModuleOpenApiDoc[] = [
   user_doc,
   vendors_doc,
   workingHours_doc,
+  training_doc,
 ];
 
 const mergePaths = (docs: ModuleOpenApiDoc[]) => {

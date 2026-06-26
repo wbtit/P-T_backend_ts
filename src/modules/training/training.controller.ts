@@ -33,6 +33,32 @@ export class TrainingController {
     res.status(200).json({ status: "success", data: pendingRequests });
   };
 
+  public getAllRequests = async (req: AuthenticateRequest, res: Response) => {
+    const { id, role, departmentId } = req.user!;
+    const statusQuery = req.query.status as string;
+    
+    let whereClause: any = {};
+    if (statusQuery) {
+      whereClause.status = { in: statusQuery.split(",") };
+    }
+
+    if (role === "PROJECT_MANAGER") {
+      whereClause.task = { project: { managerID: id } };
+    } else if (role === "DEPT_MANAGER" || role === "DEPUTY_MANAGER") {
+      whereClause.task = { departmentId: departmentId };
+    }
+
+    const requests = await prisma.trainingRequest.findMany({
+      where: whereClause,
+      include: {
+        task: true,
+        raisedBy: { select: { id: true, firstName: true, lastName: true } }
+      },
+      orderBy: { requestedAt: "desc" }
+    });
+    res.status(200).json({ status: "success", data: requests });
+  };
+
   public approveTrainingRequest = async (req: AuthenticateRequest, res: Response) => {
     const result = await this.trainingService.approveTrainingRequest(req.user!, req.params.requestId, req.body);
     res.status(200).json({ status: "success", data: result });
@@ -89,5 +115,15 @@ export class TrainingController {
   public completeTrainerSession = async (req: AuthenticateRequest, res: Response) => {
     const result = await this.trainingService.completeTrainerSession(req.user!.id, req.params.batchId);
     res.status(200).json(result);
+  };
+
+  public getMyTrainerBatches = async (req: AuthenticateRequest, res: Response) => {
+    const result = await this.trainingService.getMyTrainerBatches(req.user!.id);
+    res.status(200).json({ status: "success", data: result });
+  };
+
+  public getAllBatches = async (req: AuthenticateRequest, res: Response) => {
+    const result = await this.trainingService.getAllBatches(req.user!);
+    res.status(200).json({ status: "success", data: result });
   };
 }

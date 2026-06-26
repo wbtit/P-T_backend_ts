@@ -456,4 +456,53 @@ export class TrainingService {
 
     return { status: "success", message: "Training session marked as complete" };
   }
+
+  async getMyTrainerBatches(trainerId: string) {
+    return await prisma.trainingBatch.findMany({
+      where: {
+        trainerTask: {
+          user_id: trainerId
+        }
+      },
+      include: {
+        trainerTask: {
+          select: {
+            id: true,
+            name: true,
+            status: true,
+            due_date: true
+          }
+        },
+        _count: {
+          select: { requests: true }
+        }
+      },
+      orderBy: { createdAt: "desc" }
+    });
+  }
+
+  async getAllBatches(user: { id: string, role: string, departmentId?: string | null }) {
+    let whereClause: any = {};
+    if (user.role === "PROJECT_MANAGER") {
+      whereClause.requests = {
+        some: { task: { project: { managerID: user.id } } }
+      };
+    } else if (user.role === "DEPT_MANAGER" || user.role === "DEPUTY_MANAGER") {
+      whereClause.departmentId = user.departmentId;
+    }
+
+    return await prisma.trainingBatch.findMany({
+      where: whereClause,
+      include: {
+        trainerTask: true,
+        requests: {
+          include: {
+            raisedBy: { select: { firstName: true, lastName: true } },
+            task: { select: { status: true } } // status not strictly requested for task, wait, the prompt says "requests (with raisedBy name, status)". TrainingRequest has status.
+          }
+        }
+      },
+      orderBy: { createdAt: "desc" }
+    });
+  }
 }

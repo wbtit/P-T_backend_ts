@@ -46,6 +46,15 @@ router.get(
   })
 );
 
+router.get(
+  "/requests",
+  authMiddleware,
+  roleGuard(TRAINING_APPROVAL_ROLES),
+  asyncHandler(async (req, res) => {
+    await trainingController.getAllRequests(req as AuthenticateRequest, res);
+  })
+);
+
 router.patch(
   "/:requestId/approve",
   authMiddleware,
@@ -105,6 +114,23 @@ router.patch(
   validateUuidParam("batchId"),
   asyncHandler(async (req, res) => {
     await trainingController.completeTrainerSession(req as AuthenticateRequest, res);
+  })
+);
+
+router.get(
+  "/batches/mine",
+  authMiddleware,
+  asyncHandler(async (req, res) => {
+    await trainingController.getMyTrainerBatches(req as AuthenticateRequest, res);
+  })
+);
+
+router.get(
+  "/batches",
+  authMiddleware,
+  roleGuard(TRAINING_APPROVAL_ROLES),
+  asyncHandler(async (req, res) => {
+    await trainingController.getAllBatches(req as AuthenticateRequest, res);
   })
 );
 
