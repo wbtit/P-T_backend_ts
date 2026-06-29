@@ -59,7 +59,7 @@ export class BfaController {
               const fabricatorName = (await getFabricatorNameForUser(user.id, user.role)) || undefined;
               await sendEmail({
                 to: recipientEmails.join(","),
-                subject: `New BFA Created - ${bfa.serialNo || ""}`,
+                subject: `New BFA Created - ${projectName}`,
                 html: bfaHtmlContent(bfa, projectName, submittalSubject, fabricatorName),
               });
             }

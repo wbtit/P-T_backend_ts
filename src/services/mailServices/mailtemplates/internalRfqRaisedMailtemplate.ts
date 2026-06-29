@@ -88,7 +88,7 @@ export const internalRfqRaisedHtmlContent = ({
                          style="display: block; width: 150px; max-width: 150px;" />
                   </td>
                   <td class="project-name-container" width="70%" style="padding: 10px; color: #888888; font-weight: 600; font-size: 18px; text-align: left;">
-                    ${headerProjectName}
+                    Project Name: ${headerProjectName}
                   </td>
                 </tr>
               </table>
