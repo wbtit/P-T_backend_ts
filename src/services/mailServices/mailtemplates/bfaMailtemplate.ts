@@ -61,7 +61,7 @@ export const bfaHtmlContent = (bfa: any, projectName: string, submittalSubject: 
           <!-- Body Content -->
           <tr>
             <td class="content-body" style="padding: 40px 30px; color: #333333; line-height: 1.6;">
-              <p style="margin: 0 0 20px 0;">You have been notified about <strong>Back from Approval (BFA)</strong> for the above mentioned project. Please find the details below:</p>
+              <p style="margin: 0 0 20px 0;">You have received <strong>Back from Approval (BFA)</strong> for the above mentioned project. Please find the details below:</p>
 
               <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 20px;">
               
