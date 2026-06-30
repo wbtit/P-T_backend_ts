@@ -37,7 +37,7 @@ const RFQ_LIST_INCLUDE = {
   connectionDesignerRFQ: {
     include: {
       CDEngineers: true,
-      CDQuotations: true,
+     
     },
   },
   CDQuotas: {
@@ -185,7 +185,7 @@ export class RFQRepository {
                 connectionDesignerRFQ:{
                     include:{
                         CDEngineers: true,
-                        CDQuotations:true,
+                       
                     }
                 },
                 CDQuotas:true,
@@ -226,7 +226,7 @@ export class RFQRepository {
                 connectionDesignerRFQ:{
                     include:{
                         CDEngineers: true,
-                        CDQuotations:true,
+                       
                     }
                 },
                 CDQuotas:true,
@@ -248,7 +248,7 @@ export class RFQRepository {
                 connectionDesignerRFQ:{
                     include:{
                         CDEngineers: true,
-                        CDQuotations:true,
+                       
                     }
                 },
                 estimations:{select:{id:true}},
@@ -392,7 +392,6 @@ export class RFQRepository {
                 connectionDesignerRFQ: {
                     include: {
                         CDEngineers: true,
-                        CDQuotations: true,
                     }
                 },
                 CDQuotas: {
