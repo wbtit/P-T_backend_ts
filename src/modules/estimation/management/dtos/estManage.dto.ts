@@ -8,7 +8,7 @@ const optionalFloat = z.preprocess((val) => {
 }, z.number().optional());
 
 export const EstimationSchema = z.object({
-    estimationNumber: z.string().min(1, "Estimation number is required").optional(),
+    estimationNumber: z.string().min(1, "Estimation number is required"),
     fabricatorName: z.string().optional(),
     projectName: z.string().min(1, "Project name is required"),
     projectComplexity:z.enum(ProjectComplexity).optional(),

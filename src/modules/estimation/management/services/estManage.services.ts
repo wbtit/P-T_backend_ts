@@ -47,7 +47,6 @@ export class EstimationManageService{
                 {
                     ...data,
                     serialNo,
-                    estimationNumber: serialNo,
                 },
                 createdById
             );
