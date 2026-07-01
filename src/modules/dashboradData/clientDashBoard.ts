@@ -56,7 +56,6 @@ export const clientDashBoard = async (req: AuthenticateRequest, res: Response) =
             project: { status: { in: ["ACTIVE", "ONHOLD"] } },
             responses: {
               some: {
-                parentResponseId: null,
                 childResponses: {
                   none: {}
                 }

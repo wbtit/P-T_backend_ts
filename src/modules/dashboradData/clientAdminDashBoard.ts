@@ -78,7 +78,6 @@ export const clientAdminDashBoard = async (req: AuthenticateRequest, res: Respon
               fabricatorId: { in: fabricatorIds },
               responses: {
                 some: {
-                  parentResponseId: null,
                   childResponses: { none: {} },
                 },
               },

@@ -1,4 +1,4 @@
-import { transporter } from "./transporter";
+import { mailService } from "../mail/MailService";
 import prisma from "../../config/database/client";
 import { UserRole } from "@prisma/client";
 
@@ -147,15 +147,13 @@ const sendEmail = async ({ to, cc, subject, text, html }: SendEmailInput) => {
       return { messageId: "skipped-no-active-recipients" };
     }
 
-    const info = await transporter.sendMail({
-      from: "wbt.itdev@gmail.com",
+    await mailService.sendMail({
       to: sanitizedRecipients.to,
       cc: sanitizedRecipients.cc.length ? sanitizedRecipients.cc : undefined,
       subject: stripHtml(subject),
-      text,
-      html,
+      html: html || text || "",
     });
-    return info;
+    return { messageId: "graph-api-sent" };
   } catch (error) {
     console.error("Error sending email:", error);
     throw error;

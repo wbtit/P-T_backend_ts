@@ -130,7 +130,6 @@ export class RFQRepository {
                 project: { status: { in: ["ACTIVE", "ONHOLD"] } },
                 responses: {
                     some: {
-                        parentResponseId: null,
                         childResponses: { none: {} },
                     },
                 },
@@ -160,13 +159,15 @@ export class RFQRepository {
                 project: { some: { status: { in: ["ACTIVE", "ONHOLD"] } } }
             }
         })
-        return await prisma.rFQ.findMany({
+        const fabricatorName = fabricator?.fabName || fabricator?.id || "Unknown";
+        console.log(`[DEBUG - Pending RFQ] userId: ${userId} - Found Fabricator: ${fabricatorName}`);
+        
+        const rfqs = await prisma.rFQ.findMany({
             where: {
                             fabricator:{id:fabricator?.id},
                             project: { status: { in: ["ACTIVE", "ONHOLD"] } },
                             responses: {
                                 some: {
-                                    parentResponseId: null,
                                     childResponses: {
                                         none: {}
                                     }
@@ -191,6 +192,8 @@ export class RFQRepository {
                 CDQuotas:true,
             }
         })
+        console.log(`[DEBUG - Pending RFQ] Found ${rfqs.length} pending RFQs for Client Admin (userId: ${userId})`);
+        return rfqs;
     }
 
 
@@ -207,7 +210,6 @@ export class RFQRepository {
                 project: { status: { in: ["ACTIVE", "ONHOLD"] } },
                 responses: {
                     some: {
-                        parentResponseId: null,
                         childResponses: {
                             none: {}
                         }

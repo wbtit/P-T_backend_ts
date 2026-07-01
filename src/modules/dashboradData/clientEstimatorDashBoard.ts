@@ -34,7 +34,6 @@ export const clientEstimatorDashBoard = async (req: AuthenticateRequest, res: Re
               fabricatorId: { in: fabricatorIds },
               responses: {
                 some: {
-                  parentResponseId: null,
                   childResponses: { none: {} },
                 },
               },
