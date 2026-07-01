@@ -24,6 +24,7 @@ export const createLineItemSchema = z.object({
     quantity: z.number().optional(),
     hoursPerQty: z.number().optional(),
     totalDays: z.number().int().optional(),
+    days: z.number().int().optional(),
     fabricationPercentage: z.number().optional(),
     withfabricationTotalHours: z.number().optional(),
     totalHours: z.number().optional(),

@@ -47,7 +47,8 @@ export class LineItemsRepository{
         where:{groupId:group?.id},
         _sum:{
             totalHours:true,
-            weeks:true
+            weeks:true,
+            days:true
         },
         _count:{
             id:true 
@@ -55,12 +56,14 @@ export class LineItemsRepository{
        })
        const totalHours = items._sum.totalHours;
        const totalWeeks = items._sum.weeks;
+       const totalDays = items._sum.days;
         
        
        return {
             group,
             totalHours,
-            totalWeeks
+            totalWeeks,
+            totalDays
         }
 
     }
