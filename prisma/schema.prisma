@@ -161,6 +161,11 @@ enum Activity {
   OTHERS
 }
 
+enum RFQResponseType {
+  MTO
+  DETAILING
+}
+
 enum RFQStatus {
   OPEN
   IN_REVIEW
@@ -786,6 +791,7 @@ model RFQResponse {
   rfqId            String    @db.Uuid
   userId           String    @db.Uuid
   parentResponseId String?   @db.Uuid
+  type             RFQResponseType? @default(DETAILING)
   subject         String    @default("")
   description      String    @default("")
   totalTonnageWithConnection      String?   @default("")

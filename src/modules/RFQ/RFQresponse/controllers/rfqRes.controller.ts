@@ -8,6 +8,7 @@ import { buildRoleScopedNotification } from "../../../../utils/stakeholderNotifi
 import prisma from "../../../../config/database/client";
 import { notifyMtoClientEstimatorsForRfq } from "../../../../utils/notifyMtoClientEstimators";
 import { responseMailTemplate } from "../../../../services/mailServices/mailtemplates/responseMailTemplate";
+import { mtoRfqResponseMailTemplate } from "../../../../services/mailServices/mailtemplates/mtoRfqResponseMailTemplate";
 import { getFabricatorNameForUser } from "../../../../services/mailServices/mailtemplates/footerHelper";
 import {
     formatParticipantName,
@@ -111,8 +112,30 @@ export class RfqResponseController {
                         responder,
                         subject: `${responseLabel}: ${responseSubject}`,
                         text: result.description || `${responseLabel} received for ${responseSubject}`,
-                        buildHtml: ({ greeting, involvedNames }) =>
-                            responseMailTemplate({
+                        buildHtml: ({ greeting, involvedNames }) => {
+                            if (result.type === "MTO") {
+                                return mtoRfqResponseMailTemplate({
+                                    title: "Project Station - MTO RFQ Response",
+                                    projectName: rfqMailContext.project?.name || rfqMailContext.projectName,
+                                    subjectLine: `${responseLabel} - ${responseSubject}`,
+                                    greeting,
+                                    intro: `A new ${req.body?.parentResponseId ? "reply" : "response"} has been added to the MTO RFQ thread in Project Station. Please review the latest update below:`,
+                                    totalTonnageWithConnection: result.totalTonnageWithConnection,
+                                    totalTonnageWithoutConnection: result.totalTonnageWithoutConnection,
+                                    details: [
+                                        { label: "Project", value: rfqMailContext.project?.name || rfqMailContext.projectName || "N/A" },
+                                        { label: "Response By", value: responderName },
+                                        { label: "Response Date", value: new Date(result.createdAt).toDateString() },
+                                    ],
+                                    involvedRecipients: involvedNames,
+                                    responderName,
+                                    responderDesignation: responder.designation,
+                                    ctaLabel: "Login to View RFQ",
+                                    redirectUrl: `/rfq/${result.rfqId}`,
+                                    fabricatorName,
+                                });
+                            }
+                            return responseMailTemplate({
                                 title: "Project Station - RFQ Response",
                                 projectName: rfqMailContext.project?.name || rfqMailContext.projectName,
                                 subjectLine: `${responseLabel} - ${responseSubject}`,
@@ -129,7 +152,8 @@ export class RfqResponseController {
                                 ctaLabel: "Login to View RFQ",
                                 redirectUrl: `/rfq/${result.rfqId}`,
                                 fabricatorName,
-                            }),
+                            });
+                        }
                     });
 
                     await notifyRfqStakeholdersByRole(result.rfqId, RFQ_NOTIFY_ROLES, (role) => {

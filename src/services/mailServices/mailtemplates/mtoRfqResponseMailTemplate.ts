@@ -1,17 +1,19 @@
 import { getFooterHtml, getFooterSignatureHtml } from "./footerHelper";
 
-type ResponseMailDetail = {
+type MTOResponseMailDetail = {
   label: string;
   value?: string | number | null;
 };
 
-type ResponseMailTemplateInput = {
+type MTOResponseMailTemplateInput = {
   title: string;
   projectName?: string | null;
   subjectLine: string;
   greeting: string;
   intro: string;
-  details: ResponseMailDetail[];
+  totalTonnageWithConnection?: string | null;
+  totalTonnageWithoutConnection?: string | null;
+  details: MTOResponseMailDetail[];
   involvedRecipients: string[];
   responderName: string;
   responderDesignation?: string | null;
@@ -23,12 +25,14 @@ type ResponseMailTemplateInput = {
 const safeValue = (value?: string | number | null) =>
   value === undefined || value === null || value === "" ? "N/A" : String(value);
 
-export const responseMailTemplate = ({
+export const mtoRfqResponseMailTemplate = ({
   title,
   projectName,
   subjectLine,
   greeting,
   intro,
+  totalTonnageWithConnection,
+  totalTonnageWithoutConnection,
   details,
   involvedRecipients,
   responderName,
@@ -36,7 +40,7 @@ export const responseMailTemplate = ({
   ctaLabel,
   redirectUrl,
   fabricatorName,
-}: ResponseMailTemplateInput) => `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+}: MTOResponseMailTemplateInput) => `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
@@ -94,17 +98,25 @@ export const responseMailTemplate = ({
           <tr>
             <td class="content-body" style="padding: 40px 30px; color: #333333; line-height: 1.6;">
               <p style="color: #888888; margin: 0 0 20px 0;">Date: ${new Date().toDateString()}</p>
-              <div style="font-size: 18px; font-weight: bold; margin: 0 0 20px 0;">Subject: ${subjectLine}</div>
+              <div style="font-size: 18px; font-weight: bold; margin: 0 0 20px 0;">Subject: ${subjectLine} (MTO Response)</div>
               <p style="margin: 0 0 15px 0;">${greeting},</p>
               <p style="margin: 0 0 20px 0;">${intro}</p>
 
               <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 20px;">
+                <tr>
+                  <td width="50%" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; background-color: #f9f9f9; color: #333; font-weight: bold; font-size: 14px;">Total Tonnage (With Connection)</td>
+                  <td width="50%" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; background-color: #f9f9f9; font-size: 14px; color: #333;">${safeValue(totalTonnageWithConnection)}</td>
+                </tr>
+                <tr>
+                  <td width="50%" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; background-color: #f9f9f9; color: #333; font-weight: bold; font-size: 14px;">Total Tonnage (Without Connection)</td>
+                  <td width="50%" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; background-color: #f9f9f9; font-size: 14px; color: #333;">${safeValue(totalTonnageWithoutConnection)}</td>
+                </tr>
                 ${details
                   .map(
                     (detail) => `
                 <tr>
-                  <td width="160" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #888888; font-weight: bold; font-size: 14px;">${detail.label}</td>
-                  <td valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333;">${safeValue(detail.value)}</td>
+                  <td width="50%" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #888888; font-weight: bold; font-size: 14px;">${detail.label}</td>
+                  <td width="50%" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333;">${safeValue(detail.value)}</td>
                 </tr>`
                   )
                   .join("")}
