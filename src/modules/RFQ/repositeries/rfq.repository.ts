@@ -131,6 +131,7 @@ export class RFQRepository {
                 responses: {
                     some: {
                         childResponses: { none: {} },
+                        user: { role: { notIn: ["CLIENT", "CLIENT_ADMIN", "CLIENT_ACCOUNTANT", "CLIENT_ESTIMATOR", "CLIENT_PROJECT_COORDINATOR", "CLIENT_GENERAL_CONSTRUCTOR"] } }
                     },
                 },
             },
@@ -148,7 +149,7 @@ export class RFQRepository {
     }
 
     async findPendingRFQsForClientAdmin(userId:string){
-        const fabricator = await prisma.fabricator.findFirst({
+        const fabricators = await prisma.fabricator.findMany({
             where: {
                 pointOfContact: {
                     some: {
@@ -158,19 +159,20 @@ export class RFQRepository {
                 },
                 project: { some: { status: { in: ["ACTIVE", "ONHOLD"] } } }
             }
-        })
-        const fabricatorName = fabricator?.fabName || fabricator?.id || "Unknown";
-        console.log(`[DEBUG - Pending RFQ] userId: ${userId} - Found Fabricator: ${fabricatorName}`);
+        });
+        
+        const fabricatorIds = fabricators.map(f => f.id);
+        const fabricatorNames = fabricators.map(f => f.fabName || f.id).join(", ") || "Unknown";
+        console.log(`[DEBUG - Pending RFQ] userId: ${userId} - Found Fabricators: ${fabricatorNames}`);
         
         const rfqs = await prisma.rFQ.findMany({
             where: {
-                            fabricator:{id:fabricator?.id},
+                            fabricatorId: { in: fabricatorIds },
                             project: { status: { in: ["ACTIVE", "ONHOLD"] } },
                             responses: {
                                 some: {
-                                    childResponses: {
-                                        none: {}
-                                    }
+                                    childResponses: { none: {} },
+                                    user: { role: { notIn: ["CLIENT", "CLIENT_ADMIN", "CLIENT_ACCOUNTANT", "CLIENT_ESTIMATOR", "CLIENT_PROJECT_COORDINATOR", "CLIENT_GENERAL_CONSTRUCTOR"] } }
                                 }
                             }
                         },
@@ -210,9 +212,8 @@ export class RFQRepository {
                 project: { status: { in: ["ACTIVE", "ONHOLD"] } },
                 responses: {
                     some: {
-                        childResponses: {
-                            none: {}
-                        }
+                        childResponses: { none: {} },
+                        user: { role: { notIn: ["CLIENT", "CLIENT_ADMIN", "CLIENT_ACCOUNTANT", "CLIENT_ESTIMATOR", "CLIENT_PROJECT_COORDINATOR", "CLIENT_GENERAL_CONSTRUCTOR"] } }
                     }
                 }
             },
@@ -452,7 +453,12 @@ export class RFQRepository {
     async getPendingRFQs(){
         return await prisma.rFQ.findMany({
             where: {
-          responses: { none: {} },
+          responses: {
+              some: {
+                  childResponses: { none: {} },
+                  user: { role: { in: ["CLIENT", "CLIENT_ADMIN", "CLIENT_ACCOUNTANT", "CLIENT_ESTIMATOR", "CLIENT_PROJECT_COORDINATOR", "CLIENT_GENERAL_CONSTRUCTOR"] } }
+              }
+          },
         },
         include:{
             sender: true,
@@ -542,8 +548,8 @@ async getRFQOfConnectionEngineer(userId:string){
                 project: { departmentID: manager.departmentId },
                 responses: {
                     some: {
-                        parentResponseId: null,
-                        childResponses: { every: { status: "RECEIVED" } }
+                        childResponses: { none: {} },
+                        user: { role: { in: ["CLIENT", "CLIENT_ADMIN", "CLIENT_ACCOUNTANT", "CLIENT_ESTIMATOR", "CLIENT_PROJECT_COORDINATOR", "CLIENT_GENERAL_CONSTRUCTOR"] } }
                     },
                 },
             },
@@ -566,6 +572,7 @@ async getRFQOfConnectionEngineer(userId:string){
                 responses: {
                     some: {
                         childResponses: { none: {} },
+                        user: { role: { in: ["CLIENT", "CLIENT_ADMIN", "CLIENT_ACCOUNTANT", "CLIENT_ESTIMATOR", "CLIENT_PROJECT_COORDINATOR", "CLIENT_GENERAL_CONSTRUCTOR"] } },
                     },
                 },
             },

@@ -15,6 +15,7 @@ export class EstimationResponseRepository {
         estimationId,
         userId,
         message: data.message,
+        type: data.type,
         files: data.files,
         parentResponseId: data.parentResponseId ?? null,
       },

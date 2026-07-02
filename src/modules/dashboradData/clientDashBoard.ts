@@ -1,3 +1,4 @@
+
 import prisma from "../../config/database/client";
 import { AuthenticateRequest } from "../../middleware/authMiddleware";
 import { Response } from "express";
@@ -56,11 +57,10 @@ export const clientDashBoard = async (req: AuthenticateRequest, res: Response) =
             project: { status: { in: ["ACTIVE", "ONHOLD"] } },
             responses: {
               some: {
-                childResponses: {
-                  none: {}
-                }
-              }
-            }
+                childResponses: { none: {} },
+                user: { role: { notIn: ["CLIENT", "CLIENT_ADMIN", "CLIENT_ACCOUNTANT", "CLIENT_ESTIMATOR", "CLIENT_PROJECT_COORDINATOR", "CLIENT_GENERAL_CONSTRUCTOR"] } },
+              },
+            },
           },
         });
         const pendingSubmittals = await prisma.submittals.count({

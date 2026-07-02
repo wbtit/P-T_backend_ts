@@ -1525,6 +1525,7 @@ model EstimationResponse {
   id               String    @id @default(uuid()) @db.Uuid
   estimationId     String    @db.Uuid
   userId           String    @db.Uuid
+  type             RFQResponseType @default(DETAILING)
   parentResponseId String?   @db.Uuid
   message          String    @default("")
   files            Json?     @default("[]")

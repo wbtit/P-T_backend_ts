@@ -240,8 +240,8 @@ export const departmentManagerDashBoard = async (
               project: { departmentID: departmentId },
               responses: {
                 some: {
-                  parentResponseId: null,
-                  childResponses: { every: { status: "RECEIVED" } },
+                  childResponses: { none: {} },
+                  user: { role: { in: ["CLIENT", "CLIENT_ADMIN", "CLIENT_ACCOUNTANT", "CLIENT_ESTIMATOR", "CLIENT_PROJECT_COORDINATOR", "CLIENT_GENERAL_CONSTRUCTOR"] } },
                 },
               },
             },
@@ -273,8 +273,8 @@ export const departmentManagerDashBoard = async (
               project: { departmentID: departmentId },
               responses: {
                 some: {
-                  parentResponseId: null,
                   childResponses: { none: {} },
+                  user: { role: { notIn: ["CLIENT", "CLIENT_ADMIN", "CLIENT_ACCOUNTANT", "CLIENT_ESTIMATOR", "CLIENT_PROJECT_COORDINATOR", "CLIENT_GENERAL_CONSTRUCTOR"] } },
                 },
               },
             },
