@@ -72,9 +72,20 @@ export class RFIRepository{
         where:{
           fabricator_id: { in: fabricatorIds },
           project: { status: { in: ["ACTIVE", "ONHOLD"] } },
-          rfiresponse:{
-            none:{}
-          },
+          OR: [
+            {
+              rfiresponse: { none: {} },
+              sender: { role: { notIn: ["CLIENT", "CLIENT_ADMIN", "CLIENT_ACCOUNTANT", "CLIENT_ESTIMATOR", "CLIENT_PROJECT_COORDINATOR", "CLIENT_GENERAL_CONSTRUCTOR"] } },
+            },
+            {
+              rfiresponse: {
+                some: {
+                  childResponses: { none: {} },
+                  user: { role: { notIn: ["CLIENT", "CLIENT_ADMIN", "CLIENT_ACCOUNTANT", "CLIENT_ESTIMATOR", "CLIENT_PROJECT_COORDINATOR", "CLIENT_GENERAL_CONSTRUCTOR"] } },
+                },
+              },
+            },
+          ],
           ...getRoleVisibilityFilter(role),
         },
         include: {
@@ -108,9 +119,20 @@ export class RFIRepository{
       return await prisma.rFI.findMany({
         where:{
           project: { status: { in: ["ACTIVE", "ONHOLD"] } },
-          rfiresponse:{
-            none:{}
-          },
+          OR: [
+            {
+              rfiresponse: { none: {} },
+              sender: { role: { notIn: ["CLIENT", "CLIENT_ADMIN", "CLIENT_ACCOUNTANT", "CLIENT_ESTIMATOR", "CLIENT_PROJECT_COORDINATOR", "CLIENT_GENERAL_CONSTRUCTOR"] } },
+            },
+            {
+              rfiresponse: {
+                some: {
+                  childResponses: { none: {} },
+                  user: { role: { notIn: ["CLIENT", "CLIENT_ADMIN", "CLIENT_ACCOUNTANT", "CLIENT_ESTIMATOR", "CLIENT_PROJECT_COORDINATOR", "CLIENT_GENERAL_CONSTRUCTOR"] } },
+                },
+              },
+            },
+          ],
           ...getRoleVisibilityFilter(role),
         },
         include: {
@@ -149,9 +171,20 @@ export class RFIRepository{
           project:{
             clientProjectManagers: { some: { id: userId } }
           },
-          rfiresponse:{
-            none:{}
-          },
+          OR: [
+            {
+              rfiresponse: { none: {} },
+              sender: { role: { notIn: ["CLIENT", "CLIENT_ADMIN", "CLIENT_ACCOUNTANT", "CLIENT_ESTIMATOR", "CLIENT_PROJECT_COORDINATOR", "CLIENT_GENERAL_CONSTRUCTOR"] } },
+            },
+            {
+              rfiresponse: {
+                some: {
+                  childResponses: { none: {} },
+                  user: { role: { notIn: ["CLIENT", "CLIENT_ADMIN", "CLIENT_ACCOUNTANT", "CLIENT_ESTIMATOR", "CLIENT_PROJECT_COORDINATOR", "CLIENT_GENERAL_CONSTRUCTOR"] } },
+                },
+              },
+            },
+          ],
           ...getRoleVisibilityFilter(role),
         },include: {
         fabricator:{select:{
@@ -335,19 +368,20 @@ export class RFIRepository{
       return await prisma.rFI.findMany({
         where: {
     ...getRoleVisibilityFilter(userRole),
-    NOT: {
-      rfiresponse: {
-        some: {
-          childResponses: {
-            some: {
-              [role === "CLIENT" || role === "CLIENT_ADMIN"
-                         ? "responseState"
-                         : "wbtStatus"]: "COMPLETE",
-            },
+    OR: [
+      {
+        rfiresponse: { none: {} },
+        sender: { role: { in: ["CLIENT", "CLIENT_ADMIN", "CLIENT_ACCOUNTANT", "CLIENT_ESTIMATOR", "CLIENT_PROJECT_COORDINATOR", "CLIENT_GENERAL_CONSTRUCTOR"] } },
+      },
+      {
+        rfiresponse: {
+          some: {
+            childResponses: { none: {} },
+            user: { role: { in: ["CLIENT", "CLIENT_ADMIN", "CLIENT_ACCOUNTANT", "CLIENT_ESTIMATOR", "CLIENT_PROJECT_COORDINATOR", "CLIENT_GENERAL_CONSTRUCTOR"] } },
           },
         },
       },
-    },
+    ],
   },
         include: {
           fabricator: true,
@@ -370,17 +404,20 @@ export class RFIRepository{
         where: {
           project: { departmentID: manager.departmentId },
           ...getRoleVisibilityFilter(role),
-          NOT: {
-            rfiresponse: {
-              some: {
-                childResponses: {
-                  some: {
-                    wbtStatus: "COMPLETE",
-                  },
+          OR: [
+            {
+              rfiresponse: { none: {} },
+              sender: { role: { in: ["CLIENT", "CLIENT_ADMIN", "CLIENT_ACCOUNTANT", "CLIENT_ESTIMATOR", "CLIENT_PROJECT_COORDINATOR", "CLIENT_GENERAL_CONSTRUCTOR"] } },
+            },
+            {
+              rfiresponse: {
+                some: {
+                  childResponses: { none: {} },
+                  user: { role: { in: ["CLIENT", "CLIENT_ADMIN", "CLIENT_ACCOUNTANT", "CLIENT_ESTIMATOR", "CLIENT_PROJECT_COORDINATOR", "CLIENT_GENERAL_CONSTRUCTOR"] } },
                 },
               },
             },
-          },
+          ],
         },
         include: {
           fabricator: true,
@@ -399,15 +436,20 @@ export class RFIRepository{
         where: {
           project: { managerID: managerId },
           ...getRoleVisibilityFilter(role),
-          
-            rfiresponse: {
-              some: {
-                childResponses: {
-                  none: {},
+          OR: [
+            {
+              rfiresponse: { none: {} },
+              sender: { role: { in: ["CLIENT", "CLIENT_ADMIN", "CLIENT_ACCOUNTANT", "CLIENT_ESTIMATOR", "CLIENT_PROJECT_COORDINATOR", "CLIENT_GENERAL_CONSTRUCTOR"] } },
+            },
+            {
+              rfiresponse: {
+                some: {
+                  childResponses: { none: {} },
+                  user: { role: { in: ["CLIENT", "CLIENT_ADMIN", "CLIENT_ACCOUNTANT", "CLIENT_ESTIMATOR", "CLIENT_PROJECT_COORDINATOR", "CLIENT_GENERAL_CONSTRUCTOR"] } },
                 },
               },
-            
-          },
+            },
+          ],
         },
         include: {
           fabricator: true,

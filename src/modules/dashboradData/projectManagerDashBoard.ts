@@ -78,13 +78,20 @@ export const projectManagerDashBoard = async (
             where: {
               project: managerFilter,
               ...getRoleVisibilityFilter(role),
-              rfiresponse: {
-                some: {
-                  childResponses: {
-                    none: {},
+              OR: [
+                {
+                  rfiresponse: { none: {} },
+                  sender: { role: { in: ["CLIENT", "CLIENT_ADMIN", "CLIENT_ACCOUNTANT", "CLIENT_ESTIMATOR", "CLIENT_PROJECT_COORDINATOR", "CLIENT_GENERAL_CONSTRUCTOR"] } },
+                },
+                {
+                  rfiresponse: {
+                    some: {
+                      childResponses: { none: {} },
+                      user: { role: { in: ["CLIENT", "CLIENT_ADMIN", "CLIENT_ACCOUNTANT", "CLIENT_ESTIMATOR", "CLIENT_PROJECT_COORDINATOR", "CLIENT_GENERAL_CONSTRUCTOR"] } },
+                    },
                   },
                 },
-              },
+              ],
             },
           }),
           prisma.rFI.count({
@@ -142,7 +149,20 @@ export const projectManagerDashBoard = async (
           prisma.rFI.count({
             where: {
               project: { managerID: userId, status: { in: ["ACTIVE", "ONHOLD"] } },
-              rfiresponse: { none: {} },
+              OR: [
+                {
+                  rfiresponse: { none: {} },
+                  sender: { role: { notIn: ["CLIENT", "CLIENT_ADMIN", "CLIENT_ACCOUNTANT", "CLIENT_ESTIMATOR", "CLIENT_PROJECT_COORDINATOR", "CLIENT_GENERAL_CONSTRUCTOR"] } },
+                },
+                {
+                  rfiresponse: {
+                    some: {
+                      childResponses: { none: {} },
+                      user: { role: { notIn: ["CLIENT", "CLIENT_ADMIN", "CLIENT_ACCOUNTANT", "CLIENT_ESTIMATOR", "CLIENT_PROJECT_COORDINATOR", "CLIENT_GENERAL_CONSTRUCTOR"] } },
+                    },
+                  },
+                },
+              ],
               ...getRoleVisibilityFilter(role),
             },
           }),

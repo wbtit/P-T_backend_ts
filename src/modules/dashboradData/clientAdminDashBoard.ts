@@ -30,6 +30,7 @@ export const clientAdminDashBoard = async (req: AuthenticateRequest, res: Respon
           projectStats,
           totalProjects,
           newRFI,
+          pendingRFI,
           pendingChangeOrders,
           pendingRFQ,
           pendingSubmittals,
@@ -59,6 +60,28 @@ export const clientAdminDashBoard = async (req: AuthenticateRequest, res: Respon
               fabricator_id: { in: fabricatorIds },
               rfiresponse: { none: {} },
               ...getRoleVisibilityFilter(req.user?.role),
+            },
+          }),
+
+          prisma.rFI.count({
+            where: {
+              project: { status: { in: ["ACTIVE", "ONHOLD"] } },
+              fabricator_id: { in: fabricatorIds },
+              ...getRoleVisibilityFilter(req.user?.role),
+              OR: [
+                {
+                  rfiresponse: { none: {} },
+                  sender: { role: { notIn: ["CLIENT", "CLIENT_ADMIN", "CLIENT_ACCOUNTANT", "CLIENT_ESTIMATOR", "CLIENT_PROJECT_COORDINATOR", "CLIENT_GENERAL_CONSTRUCTOR"] } },
+                },
+                {
+                  rfiresponse: {
+                    some: {
+                      childResponses: { none: {} },
+                      user: { role: { notIn: ["CLIENT", "CLIENT_ADMIN", "CLIENT_ACCOUNTANT", "CLIENT_ESTIMATOR", "CLIENT_PROJECT_COORDINATOR", "CLIENT_GENERAL_CONSTRUCTOR"] } },
+                    },
+                  },
+                },
+              ],
             },
           }),
 
@@ -112,7 +135,7 @@ export const clientAdminDashBoard = async (req: AuthenticateRequest, res: Respon
           totalCompleteProject: 0,
           totalOnHoldProject: 0,
           totalProjects,
-          pendingRFI: newRFI,
+          pendingRFI,
           pendingChangeOrders,
           pendingRFQ,
           pendingSubmittals,

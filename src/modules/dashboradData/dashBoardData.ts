@@ -66,19 +66,20 @@ export const DashBoradData = async (
         const pendingRFI = await prisma.rFI.count({
           where: {
             ...getRoleVisibilityFilter(role),
-            NOT: {
-              rfiresponse: {
-                some: {
-                  childResponses: {
-                    some: {
-                      [role === "CLIENT" || role === "CLIENT_ADMIN" || role === "CLIENT_ACCOUNTANT" || role === "CLIENT_ESTIMATOR" || role === "CLIENT_PROJECT_COORDINATOR" || role === "CLIENT_GENERAL_CONSTRUCTOR"
-                        ? "responseState"
-                        : "wbtStatus"]: "COMPLETE",
-                    },
+            OR: [
+              {
+                rfiresponse: { none: {} },
+                sender: { role: { in: ["CLIENT", "CLIENT_ADMIN", "CLIENT_ACCOUNTANT", "CLIENT_ESTIMATOR", "CLIENT_PROJECT_COORDINATOR", "CLIENT_GENERAL_CONSTRUCTOR"] } },
+              },
+              {
+                rfiresponse: {
+                  some: {
+                    childResponses: { none: {} },
+                    user: { role: { in: ["CLIENT", "CLIENT_ADMIN", "CLIENT_ACCOUNTANT", "CLIENT_ESTIMATOR", "CLIENT_PROJECT_COORDINATOR", "CLIENT_GENERAL_CONSTRUCTOR"] } },
                   },
                 },
               },
-            },
+            ],
           },
         });
 
@@ -138,7 +139,20 @@ export const DashBoradData = async (
           where: {
             project: { status: { in: ["ACTIVE", "ONHOLD"] } },
             ...getRoleVisibilityFilter(role),
-            rfiresponse: { none: {} },
+            OR: [
+              {
+                rfiresponse: { none: {} },
+                sender: { role: { notIn: ["CLIENT", "CLIENT_ADMIN", "CLIENT_ACCOUNTANT", "CLIENT_ESTIMATOR", "CLIENT_PROJECT_COORDINATOR", "CLIENT_GENERAL_CONSTRUCTOR"] } },
+              },
+              {
+                rfiresponse: {
+                  some: {
+                    childResponses: { none: {} },
+                    user: { role: { notIn: ["CLIENT", "CLIENT_ADMIN", "CLIENT_ACCOUNTANT", "CLIENT_ESTIMATOR", "CLIENT_PROJECT_COORDINATOR", "CLIENT_GENERAL_CONSTRUCTOR"] } },
+                  },
+                },
+              },
+            ],
           },
         });
 

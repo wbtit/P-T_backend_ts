@@ -38,6 +38,26 @@ export const clientDashBoard = async (req: AuthenticateRequest, res: Response) =
             ...getRoleVisibilityFilter(req.user?.role),
           },
         });
+        const pendingRFI = await prisma.rFI.count({
+          where: {
+            project: { clientProjectManagers: { some: { id: userId } }, status: { not: "INACTIVE" } },
+            ...getRoleVisibilityFilter(req.user?.role),
+            OR: [
+              {
+                rfiresponse: { none: {} },
+                sender: { role: { notIn: ["CLIENT", "CLIENT_ADMIN", "CLIENT_ACCOUNTANT", "CLIENT_ESTIMATOR", "CLIENT_PROJECT_COORDINATOR", "CLIENT_GENERAL_CONSTRUCTOR"] } },
+              },
+              {
+                rfiresponse: {
+                  some: {
+                    childResponses: { none: {} },
+                    user: { role: { notIn: ["CLIENT", "CLIENT_ADMIN", "CLIENT_ACCOUNTANT", "CLIENT_ESTIMATOR", "CLIENT_PROJECT_COORDINATOR", "CLIENT_GENERAL_CONSTRUCTOR"] } },
+                  },
+                },
+              },
+            ],
+          },
+        });
         const pendingChangeOrders = await prisma.changeOrder.count({
           where: {
             Project: {
@@ -76,7 +96,7 @@ export const clientDashBoard = async (req: AuthenticateRequest, res: Response) =
           totalOnHoldProject: 0,
           totalProjects,
           activeEmployeeCount,
-          pendingRFI: newRFI,
+          pendingRFI,
           pendingChangeOrders,
           pendingRFQ,
           pendingSubmittals

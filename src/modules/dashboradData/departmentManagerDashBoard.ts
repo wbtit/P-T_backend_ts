@@ -191,15 +191,20 @@ export const departmentManagerDashBoard = async (
             where: {
               project: { departmentID: departmentId },
               ...getRoleVisibilityFilter(role),
-              NOT: {
-                rfiresponse: {
-                  some: {
-                    childResponses: {
-                      some: { wbtStatus: "COMPLETE" },
+              OR: [
+                {
+                  rfiresponse: { none: {} },
+                  sender: { role: { in: ["CLIENT", "CLIENT_ADMIN", "CLIENT_ACCOUNTANT", "CLIENT_ESTIMATOR", "CLIENT_PROJECT_COORDINATOR", "CLIENT_GENERAL_CONSTRUCTOR"] } },
+                },
+                {
+                  rfiresponse: {
+                    some: {
+                      childResponses: { none: {} },
+                      user: { role: { in: ["CLIENT", "CLIENT_ADMIN", "CLIENT_ACCOUNTANT", "CLIENT_ESTIMATOR", "CLIENT_PROJECT_COORDINATOR", "CLIENT_GENERAL_CONSTRUCTOR"] } },
                     },
                   },
                 },
-              },
+              ],
             },
           }),
           prisma.rFI.count({
@@ -257,7 +262,20 @@ export const departmentManagerDashBoard = async (
           prisma.rFI.count({
             where: {
               project: { departmentID: departmentId },
-              rfiresponse: { none: {} },
+              OR: [
+                {
+                  rfiresponse: { none: {} },
+                  sender: { role: { notIn: ["CLIENT", "CLIENT_ADMIN", "CLIENT_ACCOUNTANT", "CLIENT_ESTIMATOR", "CLIENT_PROJECT_COORDINATOR", "CLIENT_GENERAL_CONSTRUCTOR"] } },
+                },
+                {
+                  rfiresponse: {
+                    some: {
+                      childResponses: { none: {} },
+                      user: { role: { notIn: ["CLIENT", "CLIENT_ADMIN", "CLIENT_ACCOUNTANT", "CLIENT_ESTIMATOR", "CLIENT_PROJECT_COORDINATOR", "CLIENT_GENERAL_CONSTRUCTOR"] } },
+                    },
+                  },
+                },
+              ],
               ...getRoleVisibilityFilter(role),
             },
           }),
