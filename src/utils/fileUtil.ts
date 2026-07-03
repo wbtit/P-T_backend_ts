@@ -32,6 +32,24 @@ export function resolveUploadFilePath(file: StoredFilePathLike) {
       .replace(/^\/+/, "");
 
     candidates.add(path.resolve(baseDir, trimmedValue));
+
+    // Support for projects moved to the completed_projects archive
+    const parts = trimmedValue.split("/");
+    if (parts.length >= 2) {
+      if (parts[1] !== "completed_projects") {
+        const completedPath = [parts[0], "completed_projects", ...parts.slice(1)].join("/");
+        candidates.add(path.resolve(baseDir, completedPath));
+      }
+
+      // Fallback for fabricator name changes (e.g., commas removed from DB name)
+      const sanitizedFab = parts[0].replace(/,/g, "").replace(/_+/g, "_");
+      if (sanitizedFab !== parts[0]) {
+        candidates.add(path.resolve(baseDir, [sanitizedFab, ...parts.slice(1)].join("/")));
+        if (parts[1] !== "completed_projects") {
+          candidates.add(path.resolve(baseDir, [sanitizedFab, "completed_projects", ...parts.slice(1)].join("/")));
+        }
+      }
+    }
   }
 
   for (const candidate of candidates) {
