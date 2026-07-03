@@ -5,14 +5,12 @@ export const createLineItemGroupSchema = z.object({
     description: z.string().optional(),
     estimationId: z.string(),
     notes: z.string().optional(),
-    divisor: z.number().optional()
+    divisor: z.number().optional(),
+    totalDays: z.number().optional(),
+    totalHours: z.number().optional(),
+    weeks: z.number().optional(),
 })
-export const updateLineItemGroupSchema = createLineItemGroupSchema
-    .partial()
-    .extend({
-        // Compatibility field: allows updating aggregate hours from group update endpoint.
-        totalHours: z.number().optional(),
-    });
+export const updateLineItemGroupSchema = createLineItemGroupSchema.partial();
 
 export type lineItemGroupDto = z.infer<typeof createLineItemGroupSchema>;
 export type updateLineItemGroupDto = z.infer<typeof updateLineItemGroupSchema>;
@@ -23,8 +21,6 @@ export const createLineItemSchema = z.object({
     remarks: z.string(),
     quantity: z.number().optional(),
     hoursPerQty: z.number().optional(),
-    totalDays: z.number().int().optional(),
-    days: z.number().int().optional(),
     fabricationPercentage: z.number().optional(),
     withfabricationTotalHours: z.number().optional(),
     totalHours: z.number().optional(),

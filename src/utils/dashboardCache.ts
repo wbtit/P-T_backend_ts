@@ -6,29 +6,13 @@ export async function getCachedDashboard<T>(
   key: string,
   fetcher: () => Promise<T>
 ): Promise<T> {
-  try {
-    const cached = await redis.get(key);
-    if (cached) return JSON.parse(cached) as T;
-  } catch (_) {}
-
-  const data = await fetcher();
-
-  try {
-    await redis.set(key, JSON.stringify(data), { EX: DASHBOARD_TTL });
-  } catch (_) {}
-
-  return data;
+  // CACHE LAYER REMOVED: Bypassing Redis and always fetching fresh data
+  return await fetcher();
 }
 
 export async function invalidateDashboardCache(patterns: string[]): Promise<void> {
-  try {
-    for (const pattern of patterns) {
-      const keys = await redis.keys(pattern);
-      if (keys.length > 0) {
-        await redis.del(keys);
-      }
-    }
-  } catch (_) {}
+  // CACHE LAYER REMOVED: No-op
+  return;
 }
 
 // Cache key builders — one per dashboard type

@@ -14,15 +14,6 @@ export class RfqResponseService {
     private rfqRepository = new RFQRepository();
 
     async create(data: CreateRFQResponseInput, userId: string) {
-        console.log(`\n======================================================`);
-        console.log(`🚀 [DEBUG LOG] INCOMING CREATE RFQ RESPONSE PAYLOAD`);
-        console.log(`   User ID         : ${userId}`);
-        console.log(`   RFQ ID          : ${data.rfqId}`);
-        console.log(`   Parent Res ID   : ${data.parentResponseId}`);
-        console.log(`   Status Action   : ${data.status}`);
-        console.log(`   Raw Payload     : ${JSON.stringify(data)}`);
-        console.log(`======================================================\n`);
-
         const rfq = await this.rfqRepository.getById({ id: data.rfqId });
         if (!rfq) throw new AppError("RFQ not found", 404);
 
@@ -48,16 +39,15 @@ export class RfqResponseService {
                 wbtStatus: "WBT_SUBMITTED"
             });
             
-            console.log(`\n======================================================`);
-            console.log(`🚀 [TEST LOG: ROUND 1/2] WBT SUBMITTED RESPONSE`);
-            console.log(`   RFQ ID       : ${rfq.id}`);
-            console.log(`   Project      : ${rfq.projectName}`);
-            console.log(`   User ID      : ${userId}`);
-            console.log(`   Subject      : ${data.subject}`);
-            console.log(`   RFQ New State: status = WBT_SUBMITTED, wbtStatus = WBT_SUBMITTED`);
-            console.log(`======================================================\n`);
         } else if (isClientAcknowledgment) {
             // Client acknowledging WBT's parent response
+            if (rfq.status === "AWARDED") {
+                throw new AppError("This RFQ has already been awarded.", 409);
+            }
+            if (rfq.status === "CLOSED") {
+                throw new AppError("This RFQ is already closed.", 409);
+            }
+            
             // Only allowed when RFQ is currently WBT_SUBMITTED
             if (rfq.status !== "WBT_SUBMITTED") {
                 throw new AppError(
@@ -107,24 +97,6 @@ export class RfqResponseService {
             } catch (err) {
                 console.error("Cache invalidation failed on acknowledgment:", err);
             }
-            
-            console.log(`\n======================================================`);
-            console.log(`🚀 [TEST LOG: ROUND 1/2] CLIENT ACKNOWLEDGED WBT RESPONSE`);
-            console.log(`   RFQ ID       : ${rfq.id}`);
-            console.log(`   Project      : ${rfq.projectName}`);
-            console.log(`   User ID      : ${userId}`);
-            console.log(`   Parent Res ID: ${data.parentResponseId}`);
-            console.log(`   Action       : ${action}`);
-            console.log(`   RFQ New State: status = ${action}, wbtStatus = ${action}`);
-            console.log(`======================================================\n`);
-        } else {
-            console.log(`\n======================================================`);
-            console.log(`🚀 [TEST LOG: ROUND 1/2] CHILD RESPONSE (NO ACKNOWLEDGMENT OR FALLBACK)`);
-            console.log(`   RFQ ID       : ${rfq.id}`);
-            console.log(`   User ID      : ${userId}`);
-            console.log(`   Parent Res ID: ${data.parentResponseId}`);
-            console.log(`   Status       : (No side effects on RFQ)`);
-            console.log(`======================================================\n`);
         }
         // If parentResponseId exists but no acknowledgment — this is a 
         // plain child response (e.g. internal notes/attachments under a 

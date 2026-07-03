@@ -157,8 +157,6 @@ export class RFQRepository {
         });
         
         const fabricatorIds = fabricators.map(f => f.id);
-        const fabricatorNames = fabricators.map(f => f.fabName || f.id).join(", ") || "Unknown";
-        console.log(`[DEBUG - Pending RFQ] userId: ${userId} - Found Fabricators: ${fabricatorNames}`);
         
         const rfqs = await prisma.rFQ.findMany({
             where: {
@@ -184,7 +182,6 @@ export class RFQRepository {
                 CDQuotas:true,
             }
         })
-        console.log(`[DEBUG - Pending RFQ] Found ${rfqs.length} pending RFQs for Client Admin (userId: ${userId})`);
         return rfqs;
     }
 
@@ -525,7 +522,6 @@ async getRFQOfConnectionEngineer(userId:string){
 
         return await prisma.rFQ.findMany({
             where: {
-                project: { departmentID: manager.departmentId },
                 wbtStatus: { in: ["RECEIVED", "REVISE"] },
             },
             include: {
@@ -543,7 +539,6 @@ async getRFQOfConnectionEngineer(userId:string){
     async findPendingRFQsForProjectManager(managerId: string) {
         return await prisma.rFQ.findMany({
             where: {
-                project: { managerID: managerId },
                 wbtStatus: { in: ["RECEIVED", "REVISE"] },
             },
             include: {
@@ -561,7 +556,6 @@ async getRFQOfConnectionEngineer(userId:string){
     async findNewRFQsForProjectManager(managerId: string) {
         return await prisma.rFQ.findMany({
             where: {
-                project: { managerID: managerId },
                 responses: { none: {} },
             },
             include: {

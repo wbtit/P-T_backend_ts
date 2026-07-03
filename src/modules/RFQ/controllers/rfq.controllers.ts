@@ -497,10 +497,8 @@ export class RFQController {
         if (!req.user) {
             throw new AppError('User not found', 404);
         }
-        const { id, firstName, lastName } = req.user as any;
+        const { id } = req.user as any;
         const pendingRFQs = await rfqService.getPendingForClientAdmin(id);
-        const userName = [firstName, lastName].filter(Boolean).join(" ") || id;
-        console.log(`[DEBUG - API Controller] Sending ${pendingRFQs.length} pending RFQs back to client admin: ${userName}`);
         res.status(200).json({
             status: 'success',
             data: pendingRFQs,

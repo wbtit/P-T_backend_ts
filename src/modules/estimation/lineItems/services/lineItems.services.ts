@@ -20,21 +20,7 @@ export class LineItemsService{
         return group;
     }
     async updateLineItemGroup(id:string,data:updateLineItemGroupDto){
-        const { totalHours, ...groupPayload } = data as updateLineItemGroupDto & { totalHours?: number };
-
-        const updatedGroup = await this.lineItemsRepo.updateLineItemGroup(id, groupPayload);
-
-        if (typeof totalHours === "number") {
-            await this.lineItemsRepo.applyGroupTotalHours(
-                id,
-                totalHours,
-                updatedGroup.divisor ?? undefined
-            );
-        } else if (typeof updatedGroup.divisor === "number") {
-            // If divisor changed, keep totals and recompute weeks.
-            await this.lineItemsRepo.recomputeWeeksByGroup(id, updatedGroup.divisor);
-        }
-
+        const updatedGroup = await this.lineItemsRepo.updateLineItemGroup(id, data);
         return await this.lineItemsRepo.getLineItemGroupById(id);
     }
     async getGroupsByEstimationId(estimationId:string){
@@ -51,15 +37,49 @@ export class LineItemsService{
     }
 //Line Items
     async createLineItem(data:lineItemDto){
-        return await this.lineItemsRepo.createLineItem(data);
+        const result = await this.lineItemsRepo.createLineItem(data);
+        
+        if (result.groupId) {
+            await this.recalculateGroupTotals(result.groupId);
+        }
+        
+        return result;
     }
+    
     async updateLineItem(id:string,data:updateLineItemDto){
-        return await this.lineItemsRepo.updateLineItem(id,data);
+        const result = await this.lineItemsRepo.updateLineItem(id,data);
+        
+        if (result.groupId) {
+            await this.recalculateGroupTotals(result.groupId);
+        }
+        
+        return result;
+    }
+    
+    private async recalculateGroupTotals(groupId: string) {
+        const items = await this.lineItemsRepo.getByGroupId(groupId);
+        const group = await this.lineItemsRepo.getLineItemGroupById(groupId);
+        
+        if (!group) return;
+        
+        const sumHours = items.reduce((sum, item) => sum + (item.totalHours ?? 0), 0);
+        const sumWeeks = items.reduce((sum, item) => sum + (item.weeks ?? 0), 0);
+        
+        // Directly update the group's totals in the DB without triggering downward distribution
+        await this.lineItemsRepo.updateLineItemGroup(groupId, {
+            totalHours: sumHours,
+            weeks: sumWeeks
+        });
     }
     async getLineItemsByGroupId(groupId:string){
         return await this.lineItemsRepo.getByGroupId(groupId);
     }
     async deleteLineItem(id:string){
-        return await this.lineItemsRepo.deleteLineItem(id);
+        const item = await this.lineItemsRepo.deleteLineItem(id);
+        
+        if (item.groupId) {
+            await this.recalculateGroupTotals(item.groupId);
+        }
+        return item;
     }
 }

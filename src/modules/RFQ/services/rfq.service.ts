@@ -103,16 +103,6 @@ export class RFQService {
       }
     }
 
-    console.log(`\n======================================================`);
-    console.log(`🚀 [TEST LOG: ROUND 1] CLIENT CREATED NEW RFQ`);
-    console.log(`   RFQ ID       : ${rfq?.id}`);
-    console.log(`   Project      : ${rfq?.projectName}`);
-    console.log(`   Subject      : ${rfq?.subject}`);
-    console.log(`   Sender       : ${rfq?.senderId}`);
-    console.log(`   Status       : ${rfq?.status} (Expected: SENT)`);
-    console.log(`   WBT Status   : ${rfq?.wbtStatus} (Expected: RECEIVED)`);
-    console.log(`======================================================\n`);
-
     try {
       await invalidateDashboardCache(invalidationPatterns.onRFQChange);
     } catch (err) {
@@ -140,7 +130,6 @@ export class RFQService {
       data: GetRfqInput,
       user?: { role?: string; connectionDesignerId?: string | null }
     ){
-        console.log("[RFQ:getRfqById] user role:", user?.role, "connectionDesignerId:", user?.connectionDesignerId, "rfqId:", data.id);
         if (user?.role === "CONNECTION_DESIGNER_ENGINEER" && user.connectionDesignerId) {
             const filtered = await rfqrepo.getByIdForConnectionDesigner(
               data.id,
@@ -152,10 +141,6 @@ export class RFQService {
         }
 
         const existing = await rfqrepo.getById(data);
-        console.log(
-          "[RFQ:getRfqById] unfiltered CDQuotas:",
-          Array.isArray((existing as any)?.CDQuotas) ? (existing as any).CDQuotas.length : "none"
-        );
         if(!existing) throw new AppError('RFQ not found', 404);
 
         return existing;

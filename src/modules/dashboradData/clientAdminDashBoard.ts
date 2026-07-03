@@ -97,14 +97,8 @@ export const clientAdminDashBoard = async (req: AuthenticateRequest, res: Respon
           }),
           prisma.rFQ.count({
             where: {
-              project: { status: { in: ["ACTIVE", "ONHOLD"] } },
               fabricatorId: { in: fabricatorIds },
-              responses: {
-                some: {
-                  childResponses: { none: {} },
-                  user: { role: { notIn: ["CLIENT", "CLIENT_ADMIN", "CLIENT_ACCOUNTANT", "CLIENT_ESTIMATOR", "CLIENT_PROJECT_COORDINATOR", "CLIENT_GENERAL_CONSTRUCTOR"] } },
-                },
-              },
+              status: "WBT_SUBMITTED",
             },
           }),
 

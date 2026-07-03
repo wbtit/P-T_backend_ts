@@ -47,23 +47,21 @@ export class LineItemsRepository{
         where:{groupId:group?.id},
         _sum:{
             totalHours:true,
-            weeks:true,
-            days:true
+            weeks:true
         },
         _count:{
             id:true 
         }
        })
-       const totalHours = items._sum.totalHours;
-       const totalWeeks = items._sum.weeks;
-       const totalDays = items._sum.days;
+       const totalHours = items._sum?.totalHours ?? 0;
+       const totalWeeks = items._sum?.weeks ?? 0;
         
        
        return {
             group,
             totalHours,
-            totalWeeks,
-            totalDays
+            weeks:totalWeeks,
+            itemCount:items._count.id
         }
 
     }
@@ -130,6 +128,37 @@ export class LineItemsRepository{
                             typeof divisor === "number" && divisor > 0
                                 ? Number((rounded[index] / divisor).toFixed(4))
                                 : item.weeks,
+                    },
+                })
+            )
+        );
+    }
+
+    async applyGroupTotalDays(groupId: string, totalDays: number) {
+        const items = await prisma.estimationLineItem.findMany({
+            where: { groupId },
+            orderBy: { createdAt: "asc" },
+        });
+
+        if (items.length === 0) return [];
+
+        const currentTotal = items.reduce((sum, item) => sum + (item.totalDays ?? 0), 0);
+
+        const rawDays = items.map((item) => {
+            if (currentTotal > 0) return ((item.totalDays ?? 0) / currentTotal) * totalDays;
+            return totalDays / items.length;
+        });
+
+        const rounded = rawDays.map((value) => Number(value.toFixed(4)));
+        const diff = Number((totalDays - rounded.reduce((sum, value) => sum + value, 0)).toFixed(4));
+        rounded[rounded.length - 1] = Number((rounded[rounded.length - 1] + diff).toFixed(4));
+
+        return prisma.$transaction(
+            items.map((item, index) =>
+                prisma.estimationLineItem.update({
+                    where: { id: item.id },
+                    data: {
+                        totalDays: rounded[index]
                     },
                 })
             )

@@ -1610,6 +1610,7 @@ model EstimationLineItem {
 
   fabricationPercentage Float?
   withfabricationTotalHours Float?
+  totalDays   Float?
   totalHours  Float?
   weeks       Float?
   createdAt   DateTime                 @default(now())
