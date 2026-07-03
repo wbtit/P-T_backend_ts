@@ -14,8 +14,8 @@ export const RfqResponseSchema = z.object({
     PageNumbers: z.string().optional().nullable(),
     status: z.nativeEnum(RFQStatus).optional(),
     wbtStatus: z.nativeEnum(RFQStatus).optional(),
-    acknowledgment: z.enum(["AWARDED", "REJECTED", "CLOSED", "REVISE"]).optional(),
 
+    
     files: z
     .union([
       z.array(z.any()),

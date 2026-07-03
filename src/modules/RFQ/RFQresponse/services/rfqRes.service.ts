@@ -14,11 +14,23 @@ export class RfqResponseService {
     private rfqRepository = new RFQRepository();
 
     async create(data: CreateRFQResponseInput, userId: string) {
+        console.log(`\n======================================================`);
+        console.log(`🚀 [DEBUG LOG] INCOMING CREATE RFQ RESPONSE PAYLOAD`);
+        console.log(`   User ID         : ${userId}`);
+        console.log(`   RFQ ID          : ${data.rfqId}`);
+        console.log(`   Parent Res ID   : ${data.parentResponseId}`);
+        console.log(`   Status Action   : ${data.status}`);
+        console.log(`   Raw Payload     : ${JSON.stringify(data)}`);
+        console.log(`======================================================\n`);
+
         const rfq = await this.rfqRepository.getById({ id: data.rfqId });
         if (!rfq) throw new AppError("RFQ not found", 404);
 
-        const isParentResponse = !data.parentResponseId;
-        const isClientAcknowledgment = !!data.parentResponseId && !!data.acknowledgment;
+        const isParentResponse = !data.parentResponseId || data.parentResponseId === "null" || data.parentResponseId === "";
+        
+        const validActions = ["AWARDED", "REJECTED", "CLOSED", "REVISE"];
+        const action = data.status;
+        const isClientAcknowledgment = !isParentResponse && !!action && validActions.includes(action);
 
         if (isParentResponse) {
             // WBT creating a new submission
@@ -35,7 +47,15 @@ export class RfqResponseService {
                 status: "WBT_SUBMITTED",
                 wbtStatus: "WBT_SUBMITTED"
             });
-
+            
+            console.log(`\n======================================================`);
+            console.log(`🚀 [TEST LOG: ROUND 1/2] WBT SUBMITTED RESPONSE`);
+            console.log(`   RFQ ID       : ${rfq.id}`);
+            console.log(`   Project      : ${rfq.projectName}`);
+            console.log(`   User ID      : ${userId}`);
+            console.log(`   Subject      : ${data.subject}`);
+            console.log(`   RFQ New State: status = WBT_SUBMITTED, wbtStatus = WBT_SUBMITTED`);
+            console.log(`======================================================\n`);
         } else if (isClientAcknowledgment) {
             // Client acknowledging WBT's parent response
             // Only allowed when RFQ is currently WBT_SUBMITTED
@@ -66,8 +86,8 @@ export class RfqResponseService {
                 await tx.rFQResponse.update({
                     where: { id: data.parentResponseId! },
                     data: {
-                        status: data.acknowledgment,
-                        wbtStatus: data.acknowledgment
+                        status: action as any,
+                        wbtStatus: action as any
                     }
                 });
 
@@ -75,8 +95,8 @@ export class RfqResponseService {
                 await tx.rFQ.update({
                     where: { id: data.rfqId },
                     data: {
-                        status: data.acknowledgment,
-                        wbtStatus: data.acknowledgment
+                        status: action as any,
+                        wbtStatus: action as any
                     }
                 });
             });
@@ -87,6 +107,24 @@ export class RfqResponseService {
             } catch (err) {
                 console.error("Cache invalidation failed on acknowledgment:", err);
             }
+            
+            console.log(`\n======================================================`);
+            console.log(`🚀 [TEST LOG: ROUND 1/2] CLIENT ACKNOWLEDGED WBT RESPONSE`);
+            console.log(`   RFQ ID       : ${rfq.id}`);
+            console.log(`   Project      : ${rfq.projectName}`);
+            console.log(`   User ID      : ${userId}`);
+            console.log(`   Parent Res ID: ${data.parentResponseId}`);
+            console.log(`   Action       : ${action}`);
+            console.log(`   RFQ New State: status = ${action}, wbtStatus = ${action}`);
+            console.log(`======================================================\n`);
+        } else {
+            console.log(`\n======================================================`);
+            console.log(`🚀 [TEST LOG: ROUND 1/2] CHILD RESPONSE (NO ACKNOWLEDGMENT OR FALLBACK)`);
+            console.log(`   RFQ ID       : ${rfq.id}`);
+            console.log(`   User ID      : ${userId}`);
+            console.log(`   Parent Res ID: ${data.parentResponseId}`);
+            console.log(`   Status       : (No side effects on RFQ)`);
+            console.log(`======================================================\n`);
         }
         // If parentResponseId exists but no acknowledgment — this is a 
         // plain child response (e.g. internal notes/attachments under a 
@@ -98,8 +136,8 @@ export class RfqResponseService {
             userId,
             // For acknowledgments, carry the acknowledgment as the 
             // child response's own status too so it's visible on the record
-            status: data.acknowledgment ?? data.status ?? "RECEIVED",
-            wbtStatus: data.acknowledgment ?? data.wbtStatus ?? "SENT"
+            status: (action as any) ?? "RECEIVED",
+            wbtStatus: (action as any) ?? "SENT"
         });
 
         return createdResponse;

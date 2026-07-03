@@ -88,6 +88,8 @@ export class RFQService {
             multipleRecipients,
             projectNumber,
             serialNo,
+            status: "SENT",
+            wbtStatus: "RECEIVED",
           });
         });
         break; // If transaction succeeds, exit loop
@@ -100,6 +102,16 @@ export class RFQService {
         throw error;
       }
     }
+
+    console.log(`\n======================================================`);
+    console.log(`🚀 [TEST LOG: ROUND 1] CLIENT CREATED NEW RFQ`);
+    console.log(`   RFQ ID       : ${rfq?.id}`);
+    console.log(`   Project      : ${rfq?.projectName}`);
+    console.log(`   Subject      : ${rfq?.subject}`);
+    console.log(`   Sender       : ${rfq?.senderId}`);
+    console.log(`   Status       : ${rfq?.status} (Expected: SENT)`);
+    console.log(`   WBT Status   : ${rfq?.wbtStatus} (Expected: RECEIVED)`);
+    console.log(`======================================================\n`);
 
     try {
       await invalidateDashboardCache(invalidationPatterns.onRFQChange);
