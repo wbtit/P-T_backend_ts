@@ -128,12 +128,7 @@ export class RFQRepository {
         return await prisma.rFQ.findMany({
             where: {
                 project: { status: { in: ["ACTIVE", "ONHOLD"] } },
-                responses: {
-                    some: {
-                        childResponses: { none: {} },
-                        user: { role: { notIn: ["CLIENT", "CLIENT_ADMIN", "CLIENT_ACCOUNTANT", "CLIENT_ESTIMATOR", "CLIENT_PROJECT_COORDINATOR", "CLIENT_GENERAL_CONSTRUCTOR"] } }
-                    },
-                },
+                status: { in: ["SENT", "REVISE"] },
             },
             include: {
                 sender: true,
@@ -169,12 +164,7 @@ export class RFQRepository {
             where: {
                             fabricatorId: { in: fabricatorIds },
                             project: { status: { in: ["ACTIVE", "ONHOLD"] } },
-                            responses: {
-                                some: {
-                                    childResponses: { none: {} },
-                                    user: { role: { notIn: ["CLIENT", "CLIENT_ADMIN", "CLIENT_ACCOUNTANT", "CLIENT_ESTIMATOR", "CLIENT_PROJECT_COORDINATOR", "CLIENT_GENERAL_CONSTRUCTOR"] } }
-                                }
-                            }
+                            status: { in: ["SENT", "REVISE"] },
                         },
                     include:{
                 sender: true,
@@ -210,12 +200,7 @@ export class RFQRepository {
                     }
                 },
                 project: { status: { in: ["ACTIVE", "ONHOLD"] } },
-                responses: {
-                    some: {
-                        childResponses: { none: {} },
-                        user: { role: { notIn: ["CLIENT", "CLIENT_ADMIN", "CLIENT_ACCOUNTANT", "CLIENT_ESTIMATOR", "CLIENT_PROJECT_COORDINATOR", "CLIENT_GENERAL_CONSTRUCTOR"] } }
-                    }
-                }
+                status: { in: ["SENT", "REVISE"] },
             },
             include:{
                 sender: true,
@@ -453,12 +438,7 @@ export class RFQRepository {
     async getPendingRFQs(){
         return await prisma.rFQ.findMany({
             where: {
-          responses: {
-              some: {
-                  childResponses: { none: {} },
-                  user: { role: { in: ["CLIENT", "CLIENT_ADMIN", "CLIENT_ACCOUNTANT", "CLIENT_ESTIMATOR", "CLIENT_PROJECT_COORDINATOR", "CLIENT_GENERAL_CONSTRUCTOR"] } }
-              }
-          },
+          wbtStatus: { in: ["RECEIVED", "REVISE"] },
         },
         include:{
             sender: true,
@@ -546,12 +526,7 @@ async getRFQOfConnectionEngineer(userId:string){
         return await prisma.rFQ.findMany({
             where: {
                 project: { departmentID: manager.departmentId },
-                responses: {
-                    some: {
-                        childResponses: { none: {} },
-                        user: { role: { in: ["CLIENT", "CLIENT_ADMIN", "CLIENT_ACCOUNTANT", "CLIENT_ESTIMATOR", "CLIENT_PROJECT_COORDINATOR", "CLIENT_GENERAL_CONSTRUCTOR"] } }
-                    },
-                },
+                wbtStatus: { in: ["RECEIVED", "REVISE"] },
             },
             include: {
                 sender: true,
@@ -569,12 +544,7 @@ async getRFQOfConnectionEngineer(userId:string){
         return await prisma.rFQ.findMany({
             where: {
                 project: { managerID: managerId },
-                responses: {
-                    some: {
-                        childResponses: { none: {} },
-                        user: { role: { in: ["CLIENT", "CLIENT_ADMIN", "CLIENT_ACCOUNTANT", "CLIENT_ESTIMATOR", "CLIENT_PROJECT_COORDINATOR", "CLIENT_GENERAL_CONSTRUCTOR"] } },
-                    },
-                },
+                wbtStatus: { in: ["RECEIVED", "REVISE"] },
             },
             include: {
                 sender: true,

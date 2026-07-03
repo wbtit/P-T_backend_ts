@@ -38,7 +38,7 @@ export class RfqResponseController {
       ...req.body,
       files: uploadedFiles,
     };
-        const result = await rfqResponseService.create(payload);
+        const result = await rfqResponseService.create(payload, userId as string);
         const [rfqMailContext, responder] = await Promise.all([
             prisma.rFQ.findUnique({
                 where: { id: result.rfqId },
@@ -223,4 +223,5 @@ export class RfqResponseController {
         const { rfqResId, fileId } = req.params;
         await rfqResponseService.viewFile(rfqResId, fileId, res);
     }
+
 }
