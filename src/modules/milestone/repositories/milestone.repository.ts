@@ -127,7 +127,6 @@ export class MileStoneRepository{
                 fabricator_id: fabricatorId,
                 project: {
                     isDeleted: false,
-                    status: { in: ["ACTIVE", "ONHOLD"] },
                 },
                 ...getRoleVisibilityFilter(role),
             },
@@ -156,7 +155,6 @@ export class MileStoneRepository{
                 project: {
                     clientProjectManagers: { some: { id: clientId } },
                     isDeleted: false,
-                    status: { in: ["ACTIVE", "ONHOLD"] },
                 },
                 ...getRoleVisibilityFilter(role),
             },
@@ -228,7 +226,6 @@ export class MileStoneRepository{
             where:{project_id:id,
                 project:{
                     isDeleted: false,
-                    status: { in: ["ACTIVE", "ONHOLD"] },
                 },
                 ...getRoleVisibilityFilter(role),
             },
@@ -258,7 +255,6 @@ export class MileStoneRepository{
                 legacySubmittals:{none:{}},
                 project: {
                     isDeleted: false,
-                    status: { in: ["ACTIVE", "ONHOLD"] },
                 },
                 ...getRoleVisibilityFilter(role),
             },
@@ -282,7 +278,6 @@ export class MileStoneRepository{
                 legacySubmittals:{none:{}},
                 project: {
                     isDeleted: false,
-                    status: { in: ["ACTIVE", "ONHOLD"] },
                 },
                 ...getRoleVisibilityFilter(role),
             },
@@ -303,7 +298,6 @@ export class MileStoneRepository{
                 project:{
                     clientProjectManagers: { some: { id: clientId } },
                     isDeleted: false,
-                    status: { not: "INACTIVE" },
                 },
                 mileStoneSubmittals: { none: {} },
                 legacySubmittals: { none: {} },
@@ -327,7 +321,6 @@ export class MileStoneRepository{
             project:{
                 managerID:managerId,
                 isDeleted: false,
-                status: { in: ["ACTIVE", "ONHOLD"] },
             },
             mileStoneSubmittals:{none:{}},
             legacySubmittals:{none:{}},
@@ -365,7 +358,6 @@ export class MileStoneRepository{
                         : []),
                 ],
                 isDeleted: false,
-                status: { in: ["ACTIVE", "ONHOLD"] },
             },
             CDApprovalDate:{not:null},
             mileStoneSubmittals:{none:{}},
@@ -399,7 +391,6 @@ export class MileStoneRepository{
                     { connectionDesignerID: connectionDesignerId },
                 ],
                 isDeleted: false,
-                status: { in: ["ACTIVE", "ONHOLD"] },
             },
             CDApprovalDate:{not:null},
             ...getRoleVisibilityFilter(role),
