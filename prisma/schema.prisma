@@ -1645,6 +1645,8 @@ model RFI {
   recepient_id       String?       @db.Uuid
   sender_id          String        @db.Uuid
   status             Boolean       @default(false)
+  exStatus           State         @default(RECEIVED)
+  wbtStatus          State         @default(SENT)
   subject            String
   description        String
   files              Json          @default("[]")

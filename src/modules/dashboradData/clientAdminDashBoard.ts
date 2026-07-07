@@ -77,7 +77,8 @@ export const clientAdminDashBoard = async (req: AuthenticateRequest, res: Respon
                   rfiresponse: {
                     some: {
                       childResponses: { none: {} },
-                      user: { role: { notIn: ["CLIENT", "CLIENT_ADMIN", "CLIENT_ACCOUNTANT", "CLIENT_ESTIMATOR", "CLIENT_PROJECT_COORDINATOR", "CLIENT_GENERAL_CONSTRUCTOR"] } },
+                      responseState: { not: "COMPLETE" },
+                    user: { role: { notIn: ["CLIENT", "CLIENT_ADMIN", "CLIENT_ACCOUNTANT", "CLIENT_ESTIMATOR", "CLIENT_PROJECT_COORDINATOR", "CLIENT_GENERAL_CONSTRUCTOR"] } },
                     },
                   },
                 },

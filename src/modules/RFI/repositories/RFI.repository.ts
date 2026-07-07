@@ -42,6 +42,8 @@ export class RFIRepository{
               files: data.files,
               isAproovedByAdmin,
               isConnectionDesign: data.isConnectionDesign ?? false,
+              exStatus: "RECEIVED",
+              wbtStatus: "SENT",
             },
             include: {
               recepients:  {select:{firstName:true,middleName:true,lastName:true,username:true,designation:true,email:true,id:true}},
@@ -81,7 +83,8 @@ export class RFIRepository{
               rfiresponse: {
                 some: {
                   childResponses: { none: {} },
-                  user: { role: { notIn: ["CLIENT", "CLIENT_ADMIN", "CLIENT_ACCOUNTANT", "CLIENT_ESTIMATOR", "CLIENT_PROJECT_COORDINATOR", "CLIENT_GENERAL_CONSTRUCTOR"] } },
+                  responseState: { not: "COMPLETE" },
+                    user: { role: { notIn: ["CLIENT", "CLIENT_ADMIN", "CLIENT_ACCOUNTANT", "CLIENT_ESTIMATOR", "CLIENT_PROJECT_COORDINATOR", "CLIENT_GENERAL_CONSTRUCTOR"] } },
                 },
               },
             },
@@ -128,7 +131,8 @@ export class RFIRepository{
               rfiresponse: {
                 some: {
                   childResponses: { none: {} },
-                  user: { role: { notIn: ["CLIENT", "CLIENT_ADMIN", "CLIENT_ACCOUNTANT", "CLIENT_ESTIMATOR", "CLIENT_PROJECT_COORDINATOR", "CLIENT_GENERAL_CONSTRUCTOR"] } },
+                  responseState: { not: "COMPLETE" },
+                    user: { role: { notIn: ["CLIENT", "CLIENT_ADMIN", "CLIENT_ACCOUNTANT", "CLIENT_ESTIMATOR", "CLIENT_PROJECT_COORDINATOR", "CLIENT_GENERAL_CONSTRUCTOR"] } },
                 },
               },
             },
@@ -180,7 +184,8 @@ export class RFIRepository{
               rfiresponse: {
                 some: {
                   childResponses: { none: {} },
-                  user: { role: { notIn: ["CLIENT", "CLIENT_ADMIN", "CLIENT_ACCOUNTANT", "CLIENT_ESTIMATOR", "CLIENT_PROJECT_COORDINATOR", "CLIENT_GENERAL_CONSTRUCTOR"] } },
+                  responseState: { not: "COMPLETE" },
+                    user: { role: { notIn: ["CLIENT", "CLIENT_ADMIN", "CLIENT_ACCOUNTANT", "CLIENT_ESTIMATOR", "CLIENT_PROJECT_COORDINATOR", "CLIENT_GENERAL_CONSTRUCTOR"] } },
                 },
               },
             },
@@ -364,6 +369,17 @@ export class RFIRepository{
       },
     });
     }
+
+    async updateStatuses(id: string, exStatus: any, wbtStatus: any) {
+        return await prisma.rFI.update({
+            where: { id },
+            data: {
+                exStatus,
+                wbtStatus
+            }
+        });
+    }
+
     async findPendingRFIs(role: string, userRole?: UserRole){
       return await prisma.rFI.findMany({
         where: {

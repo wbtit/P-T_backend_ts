@@ -5,20 +5,46 @@ import { RFIRepository } from "../repositories";
 import { FileObject } from "../../../shared/fileType";
 import { resolveUploadFilePath, streamFile } from "../../../utils/fileUtil";
 import { Response } from "express";
+import prisma from "../../../config/database/client";
 
 const rfiResRepo= new RFIResponseRepository();
 const rfiRepo= new RFIRepository();
 
 export class RFIResponseService{
     async create(rfiId:string,userId:string,data:CreateRfiResDto){
-        await rfiRepo.updateStatus(rfiId)
+        const user = await prisma.user.findUnique({ where: { id: userId }, select: { role: true } });
+        const clientRoles = ["CLIENT", "CLIENT_ADMIN", "CLIENT_ACCOUNTANT", "CLIENT_ESTIMATOR", "CLIENT_PROJECT_COORDINATOR", "CLIENT_GENERAL_CONSTRUCTOR"];
+        const isClient = clientRoles.includes(user?.role || "");
+
+        // If frontend passes responseState or wbtStatus, we want to capture that input.
+        const inputStatus = data.responseState || data.wbtStatus || "COMPLETE";
+
+        let finalResponseState = inputStatus as any;
+        let finalWbtStatus = inputStatus as any;
+
+        if (isClient) {
+            // Client response
+            finalResponseState = inputStatus;
+            finalWbtStatus = "RECEIVED";
+        } else {
+            // WBT response
+            finalWbtStatus = inputStatus;
+            finalResponseState = finalWbtStatus; // status same as wbtstatus
+        }
+
         const responseData = {
             ...data,
             rfiId,
+            responseState: finalResponseState,
+            wbtStatus: finalWbtStatus
         };
-        if(responseData.parentResponseId!=undefined){
+
+        if(responseData.parentResponseId != undefined && responseData.parentResponseId !== "null" && responseData.parentResponseId !== ""){
             await rfiResRepo.updateWithParentId(responseData)
-    }
+        }
+        
+        await rfiRepo.updateStatuses(rfiId, finalResponseState, finalWbtStatus);
+
         return await rfiResRepo.create(responseData,userId)
     }
 
