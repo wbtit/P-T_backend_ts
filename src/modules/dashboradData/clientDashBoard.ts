@@ -96,7 +96,6 @@ export const clientDashBoard = async (req: AuthenticateRequest, res: Response) =
           totalCompleteProject: 0,
           totalOnHoldProject: 0,
           totalProjects,
-          activeEmployeeCount,
           pendingRFI,
           pendingChangeOrders,
           pendingRFQ,
