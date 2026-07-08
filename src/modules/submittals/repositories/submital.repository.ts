@@ -54,6 +54,12 @@ export class SubmitalRepository {
             completeionPercentage: 100,
           },
         });
+        await tx.mileStoneVersion.updateMany({
+          where: { mileStoneId: { in: mileStoneIds } },
+          data: {
+            status: "COMPLETE",
+          },
+        });
       }
 
       const project = await tx.project.findUnique({
@@ -343,6 +349,10 @@ async getPendingSubmittalsForProjectManager(managerId: string, role?: UserRole) 
           await tx.mileStone.updateMany({
             where: { id: { in: mileStoneIds } },
             data: { status: "COMPLETE", completeionPercentage: 100 },
+          });
+          await tx.mileStoneVersion.updateMany({
+            where: { mileStoneId: { in: mileStoneIds } },
+            data: { status: "COMPLETE" },
           });
         }
       }

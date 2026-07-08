@@ -1,6 +1,6 @@
 import { ModuleOpenApiDoc } from "../../openapi/types";
 import { zodRequestBody } from "../../openapi/zod";
-import { createSubmittalsDto, createSubmittalsResponseDto } from "./dtos";
+import { createSubmittalsDto, createSubmittalsResponseDto, updateSubmittalsDto } from "./dtos";
 import z from "zod";
 import { SubResStatus } from "@prisma/client";
 
@@ -302,6 +302,24 @@ export const submittalsOpenApiDoc: ModuleOpenApiDoc = {
           "200": { description: "Success" },
           "400": { description: "Bad Request" },
           "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+      patch: {
+        tags: ["Submittals"],
+        summary: "PATCH /submittal/{id} - Update Submittal Metadata",
+        description: "Update the metadata for a submittal, such as modifying the attached milestones.",
+        operationId: "patch_submittal_id",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { in: "path", name: "id", required: true, schema: { type: "string" } },
+        ],
+        requestBody: zodRequestBody(updateSubmittalsDto),
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "404": { description: "Not Found" },
           "500": { description: "Internal Server Error" }
         }
       },

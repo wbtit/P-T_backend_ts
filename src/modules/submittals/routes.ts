@@ -10,6 +10,7 @@ import {
   createSubmittalsDto,
   createSubmittalsResponseDto,
   createSubmittalVersionDto,
+  updateSubmittalsDto,
 } from "./dtos";
 import { SubResStatus } from "@prisma/client";
 import {
@@ -37,6 +38,17 @@ router.post(
   scanUploadMiddleware,
   validate({ body: createSubmittalsDto }),
   submittalController.handleCreateSubmittal.bind(submittalController)
+);
+
+// UPDATE SUBMITTAL METADATA (e.g., milestoneId)
+router.patch(
+  "/:id",
+  authMiddleware,
+  validate({
+    params: z.object({ id: z.string() }),
+    body: updateSubmittalsDto,
+  }),
+  submittalController.handleUpdateMetadata.bind(submittalController)
 );
 
 // CREATE NEW VERSION (CONTENT UPDATE)

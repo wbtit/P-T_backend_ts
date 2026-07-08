@@ -508,4 +508,17 @@ export class SubmittalController {
       isClient
     );
   }
+  // --------------------------------------------------
+  // UPDATE METADATA (e.g. milestoneId)
+  // --------------------------------------------------
+  async handleUpdateMetadata(req: AuthenticateRequest, res: Response) {
+    const { id } = req.params;
+    const updateData = req.body;
+    const updated = await submittalService.updateSubmittalMetadata(id, updateData);
+    res.status(200).json({
+      success: true,
+      message: "Submittal metadata updated successfully",
+      data: updated,
+    });
+  }
 }
