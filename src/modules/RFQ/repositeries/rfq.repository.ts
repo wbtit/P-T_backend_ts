@@ -563,29 +563,28 @@ async getRFQOfConnectionEngineer(userId:string){
     }
 
     async findRFQsForClientEstimator(userId: string) {
-        const fabricatorIds = await this.findFabricatorIdsForUser(userId);
-        if (fabricatorIds.length === 0) return [];
-
-        const clientEstimators = await prisma.user.findMany({
-            where: {
-                role: "CLIENT_ESTIMATOR",
-                OR: [
-                    { FabricatorPointOfContacts: { some: { id: { in: fabricatorIds } } } },
-                ]
+        const fabricators = await prisma.fabricator.findMany({
+          where: {
+            pointOfContact: {
+              some: { id: userId, role: "CLIENT_ESTIMATOR" },
             },
-            select: { id: true }
+          },
+          select: { id: true },
         });
 
-        const estimatorIds = clientEstimators.map(u => u.id);
-        if (estimatorIds.length === 0) return [];
+        const fabricatorIds = fabricators.map((f) => f.id);
+        if (fabricatorIds.length === 0) return [];
 
         return await prisma.rFQ.findMany({
             where: {
-                OR: [
-                    { senderId: { in: estimatorIds } },
-                    { recipientId: { in: estimatorIds } },
-                    { multipleRecipients: { some: { id: { in: estimatorIds } } } }
-                ],
+                fabricatorId: { in: fabricatorIds },
+                sender: { role: "CLIENT_ESTIMATOR" },
+                responses: {
+                    some: {
+                        childResponses: { none: {} },
+                        user: { role: { notIn: ["CLIENT", "CLIENT_ADMIN", "CLIENT_ACCOUNTANT", "CLIENT_ESTIMATOR", "CLIENT_PROJECT_COORDINATOR", "CLIENT_GENERAL_CONSTRUCTOR"] } },
+                    },
+                },
                 isDeleted: false
             },
             include: RFQ_LIST_INCLUDE,

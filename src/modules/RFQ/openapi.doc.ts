@@ -271,11 +271,11 @@ export const rFQOpenApiDoc: ModuleOpenApiDoc = {
         }
       },
     },
-    "/rfq/pending/clientEstimator": {
+    "/rfq/all/clientEstimator": {
       get: {
         tags: ["RFQ"],
-        summary: "GET /rfq/pending/clientEstimator",
-        operationId: "get_RFQ_rfq_pending_clientEstimator",
+        summary: "GET /rfq/all/clientEstimator",
+        operationId: "get_RFQ_rfq_all_clientEstimator",
         security: [{ bearerAuth: [] }],
         responses: {
           "200": { description: "Success" },

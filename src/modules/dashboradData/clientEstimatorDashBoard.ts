@@ -30,8 +30,8 @@ export const clientEstimatorDashBoard = async (req: AuthenticateRequest, res: Re
         ] = await Promise.all([
           prisma.rFQ.count({
             where: {
-              project: { status: { in: ["ACTIVE", "ONHOLD"] } },
               fabricatorId: { in: fabricatorIds },
+              sender: { role: "CLIENT_ESTIMATOR" },
               responses: {
                 some: {
                   childResponses: { none: {} },
@@ -43,8 +43,8 @@ export const clientEstimatorDashBoard = async (req: AuthenticateRequest, res: Re
 
           prisma.rFQ.count({
             where: {
-              project: { status: { in: ["ACTIVE", "ONHOLD"] } },
               fabricatorId: { in: fabricatorIds },
+              sender: { role: "CLIENT_ESTIMATOR" },
             },
           }),
         ]);
