@@ -51,6 +51,7 @@ export class SubmitalRepository {
           where: { id: { in: mileStoneIds } },
           data: {
             status: "COMPLETE",
+            completeionPercentage: 100,
           },
         });
       }
@@ -341,7 +342,7 @@ async getPendingSubmittalsForProjectManager(managerId: string, role?: UserRole) 
         if (mileStoneIds.length > 0) {
           await tx.mileStone.updateMany({
             where: { id: { in: mileStoneIds } },
-            data: { status: "COMPLETE" },
+            data: { status: "COMPLETE", completeionPercentage: 100 },
           });
         }
       }
