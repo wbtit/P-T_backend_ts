@@ -38,9 +38,7 @@ const milestoneReference = (milestone?: { subject?: string | null; serialNo?: st
 
 export class MileStoneController {
   async handleCreate(req: AuthenticateRequest, res: Response) {
-    console.log("=== FRONTEND MILESTONE CREATION PAYLOAD ===");
-    console.log(JSON.stringify(req.body, null, 2));
-    console.log("===========================================");
+
     if (!req.user) throw new AppError("User not found", 404);
 
     const result = await mileStoneService.create(req.body);
