@@ -71,11 +71,7 @@ export const clientDashBoard = async (req: AuthenticateRequest, res: Response) =
         });
         const pendingRFQ = await prisma.rFQ.count({
           where: {
-            OR: [
-              { recipientId: userId },
-              { multipleRecipients: { some: { id: userId } } }
-            ],
-            project: { status: { in: ["ACTIVE", "ONHOLD"] } },
+            senderId: userId,
             responses: {
               some: {
                 childResponses: { none: {} },

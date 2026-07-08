@@ -181,15 +181,14 @@ export class RFQRepository {
     async findPendingRFQsForClient(userId:string){
         return await prisma.rFQ.findMany({
             where: {
-                fabricator:{
-                    pointOfContact:{
-                        some:{
-                            id:userId
-                        }
-                    }
+                senderId: userId,
+                responses: {
+                    some: {
+                        childResponses: { none: {} },
+                        user: { role: { notIn: ["CLIENT", "CLIENT_ADMIN", "CLIENT_ACCOUNTANT", "CLIENT_ESTIMATOR", "CLIENT_PROJECT_COORDINATOR", "CLIENT_GENERAL_CONSTRUCTOR"] } },
+                    },
                 },
-                project: { status: { in: ["ACTIVE", "ONHOLD"] } },
-                status: { in: ["SENT", "REVISE"] },
+                isDeleted: false
             },
             include:{
                 sender: true,
