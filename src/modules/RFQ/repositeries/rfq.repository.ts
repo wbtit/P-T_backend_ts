@@ -144,26 +144,18 @@ export class RFQRepository {
     }
 
     async findPendingRFQsForClientAdmin(userId:string){
-        const fabricators = await prisma.fabricator.findMany({
-            where: {
-                pointOfContact: {
-                    some: {
-                        id: userId,
-                        role: "CLIENT_ADMIN"
-                    }
-                },
-                project: { some: { status: { in: ["ACTIVE", "ONHOLD"] } } }
-            }
-        });
-        
-        const fabricatorIds = fabricators.map(f => f.id);
-        
         const rfqs = await prisma.rFQ.findMany({
             where: {
-                            fabricatorId: { in: fabricatorIds },
-                            project: { status: { in: ["ACTIVE", "ONHOLD"] } },
-                            status: { in: ["SENT", "REVISE"] },
-                        },
+                fabricator: {
+                    pointOfContact: {
+                        some: {
+                            id: userId,
+                            role: "CLIENT_ADMIN"
+                        }
+                    }
+                },
+                status: "WBT_SUBMITTED",
+            },
                     include:{
                 sender: true,
                 recipient: true,

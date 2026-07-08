@@ -183,6 +183,7 @@ enum RFQStatus {
   SENT
   WBT_SUBMITTED
   REVISE
+  COMPLETED
 }
 
 enum EstimationStatus {
