@@ -160,7 +160,8 @@ export class TaskRepository {
                 }
                 },
                 projectBundle: true,
-                allocationLog:{ select:{ allocatedHours:true, history: true } }
+                allocationLog:{ select:{ allocatedHours:true, history: true } },
+                trainingRequestLinkedTask: true
             }
         });
         return task;
