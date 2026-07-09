@@ -138,6 +138,26 @@ export const trainingOpenApiDoc: ModuleOpenApiDoc = {
         }
       }
     },
+    "/training/report/monthly": {
+      get: {
+        tags: ["Training"],
+        summary: "GET /training/report/monthly",
+        description: "Fetch a list of users who requested training in a specific month.",
+        operationId: "get_training_report_monthly",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { in: "query", name: "year", required: true, schema: { type: "integer" } },
+          { in: "query", name: "month", required: true, schema: { type: "integer" }, description: "Month 1-12" }
+        ],
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "403": { description: "Forbidden" },
+          "500": { description: "Internal Server Error" }
+        }
+      }
+    },
     "/training/batches": {
       post: {
         tags: ["Training"],

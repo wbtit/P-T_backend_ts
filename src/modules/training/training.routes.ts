@@ -55,6 +55,15 @@ router.get(
   })
 );
 
+router.get(
+  "/report/monthly",
+  authMiddleware,
+  roleGuard(TRAINING_APPROVAL_ROLES),
+  asyncHandler(async (req, res) => {
+    await trainingController.getMonthlyReport(req as AuthenticateRequest, res);
+  })
+);
+
 router.patch(
   "/:requestId/approve",
   authMiddleware,
