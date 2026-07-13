@@ -40,7 +40,7 @@ export class EmployeeController{
     }
 
     async handleUpdateProfile(req:Request,res:Response){
-        const result = await this.empService.update(req.params.id, req.body);
+        await this.empService.update(req.params.id, req.body);
         if (req.body?.role) {
             await notifyByRoles(this.userTeamNotifyRoles, {
                 type: "USER_ROLE_CHANGED",
@@ -51,7 +51,7 @@ export class EmployeeController{
                 timestamp: new Date(),
             });
         }
-        res.status(200).json({ success: true, data: result });
+        res.status(200).json({ success: true, message: "Employee updated successfully" });
     }
     
     async handleDeletEmployee(req:Request,res:Response){

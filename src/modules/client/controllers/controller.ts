@@ -37,12 +37,11 @@ export class ClientController {
             throw new AppError("User ID is missing", 400);
         }
 
-        const updatedClient = await clientService.updateClient(userId, data);
+        await clientService.updateClient(userId, data);
 
         return res.status(200).json({
             message: "Client updated successfully",
             success: true,
-            data: updatedClient,
         });
     }
 

@@ -35,10 +35,10 @@ export class UserController {
       throw new AppError("Profile picture is required", 400);
     }
 
-    const result = await userService.updateProfilePic(user.id, profilePic);
+    await userService.updateProfilePic(user.id, profilePic);
     return res.status(200).json({
       status: "success",
-      data: result,
+      message: "Profile picture updated successfully",
     });
   }
 
