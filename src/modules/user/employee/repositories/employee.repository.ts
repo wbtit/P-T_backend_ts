@@ -22,6 +22,14 @@ export class EmployeRepository{
                         "OPERATION_EXECUTIVE","HUMAN_RESOURCE",
                     ]
                 }
+            },select:{
+                id:true,
+                username:true,
+                firstName:true,
+                middleName:true,
+                lastName:true,
+                designation:true,
+                role:true,
             }
         })
     }
