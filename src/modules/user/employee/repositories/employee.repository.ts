@@ -7,6 +7,14 @@ export class EmployeRepository{
         return await prisma.user.findMany({
             where:{
                 role:role
+            },select:{
+                id:true,
+                username:true,
+                firstName:true,
+                middleName:true,
+                lastName:true,
+                designation:true,
+                role:true,
             }
         })
     }

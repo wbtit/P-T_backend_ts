@@ -45,6 +45,7 @@ export const createSubmittalsDto = z.object({
   isConnectionDesign: zBooleanString.optional(),
   notes: z
     .union([
+      z.string(),
       z.array(z.any()),
       z.literal(null),
     ])
