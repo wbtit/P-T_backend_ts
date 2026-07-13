@@ -29,7 +29,18 @@ export const findUserById = async (id: string) => {
       role: true,
       profilePic: true,
       isActive: true,
-      FabricatorPointOfContacts: true,
+      FabricatorPointOfContacts: {
+        select: {
+          id: true,
+          fabName: true,
+        },
+      },
+      connectionDesigner: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
       connectionDesignerId: true,
       createdAt: true,
       updatedAt: true,
@@ -48,7 +59,18 @@ export const findUserByIdWithPassword = async (id: string) => {
 export const findAllUsers = async () => {
   return await prisma.user.findMany({
     include: {
-      FabricatorPointOfContacts: true,
+      FabricatorPointOfContacts: {
+        select: {
+          id: true,
+          fabName: true,
+        },
+      },
+      connectionDesigner: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
     },
   });
 };
@@ -102,7 +124,18 @@ export const updateUserProfilePic = async (id: string, profilePic: string) => {
     where: { id },
     data: { profilePic },
     include: {
-      FabricatorPointOfContacts: true,
+      FabricatorPointOfContacts: {
+        select: {
+          id: true,
+          fabName: true,
+        },
+      },
+      connectionDesigner: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
     },
   });
 };
@@ -120,7 +153,18 @@ export const findUsersByRole = async (role: userRole) => {
   return await prisma.user.findMany({
     where: { role },
     include: {
-      FabricatorPointOfContacts: true,
+      FabricatorPointOfContacts: {
+        select: {
+          id: true,
+          fabName: true,
+        },
+      },
+      connectionDesigner: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
     },
   });
 };
@@ -135,7 +179,18 @@ export const findAllUser = async () => {
       isActive: true,
     },
     include: {
-      FabricatorPointOfContacts: true,
+      FabricatorPointOfContacts: {
+        select: {
+          id: true,
+          fabName: true,
+        },
+      },
+      connectionDesigner: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
     },
   });
 };
