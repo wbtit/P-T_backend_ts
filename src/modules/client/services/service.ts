@@ -1,4 +1,4 @@
-import { createUser,deleteUser,findUserById,findUsersByRole,updateUser } from "../../user/repository";
+import { createUser,deleteUser,findUserById,findUsersByRole,updateUser,findUsersByFabricatorId } from "../../user/repository";
 import { createUserInput,updateUserInput } from "../../user/dtos";
 import { BranchRepository } from "../../fabricator/branches";
 import { AppError } from "../../../config/utils/AppError";
@@ -44,15 +44,7 @@ async getAllClients(){
     return await findUsersByRole("CLIENT")
 }
 async getAllClinetByFabricatorId(fabricatorId:string){
-    return await prisma.user.findMany({
-        where:{
-            FabricatorPointOfContacts:{
-                some:{
-                    id:fabricatorId
-                }
-            }
-        }
-    })
+    return await findUsersByFabricatorId(fabricatorId);
 }
 
 async getClientById(userId:string){

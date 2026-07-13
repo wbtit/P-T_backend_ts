@@ -189,3 +189,29 @@ export const findAllUser = async () => {
     }
   });
 };
+
+export const findUsersByFabricatorId = async (fabricatorId: string) => {
+  return await prisma.user.findMany({
+    where: {
+      FabricatorPointOfContacts: {
+        some: {
+          id: fabricatorId,
+        },
+      },
+    },select:{
+      id: true,
+      username: true,
+      firstName: true,
+      middleName: true,
+      lastName: true,
+      phone: true,
+      email: true,
+      designation: true,
+      address: true,
+      city: true,
+      state: true,
+      zipCode: true,
+      country: true,
+    }
+  });
+};
