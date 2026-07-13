@@ -1696,6 +1696,7 @@ model Submittals {
   recepient_id         String?      @db.Uuid
   sender_id            String       @db.Uuid
   date                 DateTime     @default(now())
+  notes                Json         @default("[]")    
   stage                Stage        @default(IFA)
   status               Boolean      @default(false)
   bfaStatus            Boolean      @default(false)

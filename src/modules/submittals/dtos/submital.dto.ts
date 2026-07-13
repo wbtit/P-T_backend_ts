@@ -43,6 +43,15 @@ export const createSubmittalsDto = z.object({
   status: zBooleanString.optional(),
   isAproovedByAdmin: zBooleanString.optional(),
   isConnectionDesign: zBooleanString.optional(),
+  notes: z
+    .union([
+      z.array(z.any()),
+      z.literal(null),
+    ])
+    .transform(val =>
+      val === null ? Prisma.JsonNull : val
+    )
+    .optional(),
 });
 
 export const updateSubmittalsDto =

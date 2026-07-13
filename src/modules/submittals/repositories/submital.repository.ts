@@ -88,6 +88,7 @@ export class SubmitalRepository {
           stage: data.stage,
           isAproovedByAdmin: approval,
           isConnectionDesign: data.isConnectionDesign ?? false,
+          notes: data.notes,
           multipleRecipients: data.multipleRecipients?.length
             ? { connect: data.multipleRecipients.map((id: string) => ({ id })) }
             : undefined,
@@ -369,6 +370,7 @@ async getPendingSubmittalsForProjectManager(managerId: string, role?: UserRole) 
           isAproovedByAdmin: data.isAproovedByAdmin,
           status: data.status,
           isConnectionDesign: data.isConnectionDesign,
+          notes: data.notes,
         },
       });
 
