@@ -178,19 +178,14 @@ export const findAllUser = async () => {
     where: {
       isActive: true,
     },
-    include: {
-      FabricatorPointOfContacts: {
-        select: {
-          id: true,
-          fabName: true,
-        },
-      },
-      connectionDesigner: {
-        select: {
-          id: true,
-          name: true,
-        },
-      },
-    },
+    select:{
+      id: true,
+      username: true,
+      firstName: true,
+      middleName: true,
+      lastName: true,
+      designation: true,
+      role: true,
+    }
   });
 };
