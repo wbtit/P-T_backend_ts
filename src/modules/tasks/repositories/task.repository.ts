@@ -161,7 +161,14 @@ export class TaskRepository {
                 },
                 projectBundle: true,
                 allocationLog:{ select:{ allocatedHours:true, history: true } },
-                trainingRequestLinkedTask: true
+                trainingRequestLinkedTask: true,
+                credatedByUser: {
+                    select: {
+                        firstName: true,
+                        lastName: true,
+                        middleName: true
+                    }
+                }
             }
         });
         return task;

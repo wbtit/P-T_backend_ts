@@ -5,7 +5,15 @@ import { RFIService } from "../services";
 import { mapUploadedFiles } from "../../uploads/fileUtil";
 import { sendEmail, getCCEmails } from "../../../services/mailServices/mailconfig";
 import { rfihtmlContent } from "../../../services/mailServices/mailtemplates/rfiMailtemplate";
-import { notifyProjectStakeholdersByRole } from "../../../utils/notifyProjectStakeholders";
+import { notifyProjectStakeholdersByRole, getProjectStakeholderRecipients } from "../../../utils/notifyProjectStakeholders";
+
+const INTERNAL_LOOP_ROLES: UserRole[] = [
+  "ADMIN",
+  "PROJECT_MANAGER",
+  "DEPT_MANAGER",
+  "DEPUTY_MANAGER",
+  "OPERATION_EXECUTIVE"
+];
 import { UserRole } from "@prisma/client";
 import { ProjectAssistService } from "../../project/services/projectAssist.service";
 import { sendNotification } from "../../../utils/sendNotification";
@@ -87,10 +95,7 @@ export class RFIController {
       "rfi"
     );
 
-    let isAproovedByAdmin=false;
-    if (user?.role==="ADMIN" ||user?.role==="DEPT_MANAGER") {
-            isAproovedByAdmin=true
-    }
+    let isAproovedByAdmin = false;
 
     const newrfi = await rfiService.createRfi(
       {
@@ -116,7 +121,15 @@ export class RFIController {
     // Background non-blocking tasks
     (async () => {
       try {
-        if (uniqueEmails.length > 0) {
+        const { recipientsByRole } = await getProjectStakeholderRecipients(req.body.project_id, INTERNAL_LOOP_ROLES);
+        const internalUserIds = Array.from(recipientsByRole.values()).flat();
+        const internalUsers = await prisma.user.findMany({
+          where: { id: { in: internalUserIds } },
+          select: { email: true }
+        });
+        const internalEmails = Array.from(new Set(internalUsers.map(u => u.email).filter(Boolean))) as string[];
+
+        if (internalEmails.length > 0) {
           const projectInfo = await prisma.project.findUnique({
             where: { id: req.body.project_id },
             select: { isAwarded: true }
@@ -127,20 +140,20 @@ export class RFIController {
             const ccEmails = await getCCEmails(newrfi.project_id);
             await sendEmail({
               html: rfihtmlContent(newrfi, fabricatorName),
-              to: uniqueEmails.join(","),
+              to: internalEmails.join(","),
               cc: ccEmails,
               subject: newrfi.subject,
               text: newrfi.description,
             });
           }
         }
-        await notifyProjectStakeholdersByRole(newrfi.project_id, RFI_NOTIFY_ROLES, (role) =>
+        await notifyProjectStakeholdersByRole(newrfi.project_id, INTERNAL_LOOP_ROLES, (role) =>
           buildRoleScopedNotification(role, {
             type: "RFI_CREATED",
             basePayload: { rfiId: newrfi.id, timestamp: new Date() },
             templates: {
               creator: { title: "", message: "" },
-              external: { title: "RFI Received", message: `RFI '${newrfi.subject}' was received for your response.` },
+              external: { title: "", message: "" },
               oversight: { title: "RFI Created / Sent", message: `RFI '${newrfi.subject}' was created and sent for project monitoring.` },
               internal: { title: "New RFI Created", message: `A new RFI '${newrfi.subject}' was created in the project.` },
               default: { title: "RFI Created / Sent", message: `RFI '${newrfi.subject}' was created and sent.` },
@@ -237,16 +250,44 @@ export class RFIController {
           { excludeUserIds: [updaterId] }
         );
         if (approvalWasGranted) {
+          const rfiWithRecipients = await prisma.rFI.findUnique({
+            where: { id: rfiId },
+            include: { recepients: true, multipleRecipients: true }
+          });
+          const recipientEmails = [
+            ...(rfiWithRecipients?.multipleRecipients?.map((r: any) => r.email).filter(Boolean) || []),
+            rfiWithRecipients?.recepients?.email
+          ].filter(Boolean) as string[];
+          const uniqueRecipientEmails = Array.from(new Set(recipientEmails));
+
+          if (uniqueRecipientEmails.length > 0) {
+            const projectInfo = await prisma.project.findUnique({
+              where: { id: existingRfi.project_id },
+              select: { isAwarded: true }
+            });
+            if (projectInfo?.isAwarded !== false) {
+              const fabricatorName = (await getFabricatorNameForUser(updaterId, req.user!.role)) || undefined;
+              const ccEmails = await getCCEmails(existingRfi.project_id);
+              await sendEmail({
+                html: rfihtmlContent(rfiWithRecipients as any, fabricatorName),
+                to: uniqueRecipientEmails.join(","),
+                cc: ccEmails,
+                subject: updatedRfiSubject,
+                text: "RFI has been approved and is now visible.",
+              });
+            }
+          }
+
           await notifyProjectStakeholdersByRole(existingRfi.project_id, RFI_NOTIFY_ROLES, (role) =>
             buildRoleScopedNotification(role, {
               type: "RFI_APPROVED_BY_ADMIN",
               basePayload: { rfiId, timestamp: new Date() },
               templates: {
                 creator: { title: "", message: "" },
-                external: { title: "RFI Approved", message: updatedRfiSubject ? `RFI '${updatedRfiSubject}' was approved and is ready for your action.` : "An RFI was approved and is ready for your action." },
+                external: { title: "New RFI", message: updatedRfiSubject ? `New RFI '${updatedRfiSubject}' was approved and is ready for your action.` : "A New RFI is ready for your action." },
                 oversight: { title: "RFI Approved by Admin", message: updatedRfiSubject ? `RFI '${updatedRfiSubject}' was approved by admin.` : "An RFI was approved by admin." },
                 internal: { title: "RFI Approved", message: updatedRfiSubject ? `RFI '${updatedRfiSubject}' was approved in the project.` : "An RFI was approved in the project." },
-                default: { title: "RFI Approved by Admin", message: updatedRfiSubject ? `RFI '${updatedRfiSubject}' was approved by admin.` : "An RFI was approved by admin." },
+                default: { title: "New RFI", message: updatedRfiSubject ? `New RFI '${updatedRfiSubject}' is now available.` : "A New RFI is now available." },
               },
             }),
             { excludeUserIds: [updaterId] }

@@ -514,7 +514,63 @@ export class SubmittalController {
   async handleUpdateMetadata(req: AuthenticateRequest, res: Response) {
     const { id } = req.params;
     const updateData = req.body;
+    const existing = await submittalService.getSubmittalById(id, req.user?.role);
     const updated = await submittalService.updateSubmittalMetadata(id, updateData);
+
+    const approvalWasGranted = !existing.isAproovedByAdmin && updateData.isAproovedByAdmin === true;
+    if (approvalWasGranted) {
+      (async () => {
+        try {
+          const submittalWithRecipients = await prisma.submittals.findUnique({
+            where: { id },
+            include: { recepients: true, multipleRecipients: true }
+          });
+          const recipientEmails = [
+            ...(submittalWithRecipients?.multipleRecipients?.map((r: any) => r.email).filter(Boolean) || []),
+            submittalWithRecipients?.recepients?.email
+          ].filter(Boolean) as string[];
+          const uniqueRecipientEmails = Array.from(new Set(recipientEmails));
+
+          const updatedSubmittalSubject = (updated as any).subject?.trim?.();
+          const updaterId = req.user!.id;
+          
+          if (uniqueRecipientEmails.length > 0) {
+            const projectInfo = await prisma.project.findUnique({
+              where: { id: existing.project_id },
+              select: { isAwarded: true }
+            });
+            if (projectInfo?.isAwarded !== false) {
+              const fabricatorName = (await getFabricatorNameForUser(updaterId, req.user!.role)) || undefined;
+              const ccEmails = await getCCEmails(existing.project_id);
+              await sendEmail({
+                to: uniqueRecipientEmails.join(","),
+                cc: ccEmails,
+                subject: updatedSubmittalSubject,
+                html: submittalhtmlContent(submittalWithRecipients as any, fabricatorName),
+              });
+            }
+          }
+
+          await notifyProjectStakeholdersByRole(existing.project_id, SUBMITTAL_NOTIFY_ROLES, (role) =>
+            buildRoleScopedNotification(role, {
+              type: "SUBMITTAL_APPROVED_BY_ADMIN",
+              basePayload: { submittalId: id, timestamp: new Date() },
+              templates: {
+                creator: { title: "", message: "" },
+                external: { title: "New Submittal", message: updatedSubmittalSubject ? `New Submittal '${updatedSubmittalSubject}' was approved and is ready for your action.` : "A New Submittal is ready for your action." },
+                oversight: { title: "Submittal Approved by Admin", message: updatedSubmittalSubject ? `Submittal '${updatedSubmittalSubject}' was approved by admin.` : "A Submittal was approved by admin." },
+                internal: { title: "Submittal Approved", message: updatedSubmittalSubject ? `Submittal '${updatedSubmittalSubject}' was approved in the project.` : "A Submittal was approved in the project." },
+                default: { title: "New Submittal", message: updatedSubmittalSubject ? `New Submittal '${updatedSubmittalSubject}' is now available.` : "A New Submittal is now available." },
+              },
+            }),
+            { excludeUserIds: [updaterId] }
+          );
+        } catch (error) {
+          console.error("Failed to send approval notifications:", error);
+        }
+      })();
+    }
+
     res.status(200).json({
       success: true,
       message: "Submittal metadata updated successfully",
