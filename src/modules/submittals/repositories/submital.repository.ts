@@ -135,6 +135,7 @@ export class SubmitalRepository {
         recepients: true,
         multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
         sender: true,
+        approvedBy: { select: { id: true, firstName: true, middleName: true, lastName: true } },
 
         // 🔑 Versioning
         versions: {
@@ -192,6 +193,7 @@ export class SubmitalRepository {
         multipleRecipients:true,
         sender:true,
         currentVersion: true,
+        approvedBy: { select: { id: true, firstName: true, middleName: true, lastName: true } },
         mileStoneBelongsTo: true,
         mileStoneLinks: {
           include: {
@@ -230,6 +232,7 @@ async getPendingSubmittalsForClientAdmin(userId: string, role?: UserRole) {
         recepients: true,
         multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
         currentVersion: true,
+        approvedBy: { select: { id: true, firstName: true, middleName: true, lastName: true } },
         mileStoneBelongsTo: true,
         mileStoneLinks: {
           include: {
@@ -254,6 +257,7 @@ async getPendingSubmittalsForClientAdmin(userId: string, role?: UserRole) {
         fabricator: true,
         recepients: true,
         currentVersion: true,
+        approvedBy: { select: { id: true, firstName: true, middleName: true, lastName: true } },
         mileStoneBelongsTo: true,
         mileStoneLinks: {
           include: {
@@ -409,6 +413,7 @@ async getPendingSubmittalsForProjectManager(managerId: string, role?: UserRole) 
         fabricator: true,
         recepients: true,
         currentVersion: true,
+        approvedBy: { select: { id: true, firstName: true, middleName: true, lastName: true } },
         mileStoneBelongsTo: true,
         mileStoneLinks: {
           include: {
@@ -450,6 +455,7 @@ async getPendingSubmittalsForProjectManager(managerId: string, role?: UserRole) 
         recepients: true,
         multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
         currentVersion: true,
+        approvedBy: { select: { id: true, firstName: true, middleName: true, lastName: true } },
         mileStoneBelongsTo: true,
         mileStoneLinks: {
           include: {
@@ -473,6 +479,7 @@ async getPendingSubmittalsForProjectManager(managerId: string, role?: UserRole) 
         sender: true,
         recepients: true,
         currentVersion: true,
+        approvedBy: { select: { id: true, firstName: true, middleName: true, lastName: true } },
         multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
         mileStoneBelongsTo: true,
         mileStoneLinks: {

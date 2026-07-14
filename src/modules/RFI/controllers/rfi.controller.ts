@@ -87,7 +87,8 @@ export class RFIController {
     const { id: userId } = req.user;
     const access = await projectAssistService.assertRfiSubmittalCreateUpdateAccess(
       req.body.project_id,
-      req.user
+      req.user,
+      "CREATE"
     );
 
     const uploadedFiles = mapUploadedFiles(
@@ -217,14 +218,19 @@ export class RFIController {
       "rfi"
     );
 
+    const approvalWasGranted =
+      !existingRfi.isAproovedByAdmin &&
+      req.body.isAproovedByAdmin === true;
+
+    if (approvalWasGranted) {
+      req.body.approvedById = req.user.id;
+    }
+
     const updatedRfi = await rfiService.updateRfi(rfiId, {
       ...req.body,
       files: uploadedFiles,
     });
     const updatedRfiSubject = (updatedRfi as any)?.subject?.trim?.();
-    const approvalWasGranted =
-      !existingRfi.isAproovedByAdmin &&
-      (updatedRfi as any)?.isAproovedByAdmin === true;
     const updaterId = req.user.id;
     const updaterUsername = req.user.username;
 

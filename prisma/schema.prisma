@@ -103,7 +103,6 @@ enum BatchStatus {
   TRAINING_DONE
 }
 
-
 enum WorkSegmentType {
   WORK
   REWORK
@@ -328,8 +327,7 @@ enum IpChallengeAction {
   BLOCKED
 }
 
-
- enum MileStoneType{
+enum MileStoneType {
   ANCHOR_BOLT
   MAIN_STEEL
   MAIN_STEEL_CONNECTION_DESIGN
@@ -340,42 +338,43 @@ enum IpChallengeAction {
   FOUNDATION_EMBEDS
   PANEL_EMBEDS
   OTHERS
- }
+}
+
 // ===========================================================
 // MODELS
 // ===========================================================
 
 model User {
-  id                   String   @id @default(uuid()) @db.Uuid
-  username             String   @unique
+  id                   String    @id @default(uuid()) @db.Uuid
+  username             String    @unique
   password             String
-  email                String?  @db.VarChar(150)
-  firstName            String   @map("f_name") @db.VarChar(50)
-  middleName           String?  @map("m_name") @db.VarChar(50)
-  lastName             String?  @map("l_name") @db.VarChar(50)
-  phone                String   @db.VarChar(20)
-  extension            String?  @default("") @db.VarChar(10)
-  landline             String?  @default("") @db.VarChar(20)
-  altLandline          String?  @default("") @db.VarChar(20)
-  altPhone             String?  @default("") @db.VarChar(20)
-  designation          String?  @default("") @db.VarChar(50)
-  city                 String?  @default("")
-  zipCode              String?  @default("") @map("zip_code")
-  state                String?  @default("")
-  country              String?  @default("")
-  address              String?  @default("")
+  email                String?   @db.VarChar(150)
+  firstName            String    @map("f_name") @db.VarChar(50)
+  middleName           String?   @map("m_name") @db.VarChar(50)
+  lastName             String?   @map("l_name") @db.VarChar(50)
+  phone                String    @db.VarChar(20)
+  extension            String?   @default("") @db.VarChar(10)
+  landline             String?   @default("") @db.VarChar(20)
+  altLandline          String?   @default("") @db.VarChar(20)
+  altPhone             String?   @default("") @db.VarChar(20)
+  designation          String?   @default("") @db.VarChar(50)
+  city                 String?   @default("")
+  zipCode              String?   @default("") @map("zip_code")
+  state                String?   @default("")
+  country              String?   @default("")
+  address              String?   @default("")
   profilePic           String?
   role                 UserRole
-  connectionDesignerId String?  @db.Uuid
-  vendorId             String?  @db.Uuid
-  departmentId         String?  @db.Uuid
-  isActive             Boolean  @default(true) @map("is_active")
-  isFirstLogin         Boolean  @default(true) @map("is_firstLogin")
-  tokenVersion         Int      @default(0)
+  connectionDesignerId String?   @db.Uuid
+  vendorId             String?   @db.Uuid
+  departmentId         String?   @db.Uuid
+  isActive             Boolean   @default(true) @map("is_active")
+  isFirstLogin         Boolean   @default(true) @map("is_firstLogin")
+  tokenVersion         Int       @default(0)
   lastWorkingDay       DateTime?
-  reason               String?  @default("")
-  updatedAt            DateTime @updatedAt
-  createdAt            DateTime @default(now())
+  reason               String?   @default("")
+  updatedAt            DateTime  @updatedAt
+  createdAt            DateTime  @default(now())
 
   // Relations
   vendorPOC             Vendor?              @relation("userOfvendor", fields: [vendorId], references: [id])
@@ -404,6 +403,8 @@ model User {
   rfiSender             RFI[]                @relation("senderRFI")
   rfiReceipient         RFI[]                @relation("recipientRFI")
   rfiResposedBy         RFIResponse[]        @relation("rfiresponseBy")
+  approvedRFIs          RFI[]                @relation("ApprovedRFI")
+  approvedSubmittals    Submittals[]         @relation("ApprovedSubmittal")
   submittalRecepients   Submittals[]         @relation("SubmittalsRecepient")
   submittalsender       Submittals[]         @relation("SubmittalsSender")
   submittalsresponseBy  SubmittalsResponse[] @relation("submittalsRespondedBy")
@@ -454,8 +455,8 @@ model User {
   coordinationDrawingsCreated     CoordinationDrawing[]           @relation("coordinationDrawingCreatedBy")
   coordinationDrawingResponseBy   CoordinationDrawingResponse[]   @relation("coordinationDrawingResponseBy")
 
-  createdBfas                     BFA[]                           @relation("BfaCreator")
-  createdBfaVersions              BfaVersion[]                    @relation("BfaVersionCreator")
+  createdBfas        BFA[]        @relation("BfaCreator")
+  createdBfaVersions BfaVersion[] @relation("BfaVersionCreator")
 
   // RBA Relations
   trustedIps    UserTrustedIp[] @relation("UserTrustedIps")
@@ -466,7 +467,6 @@ model User {
 
   trainingRequestsRaised   TrainingRequest[] @relation("trainingRequestRaisedBy")
   trainingRequestsApproved TrainingRequest[] @relation("trainingRequestApprovedBy")
-
 
   @@index([email])
   @@index([phone])
@@ -486,11 +486,11 @@ model Department {
   isDeleted   Boolean  @default(false) @map("is_bin")
 
   // Relations
-  managerIds User[]    @relation("ManagerOfDepartment")
-  users      User[]    @relation("UserOfTheDepartment")
-  teams      Team[]    @relation("DepartmentOfTeam")
-  tasks      Task[]    @relation("TaskBelongsToDepartment")
-  projects   Project[] @relation("projectDepartment")
+  managerIds      User[]          @relation("ManagerOfDepartment")
+  users           User[]          @relation("UserOfTheDepartment")
+  teams           Team[]          @relation("DepartmentOfTeam")
+  tasks           Task[]          @relation("TaskBelongsToDepartment")
+  projects        Project[]       @relation("projectDepartment")
   trainingBatches TrainingBatch[]
 
   @@index([createdById])
@@ -503,7 +503,7 @@ model Fabricator {
   fabName            String          @unique @default("")
   website            String?         @default("")
   drive              String?         @default("")
-  COPerHourPrice       Float?        @default(0.0)
+  COPerHourPrice     Float?          @default(0.0)
   SAC                String          @default("")
   fabricatPercentage Float           @default(0.0)
   approvalPercentage Float           @default(0.0)
@@ -567,9 +567,9 @@ model ConnectionDesignerQuota {
   connectionDesignerId String    @db.Uuid
   rfqId                String?   @db.Uuid
   bidprice             String?
-  mainSteelPrice       Float?   @map("main_steel_price")
-  miscSteelPrice       Float?   @map("misc_steel_price")
-  description           String?   @default("") 
+  mainSteelPrice       Float?    @map("main_steel_price")
+  miscSteelPrice       Float?    @map("misc_steel_price")
+  description          String?   @default("")
   files                Json?     @default("[]")
   approvalStatus       Boolean   @default(false)
   approvalDate         DateTime?
@@ -579,9 +579,9 @@ model ConnectionDesignerQuota {
   deletedAt            DateTime?
 
   // Relations
-  connectionDesigner ConnectionDesigner @relation("connectionDesignerQuotas", fields: [connectionDesignerId], references: [id])
-  rfq                RFQ?               @relation("referRFQs", fields: [rfqId], references: [id])
-  awardedProjects    Project?           @relation("awardedQuota")
+  connectionDesigner ConnectionDesigner                @relation("connectionDesignerQuotas", fields: [connectionDesignerId], references: [id])
+  rfq                RFQ?                              @relation("referRFQs", fields: [rfqId], references: [id])
+  awardedProjects    Project?                          @relation("awardedQuota")
   responses          ConnectionDesignerQuotaResponse[] @relation("quotaResponses")
 
   @@index([connectionDesignerId])
@@ -589,23 +589,23 @@ model ConnectionDesignerQuota {
 }
 
 model ConnectionDesignerQuotaResponse {
-  id                   String                   @id @default(uuid()) @db.Uuid
-  quotaId              String                   @db.Uuid
-  parentId             String?                  @db.Uuid
+  id       String  @id @default(uuid()) @db.Uuid
+  quotaId  String  @db.Uuid
+  parentId String? @db.Uuid
 
-  mainSteelPrice       Float?                   @map("main_steel_price")
-  miscSteelPrice       Float?                   @map("misc_steel_price")
-  description          String?                  @default("")
-  status               QuotaResponseStatus      @default(IN_REVIEW)
+  mainSteelPrice Float?              @map("main_steel_price")
+  miscSteelPrice Float?              @map("misc_steel_price")
+  description    String?             @default("")
+  status         QuotaResponseStatus @default(IN_REVIEW)
 
-  createdAt            DateTime                 @default(now())
-  updatedAt            DateTime                 @updatedAt
-  isDeleted            Boolean                  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  isDeleted Boolean  @default(false)
 
   // Relations
-  quota                ConnectionDesignerQuota  @relation("quotaResponses", fields: [quotaId], references: [id])
-  parentResponse       ConnectionDesignerQuotaResponse? @relation("ResponseChain", fields: [parentId], references: [id])
-  childResponses       ConnectionDesignerQuotaResponse[] @relation("ResponseChain")
+  quota          ConnectionDesignerQuota           @relation("quotaResponses", fields: [quotaId], references: [id])
+  parentResponse ConnectionDesignerQuotaResponse?  @relation("ResponseChain", fields: [parentId], references: [id])
+  childResponses ConnectionDesignerQuotaResponse[] @relation("ResponseChain")
 
   @@index([quotaId])
   @@index([parentId])
@@ -721,29 +721,29 @@ model TeamMember {
 }
 
 model RFQ {
-  id             String    @id @default(uuid()) @db.Uuid
-  serialNo       String?   @unique
-  projectNumber  String?   @default("")
-  projectName    String
-  location       String?   @default("")
-  bidPrice       String?
+  id              String    @id @default(uuid()) @db.Uuid
+  serialNo        String?   @unique
+  projectNumber   String?   @default("")
+  projectName     String
+  location        String?   @default("")
+  bidPrice        String?
   bidPriceDecimal Decimal?  @map("bid_price_decimal")
-  MTOManual      Boolean?  @default(false)
-  isMTOStickModel  Boolean?  @default(false)
-  MTOValue String?   @default("")
-  MTOStickModel  String?   @default("")
-  senderId       String?   @db.Uuid
-  recipientId    String?   @db.Uuid
-  salesPersonId  String?   @db.Uuid
-  fabricatorId   String?   @db.Uuid
-  subject        String
-  description    String
-  CDDescription  String?
-  status         RFQStatus @default(SENT)
-  wbtStatus      RFQStatus @default(RECEIVED)
-  estimationDate DateTime?
-  RFQDueDate     DateTime?
-  tools          String?
+  MTOManual       Boolean?  @default(false)
+  isMTOStickModel Boolean?  @default(false)
+  MTOValue        String?   @default("")
+  MTOStickModel   String?   @default("")
+  senderId        String?   @db.Uuid
+  recipientId     String?   @db.Uuid
+  salesPersonId   String?   @db.Uuid
+  fabricatorId    String?   @db.Uuid
+  subject         String
+  description     String
+  CDDescription   String?
+  status          RFQStatus @default(SENT)
+  wbtStatus       RFQStatus @default(RECEIVED)
+  estimationDate  DateTime?
+  RFQDueDate      DateTime?
+  tools           String?
 
   connectionDesign Boolean @default(false)
   customerDesign   Boolean @default(false)
@@ -789,20 +789,20 @@ model RFQ {
 }
 
 model RFQResponse {
-  id               String    @id @default(uuid()) @db.Uuid
-  rfqId            String    @db.Uuid
-  userId           String    @db.Uuid
-  parentResponseId String?   @db.Uuid
-  type             RFQResponseType? @default(DETAILING)
-  subject         String    @default("")
-  description      String    @default("")
-  totalTonnageWithConnection      String?   @default("")
-  totalTonnageWithoutConnection   String?   @default("")
-  PageNumbers       String?   @default("")
-  status           RFQStatus @default(RECEIVED)
-  wbtStatus        RFQStatus @default(SENT)
-  files            Json?     @default("[]")
-  link             String?   @default("")
+  id                            String           @id @default(uuid()) @db.Uuid
+  rfqId                         String           @db.Uuid
+  userId                        String           @db.Uuid
+  parentResponseId              String?          @db.Uuid
+  type                          RFQResponseType? @default(DETAILING)
+  subject                       String           @default("")
+  description                   String           @default("")
+  totalTonnageWithConnection    String?          @default("")
+  totalTonnageWithoutConnection String?          @default("")
+  PageNumbers                   String?          @default("")
+  status                        RFQStatus        @default(RECEIVED)
+  wbtStatus                     RFQStatus        @default(SENT)
+  files                         Json?            @default("[]")
+  link                          String?          @default("")
 
   createdAt DateTime  @default(now())
   isDeleted Boolean   @default(false)
@@ -820,16 +820,16 @@ model RFQResponse {
 }
 
 model RFQFollowUp {
-  id                       String   @id @default(uuid()) @db.Uuid
-  rfqId                    String   @db.Uuid
-  createdById              String   @db.Uuid
-  description              String   @default("")
-  files                    Json?    @default("[]")
-  dueDate                  DateTime?
-  reminderSent             Boolean  @default(false)
-  overdueNotificationSent  Boolean  @default(false)
-  createdAt                DateTime @default(now())
-  updatedAt                DateTime @updatedAt
+  id                      String    @id @default(uuid()) @db.Uuid
+  rfqId                   String    @db.Uuid
+  createdById             String    @db.Uuid
+  description             String    @default("")
+  files                   Json?     @default("[]")
+  dueDate                 DateTime?
+  reminderSent            Boolean   @default(false)
+  overdueNotificationSent Boolean   @default(false)
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
 
   rfq       RFQ  @relation(fields: [rfqId], references: [id], onDelete: Cascade)
   createdBy User @relation("RFQFollowUpCreatedBy", fields: [createdById], references: [id])
@@ -857,7 +857,7 @@ model Project {
   CDQuataionID             String?   @unique @db.Uuid
   vendorquotatioID         String?   @unique @db.Uuid
   rfqId                    String?   @unique @db.Uuid
-  reason             String?   @default("")
+  reason                   String?   @default("")
   status                   Status    @default(ACTIVE)
   stage                    Stage     @default(RFI)
   tools                    Tools     @default(TEKLA)
@@ -1199,52 +1199,52 @@ model ProjectStageHistory {
 }
 
 model MileStone {
-  id                    String             @id @default(uuid()) @db.Uuid
-  serialNo              String?            @unique
-  fabricator_id         String             @db.Uuid
-  date                  DateTime           @default(now())
-  project_id            String             @db.Uuid
+  id                    String               @id @default(uuid()) @db.Uuid
+  serialNo              String?              @unique
+  fabricator_id         String               @db.Uuid
+  date                  DateTime             @default(now())
+  project_id            String               @db.Uuid
   approvalDate          DateTime?
-  isConnectionDesign     Boolean            @default(false)
+  isConnectionDesign    Boolean              @default(false)
   CDApprovalDate        DateTime?
   CDTargetDate          DateTime?
-  status                Status             @default(ACTIVE)
-  stage                 Stage              @default(IFA)
+  status                Status               @default(ACTIVE)
+  stage                 Stage                @default(IFA)
   subject               String
-  types                 MileStoneType       @default(ANCHOR_BOLT)
-  subSubject            String?            @default("")
-  reason                String?            @default("")
+  types                 MileStoneType        @default(ANCHOR_BOLT)
+  subSubject            String?              @default("")
+  reason                String?              @default("")
   description           String
-  completeionPercentage Float?             @default(0.0)
-  milestoneVersion      Int                @default(1)
-  currentVersionId      String?            @unique @db.Uuid
+  completeionPercentage Float?               @default(0.0)
+  milestoneVersion      Int                  @default(1)
+  currentVersionId      String?              @unique @db.Uuid
   //relations
-  fabricator            Fabricator         @relation("FabricatorMileStone", fields: [fabricator_id], references: [id], onDelete: Cascade)
-  project               Project            @relation("ProjectMileStone", fields: [project_id], references: [id], onDelete: Cascade)
-  Tasks                 Task[]             @relation("mileStoneTasks")
-  legacySubmittals      Submittals[]       @relation("LegacyMileStoneSubmittals")
+  fabricator            Fabricator           @relation("FabricatorMileStone", fields: [fabricator_id], references: [id], onDelete: Cascade)
+  project               Project              @relation("ProjectMileStone", fields: [project_id], references: [id], onDelete: Cascade)
+  Tasks                 Task[]               @relation("mileStoneTasks")
+  legacySubmittals      Submittals[]         @relation("LegacyMileStoneSubmittals")
   mileStoneSubmittals   MilestoneSubmittal[]
   versions              MileStoneVersion[]
-  currentVersion        MileStoneVersion?  @relation("CurrentMileStoneVersion", fields: [currentVersionId], references: [id])
+  currentVersion        MileStoneVersion?    @relation("CurrentMileStoneVersion", fields: [currentVersionId], references: [id])
 }
 
 model MileStoneVersion {
-  id          String @id @default(uuid()) @db.Uuid
-  mileStoneId String @db.Uuid
-  versionNumber Int
-  approvalDate  DateTime?
-  isConnectionDesign Boolean @default(false)
-  status        Status    @default(ACTIVE)
-  stage         Stage     @default(IFA)
-  subject       String
-  types         MileStoneType @default(ANCHOR_BOLT)
-  subSubject    String?       @default("")
-  description   String
-  createdAt DateTime @default(now())
-  isActive  Boolean  @default(true)
-  mileStone    MileStone           @relation(fields: [mileStoneId], references: [id], onDelete: Cascade)
-  isCurrentFor MileStone?          @relation("CurrentMileStoneVersion")
-  responses    MileStoneResponse[]
+  id                 String              @id @default(uuid()) @db.Uuid
+  mileStoneId        String              @db.Uuid
+  versionNumber      Int
+  approvalDate       DateTime?
+  isConnectionDesign Boolean             @default(false)
+  status             Status              @default(ACTIVE)
+  stage              Stage               @default(IFA)
+  subject            String
+  types              MileStoneType       @default(ANCHOR_BOLT)
+  subSubject         String?             @default("")
+  description        String
+  createdAt          DateTime            @default(now())
+  isActive           Boolean             @default(true)
+  mileStone          MileStone           @relation(fields: [mileStoneId], references: [id], onDelete: Cascade)
+  isCurrentFor       MileStone?          @relation("CurrentMileStoneVersion")
+  responses          MileStoneResponse[]
 
   @@unique([mileStoneId, versionNumber])
   @@index([mileStoneId])
@@ -1306,25 +1306,24 @@ model Task {
   project_bundle_id      String?                           @db.Uuid
   updatedAt              DateTime                          @updatedAt
 
-  taskType          TaskType  @default(PROJECT)
-  trainingRequestId String?   @unique @db.Uuid
-
+  taskType          TaskType @default(PROJECT)
+  trainingRequestId String?  @unique @db.Uuid
 
   //Relations
-  taskcomment     Comment[]       @relation("taskcomment")
-  project         Project         @relation("TaskBelongsToProject", fields: [project_id], references: [id])
-  workingHourTask WorkingHours[]  @relation("workingHourTask")
-  user            User            @relation("usersTask", fields: [user_id], references: [id])
-  credatedByUser  User            @relation("taskCreatedByUser", fields: [created_by], references: [id])
-  department      Department      @relation("TaskBelongsToDepartment", fields: [departmentId], references: [id])
-  mileStone       MileStone?      @relation("mileStoneTasks", fields: [mileStone_id], references: [id])
-  allocationLog   TaskAllocation? @relation("allocationLog")
-  alert           TaskAlert[]     @relation("taskAllocationAlerts")
-  flags           TaskFlag[]      @relation("taskAllocationFlags")
-  projectBundle   ProjectBundle?  @relation(fields: [project_bundle_id], references: [id])
-  trainingRequestTask      TrainingRequest[] @relation("trainingRequestTask")
-  trainingRequestLinkedTask TrainingRequest? @relation("trainingRequestLinkedTask")
-  trainingBatchAsTrainer   TrainingBatch?    @relation("batchTrainerTask")
+  taskcomment               Comment[]         @relation("taskcomment")
+  project                   Project           @relation("TaskBelongsToProject", fields: [project_id], references: [id])
+  workingHourTask           WorkingHours[]    @relation("workingHourTask")
+  user                      User              @relation("usersTask", fields: [user_id], references: [id])
+  credatedByUser            User              @relation("taskCreatedByUser", fields: [created_by], references: [id])
+  department                Department        @relation("TaskBelongsToDepartment", fields: [departmentId], references: [id])
+  mileStone                 MileStone?        @relation("mileStoneTasks", fields: [mileStone_id], references: [id])
+  allocationLog             TaskAllocation?   @relation("allocationLog")
+  alert                     TaskAlert[]       @relation("taskAllocationAlerts")
+  flags                     TaskFlag[]        @relation("taskAllocationFlags")
+  projectBundle             ProjectBundle?    @relation(fields: [project_bundle_id], references: [id])
+  trainingRequestTask       TrainingRequest[] @relation("trainingRequestTask")
+  trainingRequestLinkedTask TrainingRequest?  @relation("trainingRequestLinkedTask")
+  trainingBatchAsTrainer    TrainingBatch?    @relation("batchTrainerTask")
 
   @@index([name])
   @@index([status])
@@ -1340,25 +1339,25 @@ model Task {
 }
 
 model TrainingRequest {
-  id                    String                 @id @default(uuid()) @db.Uuid
-  taskId                String                 @db.Uuid
-  raisedById            String                 @db.Uuid
-  topic                 String
-  reason                String
-  status                TrainingRequestStatus  @default(PENDING)
-  approvedById          String?                @db.Uuid
-  rejectionReason       String?
-  linkedTrainingTaskId  String?                @unique @db.Uuid
-  requestedAt           DateTime               @default(now())
-  resolvedAt            DateTime?
+  id                   String                @id @default(uuid()) @db.Uuid
+  taskId               String                @db.Uuid
+  raisedById           String                @db.Uuid
+  topic                String
+  reason               String
+  status               TrainingRequestStatus @default(PENDING)
+  approvedById         String?               @db.Uuid
+  rejectionReason      String?
+  linkedTrainingTaskId String?               @unique @db.Uuid
+  requestedAt          DateTime              @default(now())
+  resolvedAt           DateTime?
 
-  task               Task   @relation("trainingRequestTask", fields: [taskId], references: [id])
-  raisedBy           User   @relation("trainingRequestRaisedBy", fields: [raisedById], references: [id])
-  approvedBy         User?  @relation("trainingRequestApprovedBy", fields: [approvedById], references: [id])
-  linkedTrainingTask Task?  @relation("trainingRequestLinkedTask", fields: [linkedTrainingTaskId], references: [id])
+  task               Task  @relation("trainingRequestTask", fields: [taskId], references: [id])
+  raisedBy           User  @relation("trainingRequestRaisedBy", fields: [raisedById], references: [id])
+  approvedBy         User? @relation("trainingRequestApprovedBy", fields: [approvedById], references: [id])
+  linkedTrainingTask Task? @relation("trainingRequestLinkedTask", fields: [linkedTrainingTaskId], references: [id])
 
-  batchId            String?       @db.Uuid
-  batch              TrainingBatch? @relation("batchRequests", fields: [batchId], references: [id])
+  batchId String?        @db.Uuid
+  batch   TrainingBatch? @relation("batchRequests", fields: [batchId], references: [id])
 
   @@index([taskId])
   @@index([raisedById])
@@ -1367,13 +1366,13 @@ model TrainingRequest {
 }
 
 model TrainingBatch {
-  id             String       @id @default(uuid()) @db.Uuid
+  id             String      @id @default(uuid()) @db.Uuid
   topic          String
-  departmentId   String       @db.Uuid
-  status         BatchStatus  @default(FORMING)
-  createdById    String       @db.Uuid
-  trainerTaskId  String?      @unique @db.Uuid
-  createdAt      DateTime     @default(now())
+  departmentId   String      @db.Uuid
+  status         BatchStatus @default(FORMING)
+  createdById    String      @db.Uuid
+  trainerTaskId  String?     @unique @db.Uuid
+  createdAt      DateTime    @default(now())
   finalizedAt    DateTime?
   trainingDoneAt DateTime?
 
@@ -1386,7 +1385,6 @@ model TrainingBatch {
   @@index([departmentId])
   @@map("training_batch")
 }
-
 
 model TaskAllocation {
   id             String   @id @default(uuid()) @db.Uuid
@@ -1458,7 +1456,7 @@ model Comment {
   acknowledgedTime DateTime?
 
   //Relations   
-  reads            CommentRead[]   @relation("commentReads")
+  reads CommentRead[] @relation("commentReads")
 
   estimationTaskId String?         @db.Uuid
   estimationTask   EstimationTask? @relation("estComment", fields: [estimationTaskId], references: [id], onDelete: Cascade)
@@ -1471,13 +1469,13 @@ model Comment {
 }
 
 model CommentRead {
-  id          String   @id @default(uuid()) @db.Uuid
-  commentId   String   @db.Uuid
-  userId      String   @db.Uuid
-  readAt      DateTime @default(now())
+  id        String   @id @default(uuid()) @db.Uuid
+  commentId String   @db.Uuid
+  userId    String   @db.Uuid
+  readAt    DateTime @default(now())
 
-  comment     Comment  @relation("commentReads", fields: [commentId], references: [id], onDelete: Cascade)
-  user        User     @relation("userCommentReads", fields: [userId], references: [id], onDelete: Cascade)
+  comment Comment @relation("commentReads", fields: [commentId], references: [id], onDelete: Cascade)
+  user    User    @relation("userCommentReads", fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([commentId, userId])
   @@index([userId])
@@ -1524,15 +1522,15 @@ model Estimation {
 }
 
 model EstimationResponse {
-  id               String    @id @default(uuid()) @db.Uuid
-  estimationId     String    @db.Uuid
-  userId           String    @db.Uuid
+  id               String          @id @default(uuid()) @db.Uuid
+  estimationId     String          @db.Uuid
+  userId           String          @db.Uuid
   type             RFQResponseType @default(DETAILING)
-  parentResponseId String?   @db.Uuid
-  message          String    @default("")
-  files            Json?     @default("[]")
-  createdAt        DateTime  @default(now())
-  isDeleted        Boolean   @default(false)
+  parentResponseId String?         @db.Uuid
+  message          String          @default("")
+  files            Json?           @default("[]")
+  createdAt        DateTime        @default(now())
+  isDeleted        Boolean         @default(false)
   deletedAt        DateTime?
 
   parentResponse EstimationResponse?  @relation("EstimationParentChildResponse", fields: [parentResponseId], references: [id])
@@ -1606,20 +1604,20 @@ model EstimationLineItem {
   scopeOfWork String
   remarks     String
   quantity    Float?
-  type        String                   @default("")
+  type        String @default("")
   hoursPerQty Float?
 
-  fabricationPercentage Float?
+  fabricationPercentage     Float?
   withfabricationTotalHours Float?
-  totalDays   Float?
-  totalHours  Float?
-  weeks       Float?
-  createdAt   DateTime                 @default(now())
-  updatedAt   DateTime                 @updatedAt
-  id          String                   @id @default(uuid()) @db.Uuid
-  groupId     String?                  @default(uuid()) @db.Uuid
+  totalDays                 Float?
+  totalHours                Float?
+  weeks                     Float?
+  createdAt                 DateTime                 @default(now())
+  updatedAt                 DateTime                 @updatedAt
+  id                        String                   @id @default(uuid()) @db.Uuid
+  groupId                   String?                  @default(uuid()) @db.Uuid
   //Relations
-  group       EstimationLineItemGroup? @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  group                     EstimationLineItemGroup? @relation(fields: [groupId], references: [id], onDelete: Cascade)
 
   @@map("estimation_line_items")
 }
@@ -1652,6 +1650,8 @@ model RFI {
   description        String
   files              Json          @default("[]")
   isAproovedByAdmin  Boolean?      @default(false)
+  approvedById       String?       @db.Uuid
+  approvedBy         User?         @relation("ApprovedRFI", fields: [approvedById], references: [id])
   isConnectionDesign Boolean       @default(false)
   //Relations
   fabricator         Fabricator    @relation("FabricatorRFI", fields: [fabricator_id], references: [id], onDelete: Cascade)
@@ -1696,34 +1696,36 @@ model Submittals {
   recepient_id         String?      @db.Uuid
   sender_id            String       @db.Uuid
   date                 DateTime     @default(now())
-  notes                Json         @default("[]")    
+  notes                Json         @default("[]")
   stage                Stage        @default(IFA)
   status               Boolean      @default(false)
   bfaStatus            Boolean      @default(false)
   clientResponseStatus SubResStatus @default(PENDING)
   subject              String
   isAproovedByAdmin    Boolean?     @default(false)
+  approvedById         String?      @db.Uuid
+  approvedBy           User?        @relation("ApprovedSubmittal", fields: [approvedById], references: [id])
   isConnectionDesign   Boolean      @default(false)
   submittalVersion     Int          @default(1)
   // 🔑 Versioning
   currentVersionId     String?      @unique @db.Uuid
 
   // Relations
-  mileStoneBelongsTo MileStone?         @relation("LegacyMileStoneSubmittals", fields: [mileStoneId], references: [id], onDelete: Cascade)
-  fabricator         Fabricator         @relation("FabricatorSubmittals", fields: [fabricator_id], references: [id], onDelete: Cascade)
-  project            Project            @relation("ProjectSubmittals", fields: [project_id], references: [id], onDelete: Cascade)
-  recepients         User?              @relation("SubmittalsRecepient", fields: [recepient_id], references: [id], onDelete: Cascade)
-  multipleRecipients User[]             @relation("SubmittalMultipleRecipients")
-  sender             User               @relation("SubmittalsSender", fields: [sender_id], references: [id], onDelete: Cascade)
+  mileStoneBelongsTo MileStone?           @relation("LegacyMileStoneSubmittals", fields: [mileStoneId], references: [id], onDelete: Cascade)
+  fabricator         Fabricator           @relation("FabricatorSubmittals", fields: [fabricator_id], references: [id], onDelete: Cascade)
+  project            Project              @relation("ProjectSubmittals", fields: [project_id], references: [id], onDelete: Cascade)
+  recepients         User?                @relation("SubmittalsRecepient", fields: [recepient_id], references: [id], onDelete: Cascade)
+  multipleRecipients User[]               @relation("SubmittalMultipleRecipients")
+  sender             User                 @relation("SubmittalsSender", fields: [sender_id], references: [id], onDelete: Cascade)
   mileStoneLinks     MilestoneSubmittal[]
   // Versioning relations
   versions           SubmittalVersion[]
-  currentVersion     SubmittalVersion?  @relation("CurrentSubmittalVersion", fields: [currentVersionId], references: [id])
+  currentVersion     SubmittalVersion?    @relation("CurrentSubmittalVersion", fields: [currentVersionId], references: [id])
 
   // Responses
   submittalsResponse SubmittalsResponse[] @relation("submittalsresponse")
 
-  bfa                BFA?                 @relation("SubmittalBFA")
+  bfa BFA? @relation("SubmittalBFA")
 
   @@index([project_id])
   @@index([mileStoneId])
@@ -1738,7 +1740,7 @@ model MilestoneSubmittal {
   linkedAt    DateTime @default(now())
 
   mileStone MileStone  @relation(fields: [mileStoneId], references: [id], onDelete: Cascade)
-  submittal  Submittals @relation(fields: [submittalId], references: [id], onDelete: Cascade)
+  submittal Submittals @relation(fields: [submittalId], references: [id], onDelete: Cascade)
 
   @@id([mileStoneId, submittalId])
   @@index([submittalId])
@@ -2074,12 +2076,12 @@ model Invoice {
   createdBy                String?       @db.Uuid
 
   // 🔗 Relations
-  project        Project?      @relation("projectInvoice", fields: [projectId], references: [id])
-  fabricator     Fabricator    @relation("fabricatorInvoice", fields: [fabricatorId], references: [id])
-  rfq            RFQ?          @relation("rfqInvoices", fields: [rfqId], references: [id], onDelete: SetNull)
-  changeOrder    ChangeOrder?  @relation("changeOrderInvoices", fields: [changeOrderId], references: [id], onDelete: SetNull)
-  pointOfContact User[]        @relation("invoicePointOfContact")
-  user           User?         @relation("invoiceCreatedBy", fields: [createdBy], references: [id])
+  project        Project?               @relation("projectInvoice", fields: [projectId], references: [id])
+  fabricator     Fabricator             @relation("fabricatorInvoice", fields: [fabricatorId], references: [id])
+  rfq            RFQ?                   @relation("rfqInvoices", fields: [rfqId], references: [id], onDelete: SetNull)
+  changeOrder    ChangeOrder?           @relation("changeOrderInvoices", fields: [changeOrderId], references: [id], onDelete: SetNull)
+  pointOfContact User[]                 @relation("invoicePointOfContact")
+  user           User?                  @relation("invoiceCreatedBy", fields: [createdBy], references: [id])
   invoiceItems   InvoiceItem[]
   wireTransfers  InvoiceWireTransfers[] @relation("InvoiceWireTransferRelation")
 
@@ -2431,15 +2433,15 @@ model UserSession {
 }
 
 model InvoiceWireTransfers {
-  id          String   @id @default(uuid()) @db.Uuid
+  id          String    @id @default(uuid()) @db.Uuid
   subject     String?
   description String?
   date        DateTime?
-  status      Boolean  @default(false)
-  files       Json     @default("[]")
-  createdBy   String   @db.Uuid
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  status      Boolean   @default(false)
+  files       Json      @default("[]")
+  createdBy   String    @db.Uuid
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   invoices Invoice[] @relation("InvoiceWireTransferRelation")
   user     User      @relation("InvoiceWireTransferCreatedBy", fields: [createdBy], references: [id])
@@ -2449,24 +2451,24 @@ model InvoiceWireTransfers {
 }
 
 model BFA {
-  id               String       @id @default(uuid()) @db.Uuid
-  serialNo         String?      @unique
-  submittalID      String       @unique @db.Uuid
+  id               String    @id @default(uuid()) @db.Uuid
+  serialNo         String?   @unique
+  submittalID      String    @unique @db.Uuid
   subject          String
   description      String?
-  status           BfaStatus    @default(partial)
-  bfaVersion       Int          @default(1)
-  currentVersionId String?      @unique @db.Uuid
-  
-  createdById      String       @db.Uuid
-  createdAt        DateTime     @default(now())
-  updatedAt        DateTime     @updatedAt
+  status           BfaStatus @default(partial)
+  bfaVersion       Int       @default(1)
+  currentVersionId String?   @unique @db.Uuid
 
-  submittal        Submittals   @relation("SubmittalBFA", fields: [submittalID], references: [id], onDelete: Cascade)
-  createdBy        User         @relation("BfaCreator", fields: [createdById], references: [id])
-  
-  versions         BfaVersion[] @relation("BfaVersions")
-  currentVersion   BfaVersion?  @relation("CurrentBfaVersion", fields: [currentVersionId], references: [id])
+  createdById String   @db.Uuid
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  submittal Submittals @relation("SubmittalBFA", fields: [submittalID], references: [id], onDelete: Cascade)
+  createdBy User       @relation("BfaCreator", fields: [createdById], references: [id])
+
+  versions       BfaVersion[] @relation("BfaVersions")
+  currentVersion BfaVersion?  @relation("CurrentBfaVersion", fields: [currentVersionId], references: [id])
 
   @@map("bfa")
 }
@@ -2479,14 +2481,14 @@ model BfaVersion {
   description   String?
   status        BfaStatus
   file          Json?     @default("[]")
-  
-  createdById   String    @db.Uuid
-  createdAt     DateTime  @default(now())
-  isActive      Boolean   @default(true)
 
-  bfa           BFA       @relation("BfaVersions", fields: [bfaId], references: [id], onDelete: Cascade)
-  createdBy     User      @relation("BfaVersionCreator", fields: [createdById], references: [id])
-  isCurrentFor  BFA?      @relation("CurrentBfaVersion")
+  createdById String   @db.Uuid
+  createdAt   DateTime @default(now())
+  isActive    Boolean  @default(true)
+
+  bfa          BFA  @relation("BfaVersions", fields: [bfaId], references: [id], onDelete: Cascade)
+  createdBy    User @relation("BfaVersionCreator", fields: [createdById], references: [id])
+  isCurrentFor BFA? @relation("CurrentBfaVersion")
 
   @@unique([bfaId, versionNumber])
   @@index([bfaId])
@@ -2497,4 +2499,3 @@ enum BfaStatus {
   partial
   complete
 }
-

@@ -7,8 +7,16 @@ import { getRoleVisibilityFilter } from "../../../utils/roleFilter";
 import { mapUploadedFiles } from "../../uploads/fileUtil";
 import { sendEmail, getCCEmails } from "../../../services/mailServices/mailconfig";
 import { submittalhtmlContent } from "../../../services/mailServices/mailtemplates/submittalMailtemplate";
-import { notifyProjectStakeholdersByRole } from "../../../utils/notifyProjectStakeholders";
+import { notifyProjectStakeholdersByRole, getProjectStakeholderRecipients } from "../../../utils/notifyProjectStakeholders";
 import { UserRole } from "@prisma/client";
+
+const INTERNAL_LOOP_ROLES: UserRole[] = [
+  "ADMIN",
+  "PROJECT_MANAGER",
+  "DEPT_MANAGER",
+  "DEPUTY_MANAGER",
+  "OPERATION_EXECUTIVE"
+];
 import { ProjectAssistService } from "../../project/services/projectAssist.service";
 import { sendNotification } from "../../../utils/sendNotification";
 import prisma from "../../../config/database/client";
@@ -84,7 +92,8 @@ export class SubmittalController {
     const { id: userId, role } = user;
     const access = await projectAssistService.assertRfiSubmittalCreateUpdateAccess(
       req.body.project_id,
-      user
+      user,
+      "CREATE"
     );
 
     const uploadedFiles = mapUploadedFiles(
@@ -92,8 +101,7 @@ export class SubmittalController {
       "submittals"
     );
 
-    const isAproovedByAdmin =
-      role === "ADMIN" || role === "DEPT_MANAGER";
+    const isAproovedByAdmin = false;
 
     const { description, ...submittalData } = req.body;
 
@@ -125,23 +133,31 @@ export class SubmittalController {
     // Background non-blocking tasks
     (async () => {
       try {
-        if (uniqueSubmittalEmails.length > 0) {
+        const { recipientsByRole } = await getProjectStakeholderRecipients(req.body.project_id, INTERNAL_LOOP_ROLES);
+        const internalUserIds = Array.from(recipientsByRole.values()).flat();
+        const internalUsers = await prisma.user.findMany({
+          where: { id: { in: internalUserIds } },
+          select: { email: true }
+        });
+        const internalEmails = Array.from(new Set(internalUsers.map(u => u.email).filter(Boolean))) as string[];
+
+        if (internalEmails.length > 0) {
           const fabricatorName = (await getFabricatorNameForUser(userId, role)) || undefined;
           const ccEmails = await getCCEmails(submittal.project_id);
           await sendEmail({
-            to: uniqueSubmittalEmails.join(","),
+            to: internalEmails.join(","),
             cc: ccEmails,
             subject: submittal.subject,
             html: submittalhtmlContent(submittal, fabricatorName),
           });
         }
-        await notifyProjectStakeholdersByRole(submittal.project_id, SUBMITTAL_NOTIFY_ROLES, (role) =>
+        await notifyProjectStakeholdersByRole(submittal.project_id, INTERNAL_LOOP_ROLES, (role) =>
           buildRoleScopedNotification(role, {
             type: "SUBMITTAL_CREATED",
             basePayload: { submittalId: submittal.id, timestamp: new Date() },
             templates: {
               creator: { title: "", message: "" },
-              external: { title: "Submittal Received", message: `Submittal '${submittal.subject}' was received for your response.` },
+              external: { title: "", message: "" },
               oversight: { title: "Submittal Created / Sent", message: `Submittal '${submittal.subject}' was created and sent for monitoring.` },
               internal: { title: "New Submittal Created", message: `A new submittal '${submittal.subject}' was created in the project.` },
               default: { title: "Submittal Created / Sent", message: `Submittal '${submittal.subject}' was created and sent.` },
@@ -515,9 +531,14 @@ export class SubmittalController {
     const { id } = req.params;
     const updateData = req.body;
     const existing = await submittalService.getSubmittalById(id, req.user?.role);
+    
+    const approvalWasGranted = !existing.isAproovedByAdmin && updateData.isAproovedByAdmin === true;
+    if (approvalWasGranted) {
+      updateData.approvedById = req.user!.id;
+    }
+
     const updated = await submittalService.updateSubmittalMetadata(id, updateData);
 
-    const approvalWasGranted = !existing.isAproovedByAdmin && updateData.isAproovedByAdmin === true;
     if (approvalWasGranted) {
       (async () => {
         try {

@@ -48,6 +48,7 @@ export class RFIRepository{
             include: {
               recepients:  {select:{firstName:true,middleName:true,lastName:true,username:true,designation:true,email:true,id:true}},
               multipleRecipients: {select:{id:true,firstName:true,lastName:true,username:true,designation:true,email:true}},
+        approvedBy: { select: { id: true, firstName: true, middleName: true, lastName: true } },
               project: true,
               sender :  {select:{firstName:true,middleName:true,lastName:true,username:true,designation:true,email:true,id:true}},
               rfiresponse:true
@@ -230,6 +231,7 @@ export class RFIRepository{
         project: {select:{name:true}},
         sender :  {select:{firstName:true,middleName:true,lastName:true,email:true,id:true}},
         multipleRecipients: {select:{id:true,firstName:true,lastName:true,email:true}},
+        approvedBy: { select: { id: true, firstName: true, middleName: true, lastName: true } },
         recepients: {
           include: {
             managedFabricator: {
@@ -336,6 +338,7 @@ export class RFIRepository{
         project: {select:{name:true}},
         recepients:  {select:{firstName:true,middleName:true,lastName:true,email:true,id:true}},
         multipleRecipients: {select:{id:true,firstName:true,lastName:true,email:true}},
+        approvedBy: { select: { id: true, firstName: true, middleName: true, lastName: true } },
         sender :  {select:{firstName:true,middleName:true,lastName:true,email:true,id:true}},
         rfiresponse:true,
       },
@@ -353,6 +356,7 @@ export class RFIRepository{
         project: {select:{name:true}},
         recepients:  {select:{firstName:true,middleName:true,lastName:true,email:true,id:true}},
         multipleRecipients: {select:{id:true,firstName:true,lastName:true,email:true}},
+        approvedBy: { select: { id: true, firstName: true, middleName: true, lastName: true } },
         sender :  {select:{firstName:true,middleName:true,lastName:true,email:true,id:true}},
         rfiresponse:true,
       },
@@ -403,6 +407,7 @@ export class RFIRepository{
           fabricator: true,
           project: { select: { name: true } },
           multipleRecipients: { select: { firstName: true, middleName: true, lastName: true, email: true, id: true } },
+        approvedBy: { select: { id: true, firstName: true, middleName: true, lastName: true } },
           sender: { select: { firstName: true, middleName: true, lastName: true, email: true, id: true } },
           rfiresponse: true,
         },
@@ -440,6 +445,7 @@ export class RFIRepository{
           project: { select: { name: true } },
           recepients: { select: { firstName: true, middleName: true, lastName: true, email: true, id: true } },
           multipleRecipients: { select: { firstName: true, middleName: true, lastName: true, email: true, id: true } },
+        approvedBy: { select: { id: true, firstName: true, middleName: true, lastName: true } },
           sender: { select: { firstName: true, middleName: true, lastName: true, email: true, id: true } },
           rfiresponse: { include: { childResponses: true } },
         },

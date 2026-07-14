@@ -28,7 +28,7 @@ export const RFISchema = z.object({
   status: zBooleanString,
   subject: z.string(),
   description: z.string(),
-  isAproovedByAdmin:z.string(),
+  isAproovedByAdmin: zBooleanString.optional(),
   isConnectionDesign: zBooleanString.optional(),
   files: z
           .union([

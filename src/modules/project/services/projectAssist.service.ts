@@ -245,7 +245,8 @@ export class ProjectAssistService {
 
   async assertRfiSubmittalCreateUpdateAccess(
     projectId: string,
-    user: UserJwt
+    user: UserJwt,
+    action: "CREATE" | "UPDATE" = "UPDATE"
   ): Promise<RfiSubmittalAccess> {
     const project = await this.getProjectOrThrow(projectId);
 
@@ -255,6 +256,18 @@ export class ProjectAssistService {
 
     if (user.role === "PROJECT_MANAGER" && user.id === project.managerID) {
       return { isAssist: false, projectManagerId: project.managerID };
+    }
+
+    if (action === "CREATE" && project.teamID) {
+      const isTeamMember = await prisma.teamMember.findFirst({
+        where: {
+          teamId: project.teamID,
+          userId: user.id
+        }
+      });
+      if (isTeamMember) {
+        return { isAssist: false, projectManagerId: project.managerID };
+      }
     }
 
     const assist = await prismaWithAssists.projectAssist.findFirst({
@@ -267,7 +280,7 @@ export class ProjectAssistService {
     });
 
     if (!assist) {
-      throw new AppError("You are not allowed to create/update RFI or Submittals for this project", 403);
+      throw new AppError(`You are not allowed to ${action.toLowerCase()} RFI or Submittals for this project`, 403);
     }
 
     return { isAssist: true, projectManagerId: project.managerID };
