@@ -87,6 +87,7 @@ export class SubmitalRepository {
           sender_id: userId,
           stage: data.stage,
           isAproovedByAdmin: approval,
+          approvedById: approval ? userId : null,
           isConnectionDesign: data.isConnectionDesign ?? false,
           notes: data.notes,
           multipleRecipients: data.multipleRecipients?.length

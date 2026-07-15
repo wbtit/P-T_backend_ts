@@ -41,6 +41,7 @@ export class RFIRepository{
               description:data.description,
               files: data.files,
               isAproovedByAdmin,
+              approvedById: isAproovedByAdmin ? userId : null,
               isConnectionDesign: data.isConnectionDesign ?? false,
               exStatus: "RECEIVED",
               wbtStatus: "SENT",

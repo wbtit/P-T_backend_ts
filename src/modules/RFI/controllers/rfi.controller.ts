@@ -96,7 +96,7 @@ export class RFIController {
       "rfi"
     );
 
-    let isAproovedByAdmin = false;
+    const isAproovedByAdmin = req.user ? INTERNAL_LOOP_ROLES.includes(req.user.role) : false;
 
     const newrfi = await rfiService.createRfi(
       {

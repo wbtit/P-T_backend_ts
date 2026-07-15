@@ -101,7 +101,7 @@ export class SubmittalController {
       "submittals"
     );
 
-    const isAproovedByAdmin = false;
+    const isAproovedByAdmin = req.user ? INTERNAL_LOOP_ROLES.includes(req.user.role) : false;
 
     const { description, ...submittalData } = req.body;
 
