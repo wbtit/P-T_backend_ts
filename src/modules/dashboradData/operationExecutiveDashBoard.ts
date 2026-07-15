@@ -3,7 +3,7 @@ import prisma from "../../config/database/client";
 import { AuthenticateRequest } from "../../middleware/authMiddleware";
 import { UserRole } from "@prisma/client";
 import { computeSubmittalStatus } from "../submittals/utils/statusHelper";
-import { getRoleVisibilityFilter } from "../../utils/roleFilter";
+import { getRfiSubmittalVisibilityFilter } from "../../utils/roleFilter";
 import { getCachedDashboard, dashboardKeys } from "../../utils/dashboardCache";
 
 const CLIENT_ROLES: UserRole[] = [
@@ -50,7 +50,7 @@ export const operationExecutiveDashBoard = async (
                   role: { in: CLIENT_ROLES },
                 },
                 rfiresponse: { none: {} },
-                ...getRoleVisibilityFilter(role),
+                ...getRfiSubmittalVisibilityFilter(role),
               },
               select: {
                 id: true,
@@ -68,7 +68,7 @@ export const operationExecutiveDashBoard = async (
               orderBy: { date: "asc" },
             }),
             prisma.submittals.findMany({
-              where: getRoleVisibilityFilter(role),
+              where: getRfiSubmittalVisibilityFilter(role),
               select: {
                 id: true,
                 serialNo: true,

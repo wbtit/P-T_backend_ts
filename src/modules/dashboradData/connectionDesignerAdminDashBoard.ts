@@ -2,7 +2,7 @@ import { Response } from "express";
 import { Status } from "@prisma/client";
 import prisma from "../../config/database/client";
 import { AuthenticateRequest } from "../../middleware/authMiddleware";
-import { getRoleVisibilityFilter } from "../../utils/roleFilter";
+import { getRfiSubmittalVisibilityFilter } from "../../utils/roleFilter";
 import { getCachedDashboard, dashboardKeys } from "../../utils/dashboardCache";
 
 const CONNECTION_DESIGNER_ADMIN_ALLOWED_ROLES = new Set([
@@ -122,7 +122,7 @@ export const connectionDesignerAdminDashBoard = async (
           prisma.rFI.findMany({
             where: {
               project: activeProjectWhere,
-              ...getRoleVisibilityFilter(role),
+              ...getRfiSubmittalVisibilityFilter(role),
               OR: [
                 { recepients: { connectionDesignerId } },
                 { multipleRecipients: { some: { connectionDesignerId } } },
@@ -235,7 +235,7 @@ export const connectionDesignerAdminDashBoard = async (
               project: activeProjectWhere,
               currentVersionId: { not: null },
               bfaStatus: false,
-              ...getRoleVisibilityFilter(role),
+              ...getRfiSubmittalVisibilityFilter(role),
               OR: [
                 { recepients: { connectionDesignerId } },
                 { multipleRecipients: { some: { connectionDesignerId } } },

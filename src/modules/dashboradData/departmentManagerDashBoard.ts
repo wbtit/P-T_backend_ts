@@ -2,7 +2,7 @@ import { Response } from "express";
 import prisma from "../../config/database/client";
 import { AuthenticateRequest } from "../../middleware/authMiddleware";
 import { SubResStatus } from "@prisma/client";
-import { getRoleVisibilityFilter } from "../../utils/roleFilter";
+import { getRfiSubmittalVisibilityFilter } from "../../utils/roleFilter";
 import { getCachedDashboard, dashboardKeys } from "../../utils/dashboardCache";
 
 const DEPARTMENT_MANAGER_ALLOWED_ROLES = new Set(["DEPT_MANAGER", "ADMIN"]);
@@ -190,7 +190,7 @@ export const departmentManagerDashBoard = async (
           prisma.rFI.count({
             where: {
               project: { departmentID: departmentId },
-              ...getRoleVisibilityFilter(role),
+              ...getRfiSubmittalVisibilityFilter(role),
               OR: [
                 {
                   rfiresponse: { none: {} },
@@ -211,7 +211,7 @@ export const departmentManagerDashBoard = async (
             where: {
               project: { departmentID: departmentId },
               rfiresponse: { none: {} },
-              ...getRoleVisibilityFilter(role),
+              ...getRfiSubmittalVisibilityFilter(role),
             },
           }),
           prisma.changeOrder.count({
@@ -256,7 +256,7 @@ export const departmentManagerDashBoard = async (
               project: { departmentID: departmentId },
               bfaStatus: false,
               currentVersionId: { not: null },
-              ...getRoleVisibilityFilter(role),
+              ...getRfiSubmittalVisibilityFilter(role),
             },
           }),
           prisma.rFI.count({
@@ -277,7 +277,7 @@ export const departmentManagerDashBoard = async (
                   },
                 },
               ],
-              ...getRoleVisibilityFilter(role),
+              ...getRfiSubmittalVisibilityFilter(role),
             },
           }),
           prisma.changeOrder.count({
@@ -302,7 +302,7 @@ export const departmentManagerDashBoard = async (
             where: {
               project: { departmentID: departmentId },
               bfaStatus: false,
-              ...getRoleVisibilityFilter(role),
+              ...getRfiSubmittalVisibilityFilter(role),
             },
           }),
         ]);

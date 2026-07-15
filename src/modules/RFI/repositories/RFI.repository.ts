@@ -7,7 +7,7 @@ import { generateProjectScopedSerial, SERIAL_PREFIX } from "../../../utils/seria
 import { AppError } from "../../../config/utils/AppError";
 import { includes } from "zod";
 import { UserRole } from "@prisma/client";
-import { getRoleVisibilityFilter } from "../../../utils/roleFilter";
+import { getRfiSubmittalVisibilityFilter } from "../../../utils/roleFilter";
 
 export class RFIRepository{
     async create(data:CreateRFIDto,userId:string,isAproovedByAdmin:boolean){
@@ -90,7 +90,7 @@ export class RFIRepository{
               },
             },
           ],
-          ...getRoleVisibilityFilter(role),
+          ...getRfiSubmittalVisibilityFilter(role),
         },
         include: {
         fabricator:{select:{
@@ -138,7 +138,7 @@ export class RFIRepository{
               },
             },
           ],
-          ...getRoleVisibilityFilter(role),
+          ...getRfiSubmittalVisibilityFilter(role),
         },
         include: {
           fabricator:{select:{
@@ -191,7 +191,7 @@ export class RFIRepository{
               },
             },
           ],
-          ...getRoleVisibilityFilter(role),
+          ...getRfiSubmittalVisibilityFilter(role),
         },include: {
         fabricator:{select:{
           fabName:true,
@@ -258,7 +258,7 @@ export class RFIRepository{
   
 
 
-    async updateRFI(id: string, data: UpdateRFIDto) {
+    async updateRFI(id: string, data: UpdateRFIDto & { approvedById?: string }) {
         const existing = await prisma.rFI.findUnique({
           where: { id },
         });
@@ -274,6 +274,7 @@ export class RFIRepository{
           isAproovedByAdmin,
           files,
           isConnectionDesign,
+          approvedById,
         } = data;
     
         return await prisma.rFI.update({
@@ -287,10 +288,11 @@ export class RFIRepository{
                 ? isAproovedByAdmin
                 : existing.isAproovedByAdmin,
             files: files ?? existing.files as any,
-            isConnectionDesign:
-              typeof isConnectionDesign === "boolean"
-                ? isConnectionDesign
-                : existing.isConnectionDesign,
+            isConnectionDesign: typeof isConnectionDesign === 'boolean' ? isConnectionDesign : existing.isConnectionDesign,
+            approvedById: approvedById,
+          },
+          include: {
+            approvedBy: { select: { id: true, firstName: true, middleName: true, lastName: true } },
           },
         });
     }
@@ -301,7 +303,7 @@ export class RFIRepository{
       where: {
         sender_id: userId,
         ...(projectId ? { project_id: projectId } : {}),
-        ...getRoleVisibilityFilter(role),
+        ...getRfiSubmittalVisibilityFilter(role),
       },
       include: {
         fabricator: true,
@@ -317,7 +319,7 @@ export class RFIRepository{
         return await prisma.rFI.findMany({
       where: {
         project_id: projectId,
-        ...getRoleVisibilityFilter(role),
+        ...getRfiSubmittalVisibilityFilter(role),
         OR: [
           { recepient_id: userId },
           { multipleRecipients: { some: { id: userId } } },
@@ -349,7 +351,7 @@ export class RFIRepository{
         return await prisma.rFI.findMany({
       where: {
         project_id: projectId,
-        ...getRoleVisibilityFilter(role),
+        ...getRfiSubmittalVisibilityFilter(role),
       },
       include: {
         fabricator: true,
@@ -387,7 +389,7 @@ export class RFIRepository{
     async findPendingRFIs(role: string, userRole?: UserRole){
       return await prisma.rFI.findMany({
         where: {
-    ...getRoleVisibilityFilter(userRole),
+    ...getRfiSubmittalVisibilityFilter(userRole),
     OR: [
       {
         rfiresponse: { none: {} },
@@ -424,7 +426,7 @@ export class RFIRepository{
       return await prisma.rFI.findMany({
         where: {
           project: { departmentID: manager.departmentId },
-          ...getRoleVisibilityFilter(role),
+          ...getRfiSubmittalVisibilityFilter(role),
           OR: [
             {
               rfiresponse: { none: {} },
@@ -457,7 +459,7 @@ export class RFIRepository{
       return await prisma.rFI.findMany({
         where: {
           project: { managerID: managerId },
-          ...getRoleVisibilityFilter(role),
+          ...getRfiSubmittalVisibilityFilter(role),
           OR: [
             {
               rfiresponse: { none: {} },
@@ -488,7 +490,7 @@ export class RFIRepository{
         where: {
           project: { managerID: managerId },
           rfiresponse: { none: {} },
-          ...getRoleVisibilityFilter(role),
+          ...getRfiSubmittalVisibilityFilter(role),
         },
         include: {
           fabricator: true,

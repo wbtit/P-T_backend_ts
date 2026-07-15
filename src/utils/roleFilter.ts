@@ -1,6 +1,6 @@
 import { UserRole } from "@prisma/client";
 
-export function getRoleVisibilityFilter(role?: UserRole): { isConnectionDesign?: boolean; isAproovedByAdmin?: boolean } {
+export function getRoleVisibilityFilter(role?: UserRole): { isConnectionDesign?: boolean } {
   if (!role) return {};
 
   const isClientRole = role.startsWith("CLIENT");
@@ -12,7 +12,16 @@ export function getRoleVisibilityFilter(role?: UserRole): { isConnectionDesign?:
     return { isConnectionDesign: true };
   }
   if (isClientRole) {
-    return { isConnectionDesign: false, isAproovedByAdmin: true };
+    return { isConnectionDesign: false };
   }
-  return {}; // WBT side roles can see both (no restriction)
+
+  return {};
+}
+
+export function getRfiSubmittalVisibilityFilter(role?: UserRole): { isConnectionDesign?: boolean; isAproovedByAdmin?: boolean } {
+  const filter: any = getRoleVisibilityFilter(role);
+  if (role && role.startsWith("CLIENT")) {
+    filter.isAproovedByAdmin = true;
+  }
+  return filter;
 }

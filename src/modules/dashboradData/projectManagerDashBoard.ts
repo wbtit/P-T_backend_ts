@@ -3,7 +3,7 @@ import prisma from "../../config/database/client";
 import { SubmitalRepository } from "../submittals/repositories";
 import { AuthenticateRequest } from "../../middleware/authMiddleware";
 import { SubResStatus } from "@prisma/client";
-import { getRoleVisibilityFilter } from "../../utils/roleFilter";
+import { getRfiSubmittalVisibilityFilter } from "../../utils/roleFilter";
 import { getCachedDashboard, dashboardKeys } from "../../utils/dashboardCache";
 
 export const projectManagerDashBoard = async (
@@ -77,7 +77,7 @@ export const projectManagerDashBoard = async (
           prisma.rFI.count({
             where: {
               project: managerFilter,
-              ...getRoleVisibilityFilter(role),
+              ...getRfiSubmittalVisibilityFilter(role),
               OR: [
                 {
                   rfiresponse: { none: {} },
@@ -98,7 +98,7 @@ export const projectManagerDashBoard = async (
             where: {
               project: managerFilter,
               rfiresponse: { none: {} },
-              ...getRoleVisibilityFilter(role),
+              ...getRfiSubmittalVisibilityFilter(role),
             },
           }),
           prisma.changeOrder.count({
@@ -164,7 +164,7 @@ export const projectManagerDashBoard = async (
                   },
                 },
               ],
-              ...getRoleVisibilityFilter(role),
+              ...getRfiSubmittalVisibilityFilter(role),
             },
           }),
           prisma.changeOrder.count({
@@ -189,7 +189,7 @@ export const projectManagerDashBoard = async (
             where: {
               project: { managerID: userId, status: { in: ["ACTIVE", "ONHOLD"] } },
               bfaStatus: false,
-              ...getRoleVisibilityFilter(role),
+              ...getRfiSubmittalVisibilityFilter(role),
             },
           }),
         ]);

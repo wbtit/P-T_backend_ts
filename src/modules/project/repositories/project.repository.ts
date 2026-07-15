@@ -1,7 +1,7 @@
 import { Prisma, UserRole } from "@prisma/client";
 import prisma from "../../../config/database/client";
 import { AppError } from "../../../config/utils/AppError";
-import { getRoleVisibilityFilter } from "../../../utils/roleFilter";
+import { getRfiSubmittalVisibilityFilter } from "../../../utils/roleFilter";
 import { FileObject } from "../../../shared/fileType";
 import { CreateProjectInput,
   UpdateprojectInput,
@@ -637,7 +637,7 @@ async getAllDocuments(id:string, role?: UserRole){
           },
         },
         rfi: {
-          where: getRoleVisibilityFilter(role),
+          where: getRfiSubmittalVisibilityFilter(role),
           select: {
             id: true,
             subject: true,
@@ -658,7 +658,7 @@ async getAllDocuments(id:string, role?: UserRole){
           },
         },
         submittals: {
-          where: getRoleVisibilityFilter(role),
+          where: getRfiSubmittalVisibilityFilter(role),
           select: {
             id: true,
             subject: true,

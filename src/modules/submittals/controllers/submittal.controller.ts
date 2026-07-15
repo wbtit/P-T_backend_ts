@@ -3,7 +3,7 @@ import { AuthenticateRequest } from "../../../middleware/authMiddleware";
 import { AppError } from "../../../config/utils/AppError";
 import { SubmittalService } from "../services";
 import { computeSubmittalStatus } from "../utils/statusHelper";
-import { getRoleVisibilityFilter } from "../../../utils/roleFilter";
+import { getRfiSubmittalVisibilityFilter } from "../../../utils/roleFilter";
 import { mapUploadedFiles } from "../../uploads/fileUtil";
 import { sendEmail, getCCEmails } from "../../../services/mailServices/mailconfig";
 import { submittalhtmlContent } from "../../../services/mailServices/mailtemplates/submittalMailtemplate";
@@ -281,7 +281,7 @@ export class SubmittalController {
           { recepients: { connectionDesignerId } },
           { multipleRecipients: { some: { connectionDesignerId } } },
         ],
-        ...getRoleVisibilityFilter(req.user?.role),
+        ...getRfiSubmittalVisibilityFilter(req.user?.role),
       },
       include: {
         project: { select: { id: true, name: true, status: true } },
@@ -531,7 +531,11 @@ export class SubmittalController {
     const { id } = req.params;
     const updateData = req.body;
     const existing = await submittalService.getSubmittalById(id, req.user?.role);
-    
+    const approvalStatus = updateData.isAproovedByAdmin ?? updateData.isApprovedByAdmin ?? updateData.approval;
+    if (approvalStatus !== undefined) {
+      updateData.isAproovedByAdmin = approvalStatus;
+    }
+
     const approvalWasGranted = !existing.isAproovedByAdmin && updateData.isAproovedByAdmin === true;
     if (approvalWasGranted) {
       updateData.approvedById = req.user!.id;

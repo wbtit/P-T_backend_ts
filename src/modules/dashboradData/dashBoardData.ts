@@ -2,7 +2,7 @@ import { Response } from "express";
 import { AuthenticateRequest } from "../../middleware/authMiddleware";
 import prisma from "../../config/database/client";
 import { SubResStatus } from "@prisma/client";
-import { getRoleVisibilityFilter } from "../../utils/roleFilter";
+import { getRfiSubmittalVisibilityFilter } from "../../utils/roleFilter";
 import { getCachedDashboard, dashboardKeys } from "../../utils/dashboardCache";
 
 const FULL_ACCESS_ROLES = new Set([
@@ -65,7 +65,7 @@ export const DashBoradData = async (
 
         const pendingRFI = await prisma.rFI.count({
           where: {
-            ...getRoleVisibilityFilter(role),
+            ...getRfiSubmittalVisibilityFilter(role),
             OR: [
               {
                 rfiresponse: { none: {} },
@@ -85,7 +85,7 @@ export const DashBoradData = async (
 
         const newRFI = await prisma.rFI.count({
           where: {
-            ...getRoleVisibilityFilter(role),
+            ...getRfiSubmittalVisibilityFilter(role),
             rfiresponse: { none: {} },
           },
         });
@@ -126,14 +126,14 @@ export const DashBoradData = async (
           where: {
             bfaStatus: false,
             currentVersionId: { not: null },
-            ...getRoleVisibilityFilter(role),
+            ...getRfiSubmittalVisibilityFilter(role),
           },
         });
 
         const clientSidePendingRFI = await prisma.rFI.count({
           where: {
             project: { status: { in: ["ACTIVE", "ONHOLD"] } },
-            ...getRoleVisibilityFilter(role),
+            ...getRfiSubmittalVisibilityFilter(role),
             OR: [
               {
                 rfiresponse: { none: {} },
@@ -171,7 +171,7 @@ export const DashBoradData = async (
           where: {
             project: { status: { in: ["ACTIVE", "ONHOLD"] } },
             bfaStatus: false,
-            ...getRoleVisibilityFilter(role),
+            ...getRfiSubmittalVisibilityFilter(role),
           },
         });
 

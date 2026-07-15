@@ -3,7 +3,7 @@ import { CreateSubmittalsDto, UpdateSubmittalsDto } from "../dtos";
 import { generateProjectScopedSerial, SERIAL_PREFIX } from "../../../utils/serial.util";
 import { AppError } from "../../../config/utils/AppError";
 import { Prisma, SubResStatus, UserRole } from "@prisma/client";
-import { getRoleVisibilityFilter } from "../../../utils/roleFilter";
+import { getRfiSubmittalVisibilityFilter } from "../../../utils/roleFilter";
 
 const ACTION_REQUIRED_FILTER = {
   some: {
@@ -184,7 +184,7 @@ export class SubmitalRepository {
         project: { status: { in: ["ACTIVE", "ONHOLD"] } },
         currentVersionId: { not: null },
         bfaStatus: false,
-        ...getRoleVisibilityFilter(role),
+        ...getRfiSubmittalVisibilityFilter(role),
       },
       include: {
         project: { select: { name: true } },
@@ -224,7 +224,7 @@ async getPendingSubmittalsForClientAdmin(userId: string, role?: UserRole) {
         project: { status: { in: ["ACTIVE", "ONHOLD"] } },
         currentVersionId: { not: null },
         bfaStatus: false,
-        ...getRoleVisibilityFilter(role),
+        ...getRfiSubmittalVisibilityFilter(role),
       },
       include: {
         project: { select: { name: true } },
@@ -250,7 +250,7 @@ async getPendingSubmittalsForClientAdmin(userId: string, role?: UserRole) {
         project: { clientProjectManagers: { some: { id: userId } }, status: { not: "INACTIVE" } },
         currentVersionId: { not: null },
         bfaStatus: false,
-        ...getRoleVisibilityFilter(role),
+        ...getRfiSubmittalVisibilityFilter(role),
       },
       include: {
         project: { select: { name: true } },
@@ -281,7 +281,7 @@ async getPendingSubmittalsForDepartmentManager(managerId: string, role?: UserRol
     where: {
       bfaStatus: false,
       currentVersionId: { not: null },
-      ...getRoleVisibilityFilter(role),
+      ...getRfiSubmittalVisibilityFilter(role),
       project: { departmentID: manager.departmentId,
        },
     },
@@ -312,7 +312,7 @@ async getPendingSubmittalsForProjectManager(managerId: string, role?: UserRole) 
     where: {
       bfaStatus: false,
       currentVersionId: { not: null },
-      ...getRoleVisibilityFilter(role),
+      ...getRfiSubmittalVisibilityFilter(role),
       project: { managerID: managerId },
     },
     include:{
@@ -340,7 +340,7 @@ async getPendingSubmittalsForProjectManager(managerId: string, role?: UserRole) 
   // -----------------------------
   async updateMetadata(
     id: string,
-    data: UpdateSubmittalsDto
+    data: UpdateSubmittalsDto & { approvedById?: string }
   ) {
     const mileStoneIds = data.mileStoneIds === undefined
       ? undefined
@@ -375,6 +375,10 @@ async getPendingSubmittalsForProjectManager(managerId: string, role?: UserRole) 
           status: data.status,
           isConnectionDesign: data.isConnectionDesign,
           notes: data.notes,
+          approvedById: data.approvedById,
+        },
+        include: {
+          approvedBy: { select: { id: true, firstName: true, middleName: true, lastName: true } },
         },
       });
 
@@ -406,7 +410,7 @@ async getPendingSubmittalsForProjectManager(managerId: string, role?: UserRole) 
       where: {
         sender_id: senderId,
         ...(projectId ? { project_id: projectId } : {}),
-        ...getRoleVisibilityFilter(role),
+        ...getRfiSubmittalVisibilityFilter(role),
       },
       include: {
         project: { select: { name: true } },
@@ -432,7 +436,7 @@ async getPendingSubmittalsForProjectManager(managerId: string, role?: UserRole) 
     return prisma.submittals.findMany({
       where: {
         ...(projectId ? { project_id: projectId } : {}),
-        ...getRoleVisibilityFilter(role),
+        ...getRfiSubmittalVisibilityFilter(role),
         OR: [
           { recepient_id: recipientId },
           { multipleRecipients: { some: { id: recipientId } } },
@@ -472,7 +476,7 @@ async getPendingSubmittalsForProjectManager(managerId: string, role?: UserRole) 
   // -----------------------------
   async findByProject(projectId: string, role?: UserRole) {
     return prisma.submittals.findMany({
-      where: { project_id: projectId, ...getRoleVisibilityFilter(role) },
+      where: { project_id: projectId, ...getRfiSubmittalVisibilityFilter(role) },
       include: {
         project: { select: { name: true } },
         fabricator: true,
@@ -497,7 +501,7 @@ async getPendingSubmittalsForProjectManager(managerId: string, role?: UserRole) 
       where: {
         bfaStatus: false,
         currentVersionId: { not: null },
-        ...getRoleVisibilityFilter(role),
+        ...getRfiSubmittalVisibilityFilter(role),
       },
       include:{
           project:{select:{name:true}},

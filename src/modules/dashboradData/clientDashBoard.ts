@@ -3,7 +3,7 @@ import prisma from "../../config/database/client";
 import { AuthenticateRequest } from "../../middleware/authMiddleware";
 import { Response } from "express";
 import { SubResStatus } from "@prisma/client";
-import { getRoleVisibilityFilter } from "../../utils/roleFilter";
+import { getRfiSubmittalVisibilityFilter } from "../../utils/roleFilter";
 import { getCachedDashboard, dashboardKeys } from "../../utils/dashboardCache";
 
 export const clientDashBoard = async (req: AuthenticateRequest, res: Response) => {
@@ -35,13 +35,13 @@ export const clientDashBoard = async (req: AuthenticateRequest, res: Response) =
           where: {
             project: { clientProjectManagers: { some: { id: userId } }, status: { not: "INACTIVE" } },
             rfiresponse: { none: {} },
-            ...getRoleVisibilityFilter(req.user?.role),
+            ...getRfiSubmittalVisibilityFilter(req.user?.role),
           },
         });
         const pendingRFI = await prisma.rFI.count({
           where: {
             project: { clientProjectManagers: { some: { id: userId } }, status: { not: "INACTIVE" } },
-            ...getRoleVisibilityFilter(req.user?.role),
+            ...getRfiSubmittalVisibilityFilter(req.user?.role),
             OR: [
               {
                 rfiresponse: { none: {} },
@@ -84,7 +84,7 @@ export const clientDashBoard = async (req: AuthenticateRequest, res: Response) =
           where: {
             project: { clientProjectManagers: { some: { id: userId } }, status: { not: "INACTIVE" } },
             bfaStatus: false,
-            ...getRoleVisibilityFilter(req.user?.role),
+            ...getRfiSubmittalVisibilityFilter(req.user?.role),
           },
         });
         const resObj: Record<string, any> = {

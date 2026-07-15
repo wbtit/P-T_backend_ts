@@ -19,7 +19,7 @@ import { ProjectAssistService } from "../../project/services/projectAssist.servi
 import { sendNotification } from "../../../utils/sendNotification";
 import { buildRoleScopedNotification } from "../../../utils/stakeholderNotificationMessages";
 import prisma from "../../../config/database/client";
-import { getRoleVisibilityFilter } from "../../../utils/roleFilter";
+import { getRfiSubmittalVisibilityFilter } from "../../../utils/roleFilter";
 import { getFabricatorNameForUser } from "../../../services/mailServices/mailtemplates/footerHelper";
 
 const rfiService = new RFIService();
@@ -511,7 +511,7 @@ export class RFIController {
           { recepients: { connectionDesignerId } },
           { multipleRecipients: { some: { connectionDesignerId } } },
         ],
-        ...getRoleVisibilityFilter(req.user?.role),
+        ...getRfiSubmittalVisibilityFilter(req.user?.role),
       },
       include: {
         fabricator: { select: { id: true, fabName: true } },
