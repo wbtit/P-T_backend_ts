@@ -223,7 +223,7 @@ async handlePendingCOsForClient(req: AuthenticateRequest, res: Response) {
       }
     }
 
-    const allowedApprovalRoles = ["ADMIN", "DEPUTY_MANAGER", "OPERATION_EXECUTIVE", "PROJECT_MANAGER_OFFICER"];
+    const allowedApprovalRoles = ["ADMIN", "DEPUTY_MANAGER", "OPERATION_EXECUTIVE", "PROJECT_MANAGER_OFFICER", "DEPT_MANAGER"];
     const updatePayload = { ...req.body };
     if (!allowedApprovalRoles.includes(req.user?.role || "")) {
       delete updatePayload.isAproovedByAdmin;

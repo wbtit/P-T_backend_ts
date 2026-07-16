@@ -12,7 +12,8 @@ const INTERNAL_LOOP_ROLES: UserRole[] = [
   "PROJECT_MANAGER",
   "DEPT_MANAGER",
   "DEPUTY_MANAGER",
-  "OPERATION_EXECUTIVE"
+  "OPERATION_EXECUTIVE",
+  "PROJECT_MANAGER_OFFICER"
 ];
 import { UserRole } from "@prisma/client";
 import { ProjectAssistService } from "../../project/services/projectAssist.service";
