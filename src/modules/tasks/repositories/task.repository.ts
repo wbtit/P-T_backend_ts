@@ -46,7 +46,8 @@ export class TaskRepository {
                     reworkStartTime: cleanData.reworkStartTime,
                     created_by: createdBy,
                     project_bundle_id: cleanData.project_bundle_id,
-                    wbsType: cleanData.wbsType
+                    wbsType: cleanData.wbsType,
+                    LineItemCompletion: cleanData.LineItemCompletion
                 }
             })
 
@@ -326,7 +327,9 @@ export class TaskRepository {
                     user_id: data.user_id,
                     departmentId: data.departmentId,
                     reworkStartTime: data.reworkStartTime,
-                    project_bundle_id: data.project_bundle_id
+                    project_bundle_id: data.project_bundle_id,
+                    wbsType: data.wbsType,
+                    LineItemCompletion: data.LineItemCompletion
                 }
             });
 
