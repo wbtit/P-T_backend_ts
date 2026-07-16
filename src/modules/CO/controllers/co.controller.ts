@@ -228,6 +228,15 @@ async handlePendingCOsForClient(req: AuthenticateRequest, res: Response) {
     if (!allowedApprovalRoles.includes(req.user?.role || "")) {
       delete updatePayload.isAproovedByAdmin;
     }
+    const managerApprovalRoles = [...allowedApprovalRoles, "PROJECT_MANAGER"];
+    if (!managerApprovalRoles.includes(req.user?.role || "")) {
+      delete updatePayload.isApprovedByManager;
+    }
+    
+    // Auto-approve manager if admin approved
+    if (updatePayload.isAproovedByAdmin === true || updatePayload.isAproovedByAdmin === "true") {
+      updatePayload.isApprovedByManager = true;
+    }
 
     const updatedCo = await coService.updateCo(id, {
       ...updatePayload,

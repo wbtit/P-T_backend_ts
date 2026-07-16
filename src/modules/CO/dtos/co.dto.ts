@@ -21,7 +21,8 @@ export const CreateCoSchema = z.object({
     stage: z.enum(Stage).default("IFA"),
     status: z.enum(COSTATUS).default("NOT_REPLIED"),   // 👈 use the Prisma enum here
     reason: z.string().optional(),
-    isAproovedByAdmin: zBooleanString,
+    isAproovedByAdmin: zBooleanString.optional(),
+    isApprovedByManager: zBooleanString.optional(),
     files: z
         .union([
           z.array(z.any()),

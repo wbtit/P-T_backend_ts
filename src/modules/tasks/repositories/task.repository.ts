@@ -86,6 +86,7 @@ export class TaskRepository {
                 created_on: "desc",
             },
             include: {
+                mileStone: { select: { subject: true } },
                 project: {
                     select: {
                         name: true,
@@ -148,6 +149,7 @@ export class TaskRepository {
         const task = await prisma.task.findUnique({
             where: { id },
             include: {
+                mileStone: { select: { subject: true } },
                 project: true,
                 user: true,
                 department: true,
@@ -155,7 +157,7 @@ export class TaskRepository {
                 alert: true,
                 flags: true,
                 taskcomment:{
-                    include:{
+                    include: {
                         user:{select:{firstName:true,lastName:true,middleName:true}
                     },
                 }
@@ -183,6 +185,7 @@ export class TaskRepository {
                 }
             },
             include: {
+                mileStone: { select: { subject: true } },
                 project: true,
                 user: true,
                 department: true,
@@ -211,6 +214,7 @@ export class TaskRepository {
                 }
             },
             include: {
+                mileStone: { select: { subject: true } },
                 taskcomment:{
                     select:{acknowledged:true}
                 },
@@ -232,6 +236,7 @@ export class TaskRepository {
                 }
             },
            include: {
+                mileStone: { select: { subject: true } },
             taskcomment:{
                     select:{acknowledged:true}
                 },
@@ -255,6 +260,7 @@ export class TaskRepository {
         const tasks = await prisma.task.findMany({
             where: { user_id },
             include: {
+                mileStone: { select: { subject: true } },
                 taskcomment:{
                     select:{acknowledged:true}
                 },
@@ -271,6 +277,7 @@ export class TaskRepository {
     async findAll() {
         const tasks = await prisma.task.findMany({
             include: {
+                mileStone: { select: { subject: true } },
                 taskcomment:{
                     select:{
                         id: true,
@@ -388,7 +395,8 @@ export class TaskRepository {
     async findByProjectId(projectId: string){
         return await prisma.task.findMany({
             where:{project_id:projectId},
-            include:{
+            include: {
+                mileStone: { select: { subject: true } },
                 project: true,
                 user: true,
                 department: true,
@@ -402,6 +410,7 @@ export class TaskRepository {
         const tasks = await prisma.task.findMany({
             where: { user_id },
             include: {
+                mileStone: { select: { subject: true } },
                 project:{
                     select:{
                         name:true,

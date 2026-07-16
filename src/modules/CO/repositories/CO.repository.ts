@@ -4,7 +4,7 @@ import { generateProjectScopedSerial, SERIAL_PREFIX } from "../../../utils/seria
 import { AppError } from "../../../config/utils/AppError";
 
 export class CORepository {
-    async create(data:CreateCoInput,userId:string,approval:boolean){
+    async create(data:CreateCoInput,userId:string,approval:boolean, managerApproval:boolean = false){
         return await prisma.$transaction(async (tx) => {
           const project = await tx.project.findUnique({
             where: { id: data.project },
@@ -34,6 +34,7 @@ export class CORepository {
               files:data.files,
               sentOn:data.sentOn|| new Date(),
               isAproovedByAdmin:approval,
+              isApprovedByManager: managerApproval,
               sender: userId,
               multipleRecipients: data.multipleRecipients?.length
                 ? { connect: data.multipleRecipients.map((id: string) => ({ id })) }
@@ -63,6 +64,7 @@ export class CORepository {
         status: rest.status,
         reason: rest.reason,
         isAproovedByAdmin: rest.isAproovedByAdmin,
+        isApprovedByManager: rest.isApprovedByManager,
         multipleRecipients: multipleRecipients?.length
           ? { set: [], connect: multipleRecipients.map((id: string) => ({ id })) }
           : undefined,
