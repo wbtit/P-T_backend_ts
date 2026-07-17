@@ -126,7 +126,7 @@ export const submittalsOpenApiDoc: ModuleOpenApiDoc = {
       post: {
         tags: ["Submittals"],
         summary: "POST /submittal - Create Submittal (Supports multipleRecipients)",
-        description: "Creates a new submittal. Note: To link milestones, pass 'mileStoneIds' as an array of milestone UUID strings. Do not use 'mileStoneLinks'.",
+        description: "Creates a new submittal. Note: To link milestones, pass 'mileStoneIds' as an array of milestone UUID strings. Do not use 'mileStoneLinks'. The 'notes' field can be passed to attach remarks/notes to the submittal.",
         operationId: "post_submittals_submittal",
         security: [{ bearerAuth: [] }],
         requestBody: zodRequestBody(createSubmittalsDto),

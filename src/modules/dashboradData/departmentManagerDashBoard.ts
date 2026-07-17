@@ -4,6 +4,7 @@ import { AuthenticateRequest } from "../../middleware/authMiddleware";
 import { SubResStatus } from "@prisma/client";
 import { getRfiSubmittalVisibilityFilter } from "../../utils/roleFilter";
 import { getCachedDashboard, dashboardKeys } from "../../utils/dashboardCache";
+import { getUnapprovedCounts } from "../../utils/unapprovedListFetcher";
 
 const DEPARTMENT_MANAGER_ALLOWED_ROLES = new Set(["DEPT_MANAGER", "ADMIN"]);
 
@@ -78,6 +79,7 @@ export const departmentManagerDashBoard = async (
           clientSidePendingChangeOrders,
           clientSidePendingRFQ,
           clientSidePendingSubmittals,
+          unapprovedCounts,
         ] = await Promise.all([
           prisma.department.findUnique({
             where: { id: departmentId },
@@ -305,6 +307,7 @@ export const departmentManagerDashBoard = async (
               ...getRfiSubmittalVisibilityFilter(role),
             },
           }),
+          getUnapprovedCounts({ departmentID: departmentId }, role)
         ]);
 
         const projectStatusDistribution = projectStatusRaw.map((item) => ({
@@ -415,6 +418,7 @@ export const departmentManagerDashBoard = async (
             topManagersCurrent,
             topEmployeesCurrent,
           },
+          ...unapprovedCounts
         };
       }
     );

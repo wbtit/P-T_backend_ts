@@ -11,6 +11,7 @@ import { projectManagerDashBoard } from "./projectManagerDashBoard";
 import { salesDashBoard } from "./salesDashBoard";
 import { operationExecutiveDashBoard } from "./operationExecutiveDashBoard";
 import { connectionDesignerAdminDashBoard } from "./connectionDesignerAdminDashBoard";
+import { unapprovedListsHandler } from "./unapprovedListsHandler";
 
 const router = Router();
 
@@ -44,6 +45,11 @@ router.get(
   "/operationExecutive",
   authMiddleware,
   asyncHandler(operationExecutiveDashBoard)
+);
+router.get(
+  "/unapproved-lists",
+  authMiddleware,
+  asyncHandler(unapprovedListsHandler)
 );
 
 export default router;

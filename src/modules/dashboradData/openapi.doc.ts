@@ -168,6 +168,22 @@ export const dashboradDataOpenApiDoc: ModuleOpenApiDoc = {
         }
       },
     },
+    "/dashBoardData/unapproved-lists": {
+      get: {
+        tags: ["DashboardData"],
+        summary: "GET /dashBoardData/unapproved-lists",
+        description: "Fetch the list of unapproved RFIs, Submittals, and Change Orders for the current user's scope.",
+        operationId: "get_dashboradData_dashBoardData_unapprovedLists",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "403": { description: "Access denied" },
+          "500": { description: "Internal Server Error" }
+        }
+      }
+    }
   }
 };
 

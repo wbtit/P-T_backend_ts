@@ -5,6 +5,7 @@ import { AuthenticateRequest } from "../../middleware/authMiddleware";
 import { SubResStatus } from "@prisma/client";
 import { getRfiSubmittalVisibilityFilter } from "../../utils/roleFilter";
 import { getCachedDashboard, dashboardKeys } from "../../utils/dashboardCache";
+import { getUnapprovedCounts } from "../../utils/unapprovedListFetcher";
 
 export const projectManagerDashBoard = async (
   req: AuthenticateRequest,
@@ -49,6 +50,7 @@ export const projectManagerDashBoard = async (
           clientSidePendingChangeOrders,
           clientSidePendingRFQ,
           clientSidePendingSubmittals,
+          unapprovedCounts,
         ] = await Promise.all([
           prisma.project.groupBy({
             by: ["status"],
@@ -192,6 +194,7 @@ export const projectManagerDashBoard = async (
               ...getRfiSubmittalVisibilityFilter(role),
             },
           }),
+          getUnapprovedCounts(managerFilter, role),
         ]);
 
         const resObj: Record<string, any> = {
@@ -216,7 +219,8 @@ export const projectManagerDashBoard = async (
             changeOrders: clientSidePendingChangeOrders,
             rfq: clientSidePendingRFQ,
             submittals: clientSidePendingSubmittals,
-          }
+          },
+          ...unapprovedCounts
         };
 
         const statusMap: Record<string, keyof typeof resObj> = {

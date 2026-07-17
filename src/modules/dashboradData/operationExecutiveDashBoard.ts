@@ -5,6 +5,7 @@ import { UserRole } from "@prisma/client";
 import { computeSubmittalStatus } from "../submittals/utils/statusHelper";
 import { getRfiSubmittalVisibilityFilter } from "../../utils/roleFilter";
 import { getCachedDashboard, dashboardKeys } from "../../utils/dashboardCache";
+import { getUnapprovedCounts } from "../../utils/unapprovedListFetcher";
 
 const CLIENT_ROLES: UserRole[] = [
   "CLIENT",
@@ -36,7 +37,7 @@ export const operationExecutiveDashBoard = async (
         const twoWeeksAgo = new Date();
         twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
 
-        const [projectStatsRaw, totalProjects, delayedClientRFIs, submittals, rfqsForRecipient] =
+        const [projectStatsRaw, totalProjects, delayedClientRFIs, submittals, rfqsForRecipient, unapprovedCounts] =
           await Promise.all([
             prisma.project.groupBy({
               by: ["status"],
@@ -109,6 +110,7 @@ export const operationExecutiveDashBoard = async (
               },
               orderBy: { createdAt: "desc" },
             }),
+            getUnapprovedCounts({}, role)
           ]);
 
         const projectStats: Record<string, number> = {
@@ -132,6 +134,7 @@ export const operationExecutiveDashBoard = async (
             submittalsTracking: submittals.map(submittal => computeSubmittalStatus(submittal)),
             rfqsWhereRecipientIsMe: rfqsForRecipient,
           },
+          ...unapprovedCounts
         };
       }
     );

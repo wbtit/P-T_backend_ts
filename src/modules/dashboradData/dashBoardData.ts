@@ -4,6 +4,7 @@ import prisma from "../../config/database/client";
 import { SubResStatus } from "@prisma/client";
 import { getRfiSubmittalVisibilityFilter } from "../../utils/roleFilter";
 import { getCachedDashboard, dashboardKeys } from "../../utils/dashboardCache";
+import { getUnapprovedCounts } from "../../utils/unapprovedListFetcher";
 
 const FULL_ACCESS_ROLES = new Set([
   "ADMIN",
@@ -193,7 +194,8 @@ export const DashBoradData = async (
             changeOrders: clientSidePendingChangeOrders,
             rfq: clientSidePendingRFQ,
             submittals: clientSidePendingSubmittals,
-          }
+          },
+          ...(await getUnapprovedCounts(projectFilter, role))
         };
 
         const statusMap: Record<string, keyof typeof resObj> = {
