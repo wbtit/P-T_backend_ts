@@ -20,55 +20,41 @@ export async function sendChallengeEmail({
   country,
   context,
 }: SendChallengeEmailInput): Promise<boolean> {
-  let subject = "Security Alert: Verification Code Required";
+  let subject = "Your sign-in code";
   if (context === "NEW_NETWORK") {
-    subject = "Verification Required: Login from a new network";
+    subject = "Your sign-in code (new network detected)";
   } else if (context === "NEW_DEVICE") {
-    subject = "Verification Required: Login from a new device";
+    subject = "Your sign-in code (new device detected)";
   } else if (context === "NEW_BOTH") {
-    subject = "Verification Required: New login location and device detected";
+    subject = "Your sign-in code (new device and network detected)";
   }
 
   const locationStr = [city, country].filter(Boolean).join(", ") || "Unknown Location";
   const timestamp = new Date().toLocaleString();
 
   const html = `
-    <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: auto; border: 1px solid #ddd; border-radius: 8px;">
-      <h2 style="color: #333;">${subject}</h2>
-      <p>A sign-in attempt was detected with your account details.</p>
+    <div style="font-family: sans-serif; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <p>Hello,</p>
+      <p>We received a request to sign in to your account. Please use the following code to complete your sign-in:</p>
       
-      <div style="background-color: #f7f7f7; padding: 15px; border-radius: 4px; margin: 20px 0;">
-        <span style="font-size: 24px; font-weight: bold; letter-spacing: 5px; color: #007bff; display: block; text-align: center;">${otp}</span>
-      </div>
+      <p style="font-size: 28px; font-weight: bold; margin: 24px 0; color: #0058a3;">${otp}</p>
       
-      <p style="font-weight: bold;">OTP expires in 10 minutes.</p>
+      <p>This code will expire in 10 minutes.</p>
       
-      <hr/>
+      <hr style="border: 0; border-top: 1px solid #eee; margin: 24px 0;" />
       
-      <h3>Login Details</h3>
-      <table style="width: 100%; border-collapse: collapse;">
-        <tr>
-          <td style="padding: 5px 0; color: #555;">Username:</td>
-          <td style="padding: 5px 0; font-weight: bold;">${username}</td>
-        </tr>
-        <tr>
-          <td style="padding: 5px 0; color: #555;">IP Address:</td>
-          <td style="padding: 5px 0; font-weight: bold;">${ipAddress}</td>
-        </tr>
-        <tr>
-          <td style="padding: 5px 0; color: #555;">Location:</td>
-          <td style="padding: 5px 0; font-weight: bold;">${locationStr}</td>
-        </tr>
-        <tr>
-          <td style="padding: 5px 0; color: #555;">Time:</td>
-          <td style="padding: 5px 0; font-weight: bold;">${timestamp}</td>
-        </tr>
-      </table>
+      <p><strong>Sign-in Details:</strong></p>
+      <ul style="list-style-type: none; padding-left: 0; line-height: 1.6;">
+        <li><strong>Username:</strong> ${username}</li>
+        <li><strong>IP Address:</strong> ${ipAddress}</li>
+        <li><strong>Location:</strong> ${locationStr}</li>
+        <li><strong>Time:</strong> ${timestamp}</li>
+      </ul>
       
-      <hr/>
+      <hr style="border: 0; border-top: 1px solid #eee; margin: 24px 0;" />
       
-      <p style="font-size: 12px; color: #777; margin-top: 20px;">
-        If this wasn't you, your account is safe. However, someone may know your password. We recommend changing your password immediately.
+      <p style="font-size: 13px; color: #666; line-height: 1.5;">
+        If you didn't request this code, you can safely ignore this email. Someone else might have entered your email address by mistake. Your account remains secure.
       </p>
     </div>
   `;
