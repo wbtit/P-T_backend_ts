@@ -257,6 +257,7 @@ export const departmentManagerDashBoard = async (
             where: {
               project: { departmentID: departmentId },
               bfaStatus: false,
+              stage: { not: "IFC" },
               currentVersionId: { not: null },
               ...getRfiSubmittalVisibilityFilter(role),
             },
@@ -304,6 +305,7 @@ export const departmentManagerDashBoard = async (
             where: {
               project: { departmentID: departmentId },
               bfaStatus: false,
+              stage: { not: "IFC" },
               ...getRfiSubmittalVisibilityFilter(role),
             },
           }),

@@ -108,6 +108,7 @@ export const clientAdminDashBoard = async (req: AuthenticateRequest, res: Respon
               project: { status: { in: ["ACTIVE", "ONHOLD"] } },
               fabricator_id: { in: fabricatorIds },
               bfaStatus: false,
+              stage: { not: "IFC" },
               ...getRfiSubmittalVisibilityFilter(req.user?.role),
             },
           }),

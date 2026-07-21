@@ -185,6 +185,7 @@ export class SubmitalRepository {
         project: { status: { in: ["ACTIVE", "ONHOLD"] } },
         currentVersionId: { not: null },
         bfaStatus: false,
+        stage: { not: "IFC" },
         ...getRfiSubmittalVisibilityFilter(role),
       },
       include: {
@@ -225,6 +226,7 @@ async getPendingSubmittalsForClientAdmin(userId: string, role?: UserRole) {
         project: { status: { in: ["ACTIVE", "ONHOLD"] } },
         currentVersionId: { not: null },
         bfaStatus: false,
+        stage: { not: "IFC" },
         ...getRfiSubmittalVisibilityFilter(role),
       },
       include: {
@@ -251,6 +253,7 @@ async getPendingSubmittalsForClientAdmin(userId: string, role?: UserRole) {
         project: { clientProjectManagers: { some: { id: userId } }, status: { not: "INACTIVE" } },
         currentVersionId: { not: null },
         bfaStatus: false,
+        stage: { not: "IFC" },
         ...getRfiSubmittalVisibilityFilter(role),
       },
       include: {
@@ -281,6 +284,7 @@ async getPendingSubmittalsForDepartmentManager(managerId: string, role?: UserRol
   return prisma.submittals.findMany({
     where: {
       bfaStatus: false,
+      stage: { not: "IFC" },
       currentVersionId: { not: null },
       ...getRfiSubmittalVisibilityFilter(role),
       project: { departmentID: manager.departmentId,
@@ -312,6 +316,7 @@ async getPendingSubmittalsForProjectManager(managerId: string, role?: UserRole) 
   return prisma.submittals.findMany({
     where: {
       bfaStatus: false,
+      stage: { not: "IFC" },
       currentVersionId: { not: null },
       ...getRfiSubmittalVisibilityFilter(role),
       project: { managerID: managerId },
@@ -501,6 +506,7 @@ async getPendingSubmittalsForProjectManager(managerId: string, role?: UserRole) 
     return prisma.submittals.findMany({
       where: {
         bfaStatus: false,
+        stage: { not: "IFC" },
         currentVersionId: { not: null },
         ...getRfiSubmittalVisibilityFilter(role),
       },

@@ -235,6 +235,7 @@ export const connectionDesignerAdminDashBoard = async (
               project: activeProjectWhere,
               currentVersionId: { not: null },
               bfaStatus: false,
+              stage: { not: "IFC" },
               ...getRfiSubmittalVisibilityFilter(role),
               OR: [
                 { recepients: { connectionDesignerId } },

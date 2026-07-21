@@ -19,7 +19,10 @@ export function computeSubmittalStatus(submittal: any): any {
   let wbtStatus = "SENT";
   let status = "RECEIVED"; // client status
 
-  if (submittal.bfaStatus) {
+  if (submittal.stage === "IFC") {
+    wbtStatus = "COMPLETE";
+    status = "COMPLETE";
+  } else if (submittal.bfaStatus) {
     wbtStatus = "BFA_RECEIVED";
     status = "BFA_SENT";
   } else if (isThresholdPassed) {

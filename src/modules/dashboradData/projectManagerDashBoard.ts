@@ -191,6 +191,7 @@ export const projectManagerDashBoard = async (
             where: {
               project: { managerID: userId, status: { in: ["ACTIVE", "ONHOLD"] } },
               bfaStatus: false,
+              stage: { not: "IFC" },
               ...getRfiSubmittalVisibilityFilter(role),
             },
           }),

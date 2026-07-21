@@ -126,6 +126,7 @@ export const DashBoradData = async (
         const pendingSubmittals = await prisma.submittals.count({
           where: {
             bfaStatus: false,
+            stage: { not: "IFC" },
             currentVersionId: { not: null },
             ...getRfiSubmittalVisibilityFilter(role),
           },
@@ -172,6 +173,7 @@ export const DashBoradData = async (
           where: {
             project: { status: { in: ["ACTIVE", "ONHOLD"] } },
             bfaStatus: false,
+            stage: { not: "IFC" },
             ...getRfiSubmittalVisibilityFilter(role),
           },
         });

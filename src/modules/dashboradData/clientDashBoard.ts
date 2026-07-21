@@ -84,6 +84,7 @@ export const clientDashBoard = async (req: AuthenticateRequest, res: Response) =
           where: {
             project: { clientProjectManagers: { some: { id: userId } }, status: { not: "INACTIVE" } },
             bfaStatus: false,
+            stage: { not: "IFC" },
             ...getRfiSubmittalVisibilityFilter(req.user?.role),
           },
         });
