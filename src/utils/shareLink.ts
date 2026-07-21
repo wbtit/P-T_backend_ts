@@ -79,8 +79,6 @@ const createShareLink = async (req: Request, res: Response) => {
       files = (row.files as any[]) || [];
     }
 
-    console.log("[DEBUG createShareLink]", { table, parentId, fileId, filesCount: files.length });
-
     const fileObj = files.find((f: any) => f.id === fileId || f.filename === fileId); // Added fallback to filename
 
     if (!fileObj) {
