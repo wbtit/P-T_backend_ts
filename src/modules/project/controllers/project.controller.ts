@@ -296,6 +296,51 @@ async expandWbs(req: AuthenticateRequest, res: Response) {
   });
 }
 
+async syncWbs(req: AuthenticateRequest, res: Response) {
+  const { projectId } = req.params;
+  const { bundleKeys } = req.body;
+
+  if (!req.user?.id) {
+    return res.status(401).json({
+      status: 'error',
+      message: 'Unauthorized'
+    });
+  }
+
+  const result = await projectService.syncProjectWbs(
+    projectId,
+    bundleKeys
+  );
+
+  res.status(200).json({
+    status: "success",
+    data: result,
+  });
+}
+
+async addWbs(req: AuthenticateRequest, res: Response) {
+  const { projectId } = req.params;
+  const { bundleKey, wbsTemplateKey } = req.body;
+
+  if (!req.user?.id) {
+    return res.status(401).json({
+      status: 'error',
+      message: 'Unauthorized'
+    });
+  }
+
+  const result = await projectService.addProjectWbs(
+    projectId,
+    bundleKey,
+    wbsTemplateKey
+  );
+
+  res.status(200).json({
+    status: "success",
+    data: result,
+  });
+}
+
     async handleGetAllProjects(req:AuthenticateRequest,res:Response){
       if(!req.user){
         return  res.status(401).json({

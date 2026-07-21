@@ -442,4 +442,149 @@ async expandProjectWbs(
    }
    return docs;
  }
+  async syncProjectWbs(projectId: string, bundleKeys?: string[]) {
+    return prisma.$transaction(async (tx) => {
+      // 1. Get project
+      const project = await tx.project.findUnique({ where: { id: projectId }, select: { stage: true } });
+      if (!project) throw new AppError("Project not found", 404);
+      
+      // 2. Get bundles to sync
+      const existingSelections = await tx.projectBundleSelection.findMany({
+        where: { projectId, bundleKey: bundleKeys && bundleKeys.length > 0 ? { in: bundleKeys } : undefined },
+      });
+      if (existingSelections.length === 0) return { added: 0, message: "No bundles to sync" };
+
+      const syncKeys = existingSelections.map(s => s.bundleKey);
+
+      // 3. Get global bundle templates with their WBS templates
+      const globalBundles = await tx.wbsBundleTemplate.findMany({
+        where: { bundleKey: { in: syncKeys }, isActive: true },
+        include: {
+          wbsTemplates: {
+            where: { isActive: true, discipline: "EXECUTION" },
+            include: { lineItems: { where: { isActive: true, isDeleted: false } } }
+          }
+        }
+      });
+
+      let addedWbsCount = 0;
+
+      for (const gBundle of globalBundles) {
+        // 4. Get corresponding ProjectBundle
+        const projectBundle = await tx.projectBundle.findFirst({
+          where: { projectId, bundleKey: gBundle.bundleKey, stage: project.stage }
+        });
+        if (!projectBundle) continue;
+
+        // 5. Get existing ProjectWbs for this bundle
+        const existingWbs = await tx.projectWbs.findMany({
+          where: { projectId, projectBundleId: projectBundle.id },
+          select: { wbsTemplateKey: true }
+        });
+        const existingWbsKeys = new Set(existingWbs.map(w => w.wbsTemplateKey));
+
+        // 6. Find missing templates
+        for (const tpl of gBundle.wbsTemplates) {
+          if (!existingWbsKeys.has(tpl.templateKey)) {
+            const wbs = await tx.projectWbs.create({
+              data: {
+                projectId,
+                projectBundleId: projectBundle.id,
+                wbsTemplateKey: tpl.templateKey,
+                discipline: "EXECUTION",
+                stage: project.stage,
+              }
+            });
+
+            if (tpl.lineItems && tpl.lineItems.length > 0) {
+              await tx.projectLineItem.createMany({
+                data: tpl.lineItems.map(li => ({
+                  projectWbsId: wbs.id,
+                  lineItemTemplateId: li.id,
+                  description: li.description,
+                  unitTime: li.unitTime,
+                  checkUnitTime: li.checkUnitTime,
+                  qtyNo: 0,
+                  execHr: 0,
+                  checkHr: 0,
+                }))
+              });
+            }
+            addedWbsCount++;
+          }
+        }
+      }
+      return { added: addedWbsCount, message: `Synced successfully. Added ${addedWbsCount} missing WBS items.` };
+    });
+  }
+  async addProjectWbs(projectId: string, bundleKey: string, wbsTemplateKey: string) {
+    return prisma.$transaction(async (tx) => {
+      const project = await tx.project.findUnique({ where: { id: projectId }, select: { stage: true } });
+      if (!project) throw new AppError("Project not found", 404);
+
+      const projectBundle = await tx.projectBundle.findFirst({
+        where: { projectId, bundleKey, stage: project.stage }
+      });
+
+      if (!projectBundle) {
+        throw new AppError("Bundle not found for this project", 404);
+      }
+
+      const template = await tx.wbsTemplate.findFirst({
+        where: {
+          OR: [
+            { templateKey: { equals: wbsTemplateKey, mode: "insensitive" } },
+            { name: { equals: wbsTemplateKey, mode: "insensitive" } }
+          ],
+          isActive: true,
+          isDeleted: false
+        },
+        include: { lineItems: { where: { isActive: true, isDeleted: false } } }
+      });
+
+      if (!template) {
+        throw new AppError("WBS template not found", 404);
+      }
+
+      const existingWbs = await tx.projectWbs.findUnique({
+        where: {
+          projectBundleId_wbsTemplateKey: {
+            projectBundleId: projectBundle.id,
+            wbsTemplateKey: template.templateKey,
+          }
+        }
+      });
+
+      if (existingWbs) {
+        throw new AppError("This WBS item already exists in the project", 409);
+      }
+
+      const wbs = await tx.projectWbs.create({
+        data: {
+          projectId,
+          projectBundleId: projectBundle.id,
+          wbsTemplateKey: template.templateKey,
+          discipline: "EXECUTION",
+          stage: project.stage,
+        }
+      });
+
+      if (template.lineItems && template.lineItems.length > 0) {
+        await tx.projectLineItem.createMany({
+          data: template.lineItems.map(li => ({
+            projectWbsId: wbs.id,
+            lineItemTemplateId: li.id,
+            description: li.description,
+            unitTime: li.unitTime,
+            checkUnitTime: li.checkUnitTime,
+            qtyNo: 0,
+            execHr: 0,
+            checkHr: 0,
+          }))
+        });
+      }
+
+      return wbs;
+    });
+  }
 }

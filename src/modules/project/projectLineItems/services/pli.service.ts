@@ -94,4 +94,49 @@ export class PLIService {
       }
     });
   }
+
+  async create(data: { projectWbsId: string; lineItemTemplateId: string }) {
+    return prisma.$transaction(async (tx) => {
+      // 1. Validate WBS exists
+      const wbs = await tx.projectWbs.findUnique({
+        where: { id: data.projectWbsId },
+        select: { id: true, projectBundleId: true },
+      });
+      if (!wbs) throw new AppError("Project WBS not found", 404);
+
+      // 2. Validate Template exists
+      const template = await tx.wbsLineItemTemplate.findUnique({
+        where: { id: data.lineItemTemplateId },
+      });
+      if (!template) throw new AppError("Line Item Template not found", 404);
+
+      // 3. Check for duplicates
+      const existing = await tx.projectLineItem.findUnique({
+        where: {
+          projectWbsId_lineItemTemplateId: {
+            projectWbsId: data.projectWbsId,
+            lineItemTemplateId: data.lineItemTemplateId,
+          },
+        },
+      });
+      if (existing) throw new AppError("Line item already exists in this WBS", 409);
+
+      // 4. Create
+      const newItem = await tx.projectLineItem.create({
+        data: {
+          projectWbsId: data.projectWbsId,
+          lineItemTemplateId: data.lineItemTemplateId,
+          description: template.description,
+          unitTime: template.unitTime,
+          checkUnitTime: template.checkUnitTime,
+          qtyNo: 0,
+          execHr: 0,
+          checkHr: 0,
+        },
+      });
+
+      return newItem;
+    });
+  }
 }
+

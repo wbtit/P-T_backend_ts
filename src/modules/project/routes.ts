@@ -22,7 +22,7 @@ import {
  import { scanUploadMiddleware } from "../../middleware/scanUpload.middleware";
 
 
- import { PLIController, ProjectLineItemBulkSchema } from "./projectLineItems";
+ import { PLIController, ProjectLineItemBulkSchema, CreateProjectLineItemSchema } from "./projectLineItems";
  import { 
     UpdateProjectLineItemSchema } from "./projectLineItems";
 
@@ -75,6 +75,10 @@ asyncHandler(projectController.handleGetProjectUpdateHistory.bind(projectControl
 
 router.post("/projects/:projectId/wbs/expand", authMiddleware, validate({ body: z.object({ bundleKeys: z.array(z.string()) }) }), asyncHandler(projectController.expandWbs.bind(projectController)));
 
+router.post("/projects/:projectId/wbs/sync", authMiddleware, validate({ body: z.object({ bundleKeys: z.array(z.string()).optional() }).optional() }), asyncHandler(projectController.syncWbs.bind(projectController)));
+
+router.post("/projects/:projectId/wbs/custom", authMiddleware, validate({ body: z.object({ bundleKey: z.string(), wbsTemplateKey: z.string() }) }), asyncHandler(projectController.addWbs.bind(projectController)));
+
 router.get(
   "/getAllDocuments/:id",
   authMiddleware,
@@ -98,6 +102,20 @@ router.get(
   authMiddleware,
   asyncHandler(
     pliController.getLineItems.bind(pliController)
+  )
+);
+
+/**
+ * ---------------------------------------
+ * CREATE SINGLE LINE ITEM
+ * ---------------------------------------
+ */
+router.post(
+  "/line-items",
+  authMiddleware,
+  validate({ body: CreateProjectLineItemSchema }),
+  asyncHandler(
+    pliController.createLineItem.bind(pliController)
   )
 );
 

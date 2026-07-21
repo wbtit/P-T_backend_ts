@@ -49,3 +49,10 @@ export type UpdatePliInput = z.infer<
 export type BulkUpdatePliInput = z.infer<
   typeof ProjectLineItemBulkSchema
 >;
+
+export const CreateProjectLineItemSchema = z.object({
+  projectWbsId: z.string().uuid(),
+  lineItemTemplateId: z.string().uuid(),
+});
+
+export type CreatePliInput = z.infer<typeof CreateProjectLineItemSchema>;

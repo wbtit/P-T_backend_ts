@@ -44,4 +44,12 @@ export class PLIController {
       message: "Line items updated successfully",
     });
   }
+  async createLineItem(req: Request, res: Response) {
+    const item = await projectLineItemService.create(req.body);
+
+    res.status(201).json({
+      status: "success",
+      data: item,
+    });
+  }
 }

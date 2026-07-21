@@ -7,7 +7,7 @@ import {
 } from "./dtos/projectAssist.dtos";
 import { JobStudyRequestSchema, JobStudySchema } from "./jobStudy/dtos";
 import { NoteSchema, NoteUpdateSchema } from "./notes";
-import { ProjectLineItemBulkSchema, UpdateProjectLineItemSchema } from "./projectLineItems";
+import { ProjectLineItemBulkSchema, UpdateProjectLineItemSchema, CreateProjectLineItemSchema } from "./projectLineItems";
 import { CreateWbsBundleTemplateDto, UpdateWbsBundleTemplateDto } from "./WBS/WbsTemplates/dtos/wbsBundle.dto";
 import { CreateWbsLineItemTemplateDto, UpdateWbsLineItemTemplateDto } from "./WBS/WbsTemplates/dtos/wbsLineItemTemplates.dto";
 import { CreateWbsTemplateDto, UpdateWbsTemplateDto } from "./WBS/WbsTemplates/dtos/wbsTemplate.dto";
@@ -78,6 +78,23 @@ export const projectOpenApiDoc: ModuleOpenApiDoc = {
           "200": { description: "Success" },
           "400": { description: "Bad Request" },
           "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
+    "/project/line-items": {
+      post: {
+        tags: ["Project"],
+        summary: "POST /project/line-items",
+        operationId: "post_project_project_line_items",
+        security: [{ bearerAuth: [] }],
+        requestBody: zodRequestBody(CreateProjectLineItemSchema),
+        responses: {
+          "201": { description: "Created" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "404": { description: "Not Found" },
+          "409": { description: "Conflict" },
           "500": { description: "Internal Server Error" }
         }
       },
@@ -450,6 +467,51 @@ export const projectOpenApiDoc: ModuleOpenApiDoc = {
         requestBody: zodRequestBody(
           z.object({
             bundleKeys: z.array(z.string()),
+          })
+        ),
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
+    "/project/projects/{projectId}/wbs/sync": {
+      post: {
+        tags: ["Project"],
+        summary: "POST /project/projects/{projectId}/wbs/sync",
+        operationId: "post_project_project_projects_projectId_wbs_sync",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { in: "path", name: "projectId", required: true, schema: { type: "string" } },
+        ],
+        requestBody: zodRequestBody(
+          z.object({
+            bundleKeys: z.array(z.string()).optional(),
+          }).optional()
+        ),
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
+    "/project/projects/{projectId}/wbs/custom": {
+      post: {
+        tags: ["Project"],
+        summary: "POST /project/projects/{projectId}/wbs/custom",
+        operationId: "post_project_project_projects_projectId_wbs_custom",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { in: "path", name: "projectId", required: true, schema: { type: "string" } },
+        ],
+        requestBody: zodRequestBody(
+          z.object({
+            bundleKey: z.string(),
+            wbsTemplateKey: z.string(),
           })
         ),
         responses: {
