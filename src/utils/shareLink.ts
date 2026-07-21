@@ -28,6 +28,7 @@ const MODEL_MAP: Record<string, string> = {
   rFI:"rFI",
   rFIResponse:"rFIResponse",
   rFQ:"rFQ",
+  CDAttachments:"rFQ",
   rFQResponse:"rFQResponse",
   changeOrder:"changeOrder",
   changeOrders:"changeOrder",
@@ -69,9 +70,18 @@ const createShareLink = async (req: Request, res: Response) => {
 
     if (!row) return res.status(404).json({ message: "Record not found" });
 
-    const files = row.files || [];
+    let files: any[] = [];
+    if (table === "CDAttachments") {
+      files = (row.CDAttachments as any[]) || [];
+    } else if (table === "rFQ") {
+      files = [...((row.files as any[]) || []), ...((row.CDAttachments as any[]) || [])];
+    } else {
+      files = (row.files as any[]) || [];
+    }
 
-    const fileObj = files.find((f: FileObj) => f.id === fileId);
+    console.log("[DEBUG createShareLink]", { table, parentId, fileId, filesCount: files.length });
+
+    const fileObj = files.find((f: any) => f.id === fileId || f.filename === fileId); // Added fallback to filename
 
     if (!fileObj) {
       return res.status(404).json({ message: "File not found in JSON" });
@@ -168,7 +178,16 @@ const downloadShare = async (req: Request, res: Response) => {
 
     if (!row) return res.status(404).json({ message: "Parent record not found" });
 
-    const file = (row.files || []).find((f: FileObj) => f.id === share.fileId);
+    let files: any[] = [];
+    if (share.parentTable === "CDAttachments") {
+      files = (row.CDAttachments as any[]) || [];
+    } else if (share.parentTable === "rFQ") {
+      files = [...((row.files as any[]) || []), ...((row.CDAttachments as any[]) || [])];
+    } else {
+      files = (row.files as any[]) || [];
+    }
+    
+    const file = files.find((f: any) => f.id === share.fileId || f.filename === share.fileId);
     if (!file) return res.status(404).json({ message: "File not found in record" });
 
     const filePath = resolveUploadFilePath(file);
