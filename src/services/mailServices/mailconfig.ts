@@ -38,9 +38,17 @@ const filterInactiveUserEmails = async (emails: string[]): Promise<string[]> => 
     },
   });
 
+  // Track which emails have at least one active user
+  const hasActiveUser = new Set(
+    matchedUsers
+      .filter((user) => user.email && user.isActive)
+      .map((user) => normalizeEmail(user.email!))
+  );
+
+  // An email is considered inactive ONLY if it exists in the DB, but has NO active users
   const inactiveEmails = new Set(
     matchedUsers
-      .filter((user) => user.email && !user.isActive)
+      .filter((user) => user.email && !user.isActive && !hasActiveUser.has(normalizeEmail(user.email!)))
       .map((user) => normalizeEmail(user.email!))
   );
 
