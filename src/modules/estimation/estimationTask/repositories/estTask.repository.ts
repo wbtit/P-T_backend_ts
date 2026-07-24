@@ -35,6 +35,13 @@ const estimationTaskInclude = {
             rfq: { select: { id: true, serialNo: true, files: true } },
         },
     },
+    comment: {
+        include: {
+            user: { select: userNameSelect },
+            reads: true,
+        },
+        orderBy: { created_on: 'desc' }
+    },
 } as const;
 
 type EstimationTaskWithFrontendDetails = Prisma.EstimationTaskGetPayload<{

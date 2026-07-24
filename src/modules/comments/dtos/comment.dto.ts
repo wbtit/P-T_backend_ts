@@ -2,8 +2,8 @@ import z from "zod";
 
 export const createCommentSchema=z.object({
     data:z.string(),
-    task_id:z.string().optional(),
-    estimationTaskId:z.string().optional(),
+    task_id:z.string().nullable().optional().or(z.literal("")).transform(v => v === "" || v === null ? undefined : v),
+    estimationTaskId:z.string().nullable().optional().or(z.literal("")).transform(v => v === "" || v === null ? undefined : v),
     acknowledged:z.boolean().optional(),
     acknowledgedTime:z.date().optional()
 });
