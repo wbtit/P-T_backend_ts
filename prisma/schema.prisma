@@ -1883,7 +1883,7 @@ model ChangeOrdertable {
   updatedAt            DateTime  @updatedAt
 
   //Relations
-  CoRefersTo         ChangeOrder         @relation("CoRefersTo", fields: [CoId], references: [id])
+  CoRefersTo         ChangeOrder         @relation("CoRefersTo", fields: [CoId], references: [id], onDelete: Cascade)
   changeOrderVersion ChangeOrderVersion? @relation(fields: [changeOrderVersionId], references: [id], onDelete: Cascade)
 
   @@index([CoId])
@@ -1903,7 +1903,7 @@ model COResponse {
   createdAt            DateTime            @default(now())
   InvoiceAlerted       Boolean             @default(false)
   //Relations
-  coResponse           ChangeOrder?        @relation("coResponse", fields: [CoId], references: [id])
+  coResponse           ChangeOrder?        @relation("coResponse", fields: [CoId], references: [id], onDelete: Cascade)
   changeOrderVersion   ChangeOrderVersion? @relation(fields: [changeOrderVersionId], references: [id])
   parentResponse       COResponse?         @relation("ParentChildResponse", fields: [parentResponseId], references: [id])
   childResponses       COResponse[]        @relation("ParentChildResponse")

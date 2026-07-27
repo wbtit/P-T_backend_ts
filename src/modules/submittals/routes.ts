@@ -217,4 +217,11 @@ router.get(
   )
 );
 
+router.delete(
+  "/delete/:id",
+  authMiddleware,
+  validate({ params: z.object({ id: z.string() }) }),
+  submittalController.handleDeleteSubmittal.bind(submittalController)
+);
+
 export default router;

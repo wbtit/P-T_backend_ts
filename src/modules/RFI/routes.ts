@@ -197,4 +197,11 @@ router.get(
   rfiResponseController.handleViewFile.bind(rfiResponseController)
 );
 
+router.delete(
+  "/delete/:id",
+  authMiddleware,
+  validate({ params: z.object({ id: z.string() }) }),
+  rfiController.handleDeleteRFI.bind(rfiController)
+);
+
 export default router;

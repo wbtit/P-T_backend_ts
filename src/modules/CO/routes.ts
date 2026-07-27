@@ -268,4 +268,11 @@ router.get(
   coResponseController.handleViewFile.bind(coResponseController)
 );
 
+router.delete(
+  "/delete/:id",
+  authMiddleware,
+  validate({ params: z.object({ id: z.string() }) }),
+  coController.handleDeleteCO.bind(coController)
+);
+
 export default router;

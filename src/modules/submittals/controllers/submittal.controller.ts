@@ -603,4 +603,42 @@ export class SubmittalController {
       data: updated,
     });
   }
+
+  // True Delete Submittal
+  async handleDeleteSubmittal(req: AuthenticateRequest, res: Response) {
+    const { id } = req.params;
+    const role = req.user?.role;
+
+    if (role !== "ADMIN" && role !== "OPERATION_EXECUTIVE" && role !== "DEPUTY_MANAGER") {
+      throw new AppError("Access denied. Only ADMIN, OPERATION_EXECUTIVE, or DEPUTY_MANAGER can delete.", 403);
+    }
+
+    const submittal = await prisma.submittals.findUnique({
+      where: { id },
+      include: {
+        project: { select: { managerID: true } },
+      }
+    });
+
+    if (!submittal) {
+      throw new AppError("Submittal not found", 404);
+    }
+
+    await prisma.submittals.delete({ where: { id } });
+
+    if (submittal.project?.managerID) {
+      const deleterName = [req.user?.firstName, req.user?.lastName].filter(Boolean).join(" ") || req.user?.username || 'Unknown';
+      await sendNotification(submittal.project.managerID, {
+        type: "SUBMITTAL_DELETED",
+        title: "Submittal Deleted",
+        message: `Submittal (${submittal.serialNo || submittal.subject}) was deleted by ${role} (${deleterName}).`,
+        projectId: submittal.project_id
+      });
+    }
+
+    res.status(200).json({
+      status: "success",
+      message: "Submittal deleted successfully.",
+    });
+  }
 }

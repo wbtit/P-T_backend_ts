@@ -9,6 +9,7 @@ import { sendEmail, getCCEmails, getEmailsByRoles, stripHtml } from "../../../se
 import { coHtmlContent } from "../../../services/mailServices/mailtemplates/coMailtemplate";
 import { UserRole } from "@prisma/client";
 import prisma from "../../../config/database/client";
+import { sendNotification } from "../../../utils/sendNotification";
 import { buildRoleScopedNotification } from "../../../utils/stakeholderNotificationMessages";
 import { getFabricatorNameForUser } from "../../../services/mailServices/mailtemplates/footerHelper";
 
@@ -617,6 +618,44 @@ async handlePendingCOsForClient(req: AuthenticateRequest, res: Response) {
     res.status(200).json({
       status: "success",
       data: cos,
+    });
+  }
+
+  // True Delete CO
+  async handleDeleteCO(req: AuthenticateRequest, res: Response) {
+    const { id } = req.params;
+    const role = req.user?.role;
+
+    if (role !== "ADMIN" && role !== "OPERATION_EXECUTIVE" && role !== "DEPUTY_MANAGER") {
+      throw new AppError("Access denied. Only ADMIN, OPERATION_EXECUTIVE, or DEPUTY_MANAGER can delete.", 403);
+    }
+
+    const co = await prisma.changeOrder.findUnique({
+      where: { id },
+      include: {
+        Project: { select: { managerID: true } },
+      }
+    });
+
+    if (!co) {
+      throw new AppError("Change Order not found", 404);
+    }
+
+    await prisma.changeOrder.delete({ where: { id } });
+
+    if (co.Project?.managerID) {
+      const deleterName = [req.user?.firstName, req.user?.lastName].filter(Boolean).join(" ") || req.user?.username || 'Unknown';
+      await sendNotification(co.Project.managerID, {
+        type: "CO_DELETED",
+        title: "Change Order Deleted",
+        message: `Change Order (${co.serialNo || co.changeOrderNumber}) was deleted by ${role} (${deleterName}).`,
+        projectId: co.project
+      });
+    }
+
+    res.status(200).json({
+      status: "success",
+      message: "Change Order deleted successfully.",
     });
   }
 }

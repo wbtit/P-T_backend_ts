@@ -10,6 +10,25 @@ export const submittalsOpenApiDoc: ModuleOpenApiDoc = {
     description: "API endpoints for Submittals module"
   },
   paths: {
+    "/submittal/delete/{id}": {
+      delete: {
+        tags: ["Submittals"],
+        summary: "DELETE /submittal/delete/{id} - True Delete Submittal",
+        operationId: "delete_submittals_submittal",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { in: "path", name: "id", required: true, schema: { type: "string" } },
+        ],
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "403": { description: "Forbidden" },
+          "404": { description: "Submittal not found" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
     "/submittal/pendingSubmittal": {
       get: {
         tags: ["Submittals"],

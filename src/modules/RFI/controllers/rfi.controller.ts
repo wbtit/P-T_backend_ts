@@ -568,4 +568,42 @@ export class RFIController {
       data: pendingRFIs,
     });
   }
+
+  // True Delete RFI
+  async handleDeleteRFI(req: AuthenticateRequest, res: Response) {
+    const { id } = req.params;
+    const role = req.user?.role;
+
+    if (role !== "ADMIN" && role !== "OPERATION_EXECUTIVE" && role !== "DEPUTY_MANAGER") {
+      throw new AppError("Access denied. Only ADMIN, OPERATION_EXECUTIVE, or DEPUTY_MANAGER can delete.", 403);
+    }
+
+    const rfi = await prisma.rFI.findUnique({
+      where: { id },
+      include: {
+        project: { select: { managerID: true } },
+      }
+    });
+
+    if (!rfi) {
+      throw new AppError("RFI not found", 404);
+    }
+
+    await prisma.rFI.delete({ where: { id } });
+
+    if (rfi.project?.managerID) {
+      const deleterName = [req.user?.firstName, req.user?.lastName].filter(Boolean).join(" ") || req.user?.username || 'Unknown';
+      await sendNotification(rfi.project.managerID, {
+        type: "RFI_DELETED",
+        title: "RFI Deleted",
+        message: `RFI (${rfi.serialNo || rfi.subject}) was deleted by ${role} (${deleterName}).`,
+        projectId: rfi.project_id
+      });
+    }
+
+    res.status(200).json({
+      status: "success",
+      message: "RFI deleted successfully.",
+    });
+  }
 }

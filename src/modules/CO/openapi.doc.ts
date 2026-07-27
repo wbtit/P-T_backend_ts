@@ -23,6 +23,25 @@ export const cOOpenApiDoc: ModuleOpenApiDoc = {
         }
       },
     },
+    "/changeOrder/delete/{id}": {
+      delete: {
+        tags: ["ChangeOrder"],
+        summary: "DELETE /changeOrder/delete/{id} - True Delete Change Order",
+        operationId: "delete_CO_changeOrder",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { in: "path", name: "id", required: true, schema: { type: "string" } },
+        ],
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "403": { description: "Forbidden" },
+          "404": { description: "Change Order not found" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
     "/changeOrder/{coId}/versions/{versionId}/{fileId}": {
       get: {
         tags: ["ChangeOrder"],
