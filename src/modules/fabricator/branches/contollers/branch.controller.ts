@@ -27,11 +27,11 @@ async updateBranch(req: Request, res: Response) {
 }
 
 async deleteBranch(req: Request, res: Response) {
-     const existingBranch = await this.branchService.findBranchByName(req.body.name);
-   if (!existingBranch) {
-       throw new AppError("Branch with this name does not exist", 404);
-   }
     const { id } = req.params;
+    const existingBranch = await this.branchService.findBranchById(id);
+    if (!existingBranch) {
+        throw new AppError("Branch does not exist", 404);
+    }
    await this.branchService.deleteBranch({id});
    return res.status(204).json({
     message:"Branch deleted successfully"

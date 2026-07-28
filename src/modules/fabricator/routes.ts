@@ -18,7 +18,7 @@ const fabCtrl = new FabricatorController();
 const branchCtrl = new BranchController();
 const router = Router();
 
-const allowedRoles = ["ADMIN", "DEPUTY_MANAGER", "OPERATION_EXECUTIVE", "PROJECT_MANAGER_OFFICER"];
+const allowedRoles = ["ADMIN", "DEPUTY_MANAGER", "OPERATION_EXECUTIVE", "PROJECT_MANAGER_OFFICER","SALES_PERSON","SALES_MANAGER"];
 const restrictToAllowedRoles = (req: any, res: any, next: any) => {
   if (!req.user || !allowedRoles.includes(req.user.role)) {
     return res.status(403).json({
@@ -67,7 +67,6 @@ router.get(
 router.get(
   "/createdBy",
   authMiddleware,
-  validate({ params: z.object({ id: z.string() }) }),
   asyncHandler(fabCtrl.handleGetFabricatorByCreatedById.bind(fabCtrl))
 );
 
