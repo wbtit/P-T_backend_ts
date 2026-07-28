@@ -36,34 +36,35 @@ export class FabricatorRepository {
 
   async findAll() {
     return prisma.fabricator.findMany({
+      where: { isDeleted: false },
       orderBy: { createdAt: "desc" },
       include: FABRICATOR_INCLUDE,
     });
   }
 
   async findById(input: GetFabricatorInput) {
-    return prisma.fabricator.findUnique({
-      where: { id: input.id },
+    return prisma.fabricator.findFirst({
+      where: { id: input.id, isDeleted: false },
       include: FABRICATOR_INCLUDE,
     });
   }
 
   async findByIdHeadquaters(id: string) {
     return await prisma.fabricator.findFirst({
-      where: { id },
+      where: { id, isDeleted: false },
     });
   }
 
   async findByName(fabName: string) {
-    return prisma.fabricator.findUnique({
-      where: { fabName },
+    return prisma.fabricator.findFirst({
+      where: { fabName, isDeleted: false },
       include: FABRICATOR_INCLUDE,
     });
   }
 
   async findByCreatedById(createdById: GetFabricatorInput) {
     return prisma.fabricator.findMany({
-      where: { createdById: createdById.id },
+      where: { createdById: createdById.id, isDeleted: false },
       include: FABRICATOR_INCLUDE,
     });
   }
