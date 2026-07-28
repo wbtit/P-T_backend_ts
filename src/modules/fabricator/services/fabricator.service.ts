@@ -5,6 +5,7 @@ import { FabricatorRepository } from "../repositories";
 import { resolveUploadFilePath, streamFile } from "../../../utils/fileUtil";
 import { Response } from "express";
 import prisma from "../../../config/database/client";
+import fs from "fs";
 
 const fabRepo = new FabricatorRepository();
 
@@ -88,8 +89,22 @@ export class FabricatorService {
     const fabricator = await fabRepo.findById({ id: fabricatorId });
     if (!fabricator) throw new AppError("Fabricator not found", 404);
 
-    const files = fabricator.files as unknown as { id: string }[];
-    const updatedFiles = files.filter((file) => file.id !== fileId);
+    const files = fabricator.files as unknown as FileObject[];
+    const cleanFileId = fileId.replace(/\.[^/.]+$/, "");
+    const fileObject = files.find((file) => file.id === cleanFileId);
+
+    if (fileObject) {
+      const filePath = resolveUploadFilePath(fileObject);
+      if (filePath && fs.existsSync(filePath)) {
+        try {
+          fs.unlinkSync(filePath);
+        } catch (err) {
+          console.error("Failed to physically delete file:", err);
+        }
+      }
+    }
+
+    const updatedFiles = files.filter((file) => file.id !== cleanFileId);
 
     return fabRepo.update({ id: fabricatorId }, { files: updatedFiles });
   }
