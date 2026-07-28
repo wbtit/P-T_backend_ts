@@ -45,8 +45,8 @@ export const updateMileStoneSchema=createMileStoneSchema.partial();
 
 export const createMileStoneResponseSchema = z.object({
     mileStoneId: z.string(),
-    mileStoneVersionId: z.string().uuid().optional(),
-    parentResponseId: z.string().uuid().optional(),
+    mileStoneVersionId: z.uuid().optional(),
+    parentResponseId: z.uuid().optional(),
     description: z.string().optional(),
     status: z.enum(mileStoneResponseStatus).optional(),
     files: z

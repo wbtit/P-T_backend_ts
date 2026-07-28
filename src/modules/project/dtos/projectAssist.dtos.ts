@@ -1,16 +1,16 @@
 import { z } from "zod";
 
 export const ProjectAssistParamsSchema = z.object({
-  projectId: z.string().uuid(),
+  projectId: z.uuid(),
 });
 
 export const ProjectAssistUserParamsSchema = z.object({
-  projectId: z.string().uuid(),
-  userId: z.string().uuid(),
+  projectId: z.uuid(),
+  userId: z.uuid(),
 });
 
 export const CreateProjectAssistSchema = z.object({
-  userId: z.string().uuid(),
+  userId: z.uuid(),
   isActive: z.boolean().optional().default(true),
 });
 

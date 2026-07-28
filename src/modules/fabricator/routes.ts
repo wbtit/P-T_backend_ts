@@ -45,7 +45,7 @@ router.put(
   restrictToAllowedRoles,
   fabricatorsUploads.array("files"),
   scanUploadMiddleware,
-  validate({ params: z.object({ id: z.string() }), body: UpdateFabricatorSchema }),
+  validate({ params: z.object({ id: z.uuid() }), body: UpdateFabricatorSchema }),
   asyncHandler(fabCtrl.handleUpdateFabricator.bind(fabCtrl))
 );
 
@@ -73,21 +73,21 @@ router.get(
 router.get(
   "/file/:fabricatorId/:fileId",
   authMiddleware,
-  validate({ params: z.object({ fabricatorId: z.string(), fileId: z.string() }) }),
+  validate({ params: z.object({ fabricatorId: z.uuid(), fileId: z.string() }) }),
   asyncHandler(fabCtrl.handleGetFile.bind(fabCtrl))
 );
 
 router.get(
   "/viewFile/:fabricatorId/:fileId",
   authMiddleware,
-  validate({ params: z.object({ fabricatorId: z.string(), fileId: z.string() }) }),
+  validate({ params: z.object({ fabricatorId: z.uuid(), fileId: z.string() }) }),
   asyncHandler(fabCtrl.handleViewFile.bind(fabCtrl))
 );
 
 router.get(
   "/:id",
   authMiddleware,
-  validate({ params: z.object({ id: z.string() }) }),
+  validate({ params: z.object({ id: z.uuid() }) }),
   asyncHandler(fabCtrl.handleGetFabricatorById.bind(fabCtrl))
 );
 
@@ -95,14 +95,14 @@ router.delete(
   "/id/:id",
   authMiddleware,
   restrictToAllowedRoles,
-  validate({ params: z.object({ id: z.string() }) }),
+  validate({ params: z.object({ id: z.uuid() }) }),
   asyncHandler(fabCtrl.handleDeleteFabricator.bind(fabCtrl))
 );
 
 router.delete(
   "/files/:fabricatorId/:fileId",
   authMiddleware,
-  validate({ params: z.object({ fabricatorId: z.string(), fileId: z.string() }) }),
+  validate({ params: z.object({ fabricatorId: z.uuid(), fileId: z.string() }) }),
   asyncHandler(fabCtrl.handleDeleteFile.bind(fabCtrl))
 );
 
@@ -118,7 +118,7 @@ router.put(
   "/branch/:id",
   authMiddleware,
   restrictToAllowedRoles,
-  validate({ params: z.object({ id: z.string() }), body: branchSchema }),
+  validate({ params: z.object({ id: z.uuid() }), body: branchSchema }),
   asyncHandler(branchCtrl.updateBranch.bind(branchCtrl))
 );
 
@@ -126,7 +126,7 @@ router.delete(
   "/branch/:id",
   authMiddleware,
   restrictToAllowedRoles,
-  validate({ params: z.object({ id: z.string() }) }),
+  validate({ params: z.object({ id: z.uuid() }) }),
   asyncHandler(branchCtrl.deleteBranch.bind(branchCtrl))
 );
 

@@ -31,14 +31,14 @@ router.get(
 router.get(
   "/:id",
   authMiddleware,
-  validate({ params: z.object({ id: z.string().uuid() }) }),
+  validate({ params: z.object({ id: z.uuid() }) }),
   asyncHandler(responseCtrl.handleGetResponseById.bind(responseCtrl))
 );
 
 router.get(
   "/quota/:quotaId",
   authMiddleware,
-  validate({ params: z.object({ quotaId: z.string().uuid() }) }),
+  validate({ params: z.object({ quotaId: z.uuid() }) }),
   asyncHandler(responseCtrl.handleGetResponsesByQuotaId.bind(responseCtrl))
 );
 
@@ -47,7 +47,7 @@ router.put(
   authMiddleware,
   connectionDesignerQuotaResponseUploads.array("files", 50),
   validate({
-    params: z.object({ id: z.string().uuid() }),
+    params: z.object({ id: z.uuid() }),
     body: UpdateConnectionDesignerQuotaResponseSchema,
   }),
   asyncHandler(responseCtrl.handleUpdateResponse.bind(responseCtrl))
@@ -56,7 +56,7 @@ router.put(
 router.delete(
   "/:id",
   authMiddleware,
-  validate({ params: z.object({ id: z.string().uuid() }) }),
+  validate({ params: z.object({ id: z.uuid() }) }),
   asyncHandler(responseCtrl.handleDeleteResponse.bind(responseCtrl))
 );
 

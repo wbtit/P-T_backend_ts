@@ -9,7 +9,7 @@ export const createCommentSchema=z.object({
 });
 
 export const markReadSchema = z.object({
-  commentIds: z.array(z.string().uuid()).min(1),
+  commentIds: z.array(z.uuid()).min(1),
 });
 
 export type commentDto= z.infer<typeof createCommentSchema>;

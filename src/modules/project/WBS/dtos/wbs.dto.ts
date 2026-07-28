@@ -8,7 +8,7 @@ import { z } from "zod";
  * User selects bundles for a project
  */
 export const ProjectBundleSelectionSchema = z.object({
-  projectId: z.string().uuid(),
+  projectId: z.uuid(),
   bundleKeys: z.array(z.string()).min(1, "At least one bundle must be selected"),
 });
 
@@ -40,7 +40,7 @@ export type UpdateProjectWbsInput =
  * For dashboard / analytics queries
  */
 export const ProjectWbsQuerySchema = z.object({
-  projectId: z.string().uuid(),
+  projectId: z.uuid(),
   stage: z.enum(Stage),
   discipline: z.enum(WbsDiscipline).optional(), // EXECUTION | CHECKING
   bundleKey: z.string().optional(),

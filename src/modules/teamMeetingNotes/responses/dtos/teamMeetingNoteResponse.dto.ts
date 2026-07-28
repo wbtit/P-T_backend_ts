@@ -3,7 +3,7 @@ import z from "zod";
 
 export const TeamMeetingNoteResponseSchema = z.object({
   content: z.string().min(1),
-  parentResponseId: z.string().uuid().optional(),
+  parentResponseId: z.uuid().optional(),
   files: z
     .union([z.array(z.any()), z.literal(null)])
     .transform((val) => (val === null ? Prisma.JsonNull : val))

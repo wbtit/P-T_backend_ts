@@ -1,7 +1,7 @@
 import z from "zod";
 
 export const CreateWbsLineItemTemplateDto = z.object({
-  wbsTemplateId: z.string().uuid(),
+  wbsTemplateId: z.uuid(),
 
   description: z.string().min(3),
   unitTime: z.number().min(0),

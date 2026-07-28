@@ -1,7 +1,7 @@
 import z from 'zod';
 
 export const branchSchema = z.object({
-  fabricatorId: z.string().uuid(),
+  fabricatorId: z.uuid(),
   name: z.string().min(2).max(100),
   address: z.string().min(2).max(200),
   city: z.string().min(2).max(100),

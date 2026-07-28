@@ -24,17 +24,17 @@ const zStringArrayFromFormData = z.preprocess((val) => {
     }
   }
   return val;
-}, z.array(z.string().uuid()).optional());
+}, z.array(z.uuid()).optional());
 
 // ---------- SUBMITTALS (PARENT / IDENTITY) ----------
 export const createSubmittalsDto = z.object({
-  fabricator_id: z.string().uuid(),
+  fabricator_id: z.uuid(),
   mileStoneIds: zStringArrayFromFormData,
-  project_id: z.string().uuid(),
+  project_id: z.uuid(),
   recepient_id: z.string().optional(),
   clientResponseStatus:z.enum(SubResStatus).optional(),
   multipleRecipients: zStringArrayFromFormData,
-  sender_id: z.string().uuid(),
+  sender_id: z.uuid(),
 
   stage: z.enum(Stage).optional(),
   subject: z.string(),
@@ -68,7 +68,7 @@ export type UpdateSubmittalsDto =
 
 // ---------- SUBMITTAL VERSION (CONTENT / FILES) ----------
 export const createSubmittalVersionDto = z.object({
-  submittalId: z.string().uuid(),
+  submittalId: z.uuid(),
 
   description: z.string(),
   multipleRecipients: zStringArrayFromFormData,
@@ -95,8 +95,8 @@ export type UpdateSubmittalVersionDto =
 
 // ---------- SUBMITTALS RESPONSE ----------
 export const createSubmittalsResponseDto = z.object({
-  submittalsId: z.string().uuid(),
-  submittalVersionId: z.string().uuid().optional(),
+  submittalsId: z.uuid(),
+  submittalVersionId: z.uuid().optional(),
 
   description: z.string().optional(),
   reason: z.string().optional(),
@@ -114,7 +114,7 @@ export const createSubmittalsResponseDto = z.object({
   status: zTrimmedNativeEnum(SubResStatus).optional(),
   wbtStatus: zTrimmedNativeEnum(State).optional(),
 
-  parentResponseId: z.string().uuid().optional(),
+  parentResponseId: z.uuid().optional(),
 });
 
 export const updateSubmittalsResponseDto =

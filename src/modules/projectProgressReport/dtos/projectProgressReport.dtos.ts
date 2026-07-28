@@ -17,7 +17,7 @@ const zStringArrayFromFormData = z.preprocess((val) => {
 }, z.array(z.string()).optional());
 
 export const CreateProjectProgressReportSchema = z.object({
-  projectId: z.string().uuid(),
+  projectId: z.uuid(),
   title: z.string().min(1).max(255),
   message: z.string().min(1),
   stage: z.enum(Stage).optional(),
@@ -30,8 +30,8 @@ export const CreateProjectProgressReportSchema = z.object({
 export const UpdateProjectProgressReportSchema = CreateProjectProgressReportSchema.partial();
 
 export const CreateProjectProgressReportResponseSchema = z.object({
-  reportId: z.string().uuid(),
-  parentResponseId: z.string().uuid().optional(),
+  reportId: z.uuid(),
+  parentResponseId: z.uuid().optional(),
   description: z.string().min(1),
   status: z.enum(ProjectProgressReportStatus).optional(),
   wbtStatus: z.enum(ProjectProgressReportStatus).optional(),

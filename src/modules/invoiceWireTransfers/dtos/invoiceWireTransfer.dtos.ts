@@ -12,7 +12,7 @@ const optionalNullableTrimmedString = (maxLength: number) =>
   }, z.string().max(maxLength).nullable().optional());
 
 export const CreateInvoiceWireTransferSchema = z.object({
-  invoiceIds: z.array(z.string().uuid()).optional(),
+  invoiceIds: z.array(z.uuid()).optional(),
   subject: optionalNullableTrimmedString(255),
   description: z.string().optional(),
   date: z.preprocess(
@@ -27,7 +27,7 @@ export const CreateInvoiceWireTransferSchema = z.object({
 });
 
 export const UpdateInvoiceWireTransferSchema = z.object({
-  invoiceIds: z.array(z.string().uuid()).optional(),
+  invoiceIds: z.array(z.uuid()).optional(),
   subject: optionalNullableTrimmedString(255),
   description: z.string().optional(),
   date: z.preprocess(
@@ -42,7 +42,7 @@ export const UpdateInvoiceWireTransferSchema = z.object({
 });
 
 export const GetInvoiceWireTransferSchema = z.object({
-  id: z.string().uuid(),
+  id: z.uuid(),
 });
 
 export type CreateInvoiceWireTransferInput = z.infer<typeof CreateInvoiceWireTransferSchema>;

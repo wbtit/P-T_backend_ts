@@ -3,17 +3,17 @@ import { zodRequestBody } from "../../openapi/zod";
 import z from "zod";
 
 const measManualBodySchema = z.object({
-  managerId: z.string().uuid(),
-  projectId: z.string().uuid(),
+  managerId: z.uuid(),
+  projectId: z.uuid(),
 });
 
 const managerBiasBodySchema = z.object({
-  managerId: z.string().uuid(),
-  projectId: z.string().uuid().optional(),
+  managerId: z.uuid(),
+  projectId: z.uuid().optional(),
 });
 
 const epsManualBodySchema = z.object({
-  employeeId: z.string().uuid(),
+  employeeId: z.uuid(),
   year: z.number().int(),
   month: z.number().int().min(1).max(12),
 });
@@ -24,7 +24,7 @@ const epsRunAllBodySchema = z.object({
 });
 
 const tesRunTeamBodySchema = z.object({
-  teamId: z.string().uuid(),
+  teamId: z.uuid(),
   year: z.number().int().min(2000).max(2100).optional(),
   month: z.number().int().min(1).max(12).optional(),
 });
@@ -35,7 +35,7 @@ const tesRunAllBodySchema = z.object({
 });
 
 const scoresSummaryBodySchema = z.object({
-  projectId: z.string().uuid().optional(),
+  projectId: z.uuid().optional(),
   year: z.number().int().min(2000).max(2100).optional(),
   month: z.number().int().min(1).max(12).optional(),
 });

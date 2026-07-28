@@ -17,7 +17,7 @@ const zStringArrayFromFormData = z.preprocess((val) => {
     }
   }
   return val;
-}, z.array(z.string().uuid()).optional());
+}, z.array(z.uuid()).optional());
 
 /* -------------------- RFI DTO -------------------- */
 export const RFISchema = z.object({

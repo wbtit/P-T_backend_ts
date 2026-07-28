@@ -30,7 +30,7 @@ router.put(
   authMiddleware,
   // roleMiddleware("ADMIN"),
   validate({
-    params: z.object({ id: z.string().uuid() }),
+    params: z.object({ id: z.uuid() }),
     body: UpdateWbsLineItemTemplateDto,
   }),
   asyncHandler(lineItemcontroller.update.bind(lineItemcontroller))

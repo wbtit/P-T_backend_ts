@@ -47,7 +47,7 @@ export const teamOpenApiDoc: ModuleOpenApiDoc = {
         ],
         requestBody: zodRequestBody(
           z.object({
-            teamId: z.string().uuid(),
+            teamId: z.uuid(),
             userId: z.string(),
           })
         ),
@@ -67,7 +67,7 @@ export const teamOpenApiDoc: ModuleOpenApiDoc = {
         security: [{ bearerAuth: [] }],
         requestBody: zodRequestBody(
           z.object({
-            teamId: z.string().uuid(),
+            teamId: z.uuid(),
             userId: z.string(),
           })
         ),

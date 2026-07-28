@@ -30,7 +30,7 @@ router.get("/", authMiddleware, controller.getAll);
 router.get(
   "/project/:projectId",
   authMiddleware,
-  validate({ params: z.object({ projectId: z.string().uuid() }) }),
+  validate({ params: z.object({ projectId: z.uuid() }) }),
   controller.getByProjectId
 );
 router.get(
@@ -38,7 +38,7 @@ router.get(
   authMiddleware,
   validate({
     params: z.object({
-      drawingId: z.string().uuid(),
+      drawingId: z.uuid(),
       fileId: z.string(),
     }),
   }),
@@ -49,7 +49,7 @@ router.get(
   authMiddleware,
   validate({
     params: z.object({
-      drawingId: z.string().uuid(),
+      drawingId: z.uuid(),
       fileId: z.string(),
     }),
   }),
@@ -58,7 +58,7 @@ router.get(
 router.get(
   "/:id",
   authMiddleware,
-  validate({ params: z.object({ id: z.string().uuid() }) }),
+  validate({ params: z.object({ id: z.uuid() }) }),
   controller.get
 );
 router.patch(
@@ -67,7 +67,7 @@ router.patch(
   coordinationDrawingUploads.array("files"),
   scanUploadMiddleware,
   validate({
-    params: z.object({ id: z.string().uuid() }),
+    params: z.object({ id: z.uuid() }),
     body: UpdateCoordinationDrawingSchema,
   }),
   controller.update
@@ -75,7 +75,7 @@ router.patch(
 router.delete(
   "/:id",
   authMiddleware,
-  validate({ params: z.object({ id: z.string().uuid() }) }),
+  validate({ params: z.object({ id: z.uuid() }) }),
   controller.delete
 );
 
@@ -92,7 +92,7 @@ router.get(
   authMiddleware,
   validate({
     params: z.object({
-      responseId: z.string().uuid(),
+      responseId: z.uuid(),
       fileId: z.string(),
     }),
   }),
@@ -103,7 +103,7 @@ router.get(
   authMiddleware,
   validate({
     params: z.object({
-      responseId: z.string().uuid(),
+      responseId: z.uuid(),
       fileId: z.string(),
     }),
   }),
@@ -112,7 +112,7 @@ router.get(
 router.get(
   "/response/:id",
   authMiddleware,
-  validate({ params: z.object({ id: z.string().uuid() }) }),
+  validate({ params: z.object({ id: z.uuid() }) }),
   controller.getResponse
 );
 router.patch(
@@ -121,7 +121,7 @@ router.patch(
   coordinationDrawingResponseUploads.array("files"),
   scanUploadMiddleware,
   validate({
-    params: z.object({ id: z.string().uuid() }),
+    params: z.object({ id: z.uuid() }),
     body: UpdateCoordinationDrawingResponseSchema,
   }),
   controller.updateResponse
@@ -129,13 +129,13 @@ router.patch(
 router.delete(
   "/response/:id",
   authMiddleware,
-  validate({ params: z.object({ id: z.string().uuid() }) }),
+  validate({ params: z.object({ id: z.uuid() }) }),
   controller.deleteResponse
 );
 router.get(
   "/drawing/:drawingId/responses",
   authMiddleware,
-  validate({ params: z.object({ drawingId: z.string().uuid() }) }),
+  validate({ params: z.object({ drawingId: z.uuid() }) }),
   controller.getResponsesByDrawingId
 );
 

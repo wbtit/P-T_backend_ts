@@ -2,8 +2,8 @@ import { z } from "zod";
 import { QuotaResponseStatus } from "@prisma/client";
 
 export const CreateConnectionDesignerQuotaResponseSchema = z.object({
-  quotaId: z.string().uuid(),
-  parentId: z.string().uuid().optional(),
+  quotaId: z.uuid(),
+  parentId: z.uuid().optional(),
   mainSteelPrice: z.coerce.number().optional(),
   miscSteelPrice: z.coerce.number().optional(),
   description: z.string().optional(),
