@@ -178,3 +178,79 @@ export async function moveProjectToCompleted(params: {
 
   return { movedPaths, skippedPaths }
 }
+
+export async function moveProjectToArchived(params: {
+  fabricatorName: string
+  rfqSerialNo: string
+  rfqProjectName: string
+  projectCode: string | null
+  projectName: string
+}): Promise<{ movedPaths: string[]; skippedPaths: string[] }> {
+  const fabFolder = sanitizeFolderName(params.fabricatorName)
+
+  const rfqIdentifierPrefixed = `${sanitizeFolderName(params.rfqSerialNo)}_${sanitizeFolderName(params.rfqProjectName)}`
+  const rfqIdentifierFallback = sanitizeFolderName(params.rfqProjectName)
+
+  const projectIdentifierPrefixed = params.projectCode
+    ? `${sanitizeFolderName(params.projectCode)}_${sanitizeFolderName(params.projectName)}`
+    : sanitizeFolderName(params.projectName)
+  const projectIdentifierFallback = sanitizeFolderName(params.projectName)
+
+  const archivedBase = path.join(UPLOAD_BASE_DIR, fabFolder, "archived")
+  const archivedRfqBase = path.join(archivedBase, "rfq")
+  const completedBase = path.join(UPLOAD_BASE_DIR, fabFolder, "completed_projects")
+  const completedRfqBase = path.join(completedBase, "rfq")
+
+  fs.mkdirSync(archivedRfqBase, { recursive: true })
+
+  const movedPaths: string[] = []
+  const skippedPaths: string[] = []
+
+  const rfqSrcPrefixed = path.join(completedRfqBase, rfqIdentifierPrefixed)
+  const rfqSrcFallback = path.join(completedRfqBase, rfqIdentifierFallback)
+  
+  let rfqSrc = rfqSrcPrefixed;
+  let rfqDestName = rfqIdentifierPrefixed;
+  if (!fs.existsSync(rfqSrc) && fs.existsSync(rfqSrcFallback)) {
+    rfqSrc = rfqSrcFallback;
+    rfqDestName = rfqIdentifierFallback;
+  }
+
+  const projSrcPrefixed = path.join(completedBase, projectIdentifierPrefixed)
+  const projSrcFallback = path.join(completedBase, projectIdentifierFallback)
+
+  let projSrc = projSrcPrefixed;
+  let projDestName = projectIdentifierPrefixed;
+  if (!fs.existsSync(projSrc) && fs.existsSync(projSrcFallback)) {
+    projSrc = projSrcFallback;
+    projDestName = projectIdentifierFallback;
+  }
+
+  const moves = [
+    {
+      src: rfqSrc,
+      dest: path.join(archivedRfqBase, rfqDestName),
+      label: "RFQ folder",
+    },
+    {
+      src: projSrc,
+      dest: path.join(archivedBase, projDestName),
+      label: "Project folder",
+    },
+  ]
+
+  for (const move of moves) {
+    if (!fs.existsSync(move.src)) {
+      skippedPaths.push(`${move.label}: source not found (${move.src})`)
+      continue
+    }
+    if (fs.existsSync(move.dest)) {
+      skippedPaths.push(`${move.label}: destination already exists (${move.dest})`)
+      continue
+    }
+    fs.renameSync(move.src, move.dest)
+    movedPaths.push(`${move.label}: ${move.src} → ${move.dest}`)
+  }
+
+  return { movedPaths, skippedPaths }
+}

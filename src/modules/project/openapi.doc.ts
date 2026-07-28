@@ -244,6 +244,26 @@ export const projectOpenApiDoc: ModuleOpenApiDoc = {
         }
       },
     },
+    "/project/projects/{id}/archive": {
+      post: {
+        tags: ["Project"],
+        summary: "Archive project files",
+        description: "Manually triggers the file archival process for a completed project. Moves operational and RFQ files to the completed_projects directory. Restricted to ADMIN, DEPUTY_MANAGER, OPERATION_EXECUTIVE, PROJECT_MANAGER_OFFICER.",
+        operationId: "post_project_projects_id_archive",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { in: "path", name: "id", required: true, schema: { type: "string", format: "uuid" } },
+        ],
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "403": { description: "Forbidden" },
+          "404": { description: "Project not found" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
     "/project/projects/{projectId}/bundles": {
       get: {
         tags: ["Project"],

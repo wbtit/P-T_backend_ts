@@ -1,4 +1,4 @@
-import { moveProjectToCompleted } from "../../../utils/fileStorageHelper";
+import { moveProjectToCompleted, moveProjectToArchived } from "../../../utils/fileStorageHelper";
 import { Stage, UserRole } from "@prisma/client";
 import prisma from "../../../config/database/client";
 import { AppError } from "../../../config/utils/AppError";
@@ -129,7 +129,36 @@ import { invalidateDashboardCache, invalidationPatterns } from "../../../utils/d
   });
 
   if (data.status === "COMPLETE") {
-    // Fetch everything needed for path reconstruction
+    const fullProject = await prisma.project.findUnique({
+      where: { id },
+      select: {
+        name: true,
+        projectCode: true,
+        rfq: { select: { serialNo: true, projectName: true } },
+        fabricator: { select: { fabName: true } }
+      }
+    });
+
+    if (fullProject && fullProject.rfq && fullProject.fabricator) {
+      try {
+        const result = await moveProjectToCompleted({
+          fabricatorName: fullProject.fabricator.fabName,
+          rfqSerialNo: fullProject.rfq.serialNo ?? fullProject.rfq.projectName,
+          rfqProjectName: fullProject.rfq.projectName,
+          projectCode: fullProject.projectCode ?? null,
+          projectName: fullProject.name,
+        });
+        console.info("[ProjectComplete] Moved paths:", result.movedPaths);
+      } catch (err) {
+        console.error("[ProjectComplete] File move failed:", err);
+      }
+    }
+  }
+
+  return updatedProject;
+}
+
+  async archiveProjectFiles(id: string) {
     const fullProject = await prisma.project.findUnique({
       where: { id },
       select: {
@@ -147,27 +176,25 @@ import { invalidateDashboardCache, invalidationPatterns } from "../../../utils/d
       }
     });
 
+    if (!fullProject) throw new AppError("Project not found", 404);
+
     if (fullProject && fullProject.rfq && fullProject.fabricator) {
-      try {
-        const result = await moveProjectToCompleted({
-          fabricatorName: fullProject.fabricator.fabName,
-          rfqSerialNo: fullProject.rfq.serialNo ?? fullProject.rfq.projectName,
-          rfqProjectName: fullProject.rfq.projectName,
-          projectCode: fullProject.projectCode ?? null,
-          projectName: fullProject.name,
-        });
-        console.info("[ProjectComplete] Moved paths:", result.movedPaths);
-        if (result.skippedPaths.length > 0) {
-          console.warn("[ProjectComplete] Skipped:", result.skippedPaths);
-        }
-      } catch (err) {
-        console.error("[ProjectComplete] File move failed — status updated but files not moved:", err);
+      const result = await moveProjectToArchived({
+        fabricatorName: fullProject.fabricator.fabName,
+        rfqSerialNo: fullProject.rfq.serialNo ?? fullProject.rfq.projectName,
+        rfqProjectName: fullProject.rfq.projectName,
+        projectCode: fullProject.projectCode ?? null,
+        projectName: fullProject.name,
+      });
+      console.info("[ProjectArchive] Moved paths:", result.movedPaths);
+      if (result.skippedPaths.length > 0) {
+        console.warn("[ProjectArchive] Skipped:", result.skippedPaths);
       }
+      return result;
+    } else {
+      throw new AppError("Project is missing RFQ or Fabricator data, cannot archive files.", 400);
     }
   }
-
-  return updatedProject;
-}
 
   async awardProject(id: string) {
     const existing = await prisma.project.findUnique({

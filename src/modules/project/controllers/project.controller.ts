@@ -427,6 +427,15 @@ async addWbs(req: AuthenticateRequest, res: Response) {
       });
     }
 
+    async handleArchiveProjectFiles(req: AuthenticateRequest, res: Response) {
+        const { id } = req.params;
+        const result = await projectService.archiveProjectFiles(id);
+        res.status(200).json({
+            message: "Project files archived successfully",
+            data: result
+        });
+    }
+
     async handlePatchProjectAssist(req: AuthenticateRequest, res: Response) {
       if (!req.user) {
         return res.status(401).json({ status: "error", message: "Unauthorized" });

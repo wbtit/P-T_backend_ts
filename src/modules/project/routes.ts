@@ -1,5 +1,6 @@
 import Router from "express";
 import authMiddleware from "../../middleware/authMiddleware";
+import { roleGuard } from "../../middleware/roleGuard";
 import validate from "../../middleware/validate";
 import { JobStudyController } from "./jobStudy";
 import { 
@@ -58,6 +59,13 @@ asyncHandler(projectController.handleGetProject.bind(projectController)));
 
 router.delete("/projects/:id", authMiddleware, validate({params:z.object({id:z.string()})}), 
 asyncHandler(projectController.handleDeleteProject.bind(projectController)));
+
+router.post("/projects/:id/archive", 
+  authMiddleware, 
+  roleGuard(["ADMIN", "DEPUTY_MANAGER", "OPERATION_EXECUTIVE", "PROJECT_MANAGER_OFFICER"]), 
+  validate({params:z.object({id:z.string()})}), 
+  asyncHandler(projectController.handleArchiveProjectFiles.bind(projectController))
+);
 
 router.get("/projects", authMiddleware, asyncHandler(projectController.handleGetAllProjects.bind(projectController)));
 

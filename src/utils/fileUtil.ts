@@ -33,20 +33,24 @@ export function resolveUploadFilePath(file: StoredFilePathLike) {
 
     candidates.add(path.resolve(baseDir, trimmedValue));
 
-    // Support for projects moved to the completed_projects archive
+    // Support for projects moved to the completed_projects or archived folders
     const parts = trimmedValue.split("/");
     if (parts.length >= 2) {
-      if (parts[1] !== "completed_projects") {
+      if (parts[1] !== "completed_projects" && parts[1] !== "archived") {
         const completedPath = [parts[0], "completed_projects", ...parts.slice(1)].join("/");
         candidates.add(path.resolve(baseDir, completedPath));
+        
+        const archivedPath = [parts[0], "archived", ...parts.slice(1)].join("/");
+        candidates.add(path.resolve(baseDir, archivedPath));
       }
 
       // Fallback for fabricator name changes (e.g., commas removed from DB name)
       const sanitizedFab = parts[0].replace(/,/g, "").replace(/_+/g, "_");
       if (sanitizedFab !== parts[0]) {
         candidates.add(path.resolve(baseDir, [sanitizedFab, ...parts.slice(1)].join("/")));
-        if (parts[1] !== "completed_projects") {
+        if (parts[1] !== "completed_projects" && parts[1] !== "archived") {
           candidates.add(path.resolve(baseDir, [sanitizedFab, "completed_projects", ...parts.slice(1)].join("/")));
+          candidates.add(path.resolve(baseDir, [sanitizedFab, "archived", ...parts.slice(1)].join("/")));
         }
       }
     }
@@ -67,6 +71,26 @@ export function streamFile(res:Response, filePath: string, originalName: string)
 
   if (!resolvedPath.startsWith(resolvedBaseDir)) {
     return res.status(403).json({ message: "Forbidden" });
+  }
+
+  if (resolvedPath.includes("/archived/") || resolvedPath.includes("\\archived\\")) {
+    const req = (res as any).req;
+    const reqUser = req?.user;
+    const localsUser = res.locals?.user;
+    
+    console.log("\n================ [ARCHIVE FILE ACCESS DEBUG] ================");
+    console.log("1. Resolved Path:", resolvedPath);
+    console.log("2. res.locals.user:", localsUser ? `Exists (Role: ${localsUser.role})` : "UNDEFINED");
+    console.log("3. req.user:", reqUser ? `Exists (Role: ${reqUser.role})` : "UNDEFINED");
+    console.log("===============================================================\n");
+
+    const userRole = localsUser?.role || reqUser?.role;
+    const allowedRoles = ["ADMIN", "DEPUTY_MANAGER", "OPERATION_EXECUTIVE"];
+    
+    if (!userRole || !allowedRoles.includes(userRole)) {
+      console.warn(`[FileGuard] Blocked access to archived file. Extracted Role: ${userRole || 'UNKNOWN'}`);
+      return res.status(403).json({ message: "Forbidden: You do not have permission to read/download archived files.", debugRole: userRole || 'UNKNOWN' });
+    }
   }
 
   if (!fs.existsSync(resolvedPath)) {
