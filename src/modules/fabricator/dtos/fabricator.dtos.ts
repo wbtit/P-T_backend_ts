@@ -32,13 +32,22 @@ export const CreateFabricatorSchema=z.object({
     fabStage:z.enum(FabricatirStage),
     pointOfContact: zStringArrayFromForm.optional(),
     wbtFabricatorPointOfContact: zStringArrayFromForm.optional(),
-    files: z
-                .union([
-                  z.array(z.any()),
-                  z.literal(null),
-                ])
-                .transform((val) => (val === null ? Prisma.JsonNull : val))
-                .optional(),
+    files: z.preprocess((val) => {
+        if (typeof val === "string") {
+            try {
+                return JSON.parse(val);
+            } catch {
+                return val;
+            }
+        }
+        return val;
+    }, z
+      .union([
+        z.array(z.any()),
+        z.literal(null),
+      ])
+      .transform((val) => (val === null ? Prisma.JsonNull : val))
+      .optional()),
 });
 
 export const UpdateFabricatorSchema=CreateFabricatorSchema.partial();
