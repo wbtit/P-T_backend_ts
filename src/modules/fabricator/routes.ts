@@ -18,9 +18,21 @@ const fabCtrl = new FabricatorController();
 const branchCtrl = new BranchController();
 const router = Router();
 
+const allowedRoles = ["ADMIN", "DEPUTY_MANAGER", "OPERATION_EXECUTIVE", "PROJECT_MANAGER_OFFICER"];
+const restrictToAllowedRoles = (req: any, res: any, next: any) => {
+  if (!req.user || !allowedRoles.includes(req.user.role)) {
+    return res.status(403).json({
+      success: false,
+      message: "Not allowed: Only ADMIN, DEPUTY_MANAGER, OPERATION_EXECUTIVE, or PROJECT_MANAGER_OFFICER can perform this action."
+    });
+  }
+  next();
+};
+
 router.post(
   "/",
   authMiddleware,
+  restrictToAllowedRoles,
   fabricatorsUploads.array("files"),
   scanUploadMiddleware,
   validate({ body: CreateFabricatorSchema }),
@@ -30,6 +42,7 @@ router.post(
 router.put(
   "/update/:id",
   authMiddleware,
+  restrictToAllowedRoles,
   fabricatorsUploads.array("files"),
   scanUploadMiddleware,
   validate({ params: z.object({ id: z.string() }), body: UpdateFabricatorSchema }),
@@ -82,6 +95,7 @@ router.get(
 router.delete(
   "/id/:id",
   authMiddleware,
+  restrictToAllowedRoles,
   validate({ params: z.object({ id: z.string() }) }),
   asyncHandler(fabCtrl.handleDeleteFabricator.bind(fabCtrl))
 );
@@ -96,6 +110,7 @@ router.delete(
 router.post(
   "/branch",
   authMiddleware,
+  restrictToAllowedRoles,
   validate({ body: branchSchema }),
   asyncHandler(branchCtrl.createBranch.bind(branchCtrl))
 );
@@ -103,6 +118,7 @@ router.post(
 router.put(
   "/branch/:id",
   authMiddleware,
+  restrictToAllowedRoles,
   validate({ params: z.object({ id: z.string() }), body: branchSchema }),
   asyncHandler(branchCtrl.updateBranch.bind(branchCtrl))
 );
@@ -110,6 +126,7 @@ router.put(
 router.delete(
   "/branch/:id",
   authMiddleware,
+  restrictToAllowedRoles,
   validate({ params: z.object({ id: z.string() }) }),
   asyncHandler(branchCtrl.deleteBranch.bind(branchCtrl))
 );
