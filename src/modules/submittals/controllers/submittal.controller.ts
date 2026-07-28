@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { AuthenticateRequest } from "../../../middleware/authMiddleware";
 import { AppError } from "../../../config/utils/AppError";
+import { isWithinWorkingHoursIST } from "../../../config/utils/timeCheck.util";
 import { SubmittalService } from "../services";
 import { computeSubmittalStatus } from "../utils/statusHelper";
 import { getRfiSubmittalVisibilityFilter } from "../../../utils/roleFilter";
@@ -91,6 +92,14 @@ export class SubmittalController {
     if (!user) throw new AppError("User not found", 404);
 
     const { id: userId, role } = user;
+    
+    // Validate Time Window for non-exempt roles
+    const exemptRoles = ["ADMIN", "DEPUTY_MANAGER"];
+    if (!exemptRoles.includes(role)) {
+      if (!isWithinWorkingHoursIST()) {
+        throw new AppError("Submittal creation is restricted outside of working hours. You can only create submittals between 7:00 AM and 11:55 PM IST.", 403);
+      }
+    }
     const access = await projectAssistService.assertRfiSubmittalCreateUpdateAccess(
       req.body.project_id,
       user,
@@ -624,7 +633,13 @@ export class SubmittalController {
       throw new AppError("Submittal not found", 404);
     }
 
-    await prisma.submittals.delete({ where: { id } });
+    await prisma.$transaction([
+      prisma.submittals.update({ where: { id }, data: { currentVersionId: null } }),
+      prisma.milestoneSubmittal.deleteMany({ where: { submittalId: id } }),
+      prisma.submittalsResponse.deleteMany({ where: { submittalsId: id } }),
+      prisma.submittalVersion.deleteMany({ where: { submittalId: id } }),
+      prisma.submittals.delete({ where: { id } })
+    ]);
 
     if (submittal.project?.managerID) {
       const deleterName = [req.user?.firstName, req.user?.lastName].filter(Boolean).join(" ") || req.user?.username || 'Unknown';

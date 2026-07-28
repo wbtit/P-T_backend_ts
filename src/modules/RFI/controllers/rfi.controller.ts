@@ -589,7 +589,10 @@ export class RFIController {
       throw new AppError("RFI not found", 404);
     }
 
-    await prisma.rFI.delete({ where: { id } });
+    await prisma.$transaction([
+      prisma.rFIResponse.deleteMany({ where: { rfiId: id } }),
+      prisma.rFI.delete({ where: { id } })
+    ]);
 
     if (rfi.project?.managerID) {
       const deleterName = [req.user?.firstName, req.user?.lastName].filter(Boolean).join(" ") || req.user?.username || 'Unknown';

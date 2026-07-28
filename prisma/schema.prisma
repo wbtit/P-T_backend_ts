@@ -1596,6 +1596,7 @@ model EstimationLineItemGroup {
   totalDays    Float?
   totalHours   Float?
   weeks        Float?
+  fabStandards Float?     @default(0.0)
 
   lineItems EstimationLineItem[] // each group can have many line items
 }
@@ -1883,7 +1884,7 @@ model ChangeOrdertable {
   updatedAt            DateTime  @updatedAt
 
   //Relations
-  CoRefersTo         ChangeOrder         @relation("CoRefersTo", fields: [CoId], references: [id], onDelete: Cascade)
+  CoRefersTo         ChangeOrder         @relation("CoRefersTo", fields: [CoId], references: [id])
   changeOrderVersion ChangeOrderVersion? @relation(fields: [changeOrderVersionId], references: [id], onDelete: Cascade)
 
   @@index([CoId])
@@ -1903,7 +1904,7 @@ model COResponse {
   createdAt            DateTime            @default(now())
   InvoiceAlerted       Boolean             @default(false)
   //Relations
-  coResponse           ChangeOrder?        @relation("coResponse", fields: [CoId], references: [id], onDelete: Cascade)
+  coResponse           ChangeOrder?        @relation("coResponse", fields: [CoId], references: [id])
   changeOrderVersion   ChangeOrderVersion? @relation(fields: [changeOrderVersionId], references: [id])
   parentResponse       COResponse?         @relation("ParentChildResponse", fields: [parentResponseId], references: [id])
   childResponses       COResponse[]        @relation("ParentChildResponse")

@@ -9,6 +9,7 @@ export const createLineItemGroupSchema = z.object({
     totalDays: z.number().optional(),
     totalHours: z.number().optional(),
     weeks: z.number().optional(),
+    fabStandards: z.number().optional(),
 })
 export const updateLineItemGroupSchema = createLineItemGroupSchema.partial();
 

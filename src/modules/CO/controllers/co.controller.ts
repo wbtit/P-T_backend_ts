@@ -641,7 +641,13 @@ async handlePendingCOsForClient(req: AuthenticateRequest, res: Response) {
       throw new AppError("Change Order not found", 404);
     }
 
-    await prisma.changeOrder.delete({ where: { id } });
+    await prisma.$transaction([
+      prisma.changeOrder.update({ where: { id }, data: { currentVersionId: null } }),
+      prisma.changeOrdertable.deleteMany({ where: { CoId: id } }),
+      prisma.cOResponse.deleteMany({ where: { CoId: id } }),
+      prisma.changeOrderVersion.deleteMany({ where: { changeOrderId: id } }),
+      prisma.changeOrder.delete({ where: { id } })
+    ]);
 
     if (co.Project?.managerID) {
       const deleterName = [req.user?.firstName, req.user?.lastName].filter(Boolean).join(" ") || req.user?.username || 'Unknown';
