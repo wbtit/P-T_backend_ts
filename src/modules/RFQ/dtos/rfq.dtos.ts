@@ -90,6 +90,7 @@ export const CreateRfqSchema = z.object({
 });
 
 export const UpdateRfqSchema = CreateRfqSchema.partial();
+export const UpdateRfqPayloadSchema = CreateRfqSchema.omit({ status: true, wbtStatus: true }).partial();
 
 export type CreateRfqInput = z.infer<typeof CreateRfqSchema>;
 export type UpdateRfqInput = z.infer<typeof UpdateRfqSchema>;

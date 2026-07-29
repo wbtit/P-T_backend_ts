@@ -3,7 +3,7 @@ import { RFQController } from "./controllers";
 import validate from "../../middleware/validate";
 import authMiddleware from "../../middleware/authMiddleware";
 import { scanUploadMiddleware } from "../../middleware/scanUpload.middleware";
-import { CreateRfqSchema,UpdateRfqSchema } from "./dtos";
+import { CreateRfqSchema,UpdateRfqPayloadSchema } from "./dtos";
 
 import { RfqResponseSchema} from "./RFQresponse";
 import { RfqResponseController } from "./RFQresponse";
@@ -83,7 +83,7 @@ router.put(
     authMiddleware,
     rfqCombinedUploads,
     scanUploadMiddleware,
-    validate({params:z.object({id:z.string()}),body:UpdateRfqSchema}),
+    validate({params:z.object({id:z.string()}),body:UpdateRfqPayloadSchema}),
     rfqController.handleUpdateRfq.bind(rfqController)
 );
 
