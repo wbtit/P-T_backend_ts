@@ -101,6 +101,7 @@ router.delete(
 router.delete(
   "/files/:fabricatorId/:fileId",
   authMiddleware,
+   restrictToAllowedRoles,
   validate({ params: z.object({ fabricatorId: z.uuid(), fileId: z.string() }) }),
   asyncHandler(fabCtrl.handleDeleteFile.bind(fabCtrl))
 );
@@ -132,6 +133,7 @@ router.delete(
 router.get(
   "/branch/:id",
   authMiddleware,
+   restrictToAllowedRoles,
   validate({ params: z.object({ id: z.uuid() }) }),
   asyncHandler(branchCtrl.getBranchById.bind(branchCtrl))
 );
@@ -139,6 +141,7 @@ router.get(
 router.get(
   "/branch/fabricator/:fabricatorId",
   authMiddleware,
+   restrictToAllowedRoles,
   validate({ params: z.object({ fabricatorId: z.uuid() }) }),
   asyncHandler(branchCtrl.getBranchesByFabricatorId.bind(branchCtrl))
 );
