@@ -78,18 +78,11 @@ export function streamFile(res:Response, filePath: string, originalName: string)
     const reqUser = req?.user;
     const localsUser = res.locals?.user;
     
-    console.log("\n================ [ARCHIVE FILE ACCESS DEBUG] ================");
-    console.log("1. Resolved Path:", resolvedPath);
-    console.log("2. res.locals.user:", localsUser ? `Exists (Role: ${localsUser.role})` : "UNDEFINED");
-    console.log("3. req.user:", reqUser ? `Exists (Role: ${reqUser.role})` : "UNDEFINED");
-    console.log("===============================================================\n");
-
     const userRole = localsUser?.role || reqUser?.role;
     const allowedRoles = ["ADMIN", "DEPUTY_MANAGER", "OPERATION_EXECUTIVE"];
     
     if (!userRole || !allowedRoles.includes(userRole)) {
-      console.warn(`[FileGuard] Blocked access to archived file. Extracted Role: ${userRole || 'UNKNOWN'}`);
-      return res.status(403).json({ message: "Forbidden: You do not have permission to read/download archived files.", debugRole: userRole || 'UNKNOWN' });
+      return res.status(403).json({ message: "Forbidden: You do not have permission to read/download archived files." });
     }
   }
 
