@@ -56,6 +56,32 @@ export const findUserByIdWithPassword = async (id: string) => {
  * Returns ALL users regardless of active status.
  * Used internally by admin-level queries.
  */
+export const findManagementUsers = async () => {
+  return await prisma.user.findMany({
+    where: {
+      role: {
+        in: [
+          "PROJECT_MANAGER_OFFICER",
+          "SALES_MANAGER",
+          "SALES_PERSON",
+          "ADMIN",
+          "DEPUTY_MANAGER",
+          "OPERATION_EXECUTIVE"
+        ]
+      },
+      isActive: true,
+     
+    },
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      role: true,
+      email: true
+    }
+  });
+};
+
 export const findAllUsers = async () => {
   return await prisma.user.findMany({
     include: {

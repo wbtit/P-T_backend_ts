@@ -49,4 +49,12 @@ export class UserController {
       data: result,
     });
   }
+
+  async handleGetManagementUsers(req: AuthenticateRequest, res: Response) {
+    const result = await userService.getManagementUsers();
+    return res.status(200).json({
+      status: "success",
+      data: result,
+    });
+  }
 }

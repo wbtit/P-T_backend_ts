@@ -28,4 +28,10 @@ router.get(
   asyncHandler(userCtrl.handleGetAllUsers.bind(userCtrl))
 );
 
+router.get(
+  "/management-users",
+  authMiddleware,
+  asyncHandler(userCtrl.handleGetManagementUsers.bind(userCtrl))
+);
+
 export default router;

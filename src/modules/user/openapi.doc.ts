@@ -300,6 +300,20 @@ export const userOpenApiDoc: ModuleOpenApiDoc = {
         }
       },
     },
+    "/user/management-users": {
+      get: {
+        tags: ["User"],
+        summary: "Get Management Users",
+        description: "Fetches users whose roles fall strictly into management categories: PROJECT_MANAGER_OFFICER, SALES_MANAGER, SALES_PERSON, ADMIN, DEPUTY_MANAGER, and OPERATION_EXECUTIVE.",
+        operationId: "get_user_management_users",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": { description: "Success" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
   }
 };
 

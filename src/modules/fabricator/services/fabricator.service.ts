@@ -21,8 +21,20 @@ export class FabricatorService {
     return fabricator;
   }
 
-  async getAllFabricators() {
-    return fabRepo.findAll();
+  async getAllFabricators(page: number = 1, limit: number = 10, filters?: { search?: string; stage?: string; contactId?: string }) {
+    const skip = (page - 1) * limit;
+    const [data, total] = await Promise.all([
+      fabRepo.findAll(skip, limit, filters),
+      fabRepo.countAll(filters),
+    ]);
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 
   async getFabricatorById(id: string) {

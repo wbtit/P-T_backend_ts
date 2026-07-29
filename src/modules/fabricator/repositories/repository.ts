@@ -6,6 +6,7 @@ import {
 } from "../dtos";
 
 import prisma from "../../../config/database/client";
+import { Prisma } from "@prisma/client";
 
 // Shared include block — avoids repeating the same 4 relations in every query
 const FABRICATOR_INCLUDE = {
@@ -34,11 +35,35 @@ export class FabricatorRepository {
     });
   }
 
-  async findAll() {
+  private buildWhereClause(filters?: { search?: string; stage?: string; contactId?: string }): Prisma.FabricatorWhereInput {
+    const whereClause: Prisma.FabricatorWhereInput = { isDeleted: false };
+    if (filters?.search) {
+      whereClause.fabName = { contains: filters.search, mode: "insensitive" };
+    }
+    if (filters?.stage) {
+      whereClause.fabStage = filters.stage as any;
+    }
+    if (filters?.contactId) {
+      whereClause.wbtFabricatorPointOfContact = { some: { id: filters.contactId } };
+    }
+    return whereClause;
+  }
+
+  async findAll(skip?: number, take?: number, filters?: { search?: string; stage?: string; contactId?: string }) {
+    const where = this.buildWhereClause(filters);
     return prisma.fabricator.findMany({
-      where: { isDeleted: false },
+      where,
       orderBy: { createdAt: "desc" },
       include: FABRICATOR_INCLUDE,
+      ...(skip !== undefined && { skip }),
+      ...(take !== undefined && { take }),
+    });
+  }
+
+  async countAll(filters?: { search?: string; stage?: string; contactId?: string }) {
+    const where = this.buildWhereClause(filters);
+    return prisma.fabricator.count({
+      where,
     });
   }
 

@@ -15,6 +15,7 @@ import {
   findAllUsers,
   findAllUser,
   updateUserProfilePic,
+  findManagementUsers,
 } from "./repository";
 import { cleandata } from "../../config/utils/cleanDataObject";
 import { invalidateDashboardCache, invalidationPatterns } from "../../utils/dashboardCache";
@@ -95,6 +96,11 @@ export class UserService {
   async getAllUsers() {
     const users = await findAllUser();
     if (!users) throw new AppError("Failed to fetch users", 500);
+    return { users };
+  }
+
+  async getManagementUsers() {
+    const users = await findManagementUsers();
     return { users };
   }
 }

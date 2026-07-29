@@ -63,11 +63,11 @@ router.get(
 );
 
 
-router.get(
-  "/createdBy",
-  authMiddleware,
-  asyncHandler(fabCtrl.handleGetFabricatorByCreatedById.bind(fabCtrl))
-);
+// router.get(
+//   "/createdBy",
+//   authMiddleware,
+//   asyncHandler(fabCtrl.handleGetFabricatorByCreatedById.bind(fabCtrl))
+// );
 
 router.get(
   "/file/:fabricatorId/:fileId",
