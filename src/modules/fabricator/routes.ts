@@ -129,4 +129,18 @@ router.delete(
   asyncHandler(branchCtrl.deleteBranch.bind(branchCtrl))
 );
 
+router.get(
+  "/branch/:id",
+  authMiddleware,
+  validate({ params: z.object({ id: z.uuid() }) }),
+  asyncHandler(branchCtrl.getBranchById.bind(branchCtrl))
+);
+
+router.get(
+  "/branch/fabricator/:fabricatorId",
+  authMiddleware,
+  validate({ params: z.object({ fabricatorId: z.uuid() }) }),
+  asyncHandler(branchCtrl.getBranchesByFabricatorId.bind(branchCtrl))
+);
+
 export default router;

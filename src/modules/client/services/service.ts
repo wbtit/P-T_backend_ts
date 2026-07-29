@@ -10,7 +10,7 @@ const branchRepo = new BranchRepository();
 
 export class ClientService{
     async createClient(data:createUserInput,fabricatorId:string){
-       const branch = await branchRepo.finndByFabricatorId(fabricatorId);
+       const branch = await branchRepo.findByFabricatorId(fabricatorId);
        if(!branch){
         throw new AppError("Branch does not exist",401)
        }

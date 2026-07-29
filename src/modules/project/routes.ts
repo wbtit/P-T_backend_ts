@@ -57,6 +57,9 @@ asyncHandler(projectController.handleUpdateProject.bind(projectController)));
 router.get("/projects/:id", authMiddleware, validate({params:z.object({id:z.string()})}), 
 asyncHandler(projectController.handleGetProject.bind(projectController)));
 
+router.get("/projects/fabricator/:fabricatorId", authMiddleware, validate({params:z.object({fabricatorId:z.string()})}), 
+asyncHandler(projectController.handleGetProjectsByFabricatorId.bind(projectController)));
+
 router.delete("/projects/:id", authMiddleware, validate({params:z.object({id:z.string()})}), 
 asyncHandler(projectController.handleDeleteProject.bind(projectController)));
 

@@ -27,4 +27,8 @@ export class BranchService {
     async findBranchById(id: string) {
         return await this.branchRepository.findById(id);
     }
+
+    async findBranchesByFabricatorId(fabricatorId: string) {
+        return await this.branchRepository.findManyByFabricatorId(fabricatorId);
+    }
 }

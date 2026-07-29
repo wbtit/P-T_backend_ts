@@ -34,9 +34,14 @@ export class BranchRepository{
             where: { id }
         });
     }
-    async finndByFabricatorId(fabricatorId:string){
+    async findByFabricatorId(fabricatorId:string){
         return await prisma.branch.findFirst({where:{
             fabricatorId:fabricatorId,
         }})
+    }
+    async findManyByFabricatorId(fabricatorId:string){
+        return await prisma.branch.findMany({
+            where: { fabricatorId, isDeleted: false }
+        });
     }
 }

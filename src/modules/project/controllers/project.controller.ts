@@ -55,7 +55,6 @@ export class ProjectController {
         );
         const project = await projectService.create({
           ...req.body,
-          files: uploadedFiles
         }, req.user?.id || "");
         const creatorId = req.user?.id;
         // Background non-blocking tasks
@@ -87,6 +86,17 @@ export class ProjectController {
           status: 'success',
           data: project
         });
+    }
+
+    async handleGetProjectsByFabricatorId(req: Request, res: Response) {
+      const { fabricatorId } = req.params;
+      const projects = await projectService.getProjectsByFabricatorId(fabricatorId);
+      
+      return res.status(200).json({
+        success: true,
+        message: "Projects fetched successfully",
+        data: projects
+      });
     }
     async handleUpdateProject(req:Request,res:Response){
       const { id } = req.params;

@@ -219,6 +219,38 @@ export const fabricatorOpenApiDoc: ModuleOpenApiDoc = {
           "500": { description: "Internal Server Error" }
         }
       },
+      get: {
+        tags: ["Fabricator"],
+        summary: "GET /fabricator/branch/{id}",
+        operationId: "get_fabricator_branch_id",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { in: "path", name: "id", required: true, schema: { type: "string", format: "uuid" } },
+        ],
+        responses: {
+          "200": { description: "Success" },
+          "401": { description: "Unauthorized" },
+          "404": { description: "Branch not found" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
+    "/fabricator/branch/fabricator/{fabricatorId}": {
+      get: {
+        tags: ["Fabricator"],
+        summary: "GET /fabricator/branch/fabricator/{fabricatorId}",
+        description: "Fetches all branches assigned to a specific fabricator ID.",
+        operationId: "get_fabricator_branch_fabricatorId",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { in: "path", name: "fabricatorId", required: true, schema: { type: "string", format: "uuid" } },
+        ],
+        responses: {
+          "200": { description: "Success" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
     },
   }
 };

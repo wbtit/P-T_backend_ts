@@ -38,4 +38,25 @@ async deleteBranch(req: Request, res: Response) {
    });
 }
 
+async getBranchById(req: Request, res: Response) {
+    const { id } = req.params;
+    const branch = await this.branchService.findBranchById(id);
+    if (!branch || (branch as any).isDeleted) {
+        throw new AppError("Branch not found", 404);
+    }
+    return res.status(200).json({
+        success: true,
+        data: branch
+    });
+}
+
+async getBranchesByFabricatorId(req: Request, res: Response) {
+    const { fabricatorId } = req.params;
+    const branches = await this.branchService.findBranchesByFabricatorId(fabricatorId);
+    return res.status(200).json({
+        success: true,
+        data: branches
+    });
+}
+
 }

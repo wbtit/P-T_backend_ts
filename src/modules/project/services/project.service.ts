@@ -44,6 +44,10 @@ import { invalidateDashboardCache, invalidationPatterns } from "../../../utils/d
 
    }
 
+   async getProjectsByFabricatorId(fabricatorId: string) {
+     return await projectRepository.findByFabricatorId(fabricatorId);
+   }
+
 
 
   async update(data: UpdateprojectInput, id: string) {

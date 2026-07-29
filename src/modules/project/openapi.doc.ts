@@ -177,6 +177,23 @@ export const projectOpenApiDoc: ModuleOpenApiDoc = {
         }
       },
     },
+    "/project/projects/fabricator/{fabricatorId}": {
+      get: {
+        tags: ["Project"],
+        summary: "GET /project/projects/fabricator/{fabricatorId}",
+        description: "Fetches projects associated with a fabricator, returning only lightweight details: name, stage, status, and isAwarded.",
+        operationId: "get_project_projects_fabricator_fabricatorId",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { in: "path", name: "fabricatorId", required: true, schema: { type: "string", format: "uuid" } },
+        ],
+        responses: {
+          "200": { description: "Success" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
     "/project/projects/{id}": {
       delete: {
         tags: ["Project"],

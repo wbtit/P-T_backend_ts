@@ -96,10 +96,27 @@ export class FabricatorController {
 
     if (!fabricator) throw new AppError("Fabricator not found", 404);
 
+    const formatContact = (user: any) => ({
+      id: user.id,
+      name: `${user.firstName || ''} ${user.lastName || ''}`.trim(),
+      designation: user.designation,
+      email: user.email,
+      role: user.role
+    });
+
+    const sanitizedData = {
+      ...fabricator,
+      pointOfContact: fabricator.pointOfContact?.map(formatContact),
+      wbtFabricatorPointOfContact: fabricator.wbtFabricatorPointOfContact?.map(formatContact),
+    };
+
+    delete (sanitizedData as any).project;
+    delete (sanitizedData as any).branches;
+
     return res.status(200).json({
       message: "Fabricator fetched successfully",
       success: true,
-      data: fabricator,
+      data: sanitizedData,
     });
   }
 

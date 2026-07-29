@@ -13,6 +13,21 @@ import { setProjectWbsSelection } from "../utils/setProjectWbsSelection";
 import { generateProjectSerial } from "../../../utils/serial.util";
 
  export class ProjectRepository {
+   async findByFabricatorId(fabricatorId: string) {
+     return prisma.project.findMany({
+       where: {
+         fabricatorID: fabricatorId,
+         isDeleted: false,
+       },
+       select: {
+         name: true,
+         stage: true,
+         status: true,
+         isAwarded: true,
+       },
+     });
+   }
+
    async create(data: CreateProjectInput, userId: string) {
   return prisma.$transaction(async tx => {
     const {
