@@ -62,8 +62,7 @@ router.get(
   asyncHandler(fabCtrl.handleGetAllFabricators.bind(fabCtrl))
 );
 
-// NOTE: /createdBy MUST be registered before /:id — otherwise Express
-// matches "createdBy" as the :id param and this handler is never reached.
+
 router.get(
   "/createdBy",
   authMiddleware,

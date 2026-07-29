@@ -60,10 +60,19 @@ export class FabricatorController {
   async handleGetAllFabricators(req: Request, res: Response) {
     const fabricators = await this.fabService.getAllFabricators();
 
+    const formattedData = fabricators.map((fab: any) => {
+      const hqBranch = fab.branches?.find((b: any) => b.isHeadquarters);
+      return {
+        fabName: fab.fabName,
+        createdAt: fab.createdAt,
+        country: hqBranch ? hqBranch.country : null
+      };
+    });
+
     return res.status(200).json({
       message: "Fabricators fetched successfully",
       success: true,
-      data: fabricators,
+      data: formattedData,
     });
   }
 
@@ -123,7 +132,6 @@ export class FabricatorController {
     return res.status(200).json({
       message: "Fabricator updated successfully",
       success: true,
-      data: fabricator,
     });
   }
 
