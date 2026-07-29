@@ -189,17 +189,6 @@ export class FabricatorController {
     });
   }
 
-  async handleGetFile(req: Request, res: Response) {
-    const { fabricatorId, fileId } = req.params;
-    const file = await this.fabService.getFile(fabricatorId, fileId);
-
-    return res.status(200).json({
-      message: "File fetched successfully",
-      success: true,
-      data: file,
-    });
-  }
-
   async handleHandoverClientAdmin(req: AuthenticateRequest, res: Response) {
     const payload = FabricatorClientAdminHandoverSchema.parse(req.body);
     const fabricator = await this.fabService.handoverClientAdmin(payload);
@@ -210,15 +199,4 @@ export class FabricatorController {
       data: fabricator,
     });
   }
-
-  async handleViewFile(req: Request, res: Response) {
-    const { fabricatorId, fileId } = req.params;
-    // here we stream/send file directly so no wrapping in {message,success}
-    await this.fabService.viewFile(fabricatorId, fileId, res);
-  }
-  async handleDeleteFile(req: Request, res: Response) {
-    const { fabricatorId, fileId } = req.params;
-    await this.fabService.deleteFile(fabricatorId, fileId);
-    return res.status(204).send();
-}
 }

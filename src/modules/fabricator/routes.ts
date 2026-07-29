@@ -11,10 +11,12 @@ import {
 import z from "zod";
 import { fabricatorsUploads } from "../../utils/multerUploader.util";
 import { scanUploadMiddleware } from "../../middleware/scanUpload.middleware";
+import { FabricatorFileController } from "./controllers/fabricatorFile.controller";
 import { BranchController } from "./branches";
 import { branchSchema } from "./branches";
 
 const fabCtrl = new FabricatorController();
+const fabFileCtrl = new FabricatorFileController();
 const branchCtrl = new BranchController();
 const router = Router();
 
@@ -73,14 +75,14 @@ router.get(
   "/file/:fabricatorId/:fileId",
   authMiddleware,
   validate({ params: z.object({ fabricatorId: z.uuid(), fileId: z.string() }) }),
-  asyncHandler(fabCtrl.handleGetFile.bind(fabCtrl))
+  asyncHandler(fabFileCtrl.handleGetFile.bind(fabFileCtrl))
 );
 
 router.get(
   "/viewFile/:fabricatorId/:fileId",
   authMiddleware,
   validate({ params: z.object({ fabricatorId: z.uuid(), fileId: z.string() }) }),
-  asyncHandler(fabCtrl.handleViewFile.bind(fabCtrl))
+  asyncHandler(fabFileCtrl.handleViewFile.bind(fabFileCtrl))
 );
 
 router.get(
@@ -103,7 +105,7 @@ router.delete(
   authMiddleware,
    restrictToAllowedRoles,
   validate({ params: z.object({ fabricatorId: z.uuid(), fileId: z.string() }) }),
-  asyncHandler(fabCtrl.handleDeleteFile.bind(fabCtrl))
+  asyncHandler(fabFileCtrl.handleDeleteFile.bind(fabFileCtrl))
 );
 
 router.post(
