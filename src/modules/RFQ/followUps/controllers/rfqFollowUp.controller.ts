@@ -40,12 +40,13 @@ export class RFQFollowUpController {
     });
   }
 
-  async handleUpdate(req: Request, res: Response) {
+  async handleUpdate(req: AuthenticateRequest, res: Response) {
+    if (!req.user) throw new AppError("User not found", 404);
     const uploadedFiles = mapUploadedFiles(
       (req.files as Express.Multer.File[]) || [],
       "rfqfollowup"
     );
-    const result = await followUpService.update(req.params.id, {
+    const result = await followUpService.update(req.params.id, req.user.id, {
       ...req.body,
       files: uploadedFiles.length ? uploadedFiles : req.body.files,
     });
@@ -55,8 +56,9 @@ export class RFQFollowUpController {
     });
   }
 
-  async handleDelete(req: Request, res: Response) {
-    const result = await followUpService.delete(req.params.id);
+  async handleDelete(req: AuthenticateRequest, res: Response) {
+    if (!req.user) throw new AppError("User not found", 404);
+    const result = await followUpService.delete(req.params.id, req.user.id);
     return res.status(200).json({
       status: "success",
       data: result,

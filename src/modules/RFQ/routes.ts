@@ -4,6 +4,7 @@ import validate from "../../middleware/validate";
 import authMiddleware from "../../middleware/authMiddleware";
 import { scanUploadMiddleware } from "../../middleware/scanUpload.middleware";
 import { CreateRfqSchema,UpdateRfqPayloadSchema } from "./dtos";
+import { roleGuard } from "../../middleware/roleGuard";
 
 import { RfqResponseSchema} from "./RFQresponse";
 import { RfqResponseController } from "./RFQresponse";
@@ -174,10 +175,12 @@ router.get(
 // ===========================================================
 // RFQ FOLLOW-UP ROUTES
 // ===========================================================
+const followUpRoles = ["ADMIN", "DEPUTY_MANAGER", "OPERATION_EXECUTIVE", "DEPT_MANAGER", "PROJECT_MANAGER", "PROJECT_MANAGER_OFFICER", "SALES_PERSON", "SALES_MANAGER"];
 
 router.post(
     "/:rfqId/followups",
     authMiddleware,
+    roleGuard(followUpRoles),
     rfqFollowUpUploads.array("files"),
     scanUploadMiddleware,
     validate({
@@ -190,6 +193,7 @@ router.post(
 router.get(
     "/:rfqId/followups",
     authMiddleware,
+    roleGuard(followUpRoles),
     validate({ params: z.object({ rfqId: z.string() }) }),
     rfqFollowUpController.handleListByRfq.bind(rfqFollowUpController)
 );
@@ -197,6 +201,7 @@ router.get(
 router.get(
     "/followups/:id",
     authMiddleware,
+    roleGuard(followUpRoles),
     validate({ params: z.object({ id: z.string() }) }),
     rfqFollowUpController.handleGetById.bind(rfqFollowUpController)
 );
@@ -204,6 +209,7 @@ router.get(
 router.put(
     "/followups/:id",
     authMiddleware,
+    roleGuard(followUpRoles),
     rfqFollowUpUploads.array("files"),
     scanUploadMiddleware,
     validate({
@@ -216,6 +222,7 @@ router.put(
 router.delete(
     "/followups/:id",
     authMiddleware,
+    roleGuard(followUpRoles),
     validate({ params: z.object({ id: z.string() }) }),
     rfqFollowUpController.handleDelete.bind(rfqFollowUpController)
 );
@@ -223,6 +230,7 @@ router.delete(
 router.get(
     "/followups/:id/files/:fileId",
     authMiddleware,
+    roleGuard(followUpRoles),
     validate({ params: z.object({ id: z.string(), fileId: z.string() }) }),
     rfqFollowUpController.handleGetFile.bind(rfqFollowUpController)
 );
@@ -230,6 +238,7 @@ router.get(
 router.get(
     "/followups/viewFile/:id/:fileId",
     authMiddleware,
+    roleGuard(followUpRoles),
     validate({ params: z.object({ id: z.string(), fileId: z.string() }) }),
     rfqFollowUpController.handleViewFile.bind(rfqFollowUpController)
 );

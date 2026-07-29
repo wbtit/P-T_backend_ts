@@ -37,15 +37,17 @@ export class RFQFollowUpService {
     return this.repository.getByRfqId(rfqId);
   }
 
-  async update(id: string, data: UpdateRFQFollowUpInput) {
+  async update(id: string, userId: string, data: UpdateRFQFollowUpInput) {
     const existing = await this.repository.getById(id);
     if (!existing) throw new AppError("RFQ follow-up not found", 404);
+    if (existing.createdById !== userId) throw new AppError("You can only update your own follow-ups", 403);
     return this.repository.update(id, data);
   }
 
-  async delete(id: string) {
+  async delete(id: string, userId: string) {
     const existing = await this.repository.getById(id);
     if (!existing) throw new AppError("RFQ follow-up not found", 404);
+    if (existing.createdById !== userId) throw new AppError("You can only delete your own follow-ups", 403);
     return this.repository.delete(id);
   }
 
