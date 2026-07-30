@@ -29,6 +29,7 @@ const MODEL_MAP: Record<string, string> = {
   rFIResponse:"rFIResponse",
   rFQ:"rFQ",
   CDAttachments:"rFQ",
+  rFQFollowUp:"rFQFollowUp",
   rFQResponse:"rFQResponse",
   changeOrder:"changeOrder",
   changeOrders:"changeOrder",

@@ -26,6 +26,10 @@ const rfqController = new RFQController();
 const rfqResponseController = new RfqResponseController();
 const rfqFollowUpController = new RFQFollowUpController();
 
+// ===========================================================
+// MAIN RFQ CRUD ROUTES
+// ===========================================================
+
 router.post(
     "/",
     authMiddleware,
@@ -34,11 +38,59 @@ router.post(
     validate({body: CreateRfqSchema}),
     rfqController.handleCreateRfq.bind(rfqController)
 );
+
+router.get(
+    "/all",
+    authMiddleware,
+    rfqController.handleGetAllRFQ.bind(rfqController)
+);
+
+router.get(
+    "/getById/:id",
+    authMiddleware,
+    validate({params:z.object({id:z.string()})}),
+    rfqController.handleGetRfqById.bind(rfqController)
+);
+
+router.put(
+    "/update/:id",
+    authMiddleware,
+    rfqCombinedUploads,
+    scanUploadMiddleware,
+    validate({params:z.object({id:z.string()}),body:UpdateRfqPayloadSchema}),
+    rfqController.handleUpdateRfq.bind(rfqController)
+);
+
+router.delete(
+    "/:id",
+    authMiddleware,
+    validate({params:z.object({id:z.string()})}),
+    rfqController.handleCloseRfq.bind(rfqController)
+);
+
+router.delete(
+    "/delete/:id",
+    authMiddleware,
+    validate({params:z.object({id:z.string()})}),
+    rfqController.handleDeleteRFQ.bind(rfqController)
+);
+
+// ===========================================================
+// PENDING LIST ROUTES
+// ===========================================================
+
+router.get(
+    "/pendingRFQs",
+    authMiddleware,
+    rfqController.handlePendingRFQs.bind(rfqController)
+)
+
 router.get(
     "/pending/clientSide",
     authMiddleware,
     rfqController.handleClientSidePendingRFQs.bind(rfqController)
 )
+
 router.get(
     "/pending/clientAdmin",
     authMiddleware,
@@ -49,56 +101,46 @@ router.get("/pending/client",
     authMiddleware,
     rfqController.handlePendingForClient.bind(rfqController)
 )
+
 router.get(
     "/pending/projectManager",
     authMiddleware,
     rfqController.handlePendingForProjectManager.bind(rfqController)
 )
+
 router.get(
     "/pending/departmentManager",
     authMiddleware,
     rfqController.handlePendingForDepartmentManager.bind(rfqController)
 )
+
 router.get(
     "/pending/operationExecutive",
     authMiddleware,
     rfqController.handlePendingForOperationExecutive.bind(rfqController)
 )
+
 router.get(
     "/pending/CDAdmin",
     authMiddleware,
     rfqController.handlePendingForCDAdmin.bind(rfqController)
 )
+
 router.get(
     "/all/clientEstimator",
     authMiddleware,
     rfqController.handlePendingForClientEstimator.bind(rfqController)
 )
+
 router.get(
     "/new/projectManager",
     authMiddleware,
     rfqController.handleNewForProjectManager.bind(rfqController)
 )
-router.put(
-    "/update/:id",
-    authMiddleware,
-    rfqCombinedUploads,
-    scanUploadMiddleware,
-    validate({params:z.object({id:z.string()}),body:UpdateRfqPayloadSchema}),
-    rfqController.handleUpdateRfq.bind(rfqController)
-);
 
-router.get(
-    "/getById/:id",
-    authMiddleware,
-    validate({params:z.object({id:z.string()})}),
-    rfqController.handleGetRfqById.bind(rfqController)
-);
-router.get(
-    "/all",
-    authMiddleware,
-    rfqController.handleGetAllRFQ.bind(rfqController)
-);
+// ===========================================================
+// OTHER RFQ ROUTES
+// ===========================================================
 
 router.get(
     "/connectionEngineers",
@@ -111,6 +153,7 @@ router.get(
     authMiddleware,
     rfqController.handleSents.bind(rfqController)
 );
+
 router.get(
     "/sents/:projectId",
     authMiddleware,
@@ -118,59 +161,45 @@ router.get(
     rfqController.handleSents.bind(rfqController)
 );
 
-
-
 router.get(
     "/received",
     authMiddleware,
     rfqController.handleReceived.bind(rfqController)
 );
+
 router.get(
     "/received/:projectId",
     authMiddleware,
     validate({params:z.object({projectId:z.string()})}),
     rfqController.handleReceived.bind(rfqController)
 );
+
 router.get(
     "/project/:projectId",
     authMiddleware,
     validate({params:z.object({projectId:z.string()})}),
     rfqController.handleFindByProject.bind(rfqController)
 );
+
 router.get(
     "/fabricators/me",
     authMiddleware,
     rfqController.handleFindByLoggedInUserFabricators.bind(rfqController)
 );
+
 router.get(
     "/:rfqId/files/:fileId",
     authMiddleware,
     validate({params:z.object({rfqId:z.string(),fileId:z.string()})}),
     rfqController.handleGetFile.bind(rfqController)
 );
+
 router.get(
     "/viewFile/:rfqId/:fileId",
     authMiddleware,
     validate({params:z.object({rfqId:z.string(),fileId:z.string()})}),
     rfqController.handleViewFile.bind(rfqController)
 );
-router.delete(
-    "/:id",
-    authMiddleware,
-    validate({params:z.object({id:z.string()})}),
-    rfqController.handleCloseRfq.bind(rfqController)
-);
-router.delete(
-    "/delete/:id",
-    authMiddleware,
-    validate({params:z.object({id:z.string()})}),
-    rfqController.handleDeleteRFQ.bind(rfqController)
-);
-router.get(
-    "/pendingRFQs",
-    authMiddleware,
-    rfqController.handlePendingRFQs.bind(rfqController)
-)
 
 // ===========================================================
 // RFQ FOLLOW-UP ROUTES
