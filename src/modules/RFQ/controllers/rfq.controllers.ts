@@ -7,6 +7,7 @@ import { sendEmail, getCCEmails, getEmailsByRoles } from "../../../services/mail
 import { rfqhtmlContent } from "../../../services/mailServices/mailtemplates/rfqMailtemplate";
 import { cdRfqHtmlContent } from "../../../services/mailServices/mailtemplates/cdRfqMailTemplate";
 import { notifyRfqStakeholdersByRole } from "../../../utils/notifyRfqStakeholders";
+import { PaginationQuerySchema } from "../../../utils/pagination";
 import { UserRole } from "@prisma/client";
 import prisma from "../../../config/database/client";
 import { buildRoleScopedNotification } from "../../../utils/stakeholderNotificationMessages";
@@ -531,10 +532,12 @@ export class RFQController {
     }
 
     async handleGetAllRFQ(req:Request,res:Response){
-        const rfq = await rfqService.getAllRFQ();
+        const pagination = PaginationQuerySchema.parse(req.query);
+        const rfq = await rfqService.getAllRFQ(pagination);
         res.status(200).json({
             status: 'success',
-            data: rfq,
+            data: rfq.data,
+            meta: rfq.meta,
         });
     }
     async handleSents(req:AuthenticateRequest,res:Response){
@@ -543,11 +546,13 @@ export class RFQController {
         }
         const { id } = req.user;
         const { projectId } = req.params;
-        const rfq = await rfqService.sents(id, projectId);
+        const pagination = PaginationQuerySchema.parse(req.query);
+        const rfq = await rfqService.sents(pagination, id, projectId);
         
         res.status(200).json({
             status: 'success',
-            data: rfq,
+            data: rfq.data,
+            meta: rfq.meta,
         });
     }
     async handleReceived(req:AuthenticateRequest,res:Response){
@@ -556,10 +561,12 @@ export class RFQController {
         }
         const { id } = req.user;
         const { projectId } = req.params;
-        const rfq = await rfqService.received(id, projectId);
+        const pagination = PaginationQuerySchema.parse(req.query);
+        const rfq = await rfqService.received(pagination, id, projectId);
         res.status(200).json({
             status: 'success',
-            data: rfq,
+            data: rfq.data,
+            meta: rfq.meta,
         });
     }
     async handleFindByProject(req: Request, res: Response) {

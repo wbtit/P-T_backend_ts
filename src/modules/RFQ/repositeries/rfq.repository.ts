@@ -1,5 +1,6 @@
 import { Prisma } from "@prisma/client";
 import prisma from "../../../config/database/client";
+import { paginate, PaginationQuery } from "../../../utils/pagination";
 import { CreateRfqInput,
     GetRfqInput,
     UpdateRfqInput
@@ -110,8 +111,8 @@ export class RFQRepository {
         });
     }
 
-    async getAllRFQ(){
-        return await prisma.rFQ.findMany({
+    async getAllRFQ(query: PaginationQuery){
+        return await paginate(prisma.rFQ, {
             where: { isDeleted: false },
             include:{
                 sender: true,
@@ -121,8 +122,9 @@ export class RFQRepository {
                 responses: RFQ_RESPONSES_INCLUDE,
                 fabricator:true,
                 project: {select:{name:true}},
-            }
-        })
+            },
+            orderBy: { createdAt: "desc" },
+        }, query)
     }
 
     async findClientSidePendingRFQs() {
@@ -315,8 +317,8 @@ export class RFQRepository {
         });
 
     }
-    async sentTouser(senderId:string, projectId?: string){
-        return await prisma.rFQ.findMany({
+    async sentTouser(query: PaginationQuery, senderId:string, projectId?: string){
+        return await paginate(prisma.rFQ, {
             where:{
                 isDeleted: false,
                 senderId,
@@ -330,12 +332,13 @@ export class RFQRepository {
                 responses: RFQ_RESPONSES_INCLUDE,
                 fabricator:true,
                 project: {select:{name:true}},
-            }
-        })
+            },
+            orderBy: { createdAt: "desc" },
+        }, query)
     }
 
-    async Inbox(recipientId:string, projectId?: string){
-        return await prisma.rFQ.findMany({
+    async Inbox(query: PaginationQuery, recipientId:string, projectId?: string){
+        return await paginate(prisma.rFQ, {
             where: {
                 isDeleted: false,
                 ...(projectId ? { project: { id: projectId } } : {}),
@@ -352,8 +355,9 @@ export class RFQRepository {
                 responses: RFQ_RESPONSES_INCLUDE,
                 fabricator:true,
                 project: {select:{name:true}},
-            }
-        })
+            },
+            orderBy: { createdAt: "desc" },
+        }, query)
     }
 
     async findByProject(projectId: string) {
