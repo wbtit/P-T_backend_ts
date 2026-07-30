@@ -7,7 +7,7 @@ import { CreateRfqSchema,UpdateRfqPayloadSchema } from "./dtos";
 import { roleGuard } from "../../middleware/roleGuard";
 
 import { RfqResponseSchema} from "./RFQresponse";
-import { RfqResponseController } from "./RFQresponse";
+import { RfqResponseController, RFQResponseFileController } from "./RFQresponse";
 import {
     rfqCombinedUploads,
     rfqResponseUploads,
@@ -16,15 +16,20 @@ import {
 import {
     CreateRFQFollowUpSchema,
     RFQFollowUpController,
+    RFQFollowUpFileController,
     UpdateRFQFollowUpSchema,
 } from "./followUps";
+import { RFQFileController } from "./controllers/rfqFile.controllers";
 
 import z from "zod";
 
 const router = Router();
 const rfqController = new RFQController();
 const rfqResponseController = new RfqResponseController();
+const rfqResponseFileController = new RFQResponseFileController();
 const rfqFollowUpController = new RFQFollowUpController();
+const rfqFollowUpFileController = new RFQFollowUpFileController();
+const rfqFileController = new RFQFileController();
 
 // ===========================================================
 // MAIN RFQ CRUD ROUTES
@@ -204,7 +209,7 @@ router.get(
     authMiddleware,
     roleGuard(mainRfqCrudRoles),
     validate({params:z.object({rfqId:z.uuid(),fileId:z.uuid()})}),
-    rfqController.handleGetFile.bind(rfqController)
+    rfqFileController.handleGetFile.bind(rfqFileController)
 );
 
 router.get(
@@ -212,13 +217,22 @@ router.get(
     authMiddleware,
     roleGuard(mainRfqCrudRoles),
     validate({params:z.object({rfqId:z.uuid(),fileId:z.uuid()})}),
-    rfqController.handleViewFile.bind(rfqController)
+    rfqFileController.handleViewFile.bind(rfqFileController)
 );
 
 // ===========================================================
 // RFQ FOLLOW-UP ROUTES
 // ===========================================================
-const followUpRoles = ["ADMIN", "DEPUTY_MANAGER", "OPERATION_EXECUTIVE", "DEPT_MANAGER", "PROJECT_MANAGER", "PROJECT_MANAGER_OFFICER", "SALES_PERSON", "SALES_MANAGER"];
+const followUpRoles = ["ADMIN",
+     "DEPUTY_MANAGER", "OPERATION_EXECUTIVE", "DEPT_MANAGER",
+      "PROJECT_MANAGER", "PROJECT_MANAGER_OFFICER", "SALES_PERSON", "SALES_MANAGER",
+    "CLIENT",
+"CLIENT_ADMIN",
+"CLIENT_ACCOUNTANT",
+"CLIENT_ESTIMATOR",
+"CLIENT_PROJECT_COORDINATOR",
+"CLIENT_GENERAL_CONSTRUCTOR"
+];
 
 router.post(
     "/:rfqId/followups",
@@ -275,7 +289,7 @@ router.get(
     authMiddleware,
     roleGuard(followUpRoles),
     validate({ params: z.object({ id: z.uuid(), fileId: z.uuid() }) }),
-    rfqFollowUpController.handleGetFile.bind(rfqFollowUpController)
+    rfqFollowUpFileController.handleGetFile.bind(rfqFollowUpFileController)
 );
 
 router.get(
@@ -283,7 +297,7 @@ router.get(
     authMiddleware,
     roleGuard(followUpRoles),
     validate({ params: z.object({ id: z.uuid(), fileId: z.uuid() }) }),
-    rfqFollowUpController.handleViewFile.bind(rfqFollowUpController)
+    rfqFollowUpFileController.handleViewFile.bind(rfqFollowUpFileController)
 );
 // ===========================================================
 // RFQ RESPONSE ROUTES
@@ -310,7 +324,7 @@ router.get(
     authMiddleware,
     roleGuard(mainRfqCrudRoles),
     validate({params:z.object({rfqResId:z.uuid(),fileId:z.uuid()})}),
-    rfqResponseController.handleGetFile.bind(rfqResponseController)
+    rfqResponseFileController.handleGetFile.bind(rfqResponseFileController)
 );
 
 router.get(
@@ -318,7 +332,7 @@ router.get(
     authMiddleware,
     roleGuard(mainRfqCrudRoles),
     validate({params:z.object({rfqResId:z.uuid(),fileId:z.uuid()})}),
-    rfqResponseController.handleViewFile.bind(rfqResponseController)
+    rfqResponseFileController.handleViewFile.bind(rfqResponseFileController)
 );
 
 export default router;

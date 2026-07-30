@@ -204,46 +204,7 @@ export class RFQService {
     async getRFQOfConnectionEngineer(userId:string){
         return await rfqrepo.getRFQOfConnectionEngineer(userId);
     }
-   async getFile(rfqId: string, fileId: string) {
-        const rfq = await rfqrepo.getById({ id: rfqId });
-        if (!rfq) throw new AppError("RFQ not found", 404);
-        const files = rfq.files as unknown as FileObject[];
-        const fileObject = files.find((file: FileObject) => file.id === fileId);
-        if (!fileObject) throw new AppError("File not found", 404);
 
-        return fileObject;
-    }
-    async viewFile(id:string,fileId:string,res:Response){
-        const rfq = await rfqrepo.getById({ id });
-        if (!rfq) throw new AppError("RFQ not found", 404);
-
-        const files = rfq.files as unknown as FileObject[];
-        console.log("📂 [viewFile] Available files:", files.map(f => ({
-    id: f.id,
-    path: f.path,
-    filename: f.filename,
-    originalName: f.originalName,
-  })));
-        const cleanFileId = fileId.replace(/\.[^/.]+$/, "");
-        const fileObject = files.find((file: FileObject) => file.id === cleanFileId);
-
-        if (!fileObject) {
-    console.warn("⚠️ [viewFile] File not found in fabricator.files", {
-      fileId,
-      availableFileIds: files.map(f => f.id),
-    });
-    throw new AppError("File not found", 404);
-  }
-
-        const filePath = resolveUploadFilePath(fileObject);
-        console.log("📁 [viewFile] Resolved file path:", filePath);
-
-        if (!filePath) {
-            console.error("🚨 [viewFile] File does not exist on disk:", filePath);
-            throw new AppError("File not found on server", 404);
-              }
-        return streamFile(res, filePath, fileObject.originalName);
-    }
 
     async getPendingRFQs(){
         return await rfqrepo.getPendingRFQs();

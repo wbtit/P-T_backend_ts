@@ -65,18 +65,6 @@ export class RFQFollowUpController {
     });
   }
 
-  async handleGetFile(req: Request, res: Response) {
-    const { id, fileId } = req.params;
-    const file = await followUpService.getFile(id, fileId);
-    return res.status(200).json({
-      status: "success",
-      data: file,
-    });
-  }
 
-  async handleViewFile(req: Request, res: Response) {
-    const { id, fileId } = req.params;
-    await followUpService.viewFile(id, fileId, res);
-  }
 }
 

@@ -51,25 +51,5 @@ export class RFQFollowUpService {
     return this.repository.delete(id);
   }
 
-  async getFile(id: string, fileId: string) {
-    const followUp = await this.getById(id);
-    const files = followUp.files as unknown as FileObject[];
-    const fileObject = files.find((file: FileObject) => file.id === fileId);
-    if (!fileObject) throw new AppError("File not found", 404);
-    return fileObject;
-  }
 
-  async viewFile(id: string, fileId: string, res: Response) {
-    const followUp = await this.getById(id);
-    const files = followUp.files as unknown as FileObject[];
-    const cleanFileId = fileId.replace(/\.[^/.]+$/, "");
-    const fileObject = files.find((file: FileObject) => file.id === cleanFileId);
-    if (!fileObject) throw new AppError("File not found", 404);
-
-    const filePath = resolveUploadFilePath(fileObject);
-    if (!filePath) {
-      throw new AppError("File not found on server", 404);
-    }
-    return streamFile(res, filePath, fileObject.originalName);
-  }
 }

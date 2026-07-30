@@ -613,18 +613,6 @@ export class RFQController {
             data: rfq,
         });
     }
-    async handleGetFile(req:Request,res:Response){
-        const { rfqId, fileId } = req.params;
-        const file = await rfqService.getFile(rfqId, fileId);
-        res.status(200).json({
-            status: 'success',
-            data: file,
-        });
-    }
-    async handleViewFile(req:Request,res:Response){
-        const { rfqId, fileId } = req.params;
-        await rfqService.viewFile(rfqId, fileId, res);
-    }
 
     async handlePendingRFQs(req:AuthenticateRequest,res:Response){
         
