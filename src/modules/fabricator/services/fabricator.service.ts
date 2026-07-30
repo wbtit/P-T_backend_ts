@@ -1,4 +1,5 @@
 import { AppError } from "../../../config/utils/AppError";
+import { PaginationQuery } from "../../../utils/pagination";
 import { FileObject } from "../../../shared/fileType";
 import { CreateFabricatorInput, FabricatorClientAdminHandoverInput, UpdateFabricatorInput } from "../dtos";
 import { FabricatorRepository } from "../repositories";
@@ -21,20 +22,8 @@ export class FabricatorService {
     return fabricator;
   }
 
-  async getAllFabricators(page: number = 1, limit: number = 10, filters?: { search?: string; stage?: string; contactId?: string }) {
-    const skip = (page - 1) * limit;
-    const [data, total] = await Promise.all([
-      fabRepo.findAll(skip, limit, filters),
-      fabRepo.countAll(filters),
-    ]);
-
-    return {
-      data,
-      total,
-      page,
-      limit,
-      totalPages: Math.ceil(total / limit),
-    };
+  async getAllFabricators(query: PaginationQuery, filters?: { search?: string; stage?: string; contactId?: string }) {
+    return fabRepo.findAllPaginated(query, filters);
   }
 
   async getFabricatorById(id: string) {

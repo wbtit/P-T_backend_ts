@@ -4,6 +4,7 @@ import { AuthenticateRequest } from "../../../middleware/authMiddleware";
 import { AppError } from "../../../config/utils/AppError";
 import { mapUploadedFiles } from "../../uploads/fileUtil";
 import { notifyByRoles } from "../../../utils/notifyByRole";
+import { PaginationQuerySchema } from "../../../utils/pagination";
 import { Stage, UserRole } from "@prisma/client";
 import { FabricatorClientAdminHandoverSchema } from "../dtos";
 
@@ -58,14 +59,13 @@ export class FabricatorController {
   }
 
   async handleGetAllFabricators(req: Request, res: Response) {
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 10;
+    const pagination = PaginationQuerySchema.parse(req.query);
     
     const search = req.query.search as string | undefined;
     const stage = req.query.stage as string | undefined;
     const contactId = req.query.contactId as string | undefined;
 
-    const result = await this.fabService.getAllFabricators(page, limit, { search, stage, contactId });
+    const result = await this.fabService.getAllFabricators(pagination, { search, stage, contactId });
 
     const formattedData = result.data.map((fab: any) => {
       const hqBranch = fab.branches?.find((b: any) => b.isHeadquarters);
@@ -81,12 +81,7 @@ export class FabricatorController {
       message: "Fabricators fetched successfully",
       success: true,
       data: formattedData,
-      meta: {
-        total: result.total,
-        page: result.page,
-        limit: result.limit,
-        totalPages: result.totalPages,
-      }
+      meta: result.meta
     });
   }
 

@@ -7,6 +7,7 @@ import {
 
 import prisma from "../../../config/database/client";
 import { Prisma } from "@prisma/client";
+import { paginate, PaginationQuery } from "../../../utils/pagination";
 
 // Shared include block — avoids repeating the same 4 relations in every query
 const FABRICATOR_INCLUDE = {
@@ -65,6 +66,15 @@ export class FabricatorRepository {
     return prisma.fabricator.count({
       where,
     });
+  }
+
+  async findAllPaginated(query: PaginationQuery, filters?: { search?: string; stage?: string; contactId?: string }) {
+    const where = this.buildWhereClause(filters);
+    return paginate(prisma.fabricator, {
+      where,
+      orderBy: { createdAt: "desc" },
+      include: FABRICATOR_INCLUDE
+    }, query);
   }
 
   async findById(input: GetFabricatorInput) {
