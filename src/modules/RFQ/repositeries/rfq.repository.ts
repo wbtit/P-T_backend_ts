@@ -112,6 +112,7 @@ export class RFQRepository {
 
     async getAllRFQ(){
         return await prisma.rFQ.findMany({
+            where: { isDeleted: false },
             include:{
                 sender: true,
                 recipient: true,
@@ -127,6 +128,7 @@ export class RFQRepository {
     async findClientSidePendingRFQs() {
         return await prisma.rFQ.findMany({
             where: {
+                isDeleted: false,
                 project: { status: { in: ["ACTIVE", "ONHOLD"] } },
                 status: { in: ["SENT", "REVISE"] },
             },
@@ -146,6 +148,7 @@ export class RFQRepository {
     async findPendingRFQsForClientAdmin(userId:string){
         const rfqs = await prisma.rFQ.findMany({
             where: {
+                isDeleted: false,
                 fabricator: {
                     pointOfContact: {
                         some: {
@@ -211,7 +214,7 @@ export class RFQRepository {
     }
     async getById(data:GetRfqInput) {
         return await prisma.rFQ.findUnique({
-            where: { id: data.id },
+            where: { id: data.id, isDeleted: false },
             include:{
                 sender: true,
                 recipient: true,
@@ -254,7 +257,7 @@ export class RFQRepository {
 
     async getByIdForConnectionDesigner(id: string, connectionDesignerId: string) {
         return await prisma.rFQ.findUnique({
-            where: { id },
+            where: { id, isDeleted: false },
             include:{
                 sender: true,
                 recipient: true,
@@ -298,7 +301,7 @@ export class RFQRepository {
     
     async getByName(id:string) {
         return await prisma.rFQ.findUnique({
-            where: { id:id },
+            where: { id:id, isDeleted: false },
             include:{
                 sender: true,
                 recipient: true,
@@ -315,6 +318,7 @@ export class RFQRepository {
     async sentTouser(senderId:string, projectId?: string){
         return await prisma.rFQ.findMany({
             where:{
+                isDeleted: false,
                 senderId,
                 ...(projectId ? { project: { id: projectId } } : {}),
             },
@@ -333,6 +337,7 @@ export class RFQRepository {
     async Inbox(recipientId:string, projectId?: string){
         return await prisma.rFQ.findMany({
             where: {
+                isDeleted: false,
                 ...(projectId ? { project: { id: projectId } } : {}),
                 OR: [
                     { recipientId },
@@ -354,6 +359,7 @@ export class RFQRepository {
     async findByProject(projectId: string) {
         return await prisma.rFQ.findMany({
             where: {
+                isDeleted: false,
                 project: { id: projectId },
             },
             include: {
@@ -426,6 +432,7 @@ export class RFQRepository {
     async getPendingRFQs(){
         return await prisma.rFQ.findMany({
             where: {
+                isDeleted: false,
           wbtStatus: { in: ["RECEIVED", "REVISE"] },
         },
         include:{
@@ -457,8 +464,8 @@ getbyProjectNameAndLocation(projectName:string,location:string){
     });
     }
 
-async findDuplicateForCreate(projectName: string, location: string, subject: string) {
-    return prisma.rFQ.findFirst({
+async findDuplicateForCreate(tx: Prisma.TransactionClient | typeof prisma, projectName: string, location: string, subject: string) {
+    return tx.rFQ.findFirst({
         where: {
             isDeleted: false,
             projectName: { equals: projectName, mode: "insensitive" },
@@ -477,9 +484,12 @@ async findDuplicateForCreate(projectName: string, location: string, subject: str
     });
 }
 async deleteRFQ(id:string){
-    return await prisma.rFQ.delete({
+    return await prisma.rFQ.update({
         where:{
             id
+        },
+        data: {
+            isDeleted: true
         }
     })
 }
@@ -487,6 +497,7 @@ async deleteRFQ(id:string){
 async getRFQOfConnectionEngineer(userId:string){
     return await prisma.rFQ.findMany({
         where:{
+            isDeleted: false,
             connectionEngineers:{some:{
                 id:userId
             }
@@ -513,6 +524,7 @@ async getRFQOfConnectionEngineer(userId:string){
 
         return await prisma.rFQ.findMany({
             where: {
+                isDeleted: false,
                 wbtStatus: { in: ["RECEIVED", "REVISE"] },
             },
             include: {
@@ -530,6 +542,7 @@ async getRFQOfConnectionEngineer(userId:string){
     async findPendingRFQsForProjectManager(managerId: string) {
         return await prisma.rFQ.findMany({
             where: {
+                isDeleted: false,
                 wbtStatus: { in: ["RECEIVED", "REVISE"] },
             },
             include: {
@@ -547,6 +560,7 @@ async getRFQOfConnectionEngineer(userId:string){
     async findNewRFQsForProjectManager(managerId: string) {
         return await prisma.rFQ.findMany({
             where: {
+                isDeleted: false,
                 responses: { none: {} },
             },
             include: {

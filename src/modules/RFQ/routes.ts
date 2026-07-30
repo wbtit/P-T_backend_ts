@@ -29,10 +29,17 @@ const rfqFollowUpController = new RFQFollowUpController();
 // ===========================================================
 // MAIN RFQ CRUD ROUTES
 // ===========================================================
+const mainRfqCrudRoles = [
+    "ADMIN", "SALES_MANAGER", "SALES_PERSON", "ESTIMATION_HEAD",
+    "DEPUTY_MANAGER", "OPERATION_EXECUTIVE", "CLIENT", "CLIENT_ADMIN",
+    "CLIENT_ACCOUNTANT", "CLIENT_ESTIMATOR", "CLIENT_PROJECT_COORDINATOR",
+    "CLIENT_GENERAL_CONSTRUCTOR"
+];
 
 router.post(
     "/",
     authMiddleware,
+    roleGuard(mainRfqCrudRoles),
     rfqCombinedUploads,
     scanUploadMiddleware,
     validate({body: CreateRfqSchema}),
@@ -42,12 +49,14 @@ router.post(
 router.get(
     "/all",
     authMiddleware,
+    roleGuard(mainRfqCrudRoles),
     rfqController.handleGetAllRFQ.bind(rfqController)
 );
 
 router.get(
     "/getById/:id",
     authMiddleware,
+    roleGuard(mainRfqCrudRoles),
     validate({params:z.object({id:z.string()})}),
     rfqController.handleGetRfqById.bind(rfqController)
 );
@@ -55,6 +64,7 @@ router.get(
 router.put(
     "/update/:id",
     authMiddleware,
+    roleGuard(mainRfqCrudRoles),
     rfqCombinedUploads,
     scanUploadMiddleware,
     validate({params:z.object({id:z.string()}),body:UpdateRfqPayloadSchema}),
@@ -64,6 +74,7 @@ router.put(
 router.delete(
     "/:id",
     authMiddleware,
+    roleGuard(mainRfqCrudRoles),
     validate({params:z.object({id:z.string()})}),
     rfqController.handleCloseRfq.bind(rfqController)
 );
@@ -71,6 +82,7 @@ router.delete(
 router.delete(
     "/delete/:id",
     authMiddleware,
+    roleGuard(mainRfqCrudRoles),
     validate({params:z.object({id:z.string()})}),
     rfqController.handleDeleteRFQ.bind(rfqController)
 );

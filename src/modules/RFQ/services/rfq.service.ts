@@ -26,21 +26,24 @@ export class RFQService {
     const location = (data.location?.trim().replace(/\s+/g, " ") || "GENERAL");
     const subject = data.subject.trim().replace(/\s+/g, " ");
 
-    const duplicateRfq = await rfqrepo.findDuplicateForCreate(
-      projectName,
-      location,
-      subject
-    );
 
-    if (duplicateRfq) {
-      throw new AppError("An RFQ with the same project, location, and subject already exists", 409);
-    }
 
     let rfq;
     let attempts = 0;
     while (attempts < 5) {
       try {
         rfq = await prisma.$transaction(async (tx) => {
+          const duplicateRfq = await rfqrepo.findDuplicateForCreate(
+            tx,
+            projectName,
+            location,
+            subject
+          );
+
+          if (duplicateRfq) {
+            throw new AppError("An RFQ with the same project, location, and subject already exists", 409);
+          }
+
           const fabricator = await tx.fabricator.findUnique({
             where: { id: data.fabricatorId },
             select: {
