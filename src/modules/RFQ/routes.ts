@@ -202,6 +202,7 @@ router.get(
 router.get(
     "/:rfqId/files/:fileId",
     authMiddleware,
+    roleGuard(mainRfqCrudRoles),
     validate({params:z.object({rfqId:z.uuid(),fileId:z.uuid()})}),
     rfqController.handleGetFile.bind(rfqController)
 );
@@ -209,6 +210,7 @@ router.get(
 router.get(
     "/viewFile/:rfqId/:fileId",
     authMiddleware,
+    roleGuard(mainRfqCrudRoles),
     validate({params:z.object({rfqId:z.uuid(),fileId:z.uuid()})}),
     rfqController.handleViewFile.bind(rfqController)
 );
@@ -306,6 +308,7 @@ router.get(
 router.get(
     "/responses/:rfqResId/files/:fileId",
     authMiddleware,
+    roleGuard(mainRfqCrudRoles),
     validate({params:z.object({rfqResId:z.uuid(),fileId:z.uuid()})}),
     rfqResponseController.handleGetFile.bind(rfqResponseController)
 );
@@ -313,6 +316,7 @@ router.get(
 router.get(
     "/response/viewFile/:rfqResId/:fileId",
     authMiddleware,
+    roleGuard(mainRfqCrudRoles),
     validate({params:z.object({rfqResId:z.uuid(),fileId:z.uuid()})}),
     rfqResponseController.handleViewFile.bind(rfqResponseController)
 );
