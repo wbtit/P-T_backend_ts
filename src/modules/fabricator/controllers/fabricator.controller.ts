@@ -115,6 +115,17 @@ export class FabricatorController {
     });
   }
 
+  async handleGetFabricatorPointOfContact(req: Request, res: Response) {
+    const { id } = req.params;
+    const data = await this.fabService.getFabricatorPointOfContacts(id);
+
+    return res.status(200).json({
+      message: "Fabricator POC fetched successfully",
+      success: true,
+      data,
+    });
+  }
+
   async handleGetFabricatorByCreatedById(req: AuthenticateRequest, res: Response) {
     if (!req.user) {
       throw new AppError("User not authenticated", 401);

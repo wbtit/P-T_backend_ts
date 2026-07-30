@@ -77,6 +77,36 @@ export class FabricatorRepository {
     }, query);
   }
 
+  async findPointOfContacts(fabricatorId: string) {
+    const fabricator = await prisma.fabricator.findUnique({
+      where: { id: fabricatorId, isDeleted: false },
+      select: {
+        pointOfContact: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            phone: true,
+            role: true,
+          }
+        },
+        wbtFabricatorPointOfContact: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            phone: true,
+            role: true,
+          }
+        }
+      }
+    });
+
+    return fabricator;
+  }
+
   async findById(input: GetFabricatorInput) {
     return prisma.fabricator.findFirst({
       where: { id: input.id, isDeleted: false },

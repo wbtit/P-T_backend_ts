@@ -86,6 +86,13 @@ router.get(
 );
 
 router.get(
+  "/:id/poc",
+  authMiddleware,
+  validate({ params: z.object({ id: z.uuid() }) }),
+  asyncHandler(fabCtrl.handleGetFabricatorPointOfContact.bind(fabCtrl))
+);
+
+router.get(
   "/:id",
   authMiddleware,
   validate({ params: z.object({ id: z.uuid() }) }),

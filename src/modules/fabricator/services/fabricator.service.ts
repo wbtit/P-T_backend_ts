@@ -30,6 +30,12 @@ export class FabricatorService {
     return fabRepo.findById({ id });
   }
 
+  async getFabricatorPointOfContacts(id: string) {
+    const data = await fabRepo.findPointOfContacts(id);
+    if (!data) throw new AppError("Fabricator not found", 404);
+    return data;
+  }
+
   async getFabricatorByCreatedById(createdById: string) {
     return fabRepo.findByCreatedById({ id: createdById });
   }

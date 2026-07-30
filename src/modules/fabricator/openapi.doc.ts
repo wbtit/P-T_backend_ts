@@ -85,6 +85,23 @@ export const fabricatorOpenApiDoc: ModuleOpenApiDoc = {
         }
       },
     },
+    "/fabricator/{id}/poc": {
+      get: {
+        tags: ["Fabricator"],
+        summary: "GET /fabricator/{id}/poc",
+        operationId: "get_fabricator_poc_by_id",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { in: "path", name: "id", required: true, schema: { type: "string" } },
+        ],
+        responses: {
+          "200": { description: "Fabricator POC fetched successfully" },
+          "401": { description: "Unauthorized" },
+          "404": { description: "Fabricator not found" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
     "/fabricator/{id}": {
       get: {
         tags: ["Fabricator"],

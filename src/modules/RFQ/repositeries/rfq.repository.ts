@@ -48,6 +48,30 @@ const RFQ_LIST_INCLUDE = {
   },
 } as const;
 
+
+export const RFQ_LIST_SELECT = {
+  id: true,
+  serialNo: true,
+  projectName: true,
+  wbtStatus: true,
+  status: true,
+  sender: { select: { firstName: true, lastName: true, id: true } },
+  MTOManual: true,
+  isMTOStickModel: true,
+  MTOStickModel: true,
+  MTOValue: true,
+  detailingMain: true,
+  detailingMisc: true,
+  miscDesign: true,
+  customerDesign: true,
+  connectionDesign: true,
+  createdAt: true,
+  RFQDueDate: true,
+  estimationDate: true,
+  fabricator: { select: { fabName: true, id: true } },
+  project: { select: { name: true, isAwarded: true } }
+} as const;
+
 export class RFQRepository {
     async create(data: CreateRfqPersistInput) {
       return this.createWithTx(prisma, data);
@@ -114,15 +138,7 @@ export class RFQRepository {
     async getAllRFQ(query: PaginationQuery){
         return await paginate(prisma.rFQ, {
             where: { isDeleted: false },
-            include:{
-                sender: true,
-                recipient: true,
-                multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
-                salesPerson: true,
-                responses: RFQ_RESPONSES_INCLUDE,
-                fabricator:true,
-                project: {select:{name:true}},
-            },
+            select: RFQ_LIST_SELECT,
             orderBy: { createdAt: "desc" },
         }, query)
     }
@@ -134,15 +150,7 @@ export class RFQRepository {
                 project: { status: { in: ["ACTIVE", "ONHOLD"] } },
                 status: { in: ["SENT", "REVISE"] },
             },
-            include: {
-                sender: true,
-                recipient: true,
-                multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
-                salesPerson: true,
-                responses: RFQ_RESPONSES_INCLUDE,
-                fabricator: true,
-                project: { select: { name: true } },
-            },
+            select: RFQ_LIST_SELECT,
             orderBy: { createdAt: "desc" },
         });
     }
@@ -161,23 +169,7 @@ export class RFQRepository {
                 },
                 status: "WBT_SUBMITTED",
             },
-                    include:{
-                sender: true,
-                recipient: true,
-                multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
-                salesPerson: true,
-                responses: RFQ_RESPONSES_INCLUDE,
-                fabricator:true,
-                project: {select:{name:true}},
-                connectionEngineers:{select:{firstName:true,lastName:true,id:true}},
-                connectionDesignerRFQ:{
-                    include:{
-                        CDEngineers: true,
-                       
-                    }
-                },
-                CDQuotas:true,
-            }
+            select: RFQ_LIST_SELECT
         })
         return rfqs;
     }
@@ -195,23 +187,7 @@ export class RFQRepository {
                 },
                 isDeleted: false
             },
-            include:{
-                sender: true,
-                recipient: true,
-                multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
-                salesPerson: true,
-                responses: RFQ_RESPONSES_INCLUDE,
-                fabricator:true,
-                project: {select:{name:true}},
-                connectionEngineers:{select:{firstName:true,lastName:true,id:true}},
-                connectionDesignerRFQ:{
-                    include:{
-                        CDEngineers: true,
-                       
-                    }
-                },
-                CDQuotas:true,
-            }
+            select: RFQ_LIST_SELECT
         })
     }
     async getById(data:GetRfqInput) {
@@ -324,15 +300,7 @@ export class RFQRepository {
                 senderId,
                 ...(projectId ? { project: { id: projectId } } : {}),
             },
-            include: {
-                sender: true,
-                recipient: true,
-                multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
-                salesPerson: true,
-                responses: RFQ_RESPONSES_INCLUDE,
-                fabricator:true,
-                project: {select:{name:true}},
-            },
+            select: RFQ_LIST_SELECT,
             orderBy: { createdAt: "desc" },
         }, query)
     }
@@ -347,15 +315,7 @@ export class RFQRepository {
                     { multipleRecipients: { some: { id: recipientId } } }
                 ]
             },
-            include: {
-                sender: true,
-                recipient: true,
-                multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
-                salesPerson: true,
-                responses: RFQ_RESPONSES_INCLUDE,
-                fabricator:true,
-                project: {select:{name:true}},
-            },
+            select: RFQ_LIST_SELECT,
             orderBy: { createdAt: "desc" },
         }, query)
     }
@@ -366,26 +326,7 @@ export class RFQRepository {
                 isDeleted: false,
                 project: { id: projectId },
             },
-            include: {
-                sender: true,
-                recipient: true,
-                multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
-                salesPerson: true,
-                responses: RFQ_RESPONSES_INCLUDE,
-                fabricator: true,
-                project: { select: { name: true } },
-                connectionEngineers: { select: { firstName: true, lastName: true, id: true } },
-                connectionDesignerRFQ: {
-                    include: {
-                        CDEngineers: true,
-                    }
-                },
-                CDQuotas: {
-                    include: {
-                        connectionDesigner: { select: { name: true } },
-                    }
-                },
-            }
+            select: RFQ_LIST_SELECT
         });
     }
 
@@ -413,7 +354,7 @@ export class RFQRepository {
                 fabricatorId: { in: fabricatorIds },
                 isDeleted: false,
             },
-            include: RFQ_LIST_INCLUDE,
+            select: RFQ_LIST_SELECT,
             orderBy: { createdAt: "desc" },
         });
     }
@@ -439,15 +380,7 @@ export class RFQRepository {
                 isDeleted: false,
           wbtStatus: { in: ["RECEIVED", "REVISE"] },
         },
-        include:{
-            sender: true,
-            recipient: true,
-                multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
-            salesPerson: true,
-            responses: RFQ_RESPONSES_INCLUDE,
-            fabricator:true,
-            project: {select:{name:true}},
-        }
+        select: RFQ_LIST_SELECT
         })
     }
 getbyProjectNameAndLocation(projectName:string,location:string){
@@ -456,15 +389,7 @@ getbyProjectNameAndLocation(projectName:string,location:string){
             projectName,
             location,
             isDeleted: false,
-        },include:{
-            sender: true,
-            recipient: true,
-                multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
-            salesPerson: true,
-            responses: RFQ_RESPONSES_INCLUDE,
-            fabricator:true,
-            project: {select:{name:true}},
-        }
+        },select: RFQ_LIST_SELECT
     });
     }
 
@@ -476,15 +401,7 @@ async findDuplicateForCreate(tx: Prisma.TransactionClient | typeof prisma, proje
             location: { equals: location, mode: "insensitive" },
             subject: { equals: subject, mode: "insensitive" },
         },
-        include: {
-            sender: true,
-            recipient: true,
-            multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
-            salesPerson: true,
-            responses: RFQ_RESPONSES_INCLUDE,
-            fabricator: true,
-            project: { select: { name: true } },
-        }
+        select: RFQ_LIST_SELECT
     });
 }
 async deleteRFQ(id:string){
@@ -507,15 +424,7 @@ async getRFQOfConnectionEngineer(userId:string){
             }
         },
         },
-          include:{
-           sender: true,
-            recipient: true,
-                multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
-            salesPerson: true,
-            responses: RFQ_RESPONSES_INCLUDE,
-            fabricator:true,
-            project: {select:{name:true}},
-        }
+          select: RFQ_LIST_SELECT
         })
     }
 
@@ -531,15 +440,7 @@ async getRFQOfConnectionEngineer(userId:string){
                 isDeleted: false,
                 wbtStatus: { in: ["RECEIVED", "REVISE"] },
             },
-            include: {
-                sender: true,
-                recipient: true,
-                multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
-                salesPerson: true,
-                responses: RFQ_RESPONSES_INCLUDE,
-                fabricator: true,
-                project: { select: { name: true } },
-            },
+            select: RFQ_LIST_SELECT,
         });
     }
 
@@ -549,15 +450,7 @@ async getRFQOfConnectionEngineer(userId:string){
                 isDeleted: false,
                 wbtStatus: { in: ["RECEIVED", "REVISE"] },
             },
-            include: {
-                sender: true,
-                recipient: true,
-                multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
-                salesPerson: true,
-                responses: RFQ_RESPONSES_INCLUDE,
-                fabricator: true,
-                project: { select: { name: true } },
-            },
+            select: RFQ_LIST_SELECT,
         });
     }
 
@@ -567,15 +460,7 @@ async getRFQOfConnectionEngineer(userId:string){
                 isDeleted: false,
                 responses: { none: {} },
             },
-            include: {
-                sender: true,
-                recipient: true,
-                multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
-                salesPerson: true,
-                responses: RFQ_RESPONSES_INCLUDE,
-                fabricator: true,
-                project: { select: { name: true } },
-            },
+            select: RFQ_LIST_SELECT,
         });
     }
 
@@ -604,7 +489,7 @@ async getRFQOfConnectionEngineer(userId:string){
                 },
                 isDeleted: false
             },
-            include: RFQ_LIST_INCLUDE,
+            select: RFQ_LIST_SELECT,
             orderBy: { createdAt: "desc" }
         });
     }
