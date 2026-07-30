@@ -57,7 +57,7 @@ router.get(
     "/getById/:id",
     authMiddleware,
     roleGuard(mainRfqCrudRoles),
-    validate({params:z.object({id:z.string()})}),
+    validate({params:z.object({id:z.uuid()})}),
     rfqController.handleGetRfqById.bind(rfqController)
 );
 
@@ -67,7 +67,7 @@ router.put(
     roleGuard(mainRfqCrudRoles),
     rfqCombinedUploads,
     scanUploadMiddleware,
-    validate({params:z.object({id:z.string()}),body:UpdateRfqPayloadSchema}),
+    validate({params:z.object({id:z.uuid()}),body:UpdateRfqPayloadSchema}),
     rfqController.handleUpdateRfq.bind(rfqController)
 );
 
@@ -75,7 +75,7 @@ router.delete(
     "/:id",
     authMiddleware,
     roleGuard(mainRfqCrudRoles),
-    validate({params:z.object({id:z.string()})}),
+    validate({params:z.object({id:z.uuid()})}),
     rfqController.handleCloseRfq.bind(rfqController)
 );
 
@@ -83,7 +83,7 @@ router.delete(
     "/delete/:id",
     authMiddleware,
     roleGuard(mainRfqCrudRoles),
-    validate({params:z.object({id:z.string()})}),
+    validate({params:z.object({id:z.uuid()})}),
     rfqController.handleDeleteRFQ.bind(rfqController)
 );
 
@@ -169,7 +169,7 @@ router.get(
 router.get(
     "/sents/:projectId",
     authMiddleware,
-    validate({params:z.object({projectId:z.string()})}),
+    validate({params:z.object({projectId:z.uuid()})}),
     rfqController.handleSents.bind(rfqController)
 );
 
@@ -182,14 +182,14 @@ router.get(
 router.get(
     "/received/:projectId",
     authMiddleware,
-    validate({params:z.object({projectId:z.string()})}),
+    validate({params:z.object({projectId:z.uuid()})}),
     rfqController.handleReceived.bind(rfqController)
 );
 
 router.get(
     "/project/:projectId",
     authMiddleware,
-    validate({params:z.object({projectId:z.string()})}),
+    validate({params:z.object({projectId:z.uuid()})}),
     rfqController.handleFindByProject.bind(rfqController)
 );
 
@@ -202,14 +202,14 @@ router.get(
 router.get(
     "/:rfqId/files/:fileId",
     authMiddleware,
-    validate({params:z.object({rfqId:z.string(),fileId:z.string()})}),
+    validate({params:z.object({rfqId:z.uuid(),fileId:z.uuid()})}),
     rfqController.handleGetFile.bind(rfqController)
 );
 
 router.get(
     "/viewFile/:rfqId/:fileId",
     authMiddleware,
-    validate({params:z.object({rfqId:z.string(),fileId:z.string()})}),
+    validate({params:z.object({rfqId:z.uuid(),fileId:z.uuid()})}),
     rfqController.handleViewFile.bind(rfqController)
 );
 
@@ -225,7 +225,7 @@ router.post(
     rfqFollowUpUploads.array("files"),
     scanUploadMiddleware,
     validate({
-        params: z.object({ rfqId: z.string() }),
+        params: z.object({ rfqId: z.uuid() }),
         body: CreateRFQFollowUpSchema,
     }),
     rfqFollowUpController.handleCreate.bind(rfqFollowUpController)
@@ -235,7 +235,7 @@ router.get(
     "/:rfqId/followups",
     authMiddleware,
     roleGuard(followUpRoles),
-    validate({ params: z.object({ rfqId: z.string() }) }),
+    validate({ params: z.object({ rfqId: z.uuid() }) }),
     rfqFollowUpController.handleListByRfq.bind(rfqFollowUpController)
 );
 
@@ -243,7 +243,7 @@ router.get(
     "/followups/:id",
     authMiddleware,
     roleGuard(followUpRoles),
-    validate({ params: z.object({ id: z.string() }) }),
+    validate({ params: z.object({ id: z.uuid() }) }),
     rfqFollowUpController.handleGetById.bind(rfqFollowUpController)
 );
 
@@ -254,7 +254,7 @@ router.put(
     rfqFollowUpUploads.array("files"),
     scanUploadMiddleware,
     validate({
-        params: z.object({ id: z.string() }),
+        params: z.object({ id: z.uuid() }),
         body: UpdateRFQFollowUpSchema,
     }),
     rfqFollowUpController.handleUpdate.bind(rfqFollowUpController)
@@ -264,7 +264,7 @@ router.delete(
     "/followups/:id",
     authMiddleware,
     roleGuard(followUpRoles),
-    validate({ params: z.object({ id: z.string() }) }),
+    validate({ params: z.object({ id: z.uuid() }) }),
     rfqFollowUpController.handleDelete.bind(rfqFollowUpController)
 );
 
@@ -272,7 +272,7 @@ router.get(
     "/followups/:id/files/:fileId",
     authMiddleware,
     roleGuard(followUpRoles),
-    validate({ params: z.object({ id: z.string(), fileId: z.string() }) }),
+    validate({ params: z.object({ id: z.uuid(), fileId: z.uuid() }) }),
     rfqFollowUpController.handleGetFile.bind(rfqFollowUpController)
 );
 
@@ -280,7 +280,7 @@ router.get(
     "/followups/viewFile/:id/:fileId",
     authMiddleware,
     roleGuard(followUpRoles),
-    validate({ params: z.object({ id: z.string(), fileId: z.string() }) }),
+    validate({ params: z.object({ id: z.uuid(), fileId: z.uuid() }) }),
     rfqFollowUpController.handleViewFile.bind(rfqFollowUpController)
 );
 // ===========================================================
@@ -292,28 +292,28 @@ router.post(
     authMiddleware,
     rfqResponseUploads.array("files"),
     scanUploadMiddleware,
-    validate({params:z.object({rfqId:z.string()}),body:RfqResponseSchema}),
+    validate({params:z.object({rfqId:z.uuid()}),body:RfqResponseSchema}),
     rfqResponseController.handleCreate.bind(rfqResponseController)
 );
 
 router.get(
     "/responses/:id",
     authMiddleware,
-    validate({params:z.object({id:z.string()})}),
+    validate({params:z.object({id:z.uuid()})}),
     rfqResponseController.handleGetById.bind(rfqResponseController)
 );
 
 router.get(
     "/responses/:rfqResId/files/:fileId",
     authMiddleware,
-    validate({params:z.object({rfqResId:z.string(),fileId:z.string()})}),
+    validate({params:z.object({rfqResId:z.uuid(),fileId:z.uuid()})}),
     rfqResponseController.handleGetFile.bind(rfqResponseController)
 );
 
 router.get(
     "/response/viewFile/:rfqResId/:fileId",
     authMiddleware,
-    validate({params:z.object({rfqResId:z.string(),fileId:z.string()})}),
+    validate({params:z.object({rfqResId:z.uuid(),fileId:z.uuid()})}),
     rfqResponseController.handleViewFile.bind(rfqResponseController)
 );
 
