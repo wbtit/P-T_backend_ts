@@ -347,7 +347,7 @@ export class RFQController {
           CDAttachments: uploadedCDAttachments.length
             ? uploadedCDAttachments
             : req.body.CDAttachments,
-        });
+        }, req.user);
         const updaterId = req.user.id;
         const bodyStatus = req.body?.status;
 
@@ -602,7 +602,7 @@ export class RFQController {
     }
     async handleCloseRfq(req:AuthenticateRequest,res:Response){
         const {id}=req.params
-        const rfq = await rfqService.closeRfq(id);
+        const rfq = await rfqService.closeRfq(id, req.user);
 
         (async () => {
           try {
@@ -624,7 +624,7 @@ export class RFQController {
     }
     async handleDeleteRFQ(req:AuthenticateRequest,res:Response){
         const {id}=req.params
-        const rfq = await rfqService.deleteRFQ(id);
+        const rfq = await rfqService.deleteRFQ(id, req.user);
         res.status(200).json({
             status: 'success',
             data: rfq,

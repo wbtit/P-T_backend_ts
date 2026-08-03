@@ -116,9 +116,26 @@ export class RFQService {
     return { newRfq: rfq };
   }
 
-    async updateRfq(id:string,data:UpdateRfqInput){
+    private verifyRfqOwnership(existingRfq: any, user: any) {
+        if (!user) return; // If no user passed, skip (e.g. system operations)
+        const isOwner = existingRfq.sender?.id === user.id || existingRfq.senderId === user.id;
+        const isInternalAdmin = [
+            "ADMIN", 
+            "DEPUTY_MANAGER", 
+            "PROJECT_MANAGER_OFFICER", 
+            "OPERATION_EXECUTIVE"
+        ].includes(user.role);
+
+        if (!isOwner && !isInternalAdmin) {
+            throw new AppError("You do not have permission to modify this RFQ.", 403);
+        }
+    }
+
+    async updateRfq(id:string, data:UpdateRfqInput, user?: any){
         const existing = await rfqrepo.getById({id});
         if(!existing) throw new AppError('RFQ not found', 404);
+
+        this.verifyRfqOwnership(existing, user);
 
         const rfq = await rfqrepo.update(id,data);
 
@@ -188,7 +205,11 @@ export class RFQService {
     async getPendingForClient(userId:string){
         return await rfqrepo.findPendingRFQsForClient(userId);
     }
-    async closeRfq(id:string){
+    async closeRfq(id:string, user?: any){
+        const existing = await rfqrepo.getById({id});
+        if(!existing) throw new AppError('RFQ not found', 404);
+        this.verifyRfqOwnership(existing, user);
+
         const rfq = await rfqrepo.closeRfq(id);
         try {
           await invalidateDashboardCache(invalidationPatterns.onRFQChange);
@@ -197,7 +218,11 @@ export class RFQService {
         }
         return rfq;
     }
-    async deleteRFQ(id:string){
+    async deleteRFQ(id:string, user?: any){
+        const existing = await rfqrepo.getById({id});
+        if(!existing) throw new AppError('RFQ not found', 404);
+        this.verifyRfqOwnership(existing, user);
+
         const rfq = await rfqrepo.deleteRFQ(id);
         try {
           await invalidateDashboardCache(invalidationPatterns.onRFQChange);
