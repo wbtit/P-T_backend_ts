@@ -1214,7 +1214,7 @@ model MileStone {
   types                 MileStoneType        @default(ANCHOR_BOLT)
   subSubject            String?              @default("")
   reason                String?              @default("")
-  description           String
+  description           String?
   completeionPercentage Float?               @default(0.0)
   milestoneVersion      Int                  @default(1)
   currentVersionId      String?              @unique @db.Uuid
@@ -1239,7 +1239,7 @@ model MileStoneVersion {
   subject            String
   types              MileStoneType       @default(ANCHOR_BOLT)
   subSubject         String?             @default("")
-  description        String
+  description        String?
   createdAt          DateTime            @default(now())
   isActive           Boolean             @default(true)
   mileStone          MileStone           @relation(fields: [mileStoneId], references: [id], onDelete: Cascade)

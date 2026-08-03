@@ -149,6 +149,10 @@ export class RFQService {
 
         return existing;
     }
+
+    async getResponsesByRfqId(rfqId: string) {
+        return await rfqrepo.getResponsesByRfqId(rfqId);
+    }
     async getAllRFQ(query: PaginationQuery){
         return await rfqrepo.getAllRFQ(query);
     }

@@ -66,6 +66,13 @@ router.get(
     rfqController.handleGetRfqById.bind(rfqController)
 );
 
+router.get(
+    "/:id/responses",
+    authMiddleware,
+    validate({params:z.object({id:z.uuid()})}),
+    rfqController.handleGetResponsesByRfqId.bind(rfqController)
+);
+
 router.put(
     "/update/:id",
     authMiddleware,

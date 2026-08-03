@@ -39,7 +39,7 @@ export const createMileStoneSchema=z.object({
     reason:z.string().optional(),
     completeionPercentage:z.number().min(0).max(100).default(0).optional(),
     subject:z.string(),
-    description:z.string()  
+    description:z.string().optional()  
 })
 export const updateMileStoneSchema=createMileStoneSchema.partial();
 

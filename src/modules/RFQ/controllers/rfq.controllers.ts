@@ -477,6 +477,15 @@ export class RFQController {
             data: rfq,
         });
     }
+
+    async handleGetResponsesByRfqId(req: Request, res: Response) {
+        const { id } = req.params;
+        const responses = await rfqService.getResponsesByRfqId(id);
+        res.status(200).json({
+            status: 'success',
+            data: responses,
+        });
+    }
     async handleClientSidePendingRFQs(req: AuthenticateRequest, res: Response) {
         if (
             req.user?.role !== "ADMIN" && 

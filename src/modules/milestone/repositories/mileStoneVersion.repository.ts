@@ -22,7 +22,7 @@ type MileStoneVersionPayload = {
   subject: string;
   types: MileStoneTypeValue;
   subSubject?: string | null;
-  description: string;
+  description?: string | null;
 };
 
 export class MileStoneVersionRepository {

@@ -173,6 +173,23 @@ export const rFQOpenApiDoc: ModuleOpenApiDoc = {
         }
       },
     },
+    "/rfq/{id}/responses": {
+      get: {
+        tags: ["RFQ"],
+        summary: "GET /rfq/{id}/responses",
+        operationId: "get_RFQ_responses_by_id",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { in: "path", name: "id", required: true, schema: { type: "string" } },
+        ],
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
     "/rfq/pendingRFQs": {
       get: {
         tags: ["RFQ"],

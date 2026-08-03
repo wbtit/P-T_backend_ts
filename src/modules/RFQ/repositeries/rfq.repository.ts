@@ -194,12 +194,32 @@ export class RFQRepository {
         return await prisma.rFQ.findUnique({
             where: { id: data.id, isDeleted: false },
             include:{
-                sender: true,
-                recipient: true,
+                sender: {select: {
+                                id: true,
+                                firstName: true,
+                                middleName: true,
+                                lastName: true,
+                                username: true,
+                                email: true,
+                            }},
+                recipient: {select: {
+                                id: true,
+                                firstName: true,
+                                middleName: true,
+                                lastName: true,
+                                username: true,
+                                email: true,
+                            }},
                 multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
                 salesPerson: true,
                 responses: RFQ_RESPONSES_INCLUDE,
-                fabricator:true,
+                fabricator:{
+                    select:{
+                        id:true,
+                        fabName:true,
+                        fabStage:true,
+                    }
+                },
                 project: {select:{name:true}},
                 connectionEngineers:{select:{firstName:true,lastName:true,id:true}},
                 connectionDesignerRFQ:{
@@ -230,6 +250,24 @@ export class RFQRepository {
                     }
                 },
             }
+        });
+    }
+
+    async getResponsesByRfqId(rfqId: string) {
+        return await prisma.rFQResponse.findMany({
+            where: {
+                rfqId,
+                parentResponseId: null,
+            },
+            include: {
+                user: true,
+                childResponses: {
+                    include: {
+                        user: true,
+                    },
+                },
+            },
+            orderBy: { createdAt: "desc" },
         });
     }
 
@@ -349,13 +387,28 @@ export class RFQRepository {
     async findByFabricatorIds(fabricatorIds: string[]) {
         if (fabricatorIds.length === 0) return [];
 
-        return await prisma.rFQ.findMany({
+        const rfqs = await prisma.rFQ.findMany({
             where: {
                 fabricatorId: { in: fabricatorIds },
                 isDeleted: false,
             },
-            select: RFQ_LIST_SELECT,
+            select: {
+                ...RFQ_LIST_SELECT,
+                responses: {
+                    select: { createdAt: true },
+                    orderBy: { createdAt: "desc" },
+                    take: 1,
+                }
+            },
             orderBy: { createdAt: "desc" },
+        });
+
+        return rfqs.map((rfq) => {
+            const { responses, ...rest } = rfq;
+            return {
+                ...rest,
+                latestResponseDate: responses.length > 0 ? responses[0].createdAt : null,
+            };
         });
     }
 
