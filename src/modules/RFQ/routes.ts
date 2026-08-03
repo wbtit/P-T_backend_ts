@@ -41,6 +41,13 @@ const mainRfqCrudRoles = [
     "CLIENT_GENERAL_CONSTRUCTOR"
 ];
 
+const rfqReadRoles = [
+    ...mainRfqCrudRoles,
+    "CONNECTION_DESIGNER_ENGINEER",
+    "CONNECTION_DESIGNER_ADMIN",
+    "ESTIMATOR"
+];
+
 router.post(
     "/",
     authMiddleware,
@@ -61,7 +68,7 @@ router.get(
 router.get(
     "/getById/:id",
     authMiddleware,
-    roleGuard(mainRfqCrudRoles),
+    roleGuard(rfqReadRoles),
     validate({params:z.object({id:z.uuid()})}),
     rfqController.handleGetRfqById.bind(rfqController)
 );
@@ -69,6 +76,7 @@ router.get(
 router.get(
     "/:id/responses",
     authMiddleware,
+    roleGuard(rfqReadRoles),
     validate({params:z.object({id:z.uuid()})}),
     rfqController.handleGetResponsesByRfqId.bind(rfqController)
 );

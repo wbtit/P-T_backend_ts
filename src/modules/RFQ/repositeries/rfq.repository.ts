@@ -12,41 +12,6 @@ type CreateRfqPersistInput = Omit<CreateRfqInput, "recipientId"> & {
   serialNo: string;
 };
 
-const RFQ_RESPONSES_INCLUDE = {
-  where: {
-    parentResponseId: null,
-  },
-  include: {
-    user: true,
-    childResponses: {
-      include: {
-        user: true,
-      },
-    },
-  },
-} as const;
-
-const RFQ_LIST_INCLUDE = {
-  sender: true,
-  recipient: true,
-  multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
-  salesPerson: true,
-  responses: RFQ_RESPONSES_INCLUDE,
-  fabricator: true,
-  project: { select: { name: true } },
-  connectionEngineers: { select: { firstName: true, lastName: true, id: true } },
-  connectionDesignerRFQ: {
-    include: {
-      CDEngineers: true,
-     
-    },
-  },
-  CDQuotas: {
-    include: {
-      connectionDesigner: { select: { name: true } },
-    },
-  },
-} as const;
 
 
 export const RFQ_LIST_SELECT = {
@@ -97,7 +62,6 @@ export class RFQRepository {
           multipleRecipients: { select: { id: true, firstName: true, lastName: true, username: true, designation: true, email: true } },
           project: { select: { name: true } },
           salesPerson: true,
-          responses: RFQ_RESPONSES_INCLUDE
         }
       });
     }
@@ -128,7 +92,6 @@ export class RFQRepository {
                 recipient: true,
                 multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
                 salesPerson: true,
-                responses: RFQ_RESPONSES_INCLUDE,
                 connectionDesignerRFQ:true,
                 connectionEngineers:true,
             }
@@ -212,7 +175,6 @@ export class RFQRepository {
                             }},
                 multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
                 salesPerson: true,
-                responses: RFQ_RESPONSES_INCLUDE,
                 fabricator:{
                     select:{
                         id:true,
@@ -229,21 +191,6 @@ export class RFQRepository {
                     }
                 },
                 estimations:{select:{id:true}},
-                followUps: {
-                    include: {
-                        createdBy: {
-                            select: {
-                                id: true,
-                                firstName: true,
-                                middleName: true,
-                                lastName: true,
-                                username: true,
-                                email: true,
-                            }
-                        }
-                    },
-                    orderBy: { createdAt: "desc" }
-                },
                 CDQuotas:{
                     include:{
                         connectionDesigner:{select:{name:true}},
@@ -253,12 +200,38 @@ export class RFQRepository {
         });
     }
 
-    async getResponsesByRfqId(rfqId: string) {
+    async getResponsesByRfqId(rfqId: string, user: any) {
+        let whereCondition: any = {
+            rfqId,
+            parentResponseId: null,
+        };
+
+        if (user.role.startsWith("CONNECTION_DESIGNER")) {
+            whereCondition.user = {
+                role: {
+                    notIn: [
+                        "CLIENT", 
+                        "CLIENT_ADMIN", 
+                        "CLIENT_ACCOUNTANT", 
+                        "CLIENT_ESTIMATOR", 
+                        "CLIENT_PROJECT_COORDINATOR", 
+                        "CLIENT_GENERAL_CONSTRUCTOR"
+                    ],
+                }
+            };
+        } else if (user.role.startsWith("CLIENT")) {
+            whereCondition.user = {
+                role: {
+                    notIn: [
+                        "CONNECTION_DESIGNER_ENGINEER", 
+                        "CONNECTION_DESIGNER_ADMIN"
+                    ],
+                }
+            };
+        }
+
         return await prisma.rFQResponse.findMany({
-            where: {
-                rfqId,
-                parentResponseId: null,
-            },
+            where: whereCondition,
             include: {
                 user: true,
                 childResponses: {
@@ -279,7 +252,6 @@ export class RFQRepository {
                 recipient: true,
                 multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
                 salesPerson: true,
-                responses: RFQ_RESPONSES_INCLUDE,
                 fabricator:true,
                 project: {select:{name:true}},
                 connectionEngineers:{select:{firstName:true,lastName:true,id:true}},
@@ -293,21 +265,6 @@ export class RFQRepository {
                     }
                 },
                 estimations:{select:{id:true}},
-                followUps: {
-                    include: {
-                        createdBy: {
-                            select: {
-                                id: true,
-                                firstName: true,
-                                middleName: true,
-                                lastName: true,
-                                username: true,
-                                email: true,
-                            }
-                        }
-                    },
-                    orderBy: { createdAt: "desc" }
-                },
                 CDQuotas:{
                     where: { connectionDesignerId }
                 },
@@ -323,7 +280,6 @@ export class RFQRepository {
                 recipient: true,
                 multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
                 salesPerson: true,
-                responses: RFQ_RESPONSES_INCLUDE,
                 project: {select:{name:true}},
                 connectionDesignerRFQ:true,
                 connectionEngineers:true,
@@ -421,7 +377,6 @@ export class RFQRepository {
                 recipient: true,
                 multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
                 salesPerson: true,
-                responses: RFQ_RESPONSES_INCLUDE,
                 project: {select:{name:true}},
             }
         })

@@ -150,8 +150,8 @@ export class RFQService {
         return existing;
     }
 
-    async getResponsesByRfqId(rfqId: string) {
-        return await rfqrepo.getResponsesByRfqId(rfqId);
+    async getResponsesByRfqId(rfqId: string, user: any) {
+        return await rfqrepo.getResponsesByRfqId(rfqId, user);
     }
     async getAllRFQ(query: PaginationQuery){
         return await rfqrepo.getAllRFQ(query);

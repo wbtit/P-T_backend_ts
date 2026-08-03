@@ -478,9 +478,10 @@ export class RFQController {
         });
     }
 
-    async handleGetResponsesByRfqId(req: Request, res: Response) {
+    async handleGetResponsesByRfqId(req: AuthenticateRequest, res: Response) {
+        if (!req.user) throw new AppError('User not found', 404);
         const { id } = req.params;
-        const responses = await rfqService.getResponsesByRfqId(id);
+        const responses = await rfqService.getResponsesByRfqId(id, req.user);
         res.status(200).json({
             status: 'success',
             data: responses,
