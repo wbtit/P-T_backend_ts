@@ -359,8 +359,17 @@ import { generateProjectSerial } from "../../../utils/serial.util";
      });
      return project;
    }
+
+   async softDelete(data: DeleteProjectInput) {
+     const project = await prisma.project.update({
+       where: { id: data.id },
+       data: { isDeleted: true },
+     });
+     return project;
+   }
    async getAll() {
       return await prisma.project.findMany({
+       where: { isDeleted: false },
        include:{
         stageHistory:true,
         fabricator:{select:{
@@ -402,6 +411,7 @@ import { generateProjectSerial } from "../../../utils/serial.util";
     async getForProjectManager(projectManagerId: string) {
        return await prisma.project.findMany({
         where: {
+          isDeleted: false,
           OR: [
             { managerID: projectManagerId },
             { assists: { some: { userId: projectManagerId, isActive: true } } }
@@ -440,6 +450,7 @@ import { generateProjectSerial } from "../../../utils/serial.util";
     async getForDepartmentManager(departmentId: string, userId?: string) {
        return await prisma.project.findMany({
         where: {
+          isDeleted: false,
           OR: [
             { departmentID: departmentId },
             ...(userId ? [{ assists: { some: { userId, isActive: true } } }] : [])
@@ -477,7 +488,7 @@ import { generateProjectSerial } from "../../../utils/serial.util";
 
    async getForConnectionDesignerEngineer(connectionDesignerId: string) {
       return await prisma.project.findMany({
-        where:{connectionDesignerID:connectionDesignerId},
+        where:{connectionDesignerID:connectionDesignerId, isDeleted: false},
         include:{
         stageHistory:true,
         fabricator:{select:{
@@ -549,6 +560,7 @@ import { generateProjectSerial } from "../../../utils/serial.util";
    async getProjectsForClient(clientId: string){
     return await prisma.project.findMany({
       where:{
+        isDeleted: false,
         isAwarded: true,
         status: { not: "INACTIVE" },
         clientProjectManagers: { some: { id: clientId } }
@@ -588,6 +600,7 @@ import { generateProjectSerial } from "../../../utils/serial.util";
 async getForStaff(staffId: string) {
   return await prisma.project.findMany({
     where: {
+      isDeleted: false,
       OR: [
         { tasks: { some: { user_id: staffId } } },
         { assists: { some: { userId: staffId, isActive: true } } }

@@ -88,7 +88,7 @@ export class ProjectController {
         });
     }
 
-    async handleGetProjectsByFabricatorId(req: Request, res: Response) {
+    async handleGetProjectsByFabricatorId(req: AuthenticateRequest, res: Response) {
       const { fabricatorId } = req.params;
       const projects = await projectService.getProjectsByFabricatorId(fabricatorId);
       
@@ -98,7 +98,7 @@ export class ProjectController {
         data: projects
       });
     }
-    async handleUpdateProject(req:Request,res:Response){
+    async handleUpdateProject(req: AuthenticateRequest,res:Response){
       const { id } = req.params;
         const uploadedFiles = mapUploadedFiles(
           (req.files as Express.Multer.File[]) || [],
@@ -109,7 +109,7 @@ export class ProjectController {
           files: uploadedFiles
         }, id);
         const updates = req.body ?? {};
-        const updaterId = (req as AuthenticateRequest).user?.id;
+        const updaterId = req.user?.id;
         const updatesForMeta = { ...updates };
 
         // Background non-blocking tasks
@@ -189,7 +189,7 @@ export class ProjectController {
           data: project
         });
     }
-    async handleGetProject(req:Request,res:Response){
+    async handleGetProject(req: AuthenticateRequest,res:Response){
         const project = await projectService.get({id: req.params.id});
         if (!project) {
           return res.status(404).json({
@@ -198,7 +198,7 @@ export class ProjectController {
           });
         }
         
-        const user = (req as AuthenticateRequest).user;
+        const user = req.user;
         if (user && user.role.startsWith('CLIENT') && project.isAwarded === false) {
            return res.status(404).json({
             status: 'error',
@@ -211,7 +211,7 @@ export class ProjectController {
           data: project
         });
     }
-    async handleDeleteProject(req:Request,res:Response){
+    async handleDeleteProject(req: AuthenticateRequest,res:Response){
         const project = await projectService.delete({id: req.params.id});
         if (!project) {
           return res.status(404).json({
@@ -220,7 +220,7 @@ export class ProjectController {
           });
         }
         const deleterProjectId = req.params.id;
-        const deleterId = (req as AuthenticateRequest).user?.id;
+        const deleterId = req.user?.id;
         const projectNameForLog = project?.name;
 
         // Background non-blocking tasks
@@ -249,7 +249,7 @@ export class ProjectController {
         });
     }
 
-    async handleAwardProject(req: Request, res: Response) {
+    async handleAwardProject(req: AuthenticateRequest, res: Response) {
         const { id } = req.params;
         const project = await projectService.awardProject(id);
 
@@ -297,7 +297,7 @@ async expandWbs(req: AuthenticateRequest, res: Response) {
   const result = await projectService.expandProjectWbs(
     projectId,
     bundleKeys,
-    req.user.id
+    req.user?.id
   );
 
   res.status(200).json({
@@ -365,7 +365,7 @@ async addWbs(req: AuthenticateRequest, res: Response) {
           data: projects
         });
     }
-    async handleGetFile(req:Request,res:Response){
+    async handleGetFile(req: AuthenticateRequest,res:Response){
         const {projectId, fileId} = req.params;
         const file = await projectService.getFile(projectId, fileId);
         if (!file) {
@@ -379,11 +379,11 @@ async addWbs(req: AuthenticateRequest, res: Response) {
           data: file
         });
     }
-    async handleViewFile(req:Request,res:Response){
+    async handleViewFile(req: AuthenticateRequest,res:Response){
         const {projectId, fileId} = req.params;
         await projectService.viewFile(projectId, fileId, res);
     }
-    async handleGetProjectUpdateHistory(req:Request,res:Response){
+    async handleGetProjectUpdateHistory(req: AuthenticateRequest,res:Response){
        const { projectId } = req.params;
        const updateHistory = await projectService.getProjectUpdateHistoryByProjectId(projectId);
        res.status(200).json({
@@ -392,9 +392,9 @@ async addWbs(req: AuthenticateRequest, res: Response) {
        });
     }
 
-    async handleGetAllDocuments(req:Request,res:Response){
+    async handleGetAllDocuments(req: AuthenticateRequest,res:Response){
       const { id } = req.params;
-      const documents = await projectService.getAllDocuments(id, (req as AuthenticateRequest).user?.role);
+      const documents = await projectService.getAllDocuments(id, req.user?.role);
       res.status(200).json({
         status: 'success',
         data: documents
@@ -412,7 +412,7 @@ async addWbs(req: AuthenticateRequest, res: Response) {
       const result = await projectAssistService.createAssist(
         projectId,
         userId,
-        req.user.id,
+        req.user?.id,
         isActive ?? true
       );
 
@@ -429,12 +429,50 @@ async addWbs(req: AuthenticateRequest, res: Response) {
       }
 
       const { projectId } = req.params;
-      const assists = await projectAssistService.listAssists(projectId, req.user.id);
+      const assists = await projectAssistService.listAssists(projectId, req.user?.id);
 
       res.status(200).json({
         status: "success",
         data: assists,
       });
+    }
+
+    async handleSoftDeleteProject(req: AuthenticateRequest,res:Response){
+        const project = await projectService.softDelete({id: req.params.id});
+        if (!project) {
+          return res.status(404).json({
+            status: 'error',
+            message: 'Project not found'
+          });
+        }
+        const deleterProjectId = req.params.id;
+        const deleterId = req.user?.id;
+        const projectNameForLog = project?.name;
+
+        // Background non-blocking tasks
+        (async () => {
+          try {
+            await notifyProjectStakeholdersByRole(deleterProjectId, PROJECT_DELETED_ROLES, (role) =>
+              buildRoleScopedNotification(role, {
+                type: "PROJECT_DELETED",
+                basePayload: { projectId: deleterProjectId, timestamp: new Date() },
+                templates: {
+                  creator: { title: "", message: "" },
+                  external: { title: "Project Deleted", message: projectNameForLog?.trim() ? `Project '${projectNameForLog}' was deleted.` : "A project was deleted." },
+                  oversight: { title: "Project Deleted / Soft Deleted", message: projectNameForLog?.trim() ? `Project '${projectNameForLog}' was deleted.` : "A project was deleted." },
+                  internal: { title: "Project Deleted", message: projectNameForLog?.trim() ? `Project '${projectNameForLog}' was deleted.` : "A project was deleted." },
+                },
+              }),
+              { excludeUserIds: deleterId ? [deleterId] : [] }
+            );
+          } catch (error) {
+            console.error("Error in handleSoftDeleteProject background tasks:", error);
+          }
+        })();
+        res.status(200).json({
+          status: 'success',
+          data: project
+        });
     }
 
     async handleArchiveProjectFiles(req: AuthenticateRequest, res: Response) {
@@ -457,7 +495,7 @@ async addWbs(req: AuthenticateRequest, res: Response) {
       const result = await projectAssistService.updateAssist(
         projectId,
         userId,
-        req.user.id,
+        req.user?.id,
         isActive
       );
 
@@ -474,7 +512,7 @@ async addWbs(req: AuthenticateRequest, res: Response) {
       }
 
       const { projectId, userId } = req.params;
-      await projectAssistService.deleteAssist(projectId, userId, req.user.id);
+      await projectAssistService.deleteAssist(projectId, userId, req.user?.id);
 
       res.status(200).json({
         status: "success",

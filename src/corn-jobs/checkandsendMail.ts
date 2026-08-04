@@ -19,6 +19,7 @@ export async function checkAndSendReminders(): Promise<void> {
   // PROJECT REMINDERS
   // ───────────────────────────────
   const projects = await prisma.project.findMany({
+    where: { isDeleted: false },
     include: {
       manager: {
         select: { email: true },

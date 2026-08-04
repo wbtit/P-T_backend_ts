@@ -43,6 +43,7 @@ async function collectCounters() {
 
   // GLOBAL: Project
   const projects = await prisma.project.findMany({
+    where: { isDeleted: false },
     select: { serialNo: true },
   });
   for (const row of projects) {

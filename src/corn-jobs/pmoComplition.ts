@@ -18,6 +18,7 @@ const COMPLETION_NOTIFY_ROLES: UserRole[] = [
 
 export async function runPMOComplition() {
     const projects = await prisma.project.findMany({
+        where: { isDeleted: false },
         include:{
             mileStones:true,
             submittals:true,

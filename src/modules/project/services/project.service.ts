@@ -29,11 +29,15 @@ import { invalidateDashboardCache, invalidationPatterns } from "../../../utils/d
    
   
   async create(data: CreateProjectInput,userId:string) {
-     const existing = await projectRepository.getByProjectNumber(data.projectNumber);
-     if (existing) {
-       throw new AppError("Project with this number already exists", 409);
+     let project;
+     try {
+       project = await projectRepository.create(data,userId);
+     } catch (err: any) {
+       if (err.code === 'P2002') {
+         throw new AppError("Project with this number already exists", 409);
+       }
+       throw err;
      }
-     const project = await projectRepository.create(data,userId);
      try {
        await invalidateDashboardCache(invalidationPatterns.onProjectChange);
      } catch (err) {
@@ -372,6 +376,20 @@ async expandProjectWbs(
        throw new AppError("Project not found", 404);
      }
      const project = await projectRepository.delete(data);
+     try {
+       await invalidateDashboardCache(invalidationPatterns.onProjectChange);
+     } catch (err) {
+       console.error("Failed to invalidate cache on project delete:", err);
+     }
+     return project;
+   }
+
+   async softDelete(data: DeleteProjectInput) {
+    const existing = await projectRepository.get({ id: data.id });
+     if (!existing) {
+       throw new AppError("Project not found", 404);
+     }
+     const project = await projectRepository.softDelete(data);
      try {
        await invalidateDashboardCache(invalidationPatterns.onProjectChange);
      } catch (err) {

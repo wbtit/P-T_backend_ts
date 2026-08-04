@@ -51,8 +51,14 @@ const projectController = new ProjectController();
 router.post("/projects", authMiddleware,projectUploads.array("files"), scanUploadMiddleware, validate({body: CreateProjectSchema}),
 asyncHandler(projectController.handleCreateProject.bind(projectController)));
 
-router.put("/projects/:id", authMiddleware,projectUploads.array("files"), scanUploadMiddleware, validate({params:z.object({id:z.string()}),body: UpdateProjectSchema}), 
-asyncHandler(projectController.handleUpdateProject.bind(projectController)));
+router.put("/projects/:id", 
+  authMiddleware,
+  roleGuard(["ADMIN", "DEPUTY_MANAGER", "OPERATION_EXECUTIVE", "PROJECT_MANAGER_OFFICER", "DEPT_MANAGER", "PROJECT_MANAGER"]),
+  projectUploads.array("files"), 
+  scanUploadMiddleware, 
+  validate({params:z.object({id:z.string()}),body: UpdateProjectSchema}), 
+  asyncHandler(projectController.handleUpdateProject.bind(projectController))
+);
 
 router.get("/projects/:id", authMiddleware, validate({params:z.object({id:z.string()})}), 
 asyncHandler(projectController.handleGetProject.bind(projectController)));
@@ -62,6 +68,13 @@ asyncHandler(projectController.handleGetProjectsByFabricatorId.bind(projectContr
 
 router.delete("/projects/:id", authMiddleware, validate({params:z.object({id:z.string()})}), 
 asyncHandler(projectController.handleDeleteProject.bind(projectController)));
+
+router.patch("/projects/:id/soft-delete",
+  authMiddleware,
+  roleGuard(["ADMIN", "DEPUTY_MANAGER", "OPERATION_EXECUTIVE"]),
+  validate({params:z.object({id:z.string()})}),
+  asyncHandler(projectController.handleSoftDeleteProject.bind(projectController))
+);
 
 router.post("/projects/:id/archive", 
   authMiddleware, 
