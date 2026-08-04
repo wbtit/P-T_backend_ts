@@ -25,10 +25,30 @@ export class RfqResponseService {
 
         if (isParentResponse) {
             // WBT creating a new submission
-            // Only allowed when RFQ is SENT or REVISE
-            if (rfq.status !== "SENT" && rfq.status !== "REVISE") {
+            // Allowed when RFQ is SENT, REVISE, or WBT_SUBMITTED (for dual-submission)
+            if (rfq.status !== "SENT" && rfq.status !== "REVISE" && rfq.status !== "WBT_SUBMITTED") {
                 throw new AppError(
-                    "A new response can only be submitted when RFQ status is SENT or REVISE",
+                    "A new response can only be submitted when RFQ is active (SENT, REVISE, or WBT_SUBMITTED).",
+                    409
+                );
+            }
+
+            // Type-Based Concurrency Lock
+            const pendingResponses = await prisma.rFQResponse.findMany({
+                where: {
+                    rfqId: data.rfqId,
+                    parentResponseId: null,
+                    isDeleted: false,
+                    status: "RECEIVED" // Still pending client review
+                }
+            });
+
+            const targetType = data.type ?? "DETAILING";
+            const hasSameTypePending = pendingResponses.some(r => (r.type ?? "DETAILING") === targetType);
+            
+            if (hasSameTypePending) {
+                throw new AppError(
+                    `A ${targetType} response has already been submitted and is pending client review.`,
                     409
                 );
             }
