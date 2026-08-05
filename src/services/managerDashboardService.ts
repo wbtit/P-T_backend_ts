@@ -87,8 +87,9 @@ export async function getManagerDashboardData(managerId: string, projectId: stri
     });
 
     // 6️⃣ Generate Insights
-    const measInsight =
-        measScore.score >= 85
+    const measInsight = measScore === null
+        ? "No score available (no completed tasks)"
+        : measScore.score >= 85
             ? "Excellent estimation accuracy"
             : measScore.score >= 70
             ? "Good, but can improve"

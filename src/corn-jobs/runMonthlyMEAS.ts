@@ -25,14 +25,14 @@ export async function runMonthlyMEAS() {
     for (const p of projects) {
         try {
             console.log(`Calculating MEAS for Manager ${p.managerID} on Project ${p.id}`);
-            await calculateManagerEstimationScore(p.managerID, p.id);
-            processed++;
-        } catch (err: any) {
-            if (err?.statusCode === 404) {
+            const result = await calculateManagerEstimationScore(p.managerID, p.id);
+            if (result === null) {
                 skippedNoTasks++;
-                console.warn(`Skipping project ${p.id}: ${err.message}`);
-                continue;
+                console.warn(`Skipping project ${p.id}: No completed tasks found`);
+            } else {
+                processed++;
             }
+        } catch (err: any) {
             failed++;
             console.error(`MEAS failed for manager ${p.managerID} on project ${p.id}`, err);
         }

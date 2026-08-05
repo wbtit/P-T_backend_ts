@@ -26,6 +26,15 @@ export async function runMEASManually(req: Request, res: Response) {
       projectId,
     );
     console.log("MEAS calculation result:", result);
+
+    if (result === null) {
+      return res.status(200).json({
+        success: true,
+        message: "No completed tasks found on this project during this period. (Note: MEAS evaluates staff task completion vs manager allocation estimates).",
+        data: null,
+      });
+    }
+
     return res.status(200).json({
       success: true,
       message: "MEAS calculated successfully",

@@ -125,10 +125,8 @@ export async function calculateManagerEstimationScore(managerId:string,projectId
         });
         console.log("[MEAS][DEBUG] no-match diagnostic: latest completed tasks on project", nearbyTasks);
 
-        throw new AppError(
-            `No completed tasks found for manager ${managerId} on project ${projectId} in ${period}`,
-            404
-        );
+        console.log(`[MEAS][DEBUG] No completed tasks found on project ${projectId} for the period ${period} (managed by ${managerId})`);
+        return null;
     }
 
 
