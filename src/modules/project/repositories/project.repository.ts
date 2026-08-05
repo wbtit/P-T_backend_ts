@@ -1,3 +1,12 @@
+export interface ProjectFilters {
+    search?: string;
+    managerName?: string;
+    fabricatorName?: string;
+    stage?: string;
+    startDate?: string;
+    endDate?: string;
+}
+
 import { Prisma, UserRole } from "@prisma/client";
 import prisma from "../../../config/database/client";
 import { AppError } from "../../../config/utils/AppError";
@@ -367,37 +376,81 @@ import { generateProjectSerial } from "../../../utils/serial.util";
      });
      return project;
    }
-   async getAll() {
-      return await prisma.project.findMany({
-       where: { isDeleted: false },
-       include:{
-        stageHistory:true,
-        fabricator:{select:{
-          files:true,
-          fabName:true,
-          id:true
-        }},
-        manager:{select:{
-          firstName:true,
-          middleName:true,
-          lastName:true,
-          username:true,
-          id:true
-        }},
-        clientProjectManagers:{select:{
-          firstName:true,
-          middleName:true,
-          lastName:true,
-          username:true,
-          id:true
-        }},
-        team:true,
-        department:{select:{
-          name:true,
-          id:true
-        }}
-       }
-     });
+   async getAll(skip?: number, take?: number, filters?: ProjectFilters) {
+      
+               const [data, total] = await Promise.all([
+                 prisma.project.findMany({
+              where: { isDeleted: false,
+                  AND: [
+                                        filters?.search ? { name: { contains: filters.search, mode: 'insensitive' as const } } : {},
+                                        filters?.managerName ? { manager: { AND: filters.managerName.split(' ').map(part => ({
+                                          OR: [
+                                            { firstName: { contains: part, mode: 'insensitive' as const } },
+                                            { lastName: { contains: part, mode: 'insensitive' as const } }
+                                          ]
+                                        }))}} : {},
+                                        filters?.fabricatorName ? { fabricator: { fabName: { contains: filters.fabricatorName, mode: 'insensitive' as const } } } : {},
+                                        filters?.stage ? { stage: filters.stage as any } : {},
+                                        (filters?.startDate || filters?.endDate) ? {
+                                          startDate: {
+                                            ...(filters?.startDate ? { gte: new Date(filters.startDate) } : {}),
+                                            ...(filters?.endDate ? { lte: new Date(filters.endDate) } : {})
+                                          }
+                                        } : {}
+                                      ]
+            },
+              include:{
+               stageHistory:true,
+               fabricator:{select:{
+                 files:true,
+                 fabName:true,
+                 id:true
+               }},
+               manager:{select:{
+                 firstName:true,
+                 middleName:true,
+                 lastName:true,
+                 username:true,
+                 id:true
+               }},
+               clientProjectManagers:{select:{
+                 firstName:true,
+                 middleName:true,
+                 lastName:true,
+                 username:true,
+                 id:true
+               }},
+               team:true,
+               department:{select:{
+                 name:true,
+                 id:true
+               }}
+              },
+                 skip: skip,
+                 take: take
+           }),
+                 prisma.project.count({ where: { isDeleted: false,
+                     AND: [
+                                           filters?.search ? { name: { contains: filters.search, mode: 'insensitive' as const } } : {},
+                                           filters?.managerName ? { manager: { AND: filters.managerName.split(' ').map(part => ({
+                                             OR: [
+                                               { firstName: { contains: part, mode: 'insensitive' as const } },
+                                               { lastName: { contains: part, mode: 'insensitive' as const } }
+                                             ]
+                                           }))}} : {},
+                                           filters?.fabricatorName ? { fabricator: { fabName: { contains: filters.fabricatorName, mode: 'insensitive' as const } } } : {},
+                                           filters?.stage ? { stage: filters.stage as any } : {},
+                                           (filters?.startDate || filters?.endDate) ? {
+                                             startDate: {
+                                               ...(filters?.startDate ? { gte: new Date(filters.startDate) } : {}),
+                                               ...(filters?.endDate ? { lte: new Date(filters.endDate) } : {})
+                                             }
+                                           } : {}
+                                         ]
+                } })
+               ]);
+               return { data, total };
+             
    }
    async getProjectUpdateHistoryByProjectId(projectId: string) {
      const updateLog = await prisma.projectStageHistory.findMany({
@@ -408,232 +461,512 @@ import { generateProjectSerial } from "../../../utils/serial.util";
      });
      return updateLog;
    }
-    async getForProjectManager(projectManagerId: string) {
-       return await prisma.project.findMany({
-        where: {
-          isDeleted: false,
-          OR: [
-            { managerID: projectManagerId },
-            { assists: { some: { userId: projectManagerId, isActive: true } } }
-          ]
-        },
-       include:{
-        stageHistory:true,
-        fabricator:{select:{
-          files:true,
-          fabName:true,
-          id:true
-        }},
-        manager:{select:{
-          firstName:true,
-          middleName:true,
-          lastName:true,
-          username:true,
-          id:true
-        }},
-        clientProjectManagers:{select:{
-          firstName:true,
-          middleName:true,
-          lastName:true,
-          username:true,
-          id:true
-        }},
-        team:true,
-        department:{select:{
-          name:true,
-          id:true
-        }}
-       }
-     });
-   }
-
-    async getForDepartmentManager(departmentId: string, userId?: string) {
-       return await prisma.project.findMany({
-        where: {
-          isDeleted: false,
-          OR: [
-            { departmentID: departmentId },
-            ...(userId ? [{ assists: { some: { userId, isActive: true } } }] : [])
-          ]
-        },
-       include:{
-        stageHistory:true,
-        fabricator:{select:{
-          files:true,
-          fabName:true,
-          id:true
-        }},
-        manager:{select:{
-          firstName:true,
-          middleName:true,
-          lastName:true,
-          username:true,
-          id:true
-        }},
-        clientProjectManagers:{select:{
-          firstName:true,
-          middleName:true,
-          lastName:true,
-          username:true,
-          id:true
-        }},
-        team:true,
-        department:{select:{
-          name:true,
-          id:true
-        }}
-       }
-     });
-   }
-
-   async getForConnectionDesignerEngineer(connectionDesignerId: string) {
-      return await prisma.project.findMany({
-        where:{connectionDesignerID:connectionDesignerId, isDeleted: false},
-        include:{
-        stageHistory:true,
-        fabricator:{select:{
-          files:true,
-          fabName:true,
-          id:true
-        }},
-        manager:{select:{
-          firstName:true,
-          middleName:true,
-          lastName:true,
-          username:true,
-          id:true
-        }},
-        clientProjectManagers:{select:{
-          firstName:true,
-          middleName:true,
-          lastName:true,
-          username:true,
-          id:true
-        }},
-        team:true,
-        department:{select:{
-          name:true,
-          id:true
-        }}
-       }
-      })
-   }
-
-   async getProjectsForClientAdmin(clientAdminId: string) {
-    return await prisma.project.findMany({
-      where:{
-        isDeleted: false,
-        isAwarded: true,
-        status: { not: "INACTIVE" },
-        fabricator:{ pointOfContact: { some: { id: clientAdminId } } },
-      },
-      include:{
-        stageHistory:true,
-        fabricator:{select:{
-          files:true,
-          fabName:true,
-          id:true
-        }},
-        manager:{select:{
-          firstName:true,
-          middleName:true,
-          lastName:true,
-          username:true,
-          id:true
-        }},
-        clientProjectManagers:{select:{
-          firstName:true,
-          middleName:true,
-          lastName:true,
-          username:true,
-          id:true
-        }},
-        team:true,
-        department:{select:{
-          name:true,
-          id:true
-        }}
-       }
-    })
-   }
-
-   async getProjectsForClient(clientId: string){
-    return await prisma.project.findMany({
-      where:{
-        isDeleted: false,
-        isAwarded: true,
-        status: { not: "INACTIVE" },
-        clientProjectManagers: { some: { id: clientId } }
+    async getForProjectManager(projectManagerId: string, skip?: number, take?: number, filters?: ProjectFilters) {
        
-      },
-      include:{
-        stageHistory:true,
-        fabricator:{select:{
-          files:true,
-          fabName:true,
-          id:true
-        }},
-        manager:{select:{
-          firstName:true,
-          middleName:true,
-          lastName:true,
-          username:true,
-          id:true
-        }},
-        clientProjectManagers:{select:{
-          firstName:true,
-          middleName:true,
-          lastName:true,
-          username:true,
-          id:true
-        }},
-        team:true,
-        department:{select:{
-          name:true,
-          id:true
-        }}
-       }
+                const [data, total] = await Promise.all([
+                  prisma.project.findMany({
+                where: {
+                  isDeleted: false,
+                  OR: [
+                    { managerID: projectManagerId },
+                    { assists: { some: { userId: projectManagerId, isActive: true } } }
+                  ],
+                    AND: [
+                                          filters?.search ? { name: { contains: filters.search, mode: 'insensitive' as const } } : {},
+                                          filters?.managerName ? { manager: { AND: filters.managerName.split(' ').map(part => ({
+                                            OR: [
+                                              { firstName: { contains: part, mode: 'insensitive' as const } },
+                                              { lastName: { contains: part, mode: 'insensitive' as const } }
+                                            ]
+                                          }))}} : {},
+                                          filters?.fabricatorName ? { fabricator: { fabName: { contains: filters.fabricatorName, mode: 'insensitive' as const } } } : {},
+                                          filters?.stage ? { stage: filters.stage as any } : {},
+                                          (filters?.startDate || filters?.endDate) ? {
+                                            startDate: {
+                                              ...(filters?.startDate ? { gte: new Date(filters.startDate) } : {}),
+                                              ...(filters?.endDate ? { lte: new Date(filters.endDate) } : {})
+                                            }
+                                          } : {}
+                                        ]
+                },
+               include:{
+                stageHistory:true,
+                fabricator:{select:{
+                  files:true,
+                  fabName:true,
+                  id:true
+                }},
+                manager:{select:{
+                  firstName:true,
+                  middleName:true,
+                  lastName:true,
+                  username:true,
+                  id:true
+                }},
+                clientProjectManagers:{select:{
+                  firstName:true,
+                  middleName:true,
+                  lastName:true,
+                  username:true,
+                  id:true
+                }},
+                team:true,
+                department:{select:{
+                  name:true,
+                  id:true
+                }}
+               },
+                   skip: skip,
+                   take: take
+            }),
+                  prisma.project.count({ where: {
+                  isDeleted: false,
+                  OR: [
+                    { managerID: projectManagerId },
+                    { assists: { some: { userId: projectManagerId, isActive: true } } }
+                  ],
+                      AND: [
+                                            filters?.search ? { name: { contains: filters.search, mode: 'insensitive' as const } } : {},
+                                            filters?.managerName ? { manager: { AND: filters.managerName.split(' ').map(part => ({
+                                              OR: [
+                                                { firstName: { contains: part, mode: 'insensitive' as const } },
+                                                { lastName: { contains: part, mode: 'insensitive' as const } }
+                                              ]
+                                            }))}} : {},
+                                            filters?.fabricatorName ? { fabricator: { fabName: { contains: filters.fabricatorName, mode: 'insensitive' as const } } } : {},
+                                            filters?.stage ? { stage: filters.stage as any } : {},
+                                            (filters?.startDate || filters?.endDate) ? {
+                                              startDate: {
+                                                ...(filters?.startDate ? { gte: new Date(filters.startDate) } : {}),
+                                                ...(filters?.endDate ? { lte: new Date(filters.endDate) } : {})
+                                              }
+                                            } : {}
+                                          ]
+                } })
+                ]);
+                return { data, total };
+              
+   }
 
-   })
+    async getForDepartmentManager(departmentId: string, userId?: string, skip?: number, take?: number, filters?: ProjectFilters) {
+       
+                const [data, total] = await Promise.all([
+                  prisma.project.findMany({
+                where: {
+                  isDeleted: false,
+                  OR: [
+                    { departmentID: departmentId },
+                    ...(userId ? [{ assists: { some: { userId, isActive: true } } }] : [])
+                  ],
+                    AND: [
+                                          filters?.search ? { name: { contains: filters.search, mode: 'insensitive' as const } } : {},
+                                          filters?.managerName ? { manager: { AND: filters.managerName.split(' ').map(part => ({
+                                            OR: [
+                                              { firstName: { contains: part, mode: 'insensitive' as const } },
+                                              { lastName: { contains: part, mode: 'insensitive' as const } }
+                                            ]
+                                          }))}} : {},
+                                          filters?.fabricatorName ? { fabricator: { fabName: { contains: filters.fabricatorName, mode: 'insensitive' as const } } } : {},
+                                          filters?.stage ? { stage: filters.stage as any } : {},
+                                          (filters?.startDate || filters?.endDate) ? {
+                                            startDate: {
+                                              ...(filters?.startDate ? { gte: new Date(filters.startDate) } : {}),
+                                              ...(filters?.endDate ? { lte: new Date(filters.endDate) } : {})
+                                            }
+                                          } : {}
+                                        ]
+                },
+               include:{
+                stageHistory:true,
+                fabricator:{select:{
+                  files:true,
+                  fabName:true,
+                  id:true
+                }},
+                manager:{select:{
+                  firstName:true,
+                  middleName:true,
+                  lastName:true,
+                  username:true,
+                  id:true
+                }},
+                clientProjectManagers:{select:{
+                  firstName:true,
+                  middleName:true,
+                  lastName:true,
+                  username:true,
+                  id:true
+                }},
+                team:true,
+                department:{select:{
+                  name:true,
+                  id:true
+                }}
+               },
+                   skip: skip,
+                   take: take
+            }),
+                  prisma.project.count({ where: {
+                  isDeleted: false,
+                  OR: [
+                    { departmentID: departmentId },
+                    ...(userId ? [{ assists: { some: { userId, isActive: true } } }] : [])
+                  ],
+                      AND: [
+                                            filters?.search ? { name: { contains: filters.search, mode: 'insensitive' as const } } : {},
+                                            filters?.managerName ? { manager: { AND: filters.managerName.split(' ').map(part => ({
+                                              OR: [
+                                                { firstName: { contains: part, mode: 'insensitive' as const } },
+                                                { lastName: { contains: part, mode: 'insensitive' as const } }
+                                              ]
+                                            }))}} : {},
+                                            filters?.fabricatorName ? { fabricator: { fabName: { contains: filters.fabricatorName, mode: 'insensitive' as const } } } : {},
+                                            filters?.stage ? { stage: filters.stage as any } : {},
+                                            (filters?.startDate || filters?.endDate) ? {
+                                              startDate: {
+                                                ...(filters?.startDate ? { gte: new Date(filters.startDate) } : {}),
+                                                ...(filters?.endDate ? { lte: new Date(filters.endDate) } : {})
+                                              }
+                                            } : {}
+                                          ]
+                } })
+                ]);
+                return { data, total };
+              
+   }
+
+   async getForConnectionDesignerEngineer(connectionDesignerId: string, skip?: number, take?: number, filters?: ProjectFilters) {
+      
+               const [data, total] = await Promise.all([
+                 prisma.project.findMany({
+               where:{connectionDesignerID:connectionDesignerId, isDeleted: false,
+                   AND: [
+                                         filters?.search ? { name: { contains: filters.search, mode: 'insensitive' as const } } : {},
+                                         filters?.managerName ? { manager: { AND: filters.managerName.split(' ').map(part => ({
+                                           OR: [
+                                             { firstName: { contains: part, mode: 'insensitive' as const } },
+                                             { lastName: { contains: part, mode: 'insensitive' as const } }
+                                           ]
+                                         }))}} : {},
+                                         filters?.fabricatorName ? { fabricator: { fabName: { contains: filters.fabricatorName, mode: 'insensitive' as const } } } : {},
+                                         filters?.stage ? { stage: filters.stage as any } : {},
+                                         (filters?.startDate || filters?.endDate) ? {
+                                           startDate: {
+                                             ...(filters?.startDate ? { gte: new Date(filters.startDate) } : {}),
+                                             ...(filters?.endDate ? { lte: new Date(filters.endDate) } : {})
+                                           }
+                                         } : {}
+                                       ]
+            },
+               include:{
+               stageHistory:true,
+               fabricator:{select:{
+                 files:true,
+                 fabName:true,
+                 id:true
+               }},
+               manager:{select:{
+                 firstName:true,
+                 middleName:true,
+                 lastName:true,
+                 username:true,
+                 id:true
+               }},
+               clientProjectManagers:{select:{
+                 firstName:true,
+                 middleName:true,
+                 lastName:true,
+                 username:true,
+                 id:true
+               }},
+               team:true,
+               department:{select:{
+                 name:true,
+                 id:true
+               }}
+              },
+                 skip: skip,
+                 take: take
+           }),
+                 prisma.project.count({ where: {connectionDesignerID:connectionDesignerId, isDeleted: false,
+                     AND: [
+                                           filters?.search ? { name: { contains: filters.search, mode: 'insensitive' as const } } : {},
+                                           filters?.managerName ? { manager: { AND: filters.managerName.split(' ').map(part => ({
+                                             OR: [
+                                               { firstName: { contains: part, mode: 'insensitive' as const } },
+                                               { lastName: { contains: part, mode: 'insensitive' as const } }
+                                             ]
+                                           }))}} : {},
+                                           filters?.fabricatorName ? { fabricator: { fabName: { contains: filters.fabricatorName, mode: 'insensitive' as const } } } : {},
+                                           filters?.stage ? { stage: filters.stage as any } : {},
+                                           (filters?.startDate || filters?.endDate) ? {
+                                             startDate: {
+                                               ...(filters?.startDate ? { gte: new Date(filters.startDate) } : {}),
+                                               ...(filters?.endDate ? { lte: new Date(filters.endDate) } : {})
+                                             }
+                                           } : {}
+                                         ]
+                } })
+               ]);
+               return { data, total };
+             
+   }
+
+   async getProjectsForClientAdmin(clientAdminId: string, skip?: number, take?: number, filters?: ProjectFilters) {
+    
+               const [data, total] = await Promise.all([
+                 prisma.project.findMany({
+             where:{
+               isDeleted: false,
+               isAwarded: true,
+               status: { not: "INACTIVE" },
+               fabricator:{ pointOfContact: { some: { id: clientAdminId } } },
+                 AND: [
+                                       filters?.search ? { name: { contains: filters.search, mode: 'insensitive' as const } } : {},
+                                       filters?.managerName ? { manager: { AND: filters.managerName.split(' ').map(part => ({
+                                         OR: [
+                                           { firstName: { contains: part, mode: 'insensitive' as const } },
+                                           { lastName: { contains: part, mode: 'insensitive' as const } }
+                                         ]
+                                       }))}} : {},
+                                       filters?.fabricatorName ? { fabricator: { fabName: { contains: filters.fabricatorName, mode: 'insensitive' as const } } } : {},
+                                       filters?.stage ? { stage: filters.stage as any } : {},
+                                       (filters?.startDate || filters?.endDate) ? {
+                                         startDate: {
+                                           ...(filters?.startDate ? { gte: new Date(filters.startDate) } : {}),
+                                           ...(filters?.endDate ? { lte: new Date(filters.endDate) } : {})
+                                         }
+                                       } : {}
+                                     ]
+            },
+             include:{
+               stageHistory:true,
+               fabricator:{select:{
+                 files:true,
+                 fabName:true,
+                 id:true
+               }},
+               manager:{select:{
+                 firstName:true,
+                 middleName:true,
+                 lastName:true,
+                 username:true,
+                 id:true
+               }},
+               clientProjectManagers:{select:{
+                 firstName:true,
+                 middleName:true,
+                 lastName:true,
+                 username:true,
+                 id:true
+               }},
+               team:true,
+               department:{select:{
+                 name:true,
+                 id:true
+               }}
+              },
+               skip: skip,
+               take: take
+           }),
+                 prisma.project.count({ where: {
+               isDeleted: false,
+               isAwarded: true,
+               status: { not: "INACTIVE" },
+               fabricator:{ pointOfContact: { some: { id: clientAdminId } } },
+                     AND: [
+                                           filters?.search ? { name: { contains: filters.search, mode: 'insensitive' as const } } : {},
+                                           filters?.managerName ? { manager: { AND: filters.managerName.split(' ').map(part => ({
+                                             OR: [
+                                               { firstName: { contains: part, mode: 'insensitive' as const } },
+                                               { lastName: { contains: part, mode: 'insensitive' as const } }
+                                             ]
+                                           }))}} : {},
+                                           filters?.fabricatorName ? { fabricator: { fabName: { contains: filters.fabricatorName, mode: 'insensitive' as const } } } : {},
+                                           filters?.stage ? { stage: filters.stage as any } : {},
+                                           (filters?.startDate || filters?.endDate) ? {
+                                             startDate: {
+                                               ...(filters?.startDate ? { gte: new Date(filters.startDate) } : {}),
+                                               ...(filters?.endDate ? { lte: new Date(filters.endDate) } : {})
+                                             }
+                                           } : {}
+                                         ]
+                } })
+               ]);
+               return { data, total };
+             
+   }
+
+   async getProjectsForClient(clientId: string, skip?: number, take?: number, filters?: ProjectFilters){
+    
+               const [data, total] = await Promise.all([
+                 prisma.project.findMany({
+             where:{
+               isDeleted: false,
+               isAwarded: true,
+               status: { not: "INACTIVE" },
+               clientProjectManagers: { some: { id: clientId } },
+                 AND: [
+                                       filters?.search ? { name: { contains: filters.search, mode: 'insensitive' as const } } : {},
+                                       filters?.managerName ? { manager: { AND: filters.managerName.split(' ').map(part => ({
+                                         OR: [
+                                           { firstName: { contains: part, mode: 'insensitive' as const } },
+                                           { lastName: { contains: part, mode: 'insensitive' as const } }
+                                         ]
+                                       }))}} : {},
+                                       filters?.fabricatorName ? { fabricator: { fabName: { contains: filters.fabricatorName, mode: 'insensitive' as const } } } : {},
+                                       filters?.stage ? { stage: filters.stage as any } : {},
+                                       (filters?.startDate || filters?.endDate) ? {
+                                         startDate: {
+                                           ...(filters?.startDate ? { gte: new Date(filters.startDate) } : {}),
+                                           ...(filters?.endDate ? { lte: new Date(filters.endDate) } : {})
+                                         }
+                                       } : {}
+                                     ]
+            },
+             include:{
+               stageHistory:true,
+               fabricator:{select:{
+                 files:true,
+                 fabName:true,
+                 id:true
+               }},
+               manager:{select:{
+                 firstName:true,
+                 middleName:true,
+                 lastName:true,
+                 username:true,
+                 id:true
+               }},
+               clientProjectManagers:{select:{
+                 firstName:true,
+                 middleName:true,
+                 lastName:true,
+                 username:true,
+                 id:true
+               }},
+               team:true,
+               department:{select:{
+                 name:true,
+                 id:true
+               }}
+              },
+               skip: skip,
+               take: take
+           }),
+                 prisma.project.count({ where: {
+               isDeleted: false,
+               isAwarded: true,
+               status: { not: "INACTIVE" },
+               clientProjectManagers: { some: { id: clientId } },
+                     AND: [
+                                           filters?.search ? { name: { contains: filters.search, mode: 'insensitive' as const } } : {},
+                                           filters?.managerName ? { manager: { AND: filters.managerName.split(' ').map(part => ({
+                                             OR: [
+                                               { firstName: { contains: part, mode: 'insensitive' as const } },
+                                               { lastName: { contains: part, mode: 'insensitive' as const } }
+                                             ]
+                                           }))}} : {},
+                                           filters?.fabricatorName ? { fabricator: { fabName: { contains: filters.fabricatorName, mode: 'insensitive' as const } } } : {},
+                                           filters?.stage ? { stage: filters.stage as any } : {},
+                                           (filters?.startDate || filters?.endDate) ? {
+                                             startDate: {
+                                               ...(filters?.startDate ? { gte: new Date(filters.startDate) } : {}),
+                                               ...(filters?.endDate ? { lte: new Date(filters.endDate) } : {})
+                                             }
+                                           } : {}
+                                         ]
+                } })
+               ]);
+               return { data, total };
+             
 }
 
-async getForStaff(staffId: string) {
-  return await prisma.project.findMany({
-    where: {
-      isDeleted: false,
-      OR: [
-        { tasks: { some: { user_id: staffId } } },
-        { assists: { some: { userId: staffId, isActive: true } } }
-      ]
-    },
-    include:{
-        stageHistory:true,
-        fabricator:{select:{
-          files:true,
-          fabName:true,
-          id:true
-        }},
-        manager:{select:{
-          firstName:true,
-          middleName:true,
-          lastName:true,
-          username:true,
-          id:true
-        }},
-        clientProjectManagers:{select:{
-          firstName:true,
-          middleName:true,
-          lastName:true,
-          username:true,
-          id:true
-        }},
-        team:true,
-        department:{select:{
-          name:true,
-          id:true
-        }}
-       }
-  })
+async getForStaff(staffId: string, skip?: number, take?: number, filters?: ProjectFilters) {
+  
+            const [data, total] = await Promise.all([
+              prisma.project.findMany({
+        where: {
+          isDeleted: false,
+          OR: [
+            { tasks: { some: { user_id: staffId } } },
+            { assists: { some: { userId: staffId, isActive: true } } }
+          ],
+            AND: [
+                                  filters?.search ? { name: { contains: filters.search, mode: 'insensitive' as const } } : {},
+                                  filters?.managerName ? { manager: { AND: filters.managerName.split(' ').map(part => ({
+                                    OR: [
+                                      { firstName: { contains: part, mode: 'insensitive' as const } },
+                                      { lastName: { contains: part, mode: 'insensitive' as const } }
+                                    ]
+                                  }))}} : {},
+                                  filters?.fabricatorName ? { fabricator: { fabName: { contains: filters.fabricatorName, mode: 'insensitive' as const } } } : {},
+                                  filters?.stage ? { stage: filters.stage as any } : {},
+                                  (filters?.startDate || filters?.endDate) ? {
+                                    startDate: {
+                                      ...(filters?.startDate ? { gte: new Date(filters.startDate) } : {}),
+                                      ...(filters?.endDate ? { lte: new Date(filters.endDate) } : {})
+                                    }
+                                  } : {}
+                                ]
+        },
+        include:{
+            stageHistory:true,
+            fabricator:{select:{
+              files:true,
+              fabName:true,
+              id:true
+            }},
+            manager:{select:{
+              firstName:true,
+              middleName:true,
+              lastName:true,
+              username:true,
+              id:true
+            }},
+            clientProjectManagers:{select:{
+              firstName:true,
+              middleName:true,
+              lastName:true,
+              username:true,
+              id:true
+            }},
+            team:true,
+            department:{select:{
+              name:true,
+              id:true
+            }}
+           },
+          skip: skip,
+          take: take
+    }),
+              prisma.project.count({ where: {
+          isDeleted: false,
+          OR: [
+            { tasks: { some: { user_id: staffId } } },
+            { assists: { some: { userId: staffId, isActive: true } } }
+          ],
+                  AND: [
+                                        filters?.search ? { name: { contains: filters.search, mode: 'insensitive' as const } } : {},
+                                        filters?.managerName ? { manager: { AND: filters.managerName.split(' ').map(part => ({
+                                          OR: [
+                                            { firstName: { contains: part, mode: 'insensitive' as const } },
+                                            { lastName: { contains: part, mode: 'insensitive' as const } }
+                                          ]
+                                        }))}} : {},
+                                        filters?.fabricatorName ? { fabricator: { fabName: { contains: filters.fabricatorName, mode: 'insensitive' as const } } } : {},
+                                        filters?.stage ? { stage: filters.stage as any } : {},
+                                        (filters?.startDate || filters?.endDate) ? {
+                                          startDate: {
+                                            ...(filters?.startDate ? { gte: new Date(filters.startDate) } : {}),
+                                            ...(filters?.endDate ? { lte: new Date(filters.endDate) } : {})
+                                          }
+                                        } : {}
+                                      ]
+            } })
+            ]);
+            return { data, total };
+          
 }
 
 
@@ -913,40 +1246,86 @@ async getAllDocuments(id:string, role?: UserRole){
   }
 
 
-  async getForConnectionDesignerAdmin(connectionDesignerId: string) {
-    return await prisma.project.findMany({
-      where:{
-        isDeleted: false,
-        status: { not: "INACTIVE" },
-        connectionDesignerID: connectionDesignerId,
-      },
-      include:{
-        stageHistory:true,
-        fabricator:{select:{
-          files:true,
-          fabName:true,
-          id:true
-        }},
-        manager:{select:{
-          firstName:true,
-          middleName:true,
-          lastName:true,
-          username:true,
-          id:true
-        }},
-        clientProjectManagers:{select:{
-          firstName:true,
-          middleName:true,
-          lastName:true,
-          username:true,
-          id:true
-        }},
-        team:true,
-        department:{select:{
-          name:true,
-          id:true
-        }}
-       }
-    })    
+  async getForConnectionDesignerAdmin(connectionDesignerId: string, skip?: number, take?: number, filters?: ProjectFilters) {
+    
+              const [data, total] = await Promise.all([
+                prisma.project.findMany({
+            where:{
+              isDeleted: false,
+              status: { not: "INACTIVE" },
+              connectionDesignerID: connectionDesignerId,
+                AND: [
+                                      filters?.search ? { name: { contains: filters.search, mode: 'insensitive' as const } } : {},
+                                      filters?.managerName ? { manager: { AND: filters.managerName.split(' ').map(part => ({
+                                        OR: [
+                                          { firstName: { contains: part, mode: 'insensitive' as const } },
+                                          { lastName: { contains: part, mode: 'insensitive' as const } }
+                                        ]
+                                      }))}} : {},
+                                      filters?.fabricatorName ? { fabricator: { fabName: { contains: filters.fabricatorName, mode: 'insensitive' as const } } } : {},
+                                      filters?.stage ? { stage: filters.stage as any } : {},
+                                      (filters?.startDate || filters?.endDate) ? {
+                                        startDate: {
+                                          ...(filters?.startDate ? { gte: new Date(filters.startDate) } : {}),
+                                          ...(filters?.endDate ? { lte: new Date(filters.endDate) } : {})
+                                        }
+                                      } : {}
+                                    ]
+            },
+            include:{
+              stageHistory:true,
+              fabricator:{select:{
+                files:true,
+                fabName:true,
+                id:true
+              }},
+              manager:{select:{
+                firstName:true,
+                middleName:true,
+                lastName:true,
+                username:true,
+                id:true
+              }},
+              clientProjectManagers:{select:{
+                firstName:true,
+                middleName:true,
+                lastName:true,
+                username:true,
+                id:true
+              }},
+              team:true,
+              department:{select:{
+                name:true,
+                id:true
+              }}
+             },
+              skip: skip,
+              take: take
+          }),
+                prisma.project.count({ where: {
+              isDeleted: false,
+              status: { not: "INACTIVE" },
+              connectionDesignerID: connectionDesignerId,
+                    AND: [
+                                          filters?.search ? { name: { contains: filters.search, mode: 'insensitive' as const } } : {},
+                                          filters?.managerName ? { manager: { AND: filters.managerName.split(' ').map(part => ({
+                                            OR: [
+                                              { firstName: { contains: part, mode: 'insensitive' as const } },
+                                              { lastName: { contains: part, mode: 'insensitive' as const } }
+                                            ]
+                                          }))}} : {},
+                                          filters?.fabricatorName ? { fabricator: { fabName: { contains: filters.fabricatorName, mode: 'insensitive' as const } } } : {},
+                                          filters?.stage ? { stage: filters.stage as any } : {},
+                                          (filters?.startDate || filters?.endDate) ? {
+                                            startDate: {
+                                              ...(filters?.startDate ? { gte: new Date(filters.startDate) } : {}),
+                                              ...(filters?.endDate ? { lte: new Date(filters.endDate) } : {})
+                                            }
+                                          } : {}
+                                        ]
+                } })
+              ]);
+              return { data, total };
+                
 }
  }

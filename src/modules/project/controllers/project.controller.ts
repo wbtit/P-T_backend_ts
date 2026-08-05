@@ -358,12 +358,39 @@ async addWbs(req: AuthenticateRequest, res: Response) {
           message: 'Unauthorized'
         });
       } 
-        const { id} = req.user;
-        const projects = await projectService.getAll(id);
-        res.status(200).json({
+        const { id } = req.user;
+        const page = parseInt(req.query.page as string) || 1;
+        const limit = parseInt(req.query.limit as string) || 10;
+        const skip = (page - 1) * limit;
+        const filters = {
+          search: req.query.search as string | undefined,
+          managerName: req.query.managerName as string | undefined,
+          fabricatorName: req.query.fabricatorName as string | undefined,
+          stage: req.query.stage as string | undefined,
+          startDate: req.query.startDate as string | undefined,
+          endDate: req.query.endDate as string | undefined
+        };
+
+        const result = await projectService.getAll(id, skip, limit, filters);
+        
+        // Ensure graceful fallback if the repository hasn't been updated to return { data, total }
+        const data = result?.data ?? result;
+        const total = result?.total ?? (Array.isArray(data) ? data.length : 0);
+
+        const responsePayload = {
           status: 'success',
-          data: projects
-        });
+          data,
+          meta: {
+            total,
+            page,
+            limit,
+            totalPages: Math.ceil(total / limit)
+          }
+        };
+
+        const dataLength = Array.isArray(data) ? data.length : 0;
+        
+        res.status(200).json(responsePayload);
     }
     async handleGetFile(req: AuthenticateRequest,res:Response){
         const {projectId, fileId} = req.params;

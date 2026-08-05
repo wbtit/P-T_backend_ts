@@ -8,7 +8,7 @@ import { CreateProjectInput,
   GetProjectInput,
   DeleteProjectInput
  } from "../dtos";
-import { ProjectRepository } from "../repositories";
+import { ProjectRepository, ProjectFilters } from "../repositories";
 import { createWBSAndProjectLineItems } from "../WBS/utils/wbs.util";
 import { Prisma } from "@prisma/client";
 import { FileObject } from "../../../shared/fileType";
@@ -398,7 +398,7 @@ async expandProjectWbs(
      return project;
    }
 
-   async getAll(id:string) {
+   async getAll(id:string, skip?: number, take?: number, filters?: ProjectFilters) {
     const user = await prisma.user.findUnique({where:{id}});
     if(!user){
       throw new AppError("User not found", 404);
@@ -407,37 +407,37 @@ async expandProjectWbs(
       if(user.role==="ADMIN"|| user.role==="SYSTEM_ADMIN"|| user.role==="PROJECT_MANAGER_OFFICER"
       || user.role==="DEPUTY_MANAGER"|| user.role==="OPERATION_EXECUTIVE" || user.role ==="ESTIMATION_HEAD" || user.role==="HUMAN_RESOURCE"){
         //all projects
-        projects = await projectRepository.getAll();
+        projects = await projectRepository.getAll(skip, take, filters);
       }
      if(user.role==="PROJECT_MANAGER"|| user.role ==="TEAM_LEAD"){
       //only his project 
-      projects = await projectRepository.getForProjectManager(user.id);
+      projects = await projectRepository.getForProjectManager(user.id, skip, take, filters);
      }  
      if(user.role==="DEPT_MANAGER"){
       //only of his department
-      projects = await projectRepository.getForDepartmentManager(user.departmentId!, user.id);
+      projects = await projectRepository.getForDepartmentManager(user.departmentId!, user.id, skip, take, filters);
      }
      if(user.role==="CONNECTION_DESIGNER_ADMIN"){
       if (!user.connectionDesignerId) {
         throw new AppError("Connection designer not found for this user", 400);
       }
-      projects = await projectRepository.getForConnectionDesignerAdmin(user.connectionDesignerId);
+      projects = await projectRepository.getForConnectionDesignerAdmin(user.connectionDesignerId, skip, take, filters);
      }
      if(user.role==="CONNECTION_DESIGNER_ENGINEER"){
       //only his assigned projects
-      projects = await projectRepository.getForConnectionDesignerEngineer(user.connectionDesignerId!);
+      projects = await projectRepository.getForConnectionDesignerEngineer(user.connectionDesignerId!, skip, take, filters);
      }
      if(user.role==="CLIENT_ADMIN"){
       //acts as fab represnentative
-      projects = await projectRepository.getProjectsForClientAdmin(user.id);
+      projects = await projectRepository.getProjectsForClientAdmin(user.id, skip, take, filters);
      }
      if(user.role==="CLIENT"){
       //acts as point of contact
-      projects = await projectRepository.getProjectsForClient(user.id);
+      projects = await projectRepository.getProjectsForClient(user.id, skip, take, filters);
      }
      if(user.role==="STAFF"){
       //only his assigned projects
-      projects = await projectRepository.getForStaff(user.id);
+      projects = await projectRepository.getForStaff(user.id, skip, take, filters);
      }
      return projects;
    }
