@@ -1807,25 +1807,25 @@ model SubmittalsResponse {
 }
 
 model ChangeOrder {
-  id                 String   @id @default(uuid()) @db.Uuid
-  serialNo           String?  @unique
-  project            String   @db.Uuid
-  recipients         String?  @db.Uuid
-  remarks            String   @default("")
-  changeOrderNumber  String   @default("")
-  description        String   @default("")
-  sender             String   @db.Uuid
-  sentOn             DateTime @default(now())
-  files              Json     @default("[]")
-  stage              Stage    @default(IFA)
-  status             COSTATUS @default(NOT_REPLIED)
-  reason             String   @default("")
-  createdAt          DateTime @default(now())
-  isAproovedByAdmin  Boolean? @default(false)
+  id                  String   @id @default(uuid()) @db.Uuid
+  serialNo            String?  @unique
+  project             String   @db.Uuid
+  recipients          String?  @db.Uuid
+  remarks             String   @default("")
+  changeOrderNumber   String   @default("")
+  description         String   @default("")
+  sender              String   @db.Uuid
+  sentOn              DateTime @default(now())
+  files               Json     @default("[]")
+  stage               Stage    @default(IFA)
+  status              COSTATUS @default(NOT_REPLIED)
+  reason              String   @default("")
+  createdAt           DateTime @default(now())
+  isAproovedByAdmin   Boolean? @default(false)
   isApprovedByManager Boolean? @default(false)
-  changeOrderVersion Int      @default(1)
+  changeOrderVersion  Int      @default(1)
   // 🔑 Versioning
-  currentVersionId   String?  @unique @db.Uuid
+  currentVersionId    String?  @unique @db.Uuid
 
   //Relations
   versions           ChangeOrderVersion[]
@@ -2520,70 +2520,85 @@ enum StandardChunkType {
 }
 
 model StandardDocument {
-  id            String             @id @default(uuid()) @db.Uuid
-  sourceType    StandardSourceType @map("source_type")
-  projectId     String?            @map("project_id") @db.Uuid
-  fabricatorId  String?            @map("fabricator_id") @db.Uuid
-  pdfName       String             @map("pdf_name")
-  storagePath   String             @map("storage_path")
-  isActive      Boolean            @default(true) @map("is_active")
-  uploadedAt    DateTime           @default(now()) @map("uploaded_at")
+  id           String             @id @default(uuid()) @db.Uuid
+  sourceType   StandardSourceType @map("source_type")
+  projectId    String?            @map("project_id") @db.Uuid
+  fabricatorId String?            @map("fabricator_id") @db.Uuid
+  pdfName      String             @map("pdf_name")
+  storagePath  String             @map("storage_path")
+  isActive     Boolean            @default(true) @map("is_active")
+  uploadedAt   DateTime           @default(now()) @map("uploaded_at")
 
   // Relations
   project       Project?             @relation(fields: [projectId], references: [id], onDelete: Restrict)
   fabricator    Fabricator?          @relation(fields: [fabricatorId], references: [id], onDelete: Restrict)
   chunks        StandardChunk[]
   pinnedAnswers StandardChatAnswer[]
+  StandardPage  StandardPage[]
 
   @@map("standard_documents")
 }
 
 model StandardChunk {
-  id            String            @id @default(uuid()) @db.Uuid
-  documentId    String            @map("document_id") @db.Uuid
-  chunkType     StandardChunkType @map("chunk_type")
-  pageStart     Int               @map("page_start")
-  pageEnd       Int               @map("page_end")
-  textContent   String            @map("text_content") @db.Text
-  
-  // Storing a 768-dimensional vector for Ollama nomic-embed-text embeddings.
-  embedding     Unsupported("vector(768)")? 
+  id          String            @id @default(uuid()) @db.Uuid
+  documentId  String            @map("document_id") @db.Uuid
+  chunkType   StandardChunkType @map("chunk_type")
+  pageStart   Int               @map("page_start")
+  pageEnd     Int               @map("page_end")
+  textContent String            @map("text_content") @db.Text
 
-  createdAt     DateTime          @default(now()) @map("created_at")
+  // Storing a 768-dimensional vector for Ollama nomic-embed-text embeddings.
+  embedding Unsupported("vector(768)")?
+
+  createdAt DateTime @default(now()) @map("created_at")
 
   // Relations
-  document      StandardDocument  @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  document StandardDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
 
   @@map("standard_chunks")
 }
 
 model StandardChatMessage {
-  id            String               @id @default(uuid()) @db.Uuid
-  projectId     String               @map("project_id") @db.Uuid
-  queryText     String               @map("query_text") @db.Text
-  createdAt     DateTime             @default(now()) @map("created_at")
+  id        String   @id @default(uuid()) @db.Uuid
+  projectId String   @map("project_id") @db.Uuid
+  queryText String   @map("query_text") @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
 
   // Relations
-  project       Project              @relation(fields: [projectId], references: [id], onDelete: Restrict)
-  answers       StandardChatAnswer[]
+  project Project              @relation(fields: [projectId], references: [id], onDelete: Restrict)
+  answers StandardChatAnswer[]
 
   @@map("standard_chat_messages")
 }
 
 model StandardChatAnswer {
-  id                 String             @id @default(uuid()) @db.Uuid
-  messageId          String             @map("message_id") @db.Uuid
-  sourceType         StandardSourceType @map("source_type")
-  answerText         String?            @map("answer_text") @db.Text
-  citationPdfName    String             @map("citation_pdf_name")
-  citationPageStart  Int                @map("citation_page_start")
-  citationPageEnd    Int                @map("citation_page_end")
-  imagePaths         String[]           @map("image_paths") // Array of string paths
-  pinnedDocumentId   String             @map("pinned_document_id") @db.Uuid
+  id                String             @id @default(uuid()) @db.Uuid
+  messageId         String             @map("message_id") @db.Uuid
+  sourceType        StandardSourceType @map("source_type")
+  answerText        String?            @map("answer_text") @db.Text
+  citationPdfName   String             @map("citation_pdf_name")
+  citationPageStart Int                @map("citation_page_start")
+  citationPageEnd   Int                @map("citation_page_end")
+  imagePaths        String[]           @map("image_paths") // Array of string paths
+  pinnedDocumentId  String             @map("pinned_document_id") @db.Uuid
 
   // Relations
-  message            StandardChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
-  pinnedDocument     StandardDocument    @relation(fields: [pinnedDocumentId], references: [id], onDelete: Restrict)
+  message        StandardChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  pinnedDocument StandardDocument    @relation(fields: [pinnedDocumentId], references: [id], onDelete: Restrict)
 
   @@map("standard_chat_answers")
+}
+
+model StandardPage {
+  id          String   @id @default(uuid()) @db.Uuid
+  documentId  String   @map("document_id") @db.Uuid
+  pageNumber  Int      @map("page_number")
+  imagePath   String   @map("image_path")
+  textContent String   @map("text_content") @db.Text
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  document StandardDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@unique([documentId, pageNumber])
+  @@map("standard_pages")
 }

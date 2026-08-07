@@ -145,3 +145,7 @@ vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
 /src/generated/prisma
+test/fixtures/marvin-metals-standards.pdf
+
+# Temp dir for tests
+tmp/
