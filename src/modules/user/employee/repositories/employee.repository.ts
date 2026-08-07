@@ -38,6 +38,7 @@ export class EmployeRepository{
                 lastName:true,
                 designation:true,
                 role:true,
+                isActive:true,
             }
         })
     }

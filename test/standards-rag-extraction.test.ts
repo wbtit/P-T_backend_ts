@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from "uuid";
 import fs from "fs";
 import path from "path";
 import { standardsIngestionQueue, standardsIngestionWorker, startStandardsIngestionWorker, queueConnection as productionQueueConnection, workerConnection as productionWorkerConnection } from "../src/modules/standards/jobs/standardsIngestion";
+import { pageClassificationQueue, pageClassificationWorker, startPageClassificationWorker, classificationWorkerConnection, classificationQueueConnection } from "../src/modules/standards/jobs/pageClassification";
 
 describe("Phase 2: PDF Extraction Pipeline", () => {
   let fabricatorId: string;
@@ -34,6 +35,7 @@ describe("Phase 2: PDF Extraction Pipeline", () => {
     fabricatorId = fabricator.id;
 
     startStandardsIngestionWorker();
+    startPageClassificationWorker();
 
     // Create valid document record
     const validDoc = await prisma.standardDocument.create({
@@ -78,6 +80,12 @@ describe("Phase 2: PDF Extraction Pipeline", () => {
     await standardsIngestionQueue.close();
     productionWorkerConnection?.disconnect();
     productionQueueConnection.disconnect();
+    
+    await pageClassificationWorker?.close();
+    await pageClassificationQueue.close();
+    classificationWorkerConnection?.disconnect();
+    classificationQueueConnection.disconnect();
+    
     await prisma.$disconnect();
   });
 
@@ -110,7 +118,7 @@ describe("Phase 2: PDF Extraction Pipeline", () => {
     expect(pages.length).toBe(0);
   }, 15000);
 
-  it("should process the valid 89-page PDF successfully, extracting text and images", async () => {
+  it("should process the valid 89-page PDF successfully, verifying the full extraction-through-classification chain", async () => {
     const jobProcessed = new Promise<void>((resolve) => {
       const onCompleted = (job: any) => {
         if (job?.data?.documentId === documentId) {
@@ -154,5 +162,34 @@ describe("Phase 2: PDF Extraction Pipeline", () => {
       const stat = fs.statSync(absoluteImagePath);
       expect(stat.size).toBeGreaterThan(100); // Image file should be non-empty
     }
-  }, 120000); // Allow up to 2 mins for 61 page rendering
+    // Wait for the classification worker to finish processing the document
+    const classificationProcessed = new Promise<void>((resolve) => {
+      const onClassified = (job: any) => {
+        if (job?.data?.documentId === documentId) {
+          pageClassificationWorker?.removeListener("completed", onClassified);
+          resolve();
+        }
+      };
+      pageClassificationWorker?.on("completed", onClassified);
+    });
+    
+    await classificationProcessed;
+    
+    // 4. Verify pages are classified successfully (End-to-End verification)
+    const classifiedPages = await prisma.standardPage.findMany({
+      where: { documentId }
+    });
+    
+    expect(classifiedPages.length).toBe(89);
+    for (const page of classifiedPages) {
+      expect(page.classification).not.toBeNull();
+    }
+    
+    const prosePages = classifiedPages.filter(p => p.classification === "PROSE");
+    const visualPages = classifiedPages.filter(p => p.classification === "VISUAL");
+    
+    expect(prosePages.length).toBeGreaterThan(0);
+    expect(visualPages.length).toBeGreaterThan(0);
+
+  }, 120000); // Allow up to 2 mins for rendering and classification
 });

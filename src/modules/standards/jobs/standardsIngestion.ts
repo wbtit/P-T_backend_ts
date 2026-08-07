@@ -7,6 +7,7 @@ import util from "util";
 import pdfParse from "pdf-parse";
 import { v4 as uuidv4 } from "uuid";
 import prisma from "../../../config/database/client";
+import { pageClassificationQueue } from "./pageClassification";
 
 const execFileAsync = util.promisify(execFile);
 
@@ -142,6 +143,16 @@ export const startStandardsIngestionWorker = () => {
         // Cleanup backup if transaction succeeds
         if (hadPreviousOutput) {
           await fs.promises.rm(backupDir, { recursive: true, force: true });
+        }
+        
+        // 4. Trigger Phase 3 Classification
+        try {
+          await pageClassificationQueue.add("classify", { documentId: doc.id });
+        } catch (err) {
+          console.error(`[Standards Ingestion] Failed to enqueue classification for ${doc.id}`, err);
+          // Extraction itself succeeded — don't fail this job. The classification
+          // sweeper (deferred, documented in the Phase 3 spec) is responsible for
+          // catching documents left at classification: null.
         }
         
         return true;

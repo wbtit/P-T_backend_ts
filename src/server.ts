@@ -34,7 +34,9 @@ console.error = (...args: unknown[]) => {
 
 import "./corn-jobs/safeCorn"
 import { startStandardsIngestionWorker } from "./modules/standards/jobs/standardsIngestion";
+import { startPageClassificationWorker } from "./modules/standards/jobs/pageClassification";
 startStandardsIngestionWorker();
+startPageClassificationWorker();
 
 import cors from 'cors'
 import {

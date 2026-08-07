@@ -2597,6 +2597,8 @@ model StandardPage {
   textContent String   @map("text_content") @db.Text
   createdAt   DateTime @default(now()) @map("created_at")
 
+  classification StandardChunkType? @map("classification")
+
   document StandardDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
 
   @@unique([documentId, pageNumber])
