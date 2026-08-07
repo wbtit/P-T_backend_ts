@@ -134,6 +134,9 @@ import { invalidateDashboardCache, invalidationPatterns } from "../../../utils/d
     }
 
     return project;
+  }, {
+    maxWait: 20000,
+    timeout: 60000
   });
 
   if (data.status === "COMPLETE") {
