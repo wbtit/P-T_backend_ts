@@ -186,14 +186,16 @@ export class SubmitalRepository {
         currentVersionId: { not: null },
         bfaStatus: false,
         stage: { not: "IFC" },
+        isAproovedByAdmin: true,               // WBT has sent it
+        clientResponseStatus: "PENDING",       // Client has NOT replied yet (so it's pending on their side)
         ...getRfiSubmittalVisibilityFilter(role),
       },
       include: {
         project: { select: { name: true } },
         fabricator: true,
         recepients: true,
-        multipleRecipients:true,
-        sender:true,
+        multipleRecipients: true,
+        sender: true,
         currentVersion: true,
         approvedBy: { select: { id: true, firstName: true, middleName: true, lastName: true } },
         mileStoneBelongsTo: true,
@@ -260,6 +262,7 @@ async getPendingSubmittalsForClientAdmin(userId: string, role?: UserRole) {
         project: { select: { name: true } },
         fabricator: true,
         recepients: true,
+        multipleRecipients: { select: { id: true, firstName: true, lastName: true, email: true } },
         currentVersion: true,
         approvedBy: { select: { id: true, firstName: true, middleName: true, lastName: true } },
         mileStoneBelongsTo: true,
@@ -286,6 +289,11 @@ async getPendingSubmittalsForDepartmentManager(managerId: string, role?: UserRol
       bfaStatus: false,
       stage: { not: "IFC" },
       currentVersionId: { not: null },
+      isAproovedByAdmin: true,
+      clientResponseStatus: { not: "PENDING" },
+      submittalsResponse: {
+        some: { wbtStatus: "RECEIVED" },
+      },
       ...getRfiSubmittalVisibilityFilter(role),
       project: { departmentID: manager.departmentId,
        },
@@ -318,6 +326,11 @@ async getPendingSubmittalsForProjectManager(managerId: string, role?: UserRole) 
       bfaStatus: false,
       stage: { not: "IFC" },
       currentVersionId: { not: null },
+      isAproovedByAdmin: true,
+      clientResponseStatus: { not: "PENDING" },
+      submittalsResponse: {
+        some: { wbtStatus: "RECEIVED" },
+      },
       ...getRfiSubmittalVisibilityFilter(role),
       project: { managerID: managerId },
     },
@@ -508,6 +521,11 @@ async getPendingSubmittalsForProjectManager(managerId: string, role?: UserRole) 
         bfaStatus: false,
         stage: { not: "IFC" },
         currentVersionId: { not: null },
+        isAproovedByAdmin: true,
+        clientResponseStatus: { not: "PENDING" },
+        submittalsResponse: {
+          some: { wbtStatus: "RECEIVED" },
+        },
         ...getRfiSubmittalVisibilityFilter(role),
       },
       include:{

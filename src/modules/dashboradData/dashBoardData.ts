@@ -119,6 +119,7 @@ export const DashBoradData = async (
 
         const pendingRFQ = await prisma.rFQ.count({
           where: {
+            isDeleted: false,
             wbtStatus: { in: ["RECEIVED", "REVISE"] },
           }
         });
@@ -128,6 +129,11 @@ export const DashBoradData = async (
             bfaStatus: false,
             stage: { not: "IFC" },
             currentVersionId: { not: null },
+            isAproovedByAdmin: true,
+            clientResponseStatus: { not: "PENDING" },
+            submittalsResponse: {
+              some: { wbtStatus: "RECEIVED" },
+            },
             ...getRfiSubmittalVisibilityFilter(role),
           },
         });
@@ -174,6 +180,9 @@ export const DashBoradData = async (
             project: { status: { in: ["ACTIVE", "ONHOLD"] } },
             bfaStatus: false,
             stage: { not: "IFC" },
+            currentVersionId: { not: null },
+            isAproovedByAdmin: true,
+            clientResponseStatus: "PENDING",
             ...getRfiSubmittalVisibilityFilter(role),
           },
         });
