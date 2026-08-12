@@ -38,11 +38,14 @@ import { default as ProjectProgressReportRoutes } from "./modules/projectProgres
 import { default as InvoiceWireTransferRoutes } from "./modules/invoiceWireTransfers/routes";
 import { default as CoordinationDrawingRoutes } from "./modules/coordinationDrawing/routes";
 import { trainingRoutes } from "./modules/training";
+import { standardsRoutes, projectStandardsRoutes } from "./modules/standards/routes";
 
 const routes = express.Router();
 
 
 routes.use("/auth", AuthRoutes);
+routes.use("/standards", standardsRoutes);
+routes.use("/projects/:projectId/standards", projectStandardsRoutes);
 routes.use("/user", userRouter);
 routes.use("/task", whRoutes);
 routes.use("/employee",EmployeeRoutes)

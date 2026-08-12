@@ -2505,9 +2505,7 @@ enum BfaStatus {
   complete
 }
 
-// ===========================================================
-// NEW MODELS FOR PHASE 1: STANDARDS RAG CHATBOT
-// ===========================================================
+
 
 enum StandardSourceType {
   GENERAL
@@ -2519,6 +2517,13 @@ enum StandardChunkType {
   VISUAL
 }
 
+enum StandardDocumentStatus {
+  PENDING
+  ACTIVE
+  SUPERSEDED
+  FAILED
+}
+
 model StandardDocument {
   id           String             @id @default(uuid()) @db.Uuid
   sourceType   StandardSourceType @map("source_type")
@@ -2526,7 +2531,7 @@ model StandardDocument {
   fabricatorId String?            @map("fabricator_id") @db.Uuid
   pdfName      String             @map("pdf_name")
   storagePath  String             @map("storage_path")
-  isActive     Boolean            @default(true) @map("is_active")
+  status       StandardDocumentStatus @default(PENDING)
   uploadedAt   DateTime           @default(now()) @map("uploaded_at")
 
   // Relations
@@ -2540,12 +2545,18 @@ model StandardDocument {
 }
 
 model StandardChunk {
-  id          String            @id @default(uuid()) @db.Uuid
-  documentId  String            @map("document_id") @db.Uuid
-  chunkType   StandardChunkType @map("chunk_type")
-  pageStart   Int               @map("page_start")
-  pageEnd     Int               @map("page_end")
-  textContent String            @map("text_content") @db.Text
+  id           String            @id @default(uuid()) @db.Uuid
+  documentId   String            @map("document_id") @db.Uuid
+  chunkType    StandardChunkType @map("chunk_type")
+  pageStart    Int               @map("page_start")
+  pageEnd      Int               @map("page_end")
+  textContent  String            @map("text_content") @db.Text
+  
+  // Denormalized metadata for efficient vector filtering
+  sourceType   StandardSourceType   @map("source_type")
+  projectId    String?              @map("project_id") @db.Uuid
+  fabricatorId String?              @map("fabricator_id") @db.Uuid
+  heading      String?              @map("heading")
 
   // Storing a 768-dimensional vector for Ollama nomic-embed-text embeddings.
   embedding Unsupported("vector(768)")?
@@ -2575,10 +2586,13 @@ model StandardChatAnswer {
   id                String             @id @default(uuid()) @db.Uuid
   messageId         String             @map("message_id") @db.Uuid
   sourceType        StandardSourceType @map("source_type")
+  chunkType         StandardChunkType  @map("chunk_type")
   answerText        String?            @map("answer_text") @db.Text
   citationPdfName   String             @map("citation_pdf_name")
   citationPageStart Int                @map("citation_page_start")
   citationPageEnd   Int                @map("citation_page_end")
+  anchorPageStart   Int?               @map("anchor_page_start")
+  anchorPageEnd     Int?               @map("anchor_page_end")
   imagePaths        String[]           @map("image_paths") // Array of string paths
   pinnedDocumentId  String             @map("pinned_document_id") @db.Uuid
 

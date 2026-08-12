@@ -45,6 +45,40 @@ const teamMeetingNotesUpdateFormBody = {
   },
 };
 
+
+const teamMeetingNoteResponseFormBody = {
+  required: true,
+  content: {
+    "multipart/form-data": {
+      schema: {
+        type: "object",
+        required: ["content"],
+        properties: {
+          content: { type: "string" },
+          parentResponseId: { type: "string", format: "uuid" },
+          files: { type: "array", items: { type: "string", format: "binary" } },
+        },
+      },
+    },
+  },
+};
+
+const teamMeetingNoteResponseUpdateFormBody = {
+  required: true,
+  content: {
+    "multipart/form-data": {
+      schema: {
+        type: "object",
+        properties: {
+          content: { type: "string" },
+          parentResponseId: { type: "string", format: "uuid" },
+          files: { type: "array", items: { type: "string", format: "binary" } },
+        },
+      },
+    },
+  },
+};
+
 export const teamMeetingNotesOpenApiDoc: ModuleOpenApiDoc = {
   tag: {
     name: "TeamMeetingNotes",
@@ -182,6 +216,122 @@ export const teamMeetingNotesOpenApiDoc: ModuleOpenApiDoc = {
         security: [{ bearerAuth: [] }],
         parameters: [
           { in: "path", name: "noteId", required: true, schema: { type: "string" } },
+          { in: "path", name: "fileId", required: true, schema: { type: "string" } },
+        ],
+        responses: {
+          "200": { description: "File streamed successfully" },
+          "401": { description: "Unauthorized" },
+          "404": { description: "File not found" },
+          "500": { description: "Internal Server Error" },
+        },
+      },
+    },
+
+    "/team-meeting-notes/{noteId}/responses": {
+      post: {
+        tags: ["TeamMeetingNotes"],
+        summary: "POST /team-meeting-notes/{noteId}/responses",
+        operationId: "post_team_meeting_notes_responses",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { in: "path", name: "noteId", required: true, schema: { type: "string", format: "uuid" } },
+        ],
+        requestBody: teamMeetingNoteResponseFormBody,
+        responses: {
+          "201": { description: "Response created successfully" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" },
+        },
+      },
+      get: {
+        tags: ["TeamMeetingNotes"],
+        summary: "GET /team-meeting-notes/{noteId}/responses",
+        operationId: "get_team_meeting_notes_responses",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { in: "path", name: "noteId", required: true, schema: { type: "string", format: "uuid" } },
+        ],
+        responses: {
+          "200": { description: "Responses fetched successfully" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" },
+        },
+      },
+    },
+    "/team-meeting-notes/responses/{id}": {
+      get: {
+        tags: ["TeamMeetingNotes"],
+        summary: "GET /team-meeting-notes/responses/{id}",
+        operationId: "get_team_meeting_notes_response_by_id",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { in: "path", name: "id", required: true, schema: { type: "string", format: "uuid" } },
+        ],
+        responses: {
+          "200": { description: "Response fetched successfully" },
+          "401": { description: "Unauthorized" },
+          "404": { description: "Not found" },
+          "500": { description: "Internal Server Error" },
+        },
+      },
+      put: {
+        tags: ["TeamMeetingNotes"],
+        summary: "PUT /team-meeting-notes/responses/{id}",
+        operationId: "put_team_meeting_notes_response",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { in: "path", name: "id", required: true, schema: { type: "string", format: "uuid" } },
+        ],
+        requestBody: teamMeetingNoteResponseUpdateFormBody,
+        responses: {
+          "200": { description: "Response updated successfully" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" },
+        },
+      },
+      delete: {
+        tags: ["TeamMeetingNotes"],
+        summary: "DELETE /team-meeting-notes/responses/{id}",
+        operationId: "delete_team_meeting_notes_response",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { in: "path", name: "id", required: true, schema: { type: "string", format: "uuid" } },
+        ],
+        responses: {
+          "204": { description: "Response deleted successfully" },
+          "401": { description: "Unauthorized" },
+          "500": { description: "Internal Server Error" },
+        },
+      },
+    },
+    "/team-meeting-notes/responses/file/{responseId}/{fileId}": {
+      get: {
+        tags: ["TeamMeetingNotes"],
+        summary: "GET /team-meeting-notes/responses/file/{responseId}/{fileId}",
+        operationId: "get_team_meeting_notes_response_file",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { in: "path", name: "responseId", required: true, schema: { type: "string", format: "uuid" } },
+          { in: "path", name: "fileId", required: true, schema: { type: "string" } },
+        ],
+        responses: {
+          "200": { description: "File fetched successfully" },
+          "401": { description: "Unauthorized" },
+          "404": { description: "File not found" },
+          "500": { description: "Internal Server Error" },
+        },
+      },
+    },
+    "/team-meeting-notes/responses/viewFile/{responseId}/{fileId}": {
+      get: {
+        tags: ["TeamMeetingNotes"],
+        summary: "GET /team-meeting-notes/responses/viewFile/{responseId}/{fileId}",
+        operationId: "get_team_meeting_notes_response_view_file",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { in: "path", name: "responseId", required: true, schema: { type: "string", format: "uuid" } },
           { in: "path", name: "fileId", required: true, schema: { type: "string" } },
         ],
         responses: {

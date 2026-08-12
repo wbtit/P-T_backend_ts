@@ -722,6 +722,9 @@ export const userProfilePicUploads = createMemoryUploader(
   [".jpg", ".jpeg", ".png", ".webp", ".heic"]
 );
 
+export const standardsDataMap: Record<string, FileMeta> = {};
+export const standardsUploads = createStreamUploader(path.join(UPLOAD_BASE_DIR, "standards"), standardsDataMap, SIZE_LIMITS.DOCS);
+
 export const invoiceWireTransferDataMap: Record<string, FileMeta> = {};
 export const invoiceWireTransferUploads = createStreamUploader(
   path.join(UPLOAD_BASE_DIR, "invoicewiretransfer"),

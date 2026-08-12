@@ -40,6 +40,9 @@ export const startPageClassificationWorker = () => {
     async (job: Job<PageClassificationJobPayload>) => {
       const { documentId } = job.data;
       console.log(`[Page Classification] Worker picked up job for documentId: ${documentId}`);
+      if ((global as any).io) {
+        (global as any).io.emit("standards-progress", { documentId, status: "CLASSIFYING", progress: 33 });
+      }
 
       const pages = await prisma.standardPage.findMany({
         where: { documentId },
@@ -59,6 +62,13 @@ export const startPageClassificationWorker = () => {
 
       // Execute all updates in a single transaction
       await prisma.$transaction(updates);
+      
+      try {
+        const { chunkingQueue } = require("./chunking");
+        await chunkingQueue.add("chunk", { documentId: job.data.documentId });
+      } catch (err) {
+        console.error(`[Page Classification] Failed to enqueue chunking for ${job.data.documentId}`, err);
+      }
 
       return true;
     },
@@ -69,8 +79,21 @@ export const startPageClassificationWorker = () => {
     console.log(`[Page Classification] Job completed for documentId: ${job.data.documentId}`);
   });
 
-  pageClassificationWorker.on("failed", (job, err) => {
+  pageClassificationWorker.on("failed", async (job, err) => {
     console.error(`[Page Classification] Job failed for documentId: ${job?.data.documentId}`, err);
+    if (job?.data.documentId) {
+      if ((global as any).io) {
+        (global as any).io.emit("standards-progress", { documentId: job.data.documentId, status: "FAILED", error: err.message });
+      }
+      try {
+        await prisma.standardDocument.update({
+          where: { id: job.data.documentId },
+          data: { status: "FAILED" }
+        });
+      } catch (dbErr) {
+        console.error(`[Page Classification] Failed to update status to FAILED for documentId: ${job.data.documentId}`, dbErr);
+      }
+    }
   });
 };
 

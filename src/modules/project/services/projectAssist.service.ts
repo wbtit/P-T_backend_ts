@@ -15,6 +15,7 @@ const ELEVATED_ROLES = new Set<UserJwt["role"]>([
   "ADMIN",
   "SYSTEM_ADMIN",
   "DEPT_MANAGER",
+  "DEPUTY_MANAGER",
   "OPERATION_EXECUTIVE",
   "PROJECT_MANAGER_OFFICER",
   "CONNECTION_DESIGNER_ADMIN",
@@ -248,15 +249,30 @@ export class ProjectAssistService {
     user: UserJwt,
     action: "CREATE" | "UPDATE" = "UPDATE"
   ): Promise<RfiSubmittalAccess> {
+    console.log(`[assertAccess] ---- START ----`);
+    console.log(`[assertAccess] action: ${action}`);
+    console.log(`[assertAccess] projectId: ${projectId}`);
+    console.log(`[assertAccess] user.id: ${user.id}`);
+    console.log(`[assertAccess] user.role: ${user.role}`);
+    console.log(`[assertAccess] ELEVATED_ROLES set:`, Array.from(ELEVATED_ROLES));
+    console.log(`[assertAccess] ELEVATED_ROLES.has(user.role): ${ELEVATED_ROLES.has(user.role)}`);
+
     const project = await this.getProjectOrThrow(projectId);
+    console.log(`[assertAccess] project found: id=${project.id}, managerID=${project.managerID}, teamID=${project.teamID}`);
 
     if (ELEVATED_ROLES.has(user.role)) {
+      console.log(`[assertAccess] ✅ PASSED via ELEVATED_ROLES — returning early`);
       return { isAssist: false, projectManagerId: project.managerID };
     }
 
+    console.log(`[assertAccess] ❌ NOT in ELEVATED_ROLES — checking PROJECT_MANAGER...`);
+
     if (user.role === "PROJECT_MANAGER" && user.id === project.managerID) {
+      console.log(`[assertAccess] ✅ PASSED via PROJECT_MANAGER match`);
       return { isAssist: false, projectManagerId: project.managerID };
     }
+
+    console.log(`[assertAccess] ❌ NOT project manager — checking team membership...`);
 
     if (action === "CREATE" && project.teamID) {
       const isTeamMember = await prisma.teamMember.findFirst({
@@ -265,10 +281,16 @@ export class ProjectAssistService {
           userId: user.id
         }
       });
+      console.log(`[assertAccess] teamID: ${project.teamID}, isTeamMember: ${!!isTeamMember}`);
       if (isTeamMember) {
+        console.log(`[assertAccess] ✅ PASSED via team membership`);
         return { isAssist: false, projectManagerId: project.managerID };
       }
+    } else {
+      console.log(`[assertAccess] Skipping team check — action=${action}, teamID=${project.teamID}`);
     }
+
+    console.log(`[assertAccess] ❌ NOT a team member — checking projectAssist record...`);
 
     const assist = await prismaWithAssists.projectAssist.findFirst({
       where: {
@@ -279,10 +301,14 @@ export class ProjectAssistService {
       select: { id: true },
     });
 
+    console.log(`[assertAccess] projectAssist record found: ${JSON.stringify(assist)}`);
+
     if (!assist) {
+      console.log(`[assertAccess] ❌ No assist record — throwing 403`);
       throw new AppError(`You are not allowed to ${action.toLowerCase()} RFI or Submittals for this project`, 403);
     }
 
+    console.log(`[assertAccess] ✅ PASSED via projectAssist`);
     return { isAssist: true, projectManagerId: project.managerID };
   }
 }

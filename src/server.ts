@@ -35,8 +35,13 @@ console.error = (...args: unknown[]) => {
 import "./corn-jobs/safeCorn"
 import { startStandardsIngestionWorker } from "./modules/standards/jobs/standardsIngestion";
 import { startPageClassificationWorker } from "./modules/standards/jobs/pageClassification";
+import { startChunkingWorker } from "./modules/standards/jobs/chunking";
+import { startStandardsGenerationWorker } from "./modules/standards/jobs/standardsGeneration";
+
 startStandardsIngestionWorker();
 startPageClassificationWorker();
+startChunkingWorker();
+startStandardsGenerationWorker();
 
 import cors from 'cors'
 import {
@@ -154,7 +159,11 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
 
 
 
+import { setupGracefulShutdown } from "./utils/gracefulShutdown";
+
  const PORT=parseInt(process.env.PORT || '3000', 10)
- server.listen(PORT,()=>{
+ const serverInstance = server.listen(PORT,()=>{
     console.log(`server running http://localhost:${PORT}`)
  })
+
+ setupGracefulShutdown(serverInstance);
