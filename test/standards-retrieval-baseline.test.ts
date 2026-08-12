@@ -5,14 +5,14 @@
  * raw nearest-neighbour similarity (without the production 0.6 threshold), so
  * below-threshold true matches and false positives remain observable.
  *
- * | Query | GSMS 8703… score/page | MM 0207… score/page |
+ * | Query | GSMS 8703… top-1 / target | MM 0207… top-1 / target |
  * | --- | --- | --- |
- * | column without cap plate | 0.483230 / 7 | 0.531943 / 13 |
- * | later wide gage standard angles | 0.479097 / 2 | 0.553150 / 8 |
- * | what are the drawing presentation requirements? | 0.560656 / 9 | 0.561022 / 56 |
- * | What sheet sizes should I use for detail drawings? | 0.571053 / 11 | 0.739919 / 2 |
- * | How do I calibrate a marine GPS compass? | 0.384871 / 1 | 0.452533 / 8 |
- * | steel recipe and carbon content | 0.478505 / 33 | 0.633515 / 66 |
+ * | column without cap plate | 0.483230 p7 / 0.407941 p18 | 0.531943 p13 / — |
+ * | later wide gage standard angles | 0.479097 p2 / 0.396299 p12 | 0.553150 p8 / — |
+ * | what are the drawing presentation requirements? | 0.560656 p9 / — | 0.561022 p56 / — |
+ * | What sheet sizes should I use for detail drawings? | 0.571053 p11 / — | 0.739919 p2 / 0.739919 p2 |
+ * | How do I calibrate a marine GPS compass? | 0.384871 p1 / — | 0.452533 p8 / — |
+ * | steel recipe and carbon content | 0.478505 p33 / — | 0.633515 p66 / 0.633515 p66 |
  */
 import prisma from "../src/config/database/client";
 
@@ -31,6 +31,13 @@ const queries = [
   "How do I calibrate a marine GPS compass?",
   "steel recipe and carbon content",
 ] as const;
+
+const expectedTargetPages: Record<string, Partial<Record<string, number>>> = {
+  "column without cap plate": { "GSMS 8703…": 18 },
+  "later wide gage standard angles": { "GSMS 8703…": 12 },
+  "What sheet sizes should I use for detail drawings?": { "MM 0207…": 2 },
+  "steel recipe and carbon content": { "MM 0207…": 66 },
+};
 
 type SearchRow = {
   pageStart: number;
@@ -84,6 +91,24 @@ describe("Pre-OCR standards retrieval baseline", () => {
           `[Pre-OCR baseline] source=${source.label} query=${JSON.stringify(query)} ` +
           `similarity=${Number(top.similarity).toFixed(6)} page=${top.pageStart}-${top.pageEnd}`
         );
+
+        const targetPage = expectedTargetPages[query]?.[source.label];
+        if (targetPage !== undefined) {
+          const targetResults = await prisma.$queryRawUnsafe<SearchRow[]>(`
+            SELECT
+              page_start AS "pageStart",
+              page_end AS "pageEnd",
+              1 - (embedding <=> $1::vector) AS similarity
+            FROM standard_chunks
+            WHERE document_id = $2::uuid AND page_start = $3
+            LIMIT 1
+          `, vector, source.documentId, targetPage);
+          const target = targetResults[0];
+          console.log(
+            `[Pre-OCR baseline target] source=${source.label} query=${JSON.stringify(query)} ` +
+            `similarity=${target ? Number(target.similarity).toFixed(6) : "missing"} page=${targetPage}`
+          );
+        }
       }
     }
   });
