@@ -1,0 +1,338 @@
+{
+  "alpha_0": [
+    {
+      "query": "column with cap plate",
+      "pass": false,
+      "topPage": 18,
+      "topFinalScore": "0.7088",
+      "topLexicalScore": "0.7500",
+      "topVectorScore": "0.7088",
+      "expectedRank": 2
+    },
+    {
+      "query": "column without cap plate",
+      "pass": true,
+      "topPage": 18,
+      "topFinalScore": "0.7224",
+      "topLexicalScore": "1.0000",
+      "topVectorScore": "0.7224",
+      "expectedRank": 1
+    },
+    {
+      "query": "what is the c/c of the standard beam angles",
+      "pass": false,
+      "topPage": "NONE",
+      "topFinalScore": "N/A",
+      "topLexicalScore": "N/A",
+      "topVectorScore": "N/A",
+      "expectedRank": "NOT_IN_SET"
+    },
+    {
+      "query": "What sheet sizes should I use for detail drawings?",
+      "pass": true,
+      "topPage": 2,
+      "topFinalScore": "0.7399",
+      "topLexicalScore": "1.0000",
+      "topVectorScore": "0.7399",
+      "expectedRank": 1
+    },
+    {
+      "query": "minimum slab thickness",
+      "pass": true,
+      "topPage": "NONE",
+      "topFinalScore": "N/A",
+      "topLexicalScore": "N/A",
+      "topVectorScore": "N/A",
+      "expectedRank": "N/A"
+    },
+    {
+      "query": "how do I calibrate a marine GPS compass",
+      "pass": true,
+      "topPage": "NONE",
+      "topFinalScore": "N/A",
+      "topLexicalScore": "N/A",
+      "topVectorScore": "N/A",
+      "expectedRank": "N/A"
+    }
+  ],
+  "alpha_0.02": [
+    {
+      "query": "column with cap plate",
+      "pass": false,
+      "topPage": 18,
+      "topFinalScore": "0.7238",
+      "topLexicalScore": "0.7500",
+      "topVectorScore": "0.7088",
+      "expectedRank": 2
+    },
+    {
+      "query": "column without cap plate",
+      "pass": true,
+      "topPage": 18,
+      "topFinalScore": "0.7424",
+      "topLexicalScore": "1.0000",
+      "topVectorScore": "0.7224",
+      "expectedRank": 1
+    },
+    {
+      "query": "what is the c/c of the standard beam angles",
+      "pass": false,
+      "topPage": "NONE",
+      "topFinalScore": "N/A",
+      "topLexicalScore": "N/A",
+      "topVectorScore": "N/A",
+      "expectedRank": "NOT_IN_SET"
+    },
+    {
+      "query": "What sheet sizes should I use for detail drawings?",
+      "pass": true,
+      "topPage": 2,
+      "topFinalScore": "0.7599",
+      "topLexicalScore": "1.0000",
+      "topVectorScore": "0.7399",
+      "expectedRank": 1
+    },
+    {
+      "query": "minimum slab thickness",
+      "pass": true,
+      "topPage": "NONE",
+      "topFinalScore": "N/A",
+      "topLexicalScore": "N/A",
+      "topVectorScore": "N/A",
+      "expectedRank": "N/A"
+    },
+    {
+      "query": "how do I calibrate a marine GPS compass",
+      "pass": true,
+      "topPage": "NONE",
+      "topFinalScore": "N/A",
+      "topLexicalScore": "N/A",
+      "topVectorScore": "N/A",
+      "expectedRank": "N/A"
+    }
+  ],
+  "alpha_0.05": [
+    {
+      "query": "column with cap plate",
+      "pass": true,
+      "topPage": 16,
+      "topFinalScore": "0.7493",
+      "topLexicalScore": "1.0000",
+      "topVectorScore": "0.6993",
+      "expectedRank": 1
+    },
+    {
+      "query": "column without cap plate",
+      "pass": true,
+      "topPage": 18,
+      "topFinalScore": "0.7724",
+      "topLexicalScore": "1.0000",
+      "topVectorScore": "0.7224",
+      "expectedRank": 1
+    },
+    {
+      "query": "what is the c/c of the standard beam angles",
+      "pass": true,
+      "topPage": 13,
+      "topFinalScore": "0.6150",
+      "topLexicalScore": "1.0000",
+      "topVectorScore": "0.5650",
+      "expectedRank": 1
+    },
+    {
+      "query": "What sheet sizes should I use for detail drawings?",
+      "pass": true,
+      "topPage": 2,
+      "topFinalScore": "0.7899",
+      "topLexicalScore": "1.0000",
+      "topVectorScore": "0.7399",
+      "expectedRank": 1
+    },
+    {
+      "query": "minimum slab thickness",
+      "pass": true,
+      "topPage": "NONE",
+      "topFinalScore": "N/A",
+      "topLexicalScore": "N/A",
+      "topVectorScore": "N/A",
+      "expectedRank": "N/A"
+    },
+    {
+      "query": "how do I calibrate a marine GPS compass",
+      "pass": true,
+      "topPage": "NONE",
+      "topFinalScore": "N/A",
+      "topLexicalScore": "N/A",
+      "topVectorScore": "N/A",
+      "expectedRank": "N/A"
+    }
+  ],
+  "alpha_0.1": [
+    {
+      "query": "column with cap plate",
+      "pass": true,
+      "topPage": 16,
+      "topFinalScore": "0.7993",
+      "topLexicalScore": "1.0000",
+      "topVectorScore": "0.6993",
+      "expectedRank": 1
+    },
+    {
+      "query": "column without cap plate",
+      "pass": true,
+      "topPage": 18,
+      "topFinalScore": "0.8224",
+      "topLexicalScore": "1.0000",
+      "topVectorScore": "0.7224",
+      "expectedRank": 1
+    },
+    {
+      "query": "what is the c/c of the standard beam angles",
+      "pass": true,
+      "topPage": 13,
+      "topFinalScore": "0.6650",
+      "topLexicalScore": "1.0000",
+      "topVectorScore": "0.5650",
+      "expectedRank": 1
+    },
+    {
+      "query": "What sheet sizes should I use for detail drawings?",
+      "pass": true,
+      "topPage": 2,
+      "topFinalScore": "0.8399",
+      "topLexicalScore": "1.0000",
+      "topVectorScore": "0.7399",
+      "expectedRank": 1
+    },
+    {
+      "query": "minimum slab thickness",
+      "pass": true,
+      "topPage": "NONE",
+      "topFinalScore": "N/A",
+      "topLexicalScore": "N/A",
+      "topVectorScore": "N/A",
+      "expectedRank": "N/A"
+    },
+    {
+      "query": "how do I calibrate a marine GPS compass",
+      "pass": true,
+      "topPage": "NONE",
+      "topFinalScore": "N/A",
+      "topLexicalScore": "N/A",
+      "topVectorScore": "N/A",
+      "expectedRank": "N/A"
+    }
+  ],
+  "alpha_0.15": [
+    {
+      "query": "column with cap plate",
+      "pass": true,
+      "topPage": 16,
+      "topFinalScore": "0.8493",
+      "topLexicalScore": "1.0000",
+      "topVectorScore": "0.6993",
+      "expectedRank": 1
+    },
+    {
+      "query": "column without cap plate",
+      "pass": true,
+      "topPage": 18,
+      "topFinalScore": "0.8724",
+      "topLexicalScore": "1.0000",
+      "topVectorScore": "0.7224",
+      "expectedRank": 1
+    },
+    {
+      "query": "what is the c/c of the standard beam angles",
+      "pass": true,
+      "topPage": 13,
+      "topFinalScore": "0.7150",
+      "topLexicalScore": "1.0000",
+      "topVectorScore": "0.5650",
+      "expectedRank": 1
+    },
+    {
+      "query": "What sheet sizes should I use for detail drawings?",
+      "pass": true,
+      "topPage": 2,
+      "topFinalScore": "0.8899",
+      "topLexicalScore": "1.0000",
+      "topVectorScore": "0.7399",
+      "expectedRank": 1
+    },
+    {
+      "query": "minimum slab thickness",
+      "pass": true,
+      "topPage": "NONE",
+      "topFinalScore": "N/A",
+      "topLexicalScore": "N/A",
+      "topVectorScore": "N/A",
+      "expectedRank": "N/A"
+    },
+    {
+      "query": "how do I calibrate a marine GPS compass",
+      "pass": true,
+      "topPage": "NONE",
+      "topFinalScore": "N/A",
+      "topLexicalScore": "N/A",
+      "topVectorScore": "N/A",
+      "expectedRank": "N/A"
+    }
+  ],
+  "alpha_0.2": [
+    {
+      "query": "column with cap plate",
+      "pass": true,
+      "topPage": 16,
+      "topFinalScore": "0.8993",
+      "topLexicalScore": "1.0000",
+      "topVectorScore": "0.6993",
+      "expectedRank": 1
+    },
+    {
+      "query": "column without cap plate",
+      "pass": true,
+      "topPage": 18,
+      "topFinalScore": "0.9224",
+      "topLexicalScore": "1.0000",
+      "topVectorScore": "0.7224",
+      "expectedRank": 1
+    },
+    {
+      "query": "what is the c/c of the standard beam angles",
+      "pass": true,
+      "topPage": 13,
+      "topFinalScore": "0.7650",
+      "topLexicalScore": "1.0000",
+      "topVectorScore": "0.5650",
+      "expectedRank": 1
+    },
+    {
+      "query": "What sheet sizes should I use for detail drawings?",
+      "pass": true,
+      "topPage": 2,
+      "topFinalScore": "0.9399",
+      "topLexicalScore": "1.0000",
+      "topVectorScore": "0.7399",
+      "expectedRank": 1
+    },
+    {
+      "query": "minimum slab thickness",
+      "pass": false,
+      "topPage": 12,
+      "topFinalScore": "0.6282",
+      "topLexicalScore": "0.6667",
+      "topVectorScore": "0.4949",
+      "expectedRank": "N/A"
+    },
+    {
+      "query": "how do I calibrate a marine GPS compass",
+      "pass": true,
+      "topPage": "NONE",
+      "topFinalScore": "N/A",
+      "topLexicalScore": "N/A",
+      "topVectorScore": "N/A",
+      "expectedRank": "N/A"
+    }
+  ]
+}

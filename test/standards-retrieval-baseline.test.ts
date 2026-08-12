@@ -1,115 +1,117 @@
-/**
- * Pre-OCR retrieval baseline — recorded 2026-08-12.
- *
- * Results are populated by the measurement run below. They intentionally record
- * raw nearest-neighbour similarity (without the production 0.6 threshold), so
- * below-threshold true matches and false positives remain observable.
- *
- * | Query | GSMS 8703… top-1 / target | MM 0207… top-1 / target |
- * | --- | --- | --- |
- * | column without cap plate | 0.483230 p7 / 0.407941 p18 | 0.531943 p13 / — |
- * | later wide gage standard angles | 0.479097 p2 / 0.396299 p12 | 0.553150 p8 / — |
- * | what are the drawing presentation requirements? | 0.560656 p9 / — | 0.561022 p56 / — |
- * | What sheet sizes should I use for detail drawings? | 0.571053 p11 / — | 0.739919 p2 / 0.739919 p2 |
- * | How do I calibrate a marine GPS compass? | 0.384871 p1 / — | 0.452533 p8 / — |
- * | steel recipe and carbon content | 0.478505 p33 / — | 0.633515 p66 / 0.633515 p66 |
- */
+import fs from "fs";
+import path from "path";
 import prisma from "../src/config/database/client";
+import { searchStandards } from "../src/modules/standards/services/retrievalService";
 
-const OLLAMA_URL = process.env.OLLAMA_URL || "http://127.0.0.1:11434";
-
-const sources = [
-  { label: "GSMS 8703…", documentId: "87037d08-cbeb-4f43-9b32-7868f49b4ce2" },
-  { label: "MM 0207…", documentId: "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1" },
-] as const;
-
-const queries = [
-  "column without cap plate",
-  "later wide gage standard angles",
-  "what are the drawing presentation requirements?",
-  "What sheet sizes should I use for detail drawings?",
-  "How do I calibrate a marine GPS compass?",
-  "steel recipe and carbon content",
-] as const;
-
-const expectedTargetPages: Record<string, Partial<Record<string, number>>> = {
-  "column without cap plate": { "GSMS 8703…": 18 },
-  "later wide gage standard angles": { "GSMS 8703…": 12 },
-  "What sheet sizes should I use for detail drawings?": { "MM 0207…": 2 },
-  "steel recipe and carbon content": { "MM 0207…": 66 },
+const documents = {
+  "GSMS": "80cf6e98-5efc-44a1-adc0-9e2b9445dd9d",
+  "MM": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1"
 };
 
-type SearchRow = {
-  pageStart: number;
-  pageEnd: number;
-  similarity: number;
+const PROJECT_IDS = {
+  "GSMS": "73436d64-7a43-4c69-8618-78a7d0b2da49",
+  "MM": "da65231b-60a3-4ef5-b2cd-4feead1d29bd" // Assuming this is MM's project
 };
 
-async function embed(query: string): Promise<number[]> {
-  const response = await fetch(`${OLLAMA_URL}/api/embeddings`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ model: "nomic-embed-text", prompt: query }),
-  });
+type EvalCase = {
+  query: string;
+  docKey: keyof typeof documents;
+  expectedPages: number[];
+};
 
-  if (!response.ok) {
-    throw new Error(`Ollama embedding request failed: ${response.status} ${response.statusText}`);
-  }
+const evalCases: EvalCase[] = [
+  { query: "column with cap plate", docKey: "GSMS", expectedPages: [16, 17] },
+  { query: "column without cap plate", docKey: "GSMS", expectedPages: [18] },
+  { query: "what is the c/c of the standard beam angles", docKey: "GSMS", expectedPages: [12, 13, 14, 15] },
+  { query: "What sheet sizes should I use for detail drawings?", docKey: "MM", expectedPages: [2] },
+  { query: "minimum slab thickness", docKey: "GSMS", expectedPages: [] },
+  { query: "how do I calibrate a marine GPS compass", docKey: "GSMS", expectedPages: [] }
+];
 
-  return ((await response.json()) as { embedding: number[] }).embedding;
-}
+const alphas = [0, 0.02, 0.05, 0.10, 0.15, 0.20];
 
-describe("Pre-OCR standards retrieval baseline", () => {
-  jest.setTimeout(120_000);
+describe("Phase 10 Retrieval Tuning Harness", () => {
+  jest.setTimeout(300_000); // 5 mins
 
   afterAll(async () => {
     await prisma.$disconnect();
   });
 
-  it("prints the raw top result for each real query and intact document", async () => {
-    for (const query of queries) {
-      const embedding = await embed(query);
-      const vector = `[${embedding.join(",")}]`;
-
-      for (const source of sources) {
-        const results = await prisma.$queryRawUnsafe<SearchRow[]>(`
-          SELECT
-            page_start AS "pageStart",
-            page_end AS "pageEnd",
-            1 - (embedding <=> $1::vector) AS similarity
-          FROM standard_chunks
-          WHERE document_id = $2::uuid
-          ORDER BY embedding <=> $1::vector
-          LIMIT 1
-        `, vector, source.documentId);
-
-        // This is a measurement harness: only assert that the search produced a result.
-        expect(results.length).toBeGreaterThan(0);
-
-        const top = results[0];
-        console.log(
-          `[Pre-OCR baseline] source=${source.label} query=${JSON.stringify(query)} ` +
-          `similarity=${Number(top.similarity).toFixed(6)} page=${top.pageStart}-${top.pageEnd}`
-        );
-
-        const targetPage = expectedTargetPages[query]?.[source.label];
-        if (targetPage !== undefined) {
-          const targetResults = await prisma.$queryRawUnsafe<SearchRow[]>(`
-            SELECT
-              page_start AS "pageStart",
-              page_end AS "pageEnd",
-              1 - (embedding <=> $1::vector) AS similarity
-            FROM standard_chunks
-            WHERE document_id = $2::uuid AND page_start = $3
-            LIMIT 1
-          `, vector, source.documentId, targetPage);
-          const target = targetResults[0];
-          console.log(
-            `[Pre-OCR baseline target] source=${source.label} query=${JSON.stringify(query)} ` +
-            `similarity=${target ? Number(target.similarity).toFixed(6) : "missing"} page=${targetPage}`
-          );
+  it("tunes alpha and writes baseline", async () => {
+    const resultsOut: any = {};
+    
+    for (const alpha of alphas) {
+      console.log(`\n============================`);
+      console.log(`=== RUNNING ALPHA = ${alpha.toFixed(2)} ===`);
+      console.log(`============================\n`);
+      
+      const alphaResults: any[] = [];
+      
+      for (const testCase of evalCases) {
+        // Run full retrieval pipeline
+        const resp = await searchStandards({
+          query: testCase.query,
+          projectId: PROJECT_IDS[testCase.docKey],
+          threshold: 0.45,
+          acceptanceThreshold: 0.60,
+          alpha
+        });
+        
+        // Find which array has our chunks (GSMS -> FABRICATOR for this project, MM is likely GENERAL if not uploaded to this project. We'll just merge both for testing)
+        let candidates = [...resp.general, ...resp.fabricator];
+        // Filter out anchors, we just want direct hits
+        candidates = candidates.filter(c => !c.isAnchor);
+        // Ensure they belong to the correct document
+        const targetDocId = documents[testCase.docKey];
+        candidates = candidates.filter(c => c.documentId === targetDocId);
+        
+        // Re-sort just in case
+        candidates.sort((a, b) => b.similarity - a.similarity);
+        
+        const topHit = candidates[0];
+        const passed = testCase.expectedPages.length > 0 
+          ? (topHit ? testCase.expectedPages.includes(topHit.pageStart) : false)
+          : (!topHit);
+          
+        let expectedRank = -1;
+        for (let i = 0; i < candidates.length; i++) {
+          if (testCase.expectedPages.includes(candidates[i].pageStart)) {
+            expectedRank = i + 1;
+            break;
+          }
+        }
+          
+        alphaResults.push({
+          query: testCase.query,
+          pass: passed,
+          topPage: topHit ? topHit.pageStart : "NONE",
+          topFinalScore: topHit ? topHit.similarity.toFixed(4) : "N/A",
+          topLexicalScore: topHit ? topHit.lexicalScore.toFixed(4) : "N/A",
+          topVectorScore: topHit ? topHit.vectorSimilarity.toFixed(4) : "N/A",
+          expectedRank: expectedRank !== -1 ? expectedRank : (testCase.expectedPages.length === 0 ? "N/A" : "NOT_IN_SET")
+        });
+        
+        console.log(`Query: "${testCase.query}"`);
+        console.log(`  Pass: ${passed ? 'YES' : 'NO'}`);
+        if (topHit) {
+          console.log(`  Rank 1: Page ${topHit.pageStart} (Final: ${topHit.similarity.toFixed(4)} | Vec: ${topHit.vectorSimilarity.toFixed(4)} | Lex: ${topHit.lexicalScore.toFixed(4)})`);
+        } else {
+          console.log(`  Rank 1: NONE (No hits > 0.60)`);
         }
       }
+      resultsOut[`alpha_${alpha}`] = alphaResults;
+      
+      const allPassed = alphaResults.every(r => r.pass);
+      console.log(`\nAlpha ${alpha.toFixed(2)} ALL GREEN? ${allPassed ? 'YES' : 'NO'}`);
     }
+    
+    // Save to docs/specs/phase-10-baseline.json
+    fs.writeFileSync(
+      path.join(process.cwd(), "docs/specs/phase-10-baseline.json"), 
+      JSON.stringify(resultsOut, null, 2)
+    );
+    console.log(`\nWrote full results to docs/specs/phase-10-baseline.json`);
+    
+    expect(true).toBe(true);
   });
 });

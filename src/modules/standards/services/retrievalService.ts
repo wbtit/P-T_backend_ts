@@ -3,7 +3,9 @@ import prisma from "../../../config/database/client";
 export interface SearchStandardsOptions {
   query: string;
   projectId: string;
-  threshold?: number;
+  threshold?: number; // candidate floor (default 0.45)
+  alpha?: number;
+  acceptanceThreshold?: number; // final threshold (default 0.60)
 }
 
 export interface RetrievedChunk {
@@ -14,7 +16,9 @@ export interface RetrievedChunk {
   pageEnd: number;
   textContent: string;
   sourceType: string;
-  similarity: number;
+  similarity: number; // Final score
+  vectorSimilarity: number;
+  lexicalScore: number;
   isAnchor?: boolean;
 }
 
@@ -23,9 +27,42 @@ export interface SearchStandardsResponse {
   fabricator: RetrievedChunk[];
 }
 
+import { standardAbbreviations } from "../../../utils/abbreviations";
+
+const STOPWORDS = new Set([
+  "what", "is", "the", "of", "are", "should", "i", "use", "for", "how", "do", "a", "an", "to", "in", "on", "at", "by", "and", "or"
+]);
+
+function tokenizeAndNormalize(text: string): string[] {
+  if (!text) return [];
+  const lower = text.toLowerCase();
+  const rawTokens = lower.match(/[a-z0-9\/]+/g) || [];
+  const tokens: string[] = [];
+  for (const t of rawTokens) {
+    if (STOPWORDS.has(t)) continue;
+    const expanded = standardAbbreviations[t] || t;
+    if (expanded.includes(" ")) {
+      tokens.push(...expanded.split(" "));
+    } else {
+      tokens.push(expanded);
+    }
+  }
+  return tokens;
+}
+
+function calculateLexicalScore(queryTokens: string[], chunkText: string): number {
+  if (queryTokens.length === 0) return 0;
+  const chunkTokens = new Set(tokenizeAndNormalize(chunkText));
+  let overlap = 0;
+  for (const qt of queryTokens) {
+    if (chunkTokens.has(qt)) overlap++;
+  }
+  return overlap / queryTokens.length;
+}
+
 const ollamaUrl = process.env.OLLAMA_URL || "http://127.0.0.1:11434";
 
-async function generateEmbedding(text: string): Promise<number[]> {
+export async function generateEmbedding(text: string): Promise<number[]> {
   const response = await fetch(`${ollamaUrl}/api/embeddings`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -35,19 +72,23 @@ async function generateEmbedding(text: string): Promise<number[]> {
     throw new Error(`Ollama API error: ${response.statusText}`);
   }
   const data = (await response.json()) as { embedding: number[] };
+  if (!data.embedding || data.embedding.length === 0) {
+    throw new Error(`Empty embedding received from Ollama API`);
+  }
   return data.embedding;
 }
 
 async function searchScope(
-  embedding: number[], 
-  scopeCondition: string, 
-  threshold: number, 
-  projectId?: string
+  embedding: number[],
+  scopeCondition: string,
+  options: SearchStandardsOptions
 ): Promise<RetrievedChunk[]> {
+  const { query, projectId, threshold = 0.45, alpha = 0.0, acceptanceThreshold = 0.60 } = options;
   const vectorString = `[${embedding.join(",")}]`;
+  const queryTokens = tokenizeAndNormalize(query);
   
   // Basic threshold + top-K search
-  let query = `
+  let querySql = `
     SELECT 
       c.id, 
       c.document_id as "documentId",
@@ -63,29 +104,32 @@ async function searchScope(
 
   let results: any[];
   if (scopeCondition === "GENERAL") {
-    query += `
+    querySql += `
       JOIN standard_documents d ON c.document_id = d.id
       WHERE c.source_type = 'GENERAL' AND d.status = 'ACTIVE'
       AND 1 - (c.embedding <=> $1::vector) > $2
       ORDER BY c.embedding <=> $1::vector
       LIMIT 10
     `;
-    results = await prisma.$queryRawUnsafe(query, vectorString, threshold);
+    results = await prisma.$queryRawUnsafe(querySql, vectorString, threshold);
   } else {
-    query += `
+    querySql += `
       JOIN standard_documents d ON c.document_id = d.id
       WHERE c.source_type = 'FABRICATOR' AND c.project_id = $2::uuid AND d.status = 'ACTIVE'
       AND 1 - (c.embedding <=> $1::vector) > $3
       ORDER BY c.embedding <=> $1::vector
       LIMIT 10
     `;
-    results = await prisma.$queryRawUnsafe(query, vectorString, projectId, threshold);
+    results = await prisma.$queryRawUnsafe(querySql, vectorString, projectId, threshold);
   }
 
   const finalChunks: RetrievedChunk[] = [];
   const processedAnchorHeadings = new Set<string>();
 
   for (const row of results) {
+    const lexicalScore = calculateLexicalScore(queryTokens, row.textContent);
+    const finalScore = row.similarity + (alpha * lexicalScore);
+
     const chunk: RetrievedChunk = {
       id: row.id,
       documentId: row.documentId,
@@ -94,9 +138,15 @@ async function searchScope(
       pageEnd: row.pageEnd,
       textContent: row.textContent,
       sourceType: row.sourceType,
-      similarity: row.similarity
+      vectorSimilarity: row.similarity,
+      lexicalScore,
+      similarity: finalScore
     };
-    finalChunks.push(chunk);
+    
+    // Apply final acceptance threshold
+    if (finalScore > acceptanceThreshold) {
+      finalChunks.push(chunk);
+    }
 
     // Expand VISUAL chunks
     if (chunk.chunkType === "VISUAL" && row.heading) {
@@ -149,6 +199,8 @@ async function searchScope(
               pageEnd: anchorRow.pageEnd,
               textContent: anchorRow.textContent,
               sourceType: anchorRow.sourceType,
+              vectorSimilarity: anchorRow.similarity,
+              lexicalScore: 0,
               similarity: anchorRow.similarity,
               isAnchor: true
             });
@@ -158,6 +210,9 @@ async function searchScope(
     }
   }
 
+  // Re-sort final chunks by the new hybrid similarity score descending
+  finalChunks.sort((a, b) => b.similarity - a.similarity);
+
   return finalChunks;
 }
 
@@ -166,8 +221,8 @@ export async function searchStandards(options: SearchStandardsOptions): Promise<
   const queryEmbedding = await generateEmbedding(query);
 
   const [general, fabricator] = await Promise.all([
-    searchScope(queryEmbedding, "GENERAL", threshold),
-    searchScope(queryEmbedding, "FABRICATOR", threshold, projectId)
+    searchScope(queryEmbedding, "GENERAL", options),
+    searchScope(queryEmbedding, "FABRICATOR", options)
   ]);
 
   return { general, fabricator };
