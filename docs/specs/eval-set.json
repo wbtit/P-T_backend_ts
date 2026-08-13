@@ -1,0 +1,1438 @@
+{
+  "dev": [
+    {
+      "question": "What's the term used for a washer that indicates load?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 21,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 21 of 61  \nLIW     Load Indicator Washer \nLLH    Long Leg Horizontal \nLLO    Long Leg Outstanding \nLLV     Long Leg Vertical \n..."
+    },
+    {
+      "question": "What's the minimum size for fillet welds on these joints?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 16,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 16 of 61  \n14) BASIC WELD INFORMATION \n ..."
+    },
+    {
+      "question": "What should I do if larger holes are needed for connections between new and existing steel?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 6,
+      "classification": "PROSE",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 6 of 61  \ny. Galvanized Material – Refer to the “American Galvanizers Association” Design Guide, appended at the end of this \n..."
+    },
+    {
+      "question": "What should we do if we suspect hydrogen embrittlement in our steel?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 70,
+      "classification": "PROSE",
+      "sourceText": "Steel Beam\nCrack\nCope Cut\nFigure 5: Cope cracks in structural steel beams  \nafter galvanizing\nASTM  A143  Safeguarding  Against  Embrittlement  of  Hot-Dip  \nGalvanized   Structural   Steel   Products..."
+    },
+    {
+      "question": "When do we need to tap nuts after galvanizing the bolts?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 82,
+      "classification": "PROSE",
+      "sourceText": "galvanizeit.org\nthreaded parts\nHot-dip  galvanized  fasteners  are  recommended  for  use  with  \nhot-dip  galvanized  assemblies  and  subassemblies.  Galvanized  \nnuts,  bolts,  and  screws  in  com..."
+    },
+    {
+      "question": "Which welding process is specified for a T-joint with a root face requirement?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 47,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 47 of 61  \n \n\nMARVIN METALS ~ DETAILING STANDARDS\nStructural Steel (v5.0)\n\nTable 8-2 (continued) PJP\n| Prequalified Welded Joi..."
+    },
+    {
+      "question": "Where should shop bolts be ordered from?",
+      "docKey": "GSMS",
+      "docId": "80cf6e98-5efc-44a1-adc0-9e2b9445dd9d",
+      "correctPage": 7,
+      "classification": "VISUAL",
+      "sourceText": "01-06-26\n16\nDETAILER NOTE:\nDO NOT LIST SHOP\nBOLTS ON FIELD\nBOLT LISTS. SHOP\nBOLTS ARE ORDERED\nFROM THE BILL OF\nMATERIAL ON THE\nSHOP DRAWING\n\nLENGTH\n\nPCS.\n\nNO.\n\nMATERIAL\n\nFT.\n\nINS.\n\nMARK\n\nREMARKS\n\nCUT ..."
+    },
+    {
+      "question": "How should I handle field bolts when joist suppliers don't provide them?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 3,
+      "classification": "PROSE",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 3 of 61  \nb. The second is a number indicating the sequential order of that material type in the whole job. For instance, \nthe..."
+    },
+    {
+      "question": "How much can the root face variation be in relation to the base metal thickness for a butt joint?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 43,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 43 of 61  \n \n\nMARVIN METALS ~ DETAILING STANDARDS\nStructural Steel (v5.0)\n\nTable 8-2 (continued) PJP\n| Prequalified Welded Joi..."
+    },
+    {
+      "question": "#how is the beam length determined for fabrication?",
+      "docKey": "GSMS",
+      "docId": "80cf6e98-5efc-44a1-adc0-9e2b9445dd9d",
+      "correctPage": 22,
+      "classification": "VISUAL",
+      "sourceText": "01-06-26\n\nSloping Beams\n\n1) Show Elevation.\n\n2)Show distance to end of main material\n\nat left end.\n\n3)Show stub dim to end of main material\n\nor show stub dim to end of submat’l.\n\n4) Broken web or flan..."
+    },
+    {
+      "question": "Can you provide the exact file type required for the layout table jobs?",
+      "docKey": "GSMS",
+      "docId": "80cf6e98-5efc-44a1-adc0-9e2b9445dd9d",
+      "correctPage": 2,
+      "classification": "PROSE",
+      "sourceText": "01-06-26\nor Tekla\nPython X- we need NC1 files for I-beams, channel, square tubing & angles.\nWe can cut up to 4-0 wide and 2 inches thick material.\nBurn table- we need DXF or DWG files for plates up to..."
+    },
+    {
+      "question": "What is the size of the tack welds?",
+      "docKey": "GSMS",
+      "docId": "80cf6e98-5efc-44a1-adc0-9e2b9445dd9d",
+      "correctPage": 33,
+      "classification": "VISUAL",
+      "sourceText": "TYP\nTYP\n3\n/\n16\nTACK WELD\nTYP\nTOP &\nBOTTOM TYP\n1\n/\n8\nTYP\n1\n/\n8\nTYP\n1\n/\n8\n1\n/\n8\nTYP\nTYPICAL HANDRAIL WELD DETAIL\nTotal weight : \nONEHANDRAIL1120HR11010011\n1U2\n3\n/\n8\nx2x\n13\n/\n64\n76\n3\n/\n4\n42A361120HR1\n1HS..."
+    },
+    {
+      "question": "What's the max bend radius for the steel used here?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 1,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 1 of 61  \n \n \n \n \n \n \n \n \n \n\nMARVIN METALS ~ DETAILING STANDARDS\nStructural Steel (v5.0)\n\nMZ JIN MET Ah\n\n114 NORTH OBORN STREE..."
+    },
+    {
+      "question": "What details need to be considered during design for hot-dip galvanizing to ensure maximum corrosion protection?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 65,
+      "classification": "PROSE",
+      "sourceText": "American Galvanizers Association\n2\nIntroductIon\nAs  the  world  continues  to  evolve,  it  is  important  to  construct  a  \nbetter environment for the future. Throughout the world, hot-dip \ngalvaniz..."
+    },
+    {
+      "question": "How thick are the tack welds supposed to be?",
+      "docKey": "GSMS",
+      "docId": "80cf6e98-5efc-44a1-adc0-9e2b9445dd9d",
+      "correctPage": 33,
+      "classification": "VISUAL",
+      "sourceText": "TYP\nTYP\n3\n/\n16\nTACK WELD\nTYP\nTOP &\nBOTTOM TYP\n1\n/\n8\nTYP\n1\n/\n8\nTYP\n1\n/\n8\n1\n/\n8\nTYP\nTYPICAL HANDRAIL WELD DETAIL\nTotal weight : \nONEHANDRAIL1120HR11010011\n1U2\n3\n/\n8\nx2x\n13\n/\n64\n76\n3\n/\n4\n42A361120HR1\n1HS..."
+    },
+    {
+      "question": "What are the best practices for preparing a steel surface before galvanizing?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 68,
+      "classification": "PROSE",
+      "sourceText": "galvanizeit.org\n5\nSimilarly, excessively rusted, pitted, or forged steels should also \nnot  be  used  in  combination  with  new  or  machined  surfaces   \nbecause  the  difference  in  required  pick..."
+    },
+    {
+      "question": "Are there any specific compass directions that need to be shown on the drawing?",
+      "docKey": "GSMS",
+      "docId": "80cf6e98-5efc-44a1-adc0-9e2b9445dd9d",
+      "correctPage": 16,
+      "classification": "VISUAL",
+      "sourceText": "01-06-26\n\nColumn with Cap Plate\n\n1) Reference dimensions on left side & shop\n\ndimensions on right side of picture\n\n2)Show base plate on ist shop drawing picture.\n\n3)Compass direction always on Face (A..."
+    },
+    {
+      "question": "How can we ensure a consistent appearance on structurally different steel pieces after galvanizing?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 85,
+      "classification": "PROSE",
+      "sourceText": "22\nArchitecturally Exposed Structural Steel (AESS)\nThere is a common misconception it is not possible to achieve \ngalvanized structural steel of the quality and aesthetics required \nfor  projects  inv..."
+    },
+    {
+      "question": "What's the best way to prepare the steel surface before galvanizing to improve its finish?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 85,
+      "classification": "PROSE",
+      "sourceText": "22\nArchitecturally Exposed Structural Steel (AESS)\nThere is a common misconception it is not possible to achieve \ngalvanized structural steel of the quality and aesthetics required \nfor  projects  inv..."
+    },
+    {
+      "question": "when would a 'C1' suffix be used?",
+      "docKey": "GSMS",
+      "docId": "80cf6e98-5efc-44a1-adc0-9e2b9445dd9d",
+      "correctPage": 4,
+      "classification": "VISUAL",
+      "sourceText": "01-06-26\n\nMEMO\n\nPIECE MARK SUFFIXES cont'd\n\nIf any member hot-dip or cold galvanizes, then the suffix \"G”\n\nwould indicate this. (Cold Galv to be noted in the remarks of the shop bill)\n\nIn the rare cas..."
+    },
+    {
+      "question": "What's the size of detail sheet?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 61,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 61 of 61  \ne. Title Block - 24X36 Detail Sheet \n \n ..."
+    },
+    {
+      "question": "what sequence should be followed when tightening shop bolts?",
+      "docKey": "GSMS",
+      "docId": "80cf6e98-5efc-44a1-adc0-9e2b9445dd9d",
+      "correctPage": 5,
+      "classification": "VISUAL",
+      "sourceText": "01-06-26\n\nFIELD BOLTS\n\nUNDER Sop\n\n‘SEQ\n\n‘SEQ QTY\n\nBILL MARKS\n\nNy\n\n‘SHOP BILL\n\n1 | 2 ETC quantrry | Mari\n\nTOTAL\n\nPIECE\n\nHARK\n\nSUR\n\nDESCRIPTION\n\naa\n\nREMARKS\n\n21/3\n\n24\n\n15B1\n\nW14x22\n\n24\n\n9%\n\n48\n\nPale\n\nPL..."
+    },
+    {
+      "question": "are there any specific constraints for the level beam?",
+      "docKey": "GSMS",
+      "docId": "80cf6e98-5efc-44a1-adc0-9e2b9445dd9d",
+      "correctPage": 21,
+      "classification": "VISUAL",
+      "sourceText": "01-06-26\n\nx\n\nma\n\n> O\n\nva _.\n\nWo\n\nOrmaQa\n\nfoun\n\nx\n\n2\n\n3” 3” 5h\"\n\nEL16’—4\n\n6'in\n\nSL\n\nSS\n\nBWe\"min\n\nae\n\nx\n\nx\n\nns\n\nSS\n\na\n\n=\n\nOj\n\n<0\n\noo\n\nSN\n\n7\n\n><|N\n\nsa\n\nSS\n\nx\n\niS\n\no@.\n\nS\n\n+N)\n\nSS\n\nS\n\nOX\n\n2.\n\nms\n\n|. (I\n\nN..."
+    },
+    {
+      "question": "Who's responsible for ensuring that all necessary details are correct before final detailing?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 7,
+      "classification": "PROSE",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 7 of 61  \nff. Connection Design. \ni. The question of design responsibility of Connections is one of the important questions fa..."
+    },
+    {
+      "question": "How should the tube columns be anchored to the foundation?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 14,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 14 of 61  \n12) EXAMPLE TUBE COLUMN DETAIL \n \n \n ..."
+    },
+    {
+      "question": "For a B-P7 groove, what are the allowable variations in angle and face thickness when using GMAW?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 49,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 49 of 61  \n \n\nMARVIN METALS ~ DETAILING STANDARDS\nStructural Steel (v5.0)\n\nTable 8-2 (continued) PJP\nPrequalified Welded Joint..."
+    },
+    {
+      "question": "What is the minimum spacing for internal gussets in box sections?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 78,
+      "classification": "PROSE",
+      "sourceText": "galvanizeit.org\nBox Sections (Figure 26)\nFigure  26  shows  the  location  of  holes  and  clipped  corners,  \nwhich  must  be  flush.  Using  the  following  formulas,  \nTable 1 shows typical sizes o..."
+    },
+    {
+      "question": "How is the leveling plate denoted?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 21,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 21 of 61  \nLIW     Load Indicator Washer \nLLH    Long Leg Horizontal \nLLO    Long Leg Outstanding \nLLV     Long Leg Vertical \n..."
+    },
+    {
+      "question": "How much variation is allowed in the groove preparation for FCAW butt joints?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 36,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 36 of 61  \n \n\nMARVIN METALS ~ DETAILING STANDARDS\nStructural Steel (v5.0)\n\nTable 8-2 (continued) CJP\nPrequalified Welded Joint..."
+    },
+    {
+      "question": "How big is the sample sheet we need?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 56,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 56 of 61  \n18) SAMPLE SHEETS & TITLE BLOCKS \n24X36 Erection Drawing \n  \n ..."
+    },
+    {
+      "question": ")}<tool_call>eantry: [",
+      "docKey": "GSMS",
+      "docId": "80cf6e98-5efc-44a1-adc0-9e2b9445dd9d",
+      "correctPage": 27,
+      "classification": "VISUAL",
+      "sourceText": "01-06-26\n\nQetailer to show on Erection Drawing\n\nNote:\n\nIf beam and column is exposed to weather and the bm.\n\nflg. does not completely cover the weep holes use;\n\n% ” Galvanized Plate to match cap plate..."
+    },
+    {
+      "question": "Do we need to include any unmarked 3D views?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 60,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 60 of 61  \nd. 24X36 Detail Sheet \n \n(\nNote \n-\n \nthere will only be one piece detailed & scaled to fit\n on each sheet regardles..."
+    },
+    {
+      "question": "How thick should the tabs be?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 9,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 9 of 61  \n7) STANDARD SHEAR TABS \n \n \n \n ..."
+    },
+    {
+      "question": "Are there any specific requirements for welding symbols?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 17,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 17 of 61  \n \n \n \n \n \n \n \n \n\nMARVIN METALS ~ DETAILING STANDARDS\nStructural Steel (v5.0)\n\ni il [ '\n\nMAAVIN MET AL\n\n114 NORTH OB..."
+    },
+    {
+      "question": "How many details can be drawn on one sheet?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 58,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 58 of 61  \n11X17 Detail Sheet – USE THIS SHEET FOR DETAILS WHENEVER YOU CAN!  \n \n \n(\nNote \n-\n \nthere will only be one piece de..."
+    },
+    {
+      "question": "Will the parts be dipped in molten zinc?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 89,
+      "classification": "VISUAL",
+      "sourceText": "galvanizeit.org\n\n(©)\n—\ne)\nhad\n9)\nIN\nc\no\n2\no\n(©)\n\n©\n©\n©\no\ni)\n\n..."
+    },
+    {
+      "question": "Which ASTM standard is referenced for zinc coating on iron and steel hardware?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 87,
+      "classification": "PROSE",
+      "sourceText": "American Galvanizers Association\n24\nother recommended/related a Ga publIcatIons\nDuplex Systems: Painting Over Hot-Dip Galvanized Steel, 2012 \nHot-Dip Galvanized Architecturally Exposed Structural Stee..."
+    },
+    {
+      "question": "What size and placement of holes are required for proper drainage in gusset plates?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 73,
+      "classification": "PROSE",
+      "sourceText": "American Galvanizers Association\n10\nallowInG For proper draInaGe\nFor  effective  galvanizing,  cleaning  solutions  and  molten  zinc  \nmust flow without undue resistance into, over, through, and out ..."
+    },
+    {
+      "question": "Which side needs to be embedded?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 20,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 20 of 61  \nDIAG   Diagonal \nDOGLEG          Type of stair stringer – (bent stringer) with diag & horz. members put together \nD..."
+    },
+    {
+      "question": "what offset stub dimensions are needed?",
+      "docKey": "GSMS",
+      "docId": "80cf6e98-5efc-44a1-adc0-9e2b9445dd9d",
+      "correctPage": 20,
+      "classification": "VISUAL",
+      "sourceText": "01-06-26\n\nLevel Beams\n\n1) Show Elevation.\n\n2)Show distance to end of main material\n\nat left end.\n\n3)Show stub dim to end of main material\n\nor show stub dim to end of submat’l.\n\n4) Broken web or flange..."
+    },
+    {
+      "question": "Are we hot-dip galvanizing or using another method?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 89,
+      "classification": "VISUAL",
+      "sourceText": "galvanizeit.org\n\n(©)\n—\ne)\nhad\n9)\nIN\nc\no\n2\no\n(©)\n\n©\n©\n©\no\ni)\n\n..."
+    },
+    {
+      "question": "What are the maximum tolerances for base metal thickness with gas shielded arc welding?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 28,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 28 of 61  \n \n\nMARVIN METALS ~ DETAILING STANDARDS\nStructural Steel (v5.0)\n\nTable 8-2 (continued) CJP\nPrequalified Welded Joint..."
+    },
+    {
+      "question": "Can you explain the difference between a SLH and an SLO?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 22,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 22 of 61  \nSAWTOOTH   Type of stair stringer – with a profile of a saw’s blade \nSC     Slip Critical \nSC1E   Square Cut 1 End ..."
+    },
+    {
+      "question": "Can root welding positions be omitted for certain joint types and if so, which ones?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 28,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 28 of 61  \n \n\nMARVIN METALS ~ DETAILING STANDARDS\nStructural Steel (v5.0)\n\nTable 8-2 (continued) CJP\nPrequalified Welded Joint..."
+    },
+    {
+      "question": "What is the minimum diameter for vent holes in end sections, and when can they be optional?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 76,
+      "classification": "PROSE",
+      "sourceText": "Figure 22  illustrates the need to include additional vent holes in \nfabricated pipework designs containing five or more horizontal \ncomponents or rails to prevent floating within the zinc bath. \nRect..."
+    },
+    {
+      "question": "How can communication between the architect, engineer, fabricator, and galvanizer improve the outcome of a project?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 65,
+      "classification": "PROSE",
+      "sourceText": "American Galvanizers Association\n2\nIntroductIon\nAs  the  world  continues  to  evolve,  it  is  important  to  construct  a  \nbetter environment for the future. Throughout the world, hot-dip \ngalvaniz..."
+    },
+    {
+      "question": "Are there specific requirements for welding in this design?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 1,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 1 of 61  \n \n \n \n \n \n \n \n \n \n\nMARVIN METALS ~ DETAILING STANDARDS\nStructural Steel (v5.0)\n\nMZ JIN MET Ah\n\n114 NORTH OBORN STREE..."
+    },
+    {
+      "question": "How many vent holes are needed for each vertical member and where should they be located?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 76,
+      "classification": "PROSE",
+      "sourceText": "Figure 22  illustrates the need to include additional vent holes in \nfabricated pipework designs containing five or more horizontal \ncomponents or rails to prevent floating within the zinc bath. \nRect..."
+    },
+    {
+      "question": "What slip coefficient should be used for hot-dip galvanized surfaces when wire brushing is not an option?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 84,
+      "classification": "PROSE",
+      "sourceText": "galvanizeit.org\n21\naddItIonal desIG n consIderatIons\nStructural Connections\nThe  presence  of  a  hot-dip  galvanized  coating  on  the  contact  \nsurfaces  of  bearing  type  connections  is  not  de..."
+    },
+    {
+      "question": "Who should communicate about the duplex system before hot-dip galvanizing takes place?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 84,
+      "classification": "PROSE",
+      "sourceText": "galvanizeit.org\n21\naddItIonal desIG n consIderatIons\nStructural Connections\nThe  presence  of  a  hot-dip  galvanized  coating  on  the  contact  \nsurfaces  of  bearing  type  connections  is  not  de..."
+    },
+    {
+      "question": "What are the tolerances for root face and angle in a double-bevel-groove weld?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 36,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 36 of 61  \n \n\nMARVIN METALS ~ DETAILING STANDARDS\nStructural Steel (v5.0)\n\nTable 8-2 (continued) CJP\nPrequalified Welded Joint..."
+    },
+    {
+      "question": "Are there different toe zone weld configurations for box connections?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 53,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 53 of 61  \n \n\nMARVIN METALS ~ DETAILING STANDARDS\nStructural Steel (v5.0)\n\nTable 8-2 (continued) TUBE\nPrequalified Welded Join..."
+    },
+    {
+      "question": "what is the minimum angle punch gage needed?",
+      "docKey": "GSMS",
+      "docId": "80cf6e98-5efc-44a1-adc0-9e2b9445dd9d",
+      "correctPage": 14,
+      "classification": "VISUAL",
+      "sourceText": "01-06-26\n\n2M TYP\n\n“\n\n3%\"LEG TYP UN\n\nSN\n\nwith '%.—'9 Holes\n\n7\n\n6”LEG\n\nwith\n\nAle\n\n1%6\"6 Holes\n\naN\n\nx\n\naN\n\nBN\n\naN\n\n3\n\naN\n\nSy\n\nBs\n\nPy\n\nBs\n\nSy\n\nPy\n\nBs\n\naN\n\naN\n\nBN\n\nEN\n\naN\n\naN\n\nCheck driving clearance\n\n® bo..."
+    }
+  ],
+  "holdout": [
+    {
+      "question": "What is the minimum bending radius for steels with carbon content between 0.1% and 0.25%?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 69,
+      "classification": "PROSE",
+      "sourceText": "6\nThe  International  Zinc  Association  (IZA)  sponsored  a  four-year  \nresearch study of the mechanical properties of 19 structural steels \nfrom  major  industrial  countries.  The  University  of ..."
+    },
+    {
+      "question": "Which block is used for titles?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 61,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 61 of 61  \ne. Title Block - 24X36 Detail Sheet \n \n ..."
+    },
+    {
+      "question": "Which bolts are used in this column design?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 13,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 13 of 61  \n11) EXAMPLE W-SHAPE COLUMN DETAIL \n \n \n \n \n \n \n \n ..."
+    },
+    {
+      "question": "What's the span length for this simple beam detail?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 10,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 10 of 61  \n \n8) EXAMPLE SIMPLE BEAM DETAIL USING A 3D MODELING PROGRAM (i.e. SDS, Tekla Strutures etc.) \n \n ..."
+    },
+    {
+      "question": "What clearance should be specified for a 3/4 inch nominal bolt diameter in slip-critical connections?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 83,
+      "classification": "PROSE",
+      "sourceText": "American Galvanizers Association\n20\nDepending    on  the  type  of  structural  connection,  through-\nholes  may  be  oversized  if  they  are  to  contain  a  galvanized  \nbolt after assembly. Sectio..."
+    },
+    {
+      "question": "are there any specific fit-up requirements mentioned for these joints?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 42,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 42 of 61  \n \n\nMARVIN METALS ~ DETAILING STANDARDS\nStructural Steel (v5.0)\n\nTable 8-2 (continued) CJP\nPrequalified Welded Joint..."
+    },
+    {
+      "question": "Are there specific dimensions I should follow when detailing joist shoes?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 18,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 18 of 61  \n15) TYPICAL JOIST SHOE DIMENSIONS FOR DETAILING \n \n \n \n \n \n \n \n \n \n \n \n \n ..."
+    },
+    {
+      "question": "What type of stair stringer is used here?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 20,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 20 of 61  \nDIAG   Diagonal \nDOGLEG          Type of stair stringer – (bent stringer) with diag & horz. members put together \nD..."
+    },
+    {
+      "question": "What file format and size limits do we have for pipe and square tubing?",
+      "docKey": "GSMS",
+      "docId": "80cf6e98-5efc-44a1-adc0-9e2b9445dd9d",
+      "correctPage": 2,
+      "classification": "PROSE",
+      "sourceText": "01-06-26\nor Tekla\nPython X- we need NC1 files for I-beams, channel, square tubing & angles.\nWe can cut up to 4-0 wide and 2 inches thick material.\nBurn table- we need DXF or DWG files for plates up to..."
+    },
+    {
+      "question": "Can you specify the root and face angles for GMAW when performing a butt joint according to this standard?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 40,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 40 of 61  \n \n\nMARVIN METALS ~ DETAILING STANDARDS\nStructural Steel (v5.0)\n\nTable 8-2 (continued) CJP\nPrequalified Welded Joint..."
+    },
+    {
+      "question": "What does SC stand for and what is its purpose?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 22,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 22 of 61  \nSAWTOOTH   Type of stair stringer – with a profile of a saw’s blade \nSC     Slip Critical \nSC1E   Square Cut 1 End ..."
+    },
+    {
+      "question": "What type of handrail welding is specified?",
+      "docKey": "GSMS",
+      "docId": "80cf6e98-5efc-44a1-adc0-9e2b9445dd9d",
+      "correctPage": 1,
+      "classification": "VISUAL",
+      "sourceText": "01-06-26\nP.32\nHandrail Shop Weld Detail\n\nStructural Stds Table of Contents\n\nP.2\n\nPl\n\nGeneral Shop Drawing Information\n\nP.3\n\nMemo: Shipping Mark Suffixes\n\nP.4\n\nMemo: Shippi\n\nBr\n\nMark Suffixes\n\n(continu..."
+    },
+    {
+      "question": "#1/32-inch deep is required for readability.",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 86,
+      "classification": "PROSE",
+      "sourceText": "galvanizeit.org\nMarking for Identification\nIdentification  markings  on  fabricated  items  should  be \ncarefully  prepared  before  galvanizing  so  they  will  be  legible  \nafter  galvanizing,  but..."
+    },
+    {
+      "question": "What's the minimum root opening required for double U-groove welds using SMAW method?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 49,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 49 of 61  \n \n\nMARVIN METALS ~ DETAILING STANDARDS\nStructural Steel (v5.0)\n\nTable 8-2 (continued) PJP\nPrequalified Welded Joint..."
+    },
+    {
+      "question": "Can we avoid cold-working on steels prone to strain-age embrittlement?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 70,
+      "classification": "PROSE",
+      "sourceText": "Steel Beam\nCrack\nCope Cut\nFigure 5: Cope cracks in structural steel beams  \nafter galvanizing\nASTM  A143  Safeguarding  Against  Embrittlement  of  Hot-Dip  \nGalvanized   Structural   Steel   Products..."
+    },
+    {
+      "question": "Where should tail figures start on a column without holes?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 4,
+      "classification": "PROSE",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 4 of 61  \n4) TAIL FIGURES (EXTENSION DIMS.) (RUNNING DIMS.) \nA) On columns, tail figures are to be taken from the top of the b..."
+    },
+    {
+      "question": "How many PL1X12 sections should be removed or added?",
+      "docKey": "GSMS",
+      "docId": "80cf6e98-5efc-44a1-adc0-9e2b9445dd9d",
+      "correctPage": 10,
+      "classification": "PROSE",
+      "sourceText": "    MATERIAL CHANGE ORDER\nTO THE MANAGER OF PURCHASING:PROJECTXYZ Office Building & Parking Deck\nPLEASE MAKE THE FOLLOWING CHANGES IN MATERIAL DUE TODesign Change\nSHEETLINEQTY.SHAPE                   ..."
+    },
+    {
+      "question": "What should be done if there are inconsistencies in the field fit of members?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 7,
+      "classification": "PROSE",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 7 of 61  \nff. Connection Design. \ni. The question of design responsibility of Connections is one of the important questions fa..."
+    },
+    {
+      "question": "what size should the holes be?",
+      "docKey": "GSMS",
+      "docId": "80cf6e98-5efc-44a1-adc0-9e2b9445dd9d",
+      "correctPage": 25,
+      "classification": "VISUAL",
+      "sourceText": "01-06-26\n\njiler.\n\nre\n\nri\n\ni\n\nNote:\n\nIf beam and column is exposed to weather and the bm.\n\nfig. does not completely\n\ncover the weep holes use ;\n\n4%” Galvanized Plate to match cop plate\n\nw/bolt holes (w..."
+    },
+    {
+      "question": "How many W8x18 beams are required?",
+      "docKey": "GSMS",
+      "docId": "80cf6e98-5efc-44a1-adc0-9e2b9445dd9d",
+      "correctPage": 8,
+      "classification": "VISUAL",
+      "sourceText": " ADVANCE BILL OF MATERIAL\nLINEQUANTITYSHAPEDESCRIPTION              LENGTHSEQUENCEDRAFTING REMARKSMAX CUT LENGTHCHANGE\nNO.FEETINCHES1FEETINCHESORDER NO.\n116HSS6X6X1/4116 1/416F2E-COLSCO1\n22HSS12X6X1/4..."
+    },
+    {
+      "question": "What is the minimum bend radius for the steel sections?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 17,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 17 of 61  \n \n \n \n \n \n \n \n \n\nMARVIN METALS ~ DETAILING STANDARDS\nStructural Steel (v5.0)\n\ni il [ '\n\nMAAVIN MET AL\n\n114 NORTH OB..."
+    },
+    {
+      "question": "Can you specify the fit-up position for a groove preparation T-joint using FCAW?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 46,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 46 of 61  \n \n\nMARVIN METALS ~ DETAILING STANDARDS\nStructural Steel (v5.0)\n\nTable 8-2 (continued) | PUP\nPrequalified Welded Joi..."
+    },
+    {
+      "question": "Which positions are required for FCAW welds according to this document?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 37,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 37 of 61  \n \n\nMARVIN METALS ~ DETAILING STANDARDS\nStructural Steel (v5.0)\n\nTable 8-2 (continued) CJP\nPrequalified Welded Joint..."
+    },
+    {
+      "question": "should the base plate always be indicated on the first shop drawing picture?",
+      "docKey": "GSMS",
+      "docId": "80cf6e98-5efc-44a1-adc0-9e2b9445dd9d",
+      "correctPage": 18,
+      "classification": "VISUAL",
+      "sourceText": "01-06-26\n\nColumn without Cap Plate\n\n1) Reference dimensions on left side & shop\n\ndimensions on right side of picture\n\n2)Show base plate on ist shop drawing picture.\n\n3) Compass direction always on Fac..."
+    },
+    {
+      "question": "Which materials are used for the handrail connections?",
+      "docKey": "GSMS",
+      "docId": "80cf6e98-5efc-44a1-adc0-9e2b9445dd9d",
+      "correctPage": 1,
+      "classification": "VISUAL",
+      "sourceText": "01-06-26\nP.32\nHandrail Shop Weld Detail\n\nStructural Stds Table of Contents\n\nP.2\n\nPl\n\nGeneral Shop Drawing Information\n\nP.3\n\nMemo: Shipping Mark Suffixes\n\nP.4\n\nMemo: Shippi\n\nBr\n\nMark Suffixes\n\n(continu..."
+    },
+    {
+      "question": "What's the acceptable range for the root face when using SMAW for a groove angle of 60 degrees?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 44,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 44 of 61  \n \n\nMARVIN METALS ~ DETAILING STANDARDS\nStructural Steel (v5.0)\n\nTable 8-2 (continued) PJP\nPrequalified Welded Joint..."
+    },
+    {
+      "question": "How thick should the fillet welds be in corner and T-joints if they're reinforcing groove welds?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 25,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 25 of 61  \n \n\nMARVIN METALS ~ DETAILING STANDARDS\nStructural Steel (v5.0)\n\nTable 8-2\nPrequalified Welded Joints\n\n‘Symbols for ..."
+    },
+    {
+      "question": "How should holes be positioned relative to each other?",
+      "docKey": "GSMS",
+      "docId": "80cf6e98-5efc-44a1-adc0-9e2b9445dd9d",
+      "correctPage": 30,
+      "classification": "VISUAL",
+      "sourceText": "01-06-26\n29\n\nNote’\n\nHOLE SIZES FOR\n\nBoth holes are to be\n\nHSS\n\n1.660X0.130=%6\n\ncentered inside of the Round\n\nHSS\n\n1.900X0.188=%6\n\nHSS or Pipe columns\n\nHSS\n\n2.500X0.250='Yed\n\nHSS\n\n3.000X0.250='\"Hee\n\nHS..."
+    },
+    {
+      "question": "How far from the weld should the external vent holes be placed?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 75,
+      "classification": "PROSE",
+      "sourceText": "American Galvanizers Association\n12\nThe  following  drawings  illustrate  recommended  designs  for  \ntubular fabrications and hollow structures. The vent dimensions \ngiven are the minimum required. \n..."
+    },
+    {
+      "question": "What welding process can be used for joints that aren't prequalified for GMAW with short circuiting transfer?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 25,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 25 of 61  \n \n\nMARVIN METALS ~ DETAILING STANDARDS\nStructural Steel (v5.0)\n\nTable 8-2\nPrequalified Welded Joints\n\n‘Symbols for ..."
+    },
+    {
+      "question": "Would a high silicon content in the steel affect the galvanized coating's appearance and thickness?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 66,
+      "classification": "PROSE",
+      "sourceText": "galvanizeit.org\n3\nmaterIals suItable For GalvanIzInG\nMost  iron-containing  (ferrous)  materials  are  suitable  for  hot-\ndip  galvanizing.  Plain  carbon  steel  and  low  alloy  materials,  hot-\nro..."
+    },
+    {
+      "question": "What are the prep steps for a beam in a moment connection?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 12,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 12 of 61  \n10) TYPICAL MOMENT CONNECTION BEAM PREPS \n \n \n \n \n ..."
+    },
+    {
+      "question": "are there any specific welding positions required for this type of joint?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 38,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 38 of 61  \n \n\nMARVIN METALS ~ DETAILING STANDARDS\n\nTable 8-2 (continued)\nPrequalified Welded Joints\n\nCJP\n\nComplete-Joint-Penet..."
+    },
+    {
+      "question": "What's the minimum leg length for these clip angles?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 8,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 8 of 61  \n6) STANDARD CLIP ANGLES \n \n \n \n ..."
+    },
+    {
+      "question": "Do we need to use a shielding gas for SMAW when welding a butt joint?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 29,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 29 of 61  \n \n\nMARVIN METALS ~ DETAILING STANDARDS\nStructural Steel (v5.0)\n\nTable 8-2 (continued) CJP\nPrequalified Welded Joint..."
+    },
+    {
+      "question": "Can you specify the allowable angles for root face taper in butt joints?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 48,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 48 of 61  \n \n\nMARVIN METALS ~ DETAILING STANDARDS\nStructural Steel (v5.0)\n\nTable 8-2 (continued) | PUP\nPrequalified Welded Joi..."
+    },
+    {
+      "question": "#How can residual welding flux be properly removed from the surface to prevent rough surfaces and coating voids after welding?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 81,
+      "classification": "PROSE",
+      "sourceText": "18\nweldInG procedures & weldInG Flux removal\nWhen welded items are galvanized, the cleanliness of the weld \narea and the metallic composition of the weld itself influence \nthe  galvanized  coating’s  ..."
+    },
+    {
+      "question": "What's the maximum cut length for the HSS and Tube sections?",
+      "docKey": "GSMS",
+      "docId": "80cf6e98-5efc-44a1-adc0-9e2b9445dd9d",
+      "correctPage": 8,
+      "classification": "VISUAL",
+      "sourceText": " ADVANCE BILL OF MATERIAL\nLINEQUANTITYSHAPEDESCRIPTION              LENGTHSEQUENCEDRAFTING REMARKSMAX CUT LENGTHCHANGE\nNO.FEETINCHES1FEETINCHESORDER NO.\n116HSS6X6X1/4116 1/416F2E-COLSCO1\n22HSS12X6X1/4..."
+    },
+    {
+      "question": "Can you specify the range of angles allowed for the groove preparation in a butt joint with a B-P3-S designation?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 45,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 45 of 61  \n \n\nMARVIN METALS ~ DETAILING STANDARDS\nStructural Steel (v5.0)\n\nTable 8-2 (continued) PJP\nPrequalified Welded Joint..."
+    },
+    {
+      "question": "Do we need to include an isometric view?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 58,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 58 of 61  \n11X17 Detail Sheet – USE THIS SHEET FOR DETAILS WHENEVER YOU CAN!  \n \n \n(\nNote \n-\n \nthere will only be one piece de..."
+    },
+    {
+      "question": "What is the maximum allowable difference in thickness between the base metal and the groove preparation for a square-groove weld?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 43,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 43 of 61  \n \n\nMARVIN METALS ~ DETAILING STANDARDS\nStructural Steel (v5.0)\n\nTable 8-2 (continued) PJP\n| Prequalified Welded Joi..."
+    },
+    {
+      "question": "Are non-standard angles needed for beam webs over a certain thickness?",
+      "docKey": "GSMS",
+      "docId": "80cf6e98-5efc-44a1-adc0-9e2b9445dd9d",
+      "correctPage": 12,
+      "classification": "VISUAL",
+      "sourceText": "01-06-26\n\n2M TYP\n\naan\n\n3%\"LEG TYP UN\n\nwith '%g'9 Holes\n\n2429\"\n\nJ PG\n\nwith\n\nEB\n\nbse \"® Holes\n\nBN\n\naS\n\nSy\n\n=\n\nBN\n\nSy\n\naS\n\nSy\n\nrs\n\nSy\n\nSy)\n\nSs\n\nBS\n\nes)\n\nSN\n\nSN\n\nyy\n\nSN\n\nSN\n\nSN\n\nCheck driving clearance\n\n®..."
+    },
+    {
+      "question": "Does FV,OH shielding gas requirement apply to all SMAW processes mentioned?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 30,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 30 of 61  \n \n\nMARVIN METALS ~ DETAILING STANDARDS\nStructural Steel (v5.0)\n\nTable 8-2 (continued) CJP\nPrequalified Welded Joint..."
+    },
+    {
+      "question": "How do you ensure minimal distortion during the galvanizing process?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 64,
+      "classification": "PROSE",
+      "sourceText": "galvanizeit.org\n1\nTable of Contents\n02  IntroductIonIntroductIon \n02  communIcatIon Is KeycommunIcatIon Is Key\n03  materIals suItable For GalvanIz InGmaterIals suItable For GalvanIz InG\n04  combInInG ..."
+    },
+    {
+      "question": "how do you interpret the symbols from left to right?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 26,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 26 of 61  \n \n\nMARVIN METALS ~ DETAILING STANDARDS\n\nTable 8-2 (continued)\nPrequalified Welded Joints\nBasic Weld Symbols\nPlug Gr..."
+    },
+    {
+      "question": "What is the minimum size of external vent holes required?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 75,
+      "classification": "PROSE",
+      "sourceText": "American Galvanizers Association\n12\nThe  following  drawings  illustrate  recommended  designs  for  \ntubular fabrications and hollow structures. The vent dimensions \ngiven are the minimum required. \n..."
+    },
+    {
+      "question": "What are the recommended cleaning methods for castings to ensure a high-quality galvanized finish?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 67,
+      "classification": "PROSE",
+      "sourceText": "American Galvanizers Association\n4\n4\nDuctile iron pipe with  \nmachined flange\nCastings with mild  \ncarbon steel\nForged bolt with  \nmachined threads\nMachined surfaces  \non pitted steel\nSteel with diffe..."
+    },
+    {
+      "question": "What does AB stand for in this context?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 19,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 19 of 61  \n16) TYPICAL DETAILING ABBREVIATIONS \n \nAB     Anchor Bolt \nABT    About \nAESS   Architecturally Exposed Structural ..."
+    },
+    {
+      "question": "Is there any sequence requirement for the steel pieces?",
+      "docKey": "GSMS",
+      "docId": "80cf6e98-5efc-44a1-adc0-9e2b9445dd9d",
+      "correctPage": 9,
+      "classification": "VISUAL",
+      "sourceText": " ADVANCE BILL OF MATERIAL\nLINEQUANTITYSHAPEDESCRIPTION              LENGTHSEQUENCEDRAFTING REMARKSMAX CUT LENGTHCHANGE\nNO.FEETINCHESFEETINCHESORDER NO.\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n..."
+    },
+    {
+      "question": "Is a bottom pl washer optional and under what conditions?",
+      "docKey": "GSMS",
+      "docId": "80cf6e98-5efc-44a1-adc0-9e2b9445dd9d",
+      "correctPage": 6,
+      "classification": "VISUAL",
+      "sourceText": "01-06-26\n\nNO.\n\nMATERIAL\n\nLENGTH\n\nMARK\n\nREMARKS\n\nCUT FROM\n\nSTUB\n\nWEIGHT}\n\nPCS.\n\nFT.\n\nINS.\n\n100\n\n19Rod\n\n2 | 2 | 9001AB1\n\nQTY\n\n1\"HVY HX NUTS\n\nMA9001\n\nQTY\n\n19HD WASHERS\n\nMB9001\n\n1\"HX JAMB NUTS\n\nMC9001\n\nSe..."
+    },
+    {
+      "question": "How should hollow structural members be vented during galvanizing to ensure effective drainage?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 73,
+      "classification": "PROSE",
+      "sourceText": "American Galvanizers Association\n10\nallowInG For proper draInaGe\nFor  effective  galvanizing,  cleaning  solutions  and  molten  zinc  \nmust flow without undue resistance into, over, through, and out ..."
+    },
+    {
+      "question": "What's the allowed root tolerance for FCAW welding in this standard?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 37,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 37 of 61  \n \n\nMARVIN METALS ~ DETAILING STANDARDS\nStructural Steel (v5.0)\n\nTable 8-2 (continued) CJP\nPrequalified Welded Joint..."
+    },
+    {
+      "question": "What are the new dimensions for the steel beams?",
+      "docKey": "GSMS",
+      "docId": "80cf6e98-5efc-44a1-adc0-9e2b9445dd9d",
+      "correctPage": 11,
+      "classification": "VISUAL",
+      "sourceText": "     MATERIAL CHANGE ORDER\nTO THE MANAGER OF PURCHASING:PROJECT\nPLEASE MAKE THE FOLLOWING CHANGES IN MATERIAL DUE TO\nSHEETLINEQTY.SHAPE                          CHANGE FROM     QTY.SHAPE              ..."
+    },
+    {
+      "question": "Where exactly do we need to place these vent holes?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 15,
+      "classification": "PROSE",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 15 of 61  \n13) TYPICAL BASE PLATE DETAILS \n \n \n \n \n \n \n \n \n \n \n \n \n \n                    \n \n \n \n \n \n \n \n \n                    ..."
+    },
+    {
+      "question": "How do I determine the size of holes for a rectangular section box?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 78,
+      "classification": "PROSE",
+      "sourceText": "galvanizeit.org\nBox Sections (Figure 26)\nFigure  26  shows  the  location  of  holes  and  clipped  corners,  \nwhich  must  be  flush.  Using  the  following  formulas,  \nTable 1 shows typical sizes o..."
+    },
+    {
+      "question": "How should non-standard and narrow angles be marked according to the drawing?",
+      "docKey": "GSMS",
+      "docId": "80cf6e98-5efc-44a1-adc0-9e2b9445dd9d",
+      "correctPage": 15,
+      "classification": "VISUAL",
+      "sourceText": "01-06-26\n\n2a TYP\n\n+f\n\n3%\"LEG TYP UN\n\ni\n\nSS\n\nVa\n\nwith '%.6\"d Holes\n\n2y'oy5\"\n\n6”LEG\n\nwith\n\n|\n\nt\n\nf\n\n4\n\nt\n\n4\n\n:\n\ni 1%6\"0 Holes\n\nNotes:\n\n1. Details are for Right\n\nHand Angles.\n\n2. See Struct. Std. P.20\n\ne..."
+    },
+    {
+      "question": "# which bolts need special handling or marking?",
+      "docKey": "GSMS",
+      "docId": "80cf6e98-5efc-44a1-adc0-9e2b9445dd9d",
+      "correctPage": 32,
+      "classification": "VISUAL",
+      "sourceText": "01-06-26\n\nBILL OF MATERIAL\n\nSEQUENCE\n\nMATERIAL,\n\nTa. | PIECE\n\n‘SUB\n\nDESCRIPTION\n\nLENGTH\n\nABM #|\n\nREMARKS.\n\nlouwity|_ MARK.\n\nMARK.\n\nIN\n\n15C1\n\nW8X35\n\n24\n\n™\n\nS2E\n\npatS.\n\nPLYAX16\n\n1\n\n4\n\npis:\n\nPLYAXO\n\n0\n\n9..."
+    },
+    {
+      "question": "What size should the vent holes be for galvanizing?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 15,
+      "classification": "PROSE",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 15 of 61  \n13) TYPICAL BASE PLATE DETAILS \n \n \n \n \n \n \n \n \n \n \n \n \n \n                    \n \n \n \n \n \n \n \n \n                    ..."
+    },
+    {
+      "question": "What are the groove preparation requirements for a base metal thickness of 5/8 inch?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 47,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 47 of 61  \n \n\nMARVIN METALS ~ DETAILING STANDARDS\nStructural Steel (v5.0)\n\nTable 8-2 (continued) PJP\n| Prequalified Welded Joi..."
+    },
+    {
+      "question": "What are the allowable variations for the groove angle in a single-j groove weld?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 50,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 50 of 61  \n \n\nMARVIN METALS ~ DETAILING STANDARDS\nStructural Steel (v5.0)\n\nTable 8-2 (continued) PJP\nPrequalified Welded Joint..."
+    },
+    {
+      "question": "Are there specific recommendations for avoiding strain-age embrittlement in cold-worked steel sections thinner than 1/8 inch?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 69,
+      "classification": "PROSE",
+      "sourceText": "6\nThe  International  Zinc  Association  (IZA)  sponsored  a  four-year  \nresearch study of the mechanical properties of 19 structural steels \nfrom  major  industrial  countries.  The  University  of ..."
+    },
+    {
+      "question": "Are there any specific requirements for handling the galvanized parts post-treatment?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 88,
+      "classification": "VISUAL",
+      "sourceText": "25\ngalvanizeit.org\n\ngalvanizeit.org\n\n..."
+    },
+    {
+      "question": "are there any specific requirements for column caps?",
+      "docKey": "GSMS",
+      "docId": "80cf6e98-5efc-44a1-adc0-9e2b9445dd9d",
+      "correctPage": 19,
+      "classification": "VISUAL",
+      "sourceText": "01-06-26\n\naal5 NS\n\n2%eGOL\n\nyy, (\n\n2-18\n\n=\n\n3S\n\nSS\n\nOw\n\nx\n\n=P\n\noe\n\nCGO\n\nDFE\n\nay!\n\neft\n\n: °\n\nEz\n\nOO\n\naly\n\nx\n\nay di\n\n=\n\n12\n\nYo\n\nfale\n\n~\n\n_\n\nNe © oets\n\noO;\n\nyy\n\n1\" Ls\n\nmS\n\nCX 4\n\na)\n\nwe\n\n[\n\nB\n\n:\n\npc15 NSN/..."
+    },
+    {
+      "question": "# what is the allowed groove preparation process for tig welding in this standard?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 41,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 41 of 61  \n \n\nMARVIN METALS ~ DETAILING STANDARDS\n\nTable 8-2 (continued) CJP\nPrequalified Welded Joints\nComplete-Joint-Penetra..."
+    },
+    {
+      "question": "What are the tolerance limits for the root opening in corner joint welds using SMAW process?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 51,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 51 of 61  \n \n\nMARVIN METALS ~ DETAILING STANDARDS\nStructural Steel (v5.0)\n\nTable 8-2 (continued) PJP\nPrequalified Welded Joint..."
+    },
+    {
+      "question": "Can you specify the maximum and minimum values for the root face with GMAW process?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 44,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 44 of 61  \n \n\nMARVIN METALS ~ DETAILING STANDARDS\nStructural Steel (v5.0)\n\nTable 8-2 (continued) PJP\nPrequalified Welded Joint..."
+    },
+    {
+      "question": "What is the minimum hole size for a 2 inch HSS column?",
+      "docKey": "GSMS",
+      "docId": "80cf6e98-5efc-44a1-adc0-9e2b9445dd9d",
+      "correctPage": 30,
+      "classification": "VISUAL",
+      "sourceText": "01-06-26\n29\n\nNote’\n\nHOLE SIZES FOR\n\nBoth holes are to be\n\nHSS\n\n1.660X0.130=%6\n\ncentered inside of the Round\n\nHSS\n\n1.900X0.188=%6\n\nHSS or Pipe columns\n\nHSS\n\n2.500X0.250='Yed\n\nHSS\n\n3.000X0.250='\"Hee\n\nHS..."
+    },
+    {
+      "question": "Which sections of the drawings have been updated?",
+      "docKey": "GSMS",
+      "docId": "80cf6e98-5efc-44a1-adc0-9e2b9445dd9d",
+      "correctPage": 11,
+      "classification": "VISUAL",
+      "sourceText": "     MATERIAL CHANGE ORDER\nTO THE MANAGER OF PURCHASING:PROJECT\nPLEASE MAKE THE FOLLOWING CHANGES IN MATERIAL DUE TO\nSHEETLINEQTY.SHAPE                          CHANGE FROM     QTY.SHAPE              ..."
+    },
+    {
+      "question": "What's the allowed tolerance for root face on a single-bevel-groove weld with SMAW process?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 46,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 46 of 61  \n \n\nMARVIN METALS ~ DETAILING STANDARDS\nStructural Steel (v5.0)\n\nTable 8-2 (continued) | PUP\nPrequalified Welded Joi..."
+    },
+    {
+      "question": "What's the allowed tolerance for root opening in a single U-groove weld?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 48,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 48 of 61  \n \n\nMARVIN METALS ~ DETAILING STANDARDS\nStructural Steel (v5.0)\n\nTable 8-2 (continued) | PUP\nPrequalified Welded Joi..."
+    },
+    {
+      "question": "What size sheets should I use for title blocks?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 56,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 56 of 61  \n18) SAMPLE SHEETS & TITLE BLOCKS \n24X36 Erection Drawing \n  \n ..."
+    },
+    {
+      "question": "What's the minimum opening size needed for a 6-inch diameter section?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 77,
+      "classification": "PROSE",
+      "sourceText": "14\nAmerican Galvanizers Association\n1. The most desirable fabrication is completely open with \nthe same hole diameter as the tube’s ID.\n2. Equal substitutes would have openings as shown and \nwould be ..."
+    },
+    {
+      "question": "What's the max cut length for line 9?",
+      "docKey": "GSMS",
+      "docId": "80cf6e98-5efc-44a1-adc0-9e2b9445dd9d",
+      "correctPage": 9,
+      "classification": "VISUAL",
+      "sourceText": " ADVANCE BILL OF MATERIAL\nLINEQUANTITYSHAPEDESCRIPTION              LENGTHSEQUENCEDRAFTING REMARKSMAX CUT LENGTHCHANGE\nNO.FEETINCHESFEETINCHESORDER NO.\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n..."
+    },
+    {
+      "question": ".",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 59,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 59 of 61  \nc. Title Block - 11X17 Detail Sheet \n \n ..."
+    },
+    {
+      "question": "What is the preferred method for detailing beam end clip angles?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 5,
+      "classification": "PROSE",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 5 of 61  \n \n5) VARIOUS ITEMS \na. As a general policy the latest version of the AISC publication “Detailing For Steel Construct..."
+    },
+    {
+      "question": "What's the minimum allowed root opening for single-V groove welds?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 30,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 30 of 61  \n \n\nMARVIN METALS ~ DETAILING STANDARDS\nStructural Steel (v5.0)\n\nTable 8-2 (continued) CJP\nPrequalified Welded Joint..."
+    },
+    {
+      "question": "how do we ensure 15% of the tube's inside cross-sectional area is available for venting or drainage at each end?",
+      "docKey": "GSMS",
+      "docId": "80cf6e98-5efc-44a1-adc0-9e2b9445dd9d",
+      "correctPage": 26,
+      "classification": "VISUAL",
+      "sourceText": "01-06-26\n\nDetailer Note:\n\nMake sure the cover plate\n\nIf column is exposed to weather. Please provide:\n\nis small enough not to extend\n\n% ” Pre—Galvanized Cover Plate(Plain) smaller than the col. cop pl..."
+    },
+    {
+      "question": "Given a cold formed rectangular tube, what considerations should be taken into account for the 'C' dimension and corner curvature?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 52,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 52 of 61  \n \n\nMARVIN METALS ~ DETAILING STANDARDS\nStructural Steel (v5.0)\n\nTable 8-2 (continued) FLARE\nPrequalified Welded Joi..."
+    },
+    {
+      "question": "Can you explain the meaning of B/S?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 19,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 19 of 61  \n16) TYPICAL DETAILING ABBREVIATIONS \n \nAB     Anchor Bolt \nABT    About \nAESS   Architecturally Exposed Structural ..."
+    },
+    {
+      "question": "What's the maximum allowed groove angle for a C-U2 groove weld?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 32,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 32 of 61  \n \n\nMARVIN METALS ~ DETAILING STANDARDS\nStructural Steel (v5.0)\n\nTable 8-2 (continued) CJP\nPrequalified Welded Joint..."
+    },
+    {
+      "question": "What's the maximum size for galvanized steel members according to this drawing?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 63,
+      "classification": "PROSE",
+      "sourceText": "©  2023 American Galvanizers Association. The material provided herein has been developed to provide accurate and authoritative information \nabout after-fabrication hot-dip galvanized steel. This mate..."
+    },
+    {
+      "question": "Can you specify the root opening tolerance for TIG welding in this joint preparation?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 50,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 50 of 61  \n \n\nMARVIN METALS ~ DETAILING STANDARDS\nStructural Steel (v5.0)\n\nTable 8-2 (continued) PJP\nPrequalified Welded Joint..."
+    },
+    {
+      "question": "Are there any limitations on groove angle for corner joints when using TIG welding?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 35,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 35 of 61  \n \n\nMARVIN METALS ~ DETAILING STANDARDS\n\nStructural Steel (v5.0)\n\nTable 8-2 (continued) CJP\nPrequalified Welded Join..."
+    },
+    {
+      "question": "How are dimensions marked for sloping beams laid flat?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 4,
+      "classification": "PROSE",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 4 of 61  \n4) TAIL FIGURES (EXTENSION DIMS.) (RUNNING DIMS.) \nA) On columns, tail figures are to be taken from the top of the b..."
+    },
+    {
+      "question": "Can you specify the allowable variations in groove angle for T-joints when using GMAW method?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 51,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 51 of 61  \n \n\nMARVIN METALS ~ DETAILING STANDARDS\nStructural Steel (v5.0)\n\nTable 8-2 (continued) PJP\nPrequalified Welded Joint..."
+    },
+    {
+      "question": "# what is the recommended root opening and face angle for GMAW welding with a B-U7 joint?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 39,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 39 of 61  \n \n\nMARVIN METALS ~ DETAILING STANDARDS\nStructural Steel (v5.0)\n\nTable 8-2 (continued) CJP\n| Prequalified Welded Joi..."
+    },
+    {
+      "question": "How do we ensure the holes for expansion bolts match the bolt size?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 6,
+      "classification": "PROSE",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 6 of 61  \ny. Galvanized Material – Refer to the “American Galvanizers Association” Design Guide, appended at the end of this \n..."
+    },
+    {
+      "question": "How strong do the welds need to be?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 16,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 16 of 61  \n14) BASIC WELD INFORMATION \n ..."
+    },
+    {
+      "question": "which marking will indicate a part needs no paint?",
+      "docKey": "GSMS",
+      "docId": "80cf6e98-5efc-44a1-adc0-9e2b9445dd9d",
+      "correctPage": 3,
+      "classification": "VISUAL",
+      "sourceText": "01-06-26\n\nMEMO\n\nPIECE MARK SUFFIXES\n\nPiece Mark Suffixes\n\nIn an effort to better track materials through our production\n\nprocesses, we have determined that adding a suffix to the\n\nMain Member Piece Ma..."
+    },
+    {
+      "question": "Can we use FCAW for the B-U3a welding process?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 32,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 32 of 61  \n \n\nMARVIN METALS ~ DETAILING STANDARDS\nStructural Steel (v5.0)\n\nTable 8-2 (continued) CJP\nPrequalified Welded Joint..."
+    },
+    {
+      "question": "What's the max height for these columns?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 13,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 13 of 61  \n11) EXAMPLE W-SHAPE COLUMN DETAIL \n \n \n \n \n \n \n \n ..."
+    },
+    {
+      "question": "How should embedded items be handled for shipping?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 5,
+      "classification": "PROSE",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 5 of 61  \n \n5) VARIOUS ITEMS \na. As a general policy the latest version of the AISC publication “Detailing For Steel Construct..."
+    },
+    {
+      "question": "are there any specific dimensions mentioned?",
+      "docKey": "GSMS",
+      "docId": "80cf6e98-5efc-44a1-adc0-9e2b9445dd9d",
+      "correctPage": 23,
+      "classification": "VISUAL",
+      "sourceText": "01-06-26\n\nSo3 as\n\n=\n\n—s\n\nay\n\nWa >\n\naS\n\none\n\n+s\n\nwD 333\" Elig4\n\nx\n\n_~\n\nneko\n\n==\n\navs\n\nx\n\nx\n\n—s\n\nx\n\nn=\n\n33 6\"\n\nOjy—\n\naa\n\nac\n\nwy\n\n><|Q\n\nS\n\nx\n\nx\n\na\n\nox\n\nwS\n\ns&\n\n»|\n\n3%\n\n—S\n\nOS\n\ncal\n\nLI\n\naD)\n\n= A\n\n3H”\n\na2,..."
+    },
+    {
+      "question": "Can I use a different welding position for FCAW besides the one detailed?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 31,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 31 of 61  \n \n\nMARVIN METALS ~ DETAILING STANDARDS\n\nStructural Steel (v5.0)\n\nTable 8-2 (continued)\nPrequalified Welded Joints\nC..."
+    },
+    {
+      "question": "How should different surface conditions on steel be handled before galvanizing?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 67,
+      "classification": "PROSE",
+      "sourceText": "American Galvanizers Association\n4\n4\nDuctile iron pipe with  \nmachined flange\nCastings with mild  \ncarbon steel\nForged bolt with  \nmachined threads\nMachined surfaces  \non pitted steel\nSteel with diffe..."
+    },
+    {
+      "question": "What's the minimum required isometric view we need to add?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 60,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 60 of 61  \nd. 24X36 Detail Sheet \n \n(\nNote \n-\n \nthere will only be one piece detailed & scaled to fit\n on each sheet regardles..."
+    },
+    {
+      "question": "where sequence is shown for welding and bolting?",
+      "docKey": "GSMS",
+      "docId": "80cf6e98-5efc-44a1-adc0-9e2b9445dd9d",
+      "correctPage": 24,
+      "classification": "VISUAL",
+      "sourceText": "01-06-26\n\nDetailer\n\nShow North Arrow\n\non plans\n\njetailer\n\nPick one of these\n\nErector Notes:\n\nBolting Processes &\n\nshow on ERECTII\n\nDWGS\n\nLeft end as detailed\n\nAll pleces are marked on,\n\ner CURRENT JOB..."
+    },
+    {
+      "question": "How can we ensure uniform galvanization when combining new and old steel pieces?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 68,
+      "classification": "PROSE",
+      "sourceText": "galvanizeit.org\n5\nSimilarly, excessively rusted, pitted, or forged steels should also \nnot  be  used  in  combination  with  new  or  machined  surfaces   \nbecause  the  difference  in  required  pick..."
+    },
+    {
+      "question": "What are the standard sizes for joist shoes?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 18,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 18 of 61  \n15) TYPICAL JOIST SHOE DIMENSIONS FOR DETAILING \n \n \n \n \n \n \n \n \n \n \n \n \n ..."
+    },
+    {
+      "question": "What standards should be followed when galvanizing carbon structural steel?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 87,
+      "classification": "PROSE",
+      "sourceText": "American Galvanizers Association\n24\nother recommended/related a Ga publIcatIons\nDuplex Systems: Painting Over Hot-Dip Galvanized Steel, 2012 \nHot-Dip Galvanized Architecturally Exposed Structural Stee..."
+    },
+    {
+      "question": "What is the hole size for a HSS9X9 column?",
+      "docKey": "GSMS",
+      "docId": "80cf6e98-5efc-44a1-adc0-9e2b9445dd9d",
+      "correctPage": 29,
+      "classification": "VISUAL",
+      "sourceText": "01-06-26\np. 28\n\nNote:\n\nALL 4 holes are to be centered inside of Square\n\nor Rectangular HSS columns\n\nHOLE SIZES FOR\n\n<HSS5X5 = 13/16\n\nHSS5X5 = 1*5/16\n\nHOLE SIZE\n\nHSS6X6 = 1*5/16\n\n2\n\n+ 1/16\n\n+ WALL THIC..."
+    },
+    {
+      "question": "What's the best way to ensure proper venting visibility for galvanizers?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 74,
+      "classification": "PROSE",
+      "sourceText": "galvanizeit.org\n11\nFigure 18: Venting\nPipe  can  present  two  special  cleaning  challenges.    First,  the  \nmill coating (varnish, lacquer, and similar materials) applied by \npipe  manufacturers  r..."
+    },
+    {
+      "question": "How should holes be arranged on vertical members?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 77,
+      "classification": "PROSE",
+      "sourceText": "14\nAmerican Galvanizers Association\n1. The most desirable fabrication is completely open with \nthe same hole diameter as the tube’s ID.\n2. Equal substitutes would have openings as shown and \nwould be ..."
+    },
+    {
+      "question": "How can we ensure adequate galvanized coating thickness when dealing with steels that have very low levels of silicon or phosphorus?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 66,
+      "classification": "PROSE",
+      "sourceText": "galvanizeit.org\n3\nmaterIals suItable For GalvanIzInG\nMost  iron-containing  (ferrous)  materials  are  suitable  for  hot-\ndip  galvanizing.  Plain  carbon  steel  and  low  alloy  materials,  hot-\nro..."
+    },
+    {
+      "question": "# which pieces should have their marking shown on top?",
+      "docKey": "GSMS",
+      "docId": "80cf6e98-5efc-44a1-adc0-9e2b9445dd9d",
+      "correctPage": 31,
+      "classification": "VISUAL",
+      "sourceText": "01-06-26\n30\n\nREVISION\n\nw O\n\nNo.\n\nDATE\n\nREVISION\n\nac\n\n=\n\nio\n\n| Wy\n\nQs\n\n26\n\n]\n\na\n\n=\n\n=\n\na\n\n<=\n\nSl4\n\n>\n\nBld\n\npate\n\nag\n\n=\n\n|| 94\n\n[s|-4\n\n-—\n\n|\n\nBs\n\n|<\n\n=\n\nPART C\n\nae\n\nKi\n\nPART C|\n\nPOSTITION KEY\n\nPART Bi\n\n..."
+    },
+    {
+      "question": "what's the tolerance range for root opening and groove angle in a single-bevel-groove weld?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 34,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 34 of 61  \n \n\nMARVIN METALS ~ DETAILING STANDARDS\n\nStructural Steel (v5.0)\n\nTable 8-2 (continued)\nPrequalified Welded Joints\n\n..."
+    },
+    {
+      "question": "What are the root tolerances allowed for single-v groove welds using SAW process?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 31,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 31 of 61  \n \n\nMARVIN METALS ~ DETAILING STANDARDS\n\nStructural Steel (v5.0)\n\nTable 8-2 (continued)\nPrequalified Welded Joints\nC..."
+    },
+    {
+      "question": "How do I determine the correct hole size for different HSS sizes?",
+      "docKey": "GSMS",
+      "docId": "80cf6e98-5efc-44a1-adc0-9e2b9445dd9d",
+      "correctPage": 29,
+      "classification": "VISUAL",
+      "sourceText": "01-06-26\np. 28\n\nNote:\n\nALL 4 holes are to be centered inside of Square\n\nor Rectangular HSS columns\n\nHOLE SIZES FOR\n\n<HSS5X5 = 13/16\n\nHSS5X5 = 1*5/16\n\nHOLE SIZE\n\nHSS6X6 = 1*5/16\n\n2\n\n+ 1/16\n\n+ WALL THIC..."
+    },
+    {
+      "question": "How do I know where to place the supports for this beam in the model?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 10,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 10 of 61  \n \n8) EXAMPLE SIMPLE BEAM DETAIL USING A 3D MODELING PROGRAM (i.e. SDS, Tekla Strutures etc.) \n \n ..."
+    },
+    {
+      "question": "What size studs would benefit from being cleaned with an acetylene torch after galvanizing?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 82,
+      "classification": "PROSE",
+      "sourceText": "galvanizeit.org\nthreaded parts\nHot-dip  galvanized  fasteners  are  recommended  for  use  with  \nhot-dip  galvanized  assemblies  and  subassemblies.  Galvanized  \nnuts,  bolts,  and  screws  in  com..."
+    },
+    {
+      "question": "what measures should be taken to minimize distortion in steel fabrications before galvanizing?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 71,
+      "classification": "PROSE",
+      "sourceText": "American Galvanizers Association\n8\nmInImIzInG dIstortIon\nSome  fabrications  are  susceptible  to  distortion  at  galvanizing  \ntemperature  as  a  result  of  relieving  residual  stresses  induced ..."
+    },
+    {
+      "question": "are there any exceptions to the prequalification angle mentioned here?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 55,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 55 of 61  \n \n\nMARVIN METALS ~ DETAILING STANDARDS\n\nStructural Steel (v5.0)\n\nTable 8-2 (continued) TUBE\nPrequalified Welded Joi..."
+    },
+    {
+      "question": "How much clearance is needed if the bolt size is less than 1 inch in a bearing connection?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 83,
+      "classification": "PROSE",
+      "sourceText": "American Galvanizers Association\n20\nDepending    on  the  type  of  structural  connection,  through-\nholes  may  be  oversized  if  they  are  to  contain  a  galvanized  \nbolt after assembly. Sectio..."
+    },
+    {
+      "question": "How should vent and drain holes be positioned on pipe sections?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 74,
+      "classification": "PROSE",
+      "sourceText": "galvanizeit.org\n11\nFigure 18: Venting\nPipe  can  present  two  special  cleaning  challenges.    First,  the  \nmill coating (varnish, lacquer, and similar materials) applied by \npipe  manufacturers  r..."
+    },
+    {
+      "question": "Do I need to do anything special before attaching beams in a moment connection?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 12,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 12 of 61  \n10) TYPICAL MOMENT CONNECTION BEAM PREPS \n \n \n \n \n ..."
+    },
+    {
+      "question": "which standard should be referenced for driving clearance?",
+      "docKey": "GSMS",
+      "docId": "80cf6e98-5efc-44a1-adc0-9e2b9445dd9d",
+      "correctPage": 13,
+      "classification": "VISUAL",
+      "sourceText": "01-06-26\n\n2M\" TYP\n\n+\n\nSS\n\n3%\"LEG TYP UN\n\naN\n\nwith 1%4_\"¢ Holes\n\nDADA\n\n6”LEG\n\n|\n\nwith\n\n4\n\n:\n\nt\n\nt\n\ni 1%6°6 Holes\n\nNotes:\n\n1. Details are for Right\n\nHand Angles.\n\n2. See Struct. Std. P.20\n\nfor Beam Deta..."
+    },
+    {
+      "question": "Are there any specific requirements for the galvanizing process mentioned here?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 63,
+      "classification": "PROSE",
+      "sourceText": "©  2023 American Galvanizers Association. The material provided herein has been developed to provide accurate and authoritative information \nabout after-fabrication hot-dip galvanized steel. This mate..."
+    },
+    {
+      "question": "Do we need to use specific types of bolts for the connections?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 8,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 8 of 61  \n6) STANDARD CLIP ANGLES \n \n \n \n ..."
+    },
+    {
+      "question": "What's the required connection detail for the tube column?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 14,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 14 of 61  \n12) EXAMPLE TUBE COLUMN DETAIL \n \n \n ..."
+    },
+    {
+      "question": "What are the welding process tolerances for a single-j groove weld with root opening and face angle using SAW method?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 40,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 40 of 61  \n \n\nMARVIN METALS ~ DETAILING STANDARDS\nStructural Steel (v5.0)\n\nTable 8-2 (continued) CJP\nPrequalified Welded Joint..."
+    },
+    {
+      "question": "What are the tolerances for the groove angle and root face when using a double-V-groove weld with BPS designation?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 45,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 45 of 61  \n \n\nMARVIN METALS ~ DETAILING STANDARDS\nStructural Steel (v5.0)\n\nTable 8-2 (continued) PJP\nPrequalified Welded Joint..."
+    },
+    {
+      "question": "What's the max root opening for FCAW on a single-V-groove weld with base metal thickness of 1 inch?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 29,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 29 of 61  \n \n\nMARVIN METALS ~ DETAILING STANDARDS\nStructural Steel (v5.0)\n\nTable 8-2 (continued) CJP\nPrequalified Welded Joint..."
+    },
+    {
+      "question": "What steps should be taken to prevent hydrogen embrittlement in galvanized steel during fabrication?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 64,
+      "classification": "PROSE",
+      "sourceText": "galvanizeit.org\n1\nTable of Contents\n02  IntroductIonIntroductIon \n02  communIcatIon Is KeycommunIcatIon Is Key\n03  materIals suItable For GalvanIz InGmaterIals suItable For GalvanIz InG\n04  combInInG ..."
+    },
+    {
+      "question": "How is the value of S calculated when using T > 6/4 or Ty >= 2?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 33,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 33 of 61  \n \n\nMARVIN METALS ~ DETAILING STANDARDS\n\nTable 8-2 (continued)\nPrequalified Welded Joints\n\nCJP\n\nComplete-Joint-Penet..."
+    },
+    {
+      "question": "What size and quantity of HSS need to be changed at sequence 1?",
+      "docKey": "GSMS",
+      "docId": "80cf6e98-5efc-44a1-adc0-9e2b9445dd9d",
+      "correctPage": 10,
+      "classification": "PROSE",
+      "sourceText": "    MATERIAL CHANGE ORDER\nTO THE MANAGER OF PURCHASING:PROJECTXYZ Office Building & Parking Deck\nPLEASE MAKE THE FOLLOWING CHANGES IN MATERIAL DUE TODesign Change\nSHEETLINEQTY.SHAPE                   ..."
+    },
+    {
+      "question": "What's the max size for these tabs?",
+      "docKey": "MM",
+      "docId": "0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1",
+      "correctPage": 9,
+      "classification": "VISUAL",
+      "sourceText": "MARVIN METALS ~ DETAILING STANDARDS  \nStructural Steel (v5.0) \n \n \n \nPage 9 of 61  \n7) STANDARD SHEAR TABS \n \n \n \n ..."
+    }
+  ]
+}

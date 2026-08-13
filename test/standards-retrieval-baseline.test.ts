@@ -25,7 +25,13 @@ const evalCases: EvalCase[] = [
   { query: "what is the c/c of the standard beam angles", docKey: "GSMS", expectedPages: [12, 13, 14, 15] },
   { query: "What sheet sizes should I use for detail drawings?", docKey: "MM", expectedPages: [2] },
   { query: "minimum slab thickness", docKey: "GSMS", expectedPages: [] },
-  { query: "how do I calibrate a marine GPS compass", docKey: "GSMS", expectedPages: [] }
+  { query: "constructor for minimum slab thickness", docKey: "GSMS", expectedPages: [] },
+  { query: "how do I calibrate a marine GPS compass", docKey: "GSMS", expectedPages: [] },
+  { query: "should drawing submittals be sent as one combined file or separately", docKey: "GSMS", expectedPages: [2] },
+  { query: "do i need to provide gather sheets for plates with holes", docKey: "GSMS", expectedPages: [2] },
+  { query: "what CNC files do you need for beams and plates", docKey: "GSMS", expectedPages: [2] },
+  { query: "send drawing submittals as individual files", docKey: "GSMS", expectedPages: [2] },
+  { query: "do I need to provide gather sheets", docKey: "GSMS", expectedPages: [2] }
 ];
 
 const alphas = [0, 0.02, 0.05, 0.10, 0.15, 0.20];

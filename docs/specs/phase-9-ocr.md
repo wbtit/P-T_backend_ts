@@ -34,43 +34,31 @@ therefore has a true positive above 0.6; the prior “known false positive” la
 ## OCR eligibility
 
 The existing classifier’s `<400` character and `<4.5` words-per-line values remain classification
-cutoffs only. They are not reused as OCR eligibility criteria.
+cutoffs only. Phase 9 has no OCR character threshold, no header stripping, and no
+`getOcrEligibilityText()` helper.
 
-The raw `<100` proposal is not sufficient by itself. The 100–199 band contains 130 pages:
-129 `VISUAL`, zero `PROSE`, and one unclassified page. Representative VISUAL MM pages are:
-
-| Page | Raw length | `textContent` after the header |
-| --- | ---: | --- |
-| p1 | 101 | *(empty)* |
-| p8 | 116 | `6) STANDARD CLIP ANGLES` |
-| p9 | 115 | `7) STANDARD SHEAR TABS` |
-| p10 | 182 | `8) EXAMPLE SIMPLE BEAM DETAIL USING A 3D MODELING PROGRAM (i.e. SDS, Tekla Strutures etc.)` |
-
-The Marvin boilerplate is semantically identical across these pages after normalizing its page
-number: `MARVIN METALS ~ DETAILING STANDARDS / Structural Steel (v5.0) / Page N of 61`.
-It alone accounts for 86–101 characters. Raising a raw numeric threshold would merely move the
-same boundary problem upward, so Phase 9 uses a document-specific eligibility-text measurement
-instead.
-
-The Phase 9 OCR trigger is:
+The OCR trigger is simply:
 
 ```ts
-page.classification === "VISUAL" &&
-getOcrEligibilityText(document.pdfName, page.textContent).trim().length < 100
+page.classification === "VISUAL"
 ```
 
-`getOcrEligibilityText()` will live in one standards helper and strip only the known Marvin
-header template from that named document before measuring length; it will not modify
-`textContent`, classification, chunk text, or GSMS pages. For other documents it returns the
-original `textContent`. This value is based on the current database: the 50–99 band contains 221
-VISUAL and zero PROSE pages. MM pages 24–27 have only the 86-character boilerplate in
-`textContent`, while their rendered page is a labeled groove-weld drawing.
+This deliberately runs OCR on **every** VISUAL page. A page with useful native text merely gains
+redundant OCR text in the combined chunk; it cannot lose native text or change classification.
+This removes filename-coupled boilerplate handling and every threshold boundary. It follows the
+central reliability rule for this phase: no content-based scoping is allowed to decide which
+VISUAL drawings receive OCR.
 
-The repeated boilerplate remains embedded in every existing chunk, so it can make unrelated
-pages resemble one another and may contribute to the wrong top-1 result. Phase 9 does not alter
-that embedded content; it is a Phase 10 retrieval-quality observation.
+The data supports avoiding an eligibility threshold. The 50–99 band contains 221 VISUAL and zero
+PROSE pages. The 100–199 band contains 129 VISUAL, zero PROSE, and one unclassified page.
+Representative VISUAL MM pages p1 (101 characters), p8 (116), p9 (115), and p10 (182) contain
+only the repeated Marvin header/page number plus a drawing title or no useful body text.
 
-OCR runs on **every** eligible page. There is no heading grouping, heading deduplication, or
+The repeated Marvin boilerplate remains embedded in every existing chunk, so it can make
+unrelated pages resemble one another and may contribute to the wrong top-1 result. Phase 9 does
+not alter that embedded content; it is a Phase 10 retrieval-quality observation.
+
+OCR runs on **every** VISUAL page. There is no heading grouping, heading deduplication, or
 any other scoping. Headings are derived from the PDF text layer, so using them to scope OCR
 fails precisely when CAD-flattened pages have no usable text layer; even non-empty headings are
 not unique to a drawing artifact.
@@ -110,20 +98,36 @@ not a prior OCR result.
 The classification heuristic continues to receive `page.textContent` only. OCR output never
 enters `classifyPageText()` and cannot change a page from VISUAL to PROSE.
 
-After a page has been classified, the classification worker will process eligible pages in a
+After a page has been classified, the classification worker will process every VISUAL page in a
 plain `for...of` loop. For each, it resolves the existing page PNG, invokes Tesseract with
 `--psm 11`, and
 updates that page’s `ocrText`. It must not use `Promise.all` or another concurrent OCR fan-out.
 The existing queue-chain rule remains: an OCR/chunking dispatch failure is caught so it does not
 turn an already-completed classification stage into a failed stage.
 
-Three page-segmentation modes were evaluated on both success-criteria pages. PSM 11 (sparse
-text) is selected. It retains the page titles and semantically useful note/table text on both
-drawings without the dense, disconnected layout fragments produced by PSM 6 and PSM 3. It does
-not make OCR perfect—especially for dimensions—but it gives the embedding model the meaningful
-terms needed by the stated queries.
+Three page-segmentation modes were evaluated empirically on both success-criteria pages. For
+each mode, the measured input was the exact intended chunk text:
 
-Raw Tesseract output follows verbatim.
+```ts
+contextPrefix + [page.textContent, ocrStdout].filter(Boolean).join("\n\n")
+```
+
+Each input was embedded with `nomic-embed-text`, then compared by cosine similarity to the
+unchanged baseline query. PSM 11 wins both target-page measurements, so it is selected despite
+its visibly noisier p12 output.
+
+| PSM | GSMS p18: `column without cap plate` | GSMS p12: `later wide gage standard angles` |
+| --- | ---: | ---: |
+| 3 | 0.714382 | 0.539860 |
+| 6 | 0.712706 | 0.547376 |
+| **11 (selected)** | **0.722407** | **0.560345** |
+
+The modes do not disagree: PSM 11 is best on both pages. This is a retrieval-quality choice,
+not a visual-output choice; p12 still includes noisy dimension fragments, but its complete
+chunk produces the highest target similarity.
+
+The following is raw **stdout** only, verbatim. Tesseract stderr diagnostics are not included
+and must never be stored in `ocrText`.
 
 #### GSMS p18, `--psm 6`
 
@@ -246,7 +250,6 @@ _ Later Wide GA Std Angles Struct Stds P.11 7
 #### GSMS p12, `--psm 11`
 
 ```text
-Detected 15 diacritics
 2M TYP
 
 aan
@@ -458,17 +461,24 @@ AUTH. BY
 Later Wide GA Std Angles Struct Stds P.11
 ```
 
-The selected PSM 11 was re-benchmarked serially. The two target pages took 0.81 s (p18) and
-0.84 s (p12), a 0.83 s mean. A complex MM p24 drawing took 5.80 s with PSM 11, so per-page
-cost is content-dependent and bulk ingestion must remain serialized.
+The selected PSM 11 was re-benchmarked serially. GSMS p18 took 0.48 s and p12 0.63 s (0.56 s
+mean). MM p8, p9, p10, and p24 took 1.01 s, 1.27 s, 0.84 s, and 0.76 s respectively (0.97 s
+sample mean). Per-page cost is therefore content-dependent and bulk ingestion must remain
+serialized.
 
-The earlier PSM 6 timing is retained only as a comparison, not an implementation benchmark:
+The full-VISUAL policy has a small, quantified one-time cost compared with the discarded
+eligibility rule:
 
-| Page | Wall time |
-| --- | ---: |
-| GSMS p12, PSM 6 | 0.85 s |
-| GSMS p18, PSM 6 | 0.48 s |
-| MM p24, PSM 6 | 0.64 s |
+| Intact document | VISUAL pages / former eligible pages | Sampled PSM 11 projection: all VISUAL | Former `<100`-after-header proposal |
+| --- | ---: | ---: | ---: |
+| GSMS `87037d…` | 31 / 26 | about 17 s (31 × 0.56 s) | about 15 s |
+| MM `0207eb…` | 57 / 48 | about 55 s (57 × 0.97 s) | about 47 s |
+
+The removed filter would save only about 2 seconds for GSMS and 8 seconds for MM while leaving
+VISUAL drawings untreated. That tradeoff is not worth a permanent coupling to document headers.
+
+OCR subprocess capture is stdout-only: implementation must use the Tesseract process stdout as
+`ocrText`, keep stderr out of the embedding input, and treat a non-zero exit as an OCR failure.
 
 The implementation will preserve this serialized execution because concurrent OCR competes with
 embedding and generation on the same CPU.
@@ -487,6 +497,25 @@ const embedText = contextPrefix + pageText;
 OCR misreads. Pages with OCR text must no longer be skipped merely because their native text
 layer is empty. `StandardChunk` needs no new fields: it already stores the embedding input,
 document/page citation metadata, type, and source scope.
+
+**Truncation and Context Limit:**
+The embedding model `nomic-embed-text` defaults to a context limit of 2,048 tokens. During measurement, GSMS page 33 produced 5,349 characters of OCR text (measured at 2,203 tokens, a worst-case ratio of 2.43 characters per token due to OCR noise) and 2,289 characters of native `textContent`. This combined ~7,600-character string exceeded the 2,048-token limit and failed.
+
+The maximum native `textContent` across the entire corpus is 5,176 characters (clean prose, which tokenizes efficiently at ~4 chars/token). Thus, native text alone never exceeds the limit, and the failure risk comes entirely from dense OCR.
+
+To keep every stored embedding valid and leave the query path untouched, the implementation will **not** raise the `num_ctx` setting. Instead, it must enforce a conservative character cap sized from the measured worst-case ratio (2.43 chars/token). To safely guarantee the result stays under 2,048 tokens with a healthy margin, the total string length is capped at 4,000 characters (yielding ~1,650 tokens even for pure OCR noise).
+
+The implementation must compute a dynamic budget for the OCR text:
+`budget = 4000 - length(contextPrefix) - length(textContent)`
+- If `budget > 0`, truncate **only** the `ocrText` to fit this budget before appending it.
+
+**PROSE Branch Length Limit (Known Gap):** 
+The chunking process applies this 4,000-character budget and truncation strictly to the VISUAL branch. The PROSE branch does NOT receive truncation logic. The maximum `textContent` across the current corpus is 5,176 characters. At an average of ~4 characters per token, this translates to roughly 1,300 tokens, which rests safely inside the `nomic-embed-text` limit of 2,048 tokens. Truncating PROSE pages to a strict limit would silently drop real, validated standard text, which is worse for system reliability than encountering a loud embedding failure on an edge-case massive page. If a PROSE page does eventually exceed the 2,048-token limit, the newly implemented loud-failure mechanism (where `generateEmbedding` throws on an empty API response) will safely fail the job as a backstop.
+- Never truncate `textContent` or `contextPrefix`, as those contain the most reliable metadata and native extraction. 
+- If truncation occurs, log a warning so silent content loss remains visible.
+
+**Loud Failure Path:**
+If `generateEmbedding` receives an error from the Ollama API (whether a non-200 HTTP response or a JSON response containing an `error` key) or receives an empty array, it must throw an exception. This error must be caught by the `chunking-queue` worker, which will then fail the job, emit a `FAILED` progress event, and mark the `StandardDocument` status as `FAILED`. The system must never silently write a `StandardChunk` with an empty or missing embedding.
 
 ## Part B: standalone image standards
 
@@ -507,8 +536,7 @@ to `classifyPageText()`. Extension detection will be contained in one new shared
 helper, `src/modules/standards/services/standardDocumentType.ts`, whose
 `isStandaloneStandardImage(storagePath)` recognizes `.png`, `.jpg`, and `.jpeg`. Both ingestion
 and classification will call that helper; no other extension check is permitted. Classification
-will then classify the one image page as VISUAL before the heuristic. That same page then meets
-the OCR eligibility test and takes the exact same serialized OCR path as a sparse PDF page—no
+will then classify the one image page as VISUAL before the heuristic. That same page then, like every VISUAL page, takes the exact same serialized OCR path as a sparse PDF page—no
 image-only OCR implementation is permitted.
 
 `tests/fixtures/sample_diagram.png` is currently absent. Before Phase 9 tests are written,
@@ -517,16 +545,16 @@ and dimensions. A generic screenshot or unrelated image is not an acceptable fix
 
 ## Success criteria
 
-After OCR ingestion and re-chunking of the test fixtures:
+Based on the full-document dry run of all 31 GSMS VISUAL pages, the predicted outcomes are:
 
-- GSMS page 18 is top-1 and clears 0.6 for `column without cap plate`.
-- GSMS page 12 is top-1 and clears 0.6 for `later wide gage standard angles`.
-- Both checks use the unchanged production threshold of 0.6 and the exact baseline query text.
-- The irrelevance query remains well below threshold (baseline: 0.384871 GSMS and 0.452533 MM).
+- **PASS**: GSMS page 18 is expected to win top-1 and comfortably clear 0.6 (predicted ~0.722) for `column without cap plate`. Phase 9 succeeds here by making VISUAL content embed-able.
+- **EXPECTED PARTIAL**: GSMS page 12 is expected to NOT clear 0.6 and does NOT win top-1 for `later wide gage standard angles`. GSMS page 14 wins at ~0.577. This is a recorded, expected outcome, not a regression, and it does not block Phase 9 closure.
+- The irrelevance query stays well below the 0.6 threshold (measured 0.3849 → 0.4387).
 
-If OCR materially raises the two target scores but does not clear 0.6, that is an honest partial
-result. It points to Phase 10 hybrid keyword/vector retrieval rather than a threshold change or
-query rewriting.
+**Near-Duplicate Diagnosis:**
+GSMS page 12 loses top-1 to page 14 because page 14 is "Early WGA Std Angles" (Sheet P.13) and page 12 is "Later Wide GA Std Angles" (Sheet P.11). There are four near-identical clip-angle pages differing by only single tokens (Early vs Later, Wide GA vs WGA) amid massive identical table content. OCR is not the failure here; near-duplicate discrimination is. Phase 9's scope is purely making VISUAL content embed-able. 
+
+**Note for Phase 10**: Lexical keyword matching will need to handle OCR abbreviations (e.g., GA ↔ Gage, Std ↔ Standard) to properly disambiguate these near-identical pages.
 
 ## Operational recovery for intact pre-OCR documents
 
@@ -548,7 +576,7 @@ does not overwrite native extraction, re-render pages, or require a source-file 
 
 Tests will use a dedicated project/fabricator scope and only delete records and filesystem output
 they create. They will cover the schema separation of `textContent` and `ocrText`, serialized OCR
-on every eligible VISUAL page, unchanged classification after reprocessing, combined chunk input,
+on every VISUAL page, unchanged classification after reprocessing, combined chunk input,
 PNG/JPG ingestion, the image short-circuit, and the retrieval success criteria above. The fixture
 must be supplied before the standalone-image test is authored. The red test output will be shown
 before implementation begins.
