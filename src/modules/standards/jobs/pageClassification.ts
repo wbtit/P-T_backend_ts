@@ -2,6 +2,12 @@ import { Queue, Worker, Job } from "bullmq";
 import IORedis from "ioredis";
 import prisma from "../../../config/database/client";
 import { classifyPageText } from "../services/classificationService";
+import { execFile } from "child_process";
+import util from "util";
+import path from "path";
+import { isStandaloneStandardImage } from "../services/standardDocumentType";
+
+const execFileAsync = util.promisify(execFile);
 
 const redisUrl = process.env.REDIS_URL || "redis://127.0.0.1:6379";
 
@@ -52,11 +58,41 @@ export const startPageClassificationWorker = () => {
         throw new Error(`No pages found for document: ${documentId}`);
       }
 
-      const updates = pages.map(page => {
-        const classification = classifyPageText(page.textContent);
+      const doc = await prisma.standardDocument.findUnique({ where: { id: documentId } });
+      if (!doc) {
+        throw new Error(`Document not found: ${documentId}`);
+      }
+      
+      const isStandaloneImage = isStandaloneStandardImage(doc.storagePath);
+
+      const classifiedPages = pages.map(page => {
+        const classification = isStandaloneImage ? "VISUAL" : classifyPageText(page.textContent);
+        return { ...page, classification, ocrText: page.ocrText };
+      });
+
+      for (const page of classifiedPages) {
+        if (page.classification === "VISUAL" && page.imagePath) {
+          const absoluteImagePath = path.join(process.cwd(), page.imagePath);
+          try {
+            const { stdout } = await execFileAsync("tesseract", [absoluteImagePath, "stdout", "--psm", "11"]);
+            if (stdout && stdout.trim().length > 0) {
+              page.ocrText = stdout;
+            }
+          } catch (err) {
+            throw new Error(`[Page Classification] Tesseract failed for ${absoluteImagePath}: ${err}`);
+          }
+        } else {
+          page.ocrText = null;
+        }
+      }
+
+      const updates = classifiedPages.map(page => {
         return prisma.standardPage.update({
           where: { id: page.id },
-          data: { classification },
+          data: { 
+            classification: page.classification,
+            ocrText: page.ocrText || null
+          },
         });
       });
 

@@ -85,11 +85,43 @@ export class StandardsController {
         where: { projectId },
         orderBy: { createdAt: "desc" },
         include: {
-          answers: true
+          answers: {
+            include: { citations: true }
+          }
         }
       });
 
-      res.status(200).json(history);
+      // Dual-format read path: 
+      // If a StandardChatAnswer lacks a citations array (or it is empty) but has citationPdfName,
+      // synthesize a citation object to match the Phase 11 structure for clients.
+      const mappedHistory = history.map(msg => ({
+        ...msg,
+        answers: msg.answers.map(ans => {
+          if (ans.citations && ans.citations.length > 0) {
+            return ans; // New format
+          }
+          if (ans.citationPdfName) {
+            // Legacy format fallback
+            return {
+              ...ans,
+              citations: [{
+                rank: 1,
+                chunkType: ans.chunkType,
+                citationPdfName: ans.citationPdfName,
+                citationPageStart: ans.citationPageStart,
+                citationPageEnd: ans.citationPageEnd,
+                anchorPageStart: ans.anchorPageStart,
+                anchorPageEnd: ans.anchorPageEnd,
+                imagePaths: ans.imagePaths || [],
+              }]
+            };
+          }
+          // Fallback for empty answers (e.g., "Not covered")
+          return { ...ans, citations: [] };
+        })
+      }));
+
+      res.status(200).json(mappedHistory);
     } catch (error: any) {
       console.error("[StandardsController] getChatHistory error:", error);
       res.status(500).json({ message: "Internal server error" });

@@ -34,7 +34,9 @@ import { invalidateDashboardCache, invalidationPatterns } from "../../../utils/d
        project = await projectRepository.create(data,userId);
      } catch (err: any) {
        if (err.code === 'P2002') {
-         throw new AppError("Project with this number already exists", 409);
+         const target = err.meta?.target;
+         const field = (Array.isArray(target) && target.length > 0) ? target[0] : 'record';
+         throw new AppError(`Project with this ${field} already exists`, 409);
        }
        throw err;
      }

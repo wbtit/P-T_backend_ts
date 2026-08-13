@@ -150,3 +150,16 @@ test/fixtures/dummy.txt
 
 # Temp dir for tests
 tmp/
+
+# Project-specific: scratch one-off scripts (keep harness and generator, ignore everything else)
+scratch/*.js
+
+# Loose root-level test scripts
+test_*.js
+test_*.ts
+
+# Benchmark / evaluation artifacts
+/tmp/benchmark_run.txt
+
+# AI tooling
+.gemini/

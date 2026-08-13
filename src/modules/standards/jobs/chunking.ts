@@ -3,6 +3,7 @@ import IORedis from "ioredis";
 import prisma from "../../../config/database/client";
 import { Prisma } from "@prisma/client";
 import { StandardsVersioningService } from "../services/versioningService";
+import { generateEmbedding } from "../services/retrievalService";
 
 // Connection for Queue
 export const chunkingQueueConnection = new IORedis(process.env.REDIS_URL || "redis://localhost:6379", {
@@ -23,21 +24,6 @@ export const chunkingQueue = new Queue("chunking-queue", {
 });
 
 export let chunkingWorker: Worker | null = null;
-
-const ollamaUrl = process.env.OLLAMA_URL || "http://127.0.0.1:11434";
-
-async function generateEmbedding(text: string): Promise<number[]> {
-  const response = await fetch(`${ollamaUrl}/api/embeddings`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ model: "nomic-embed-text", prompt: text })
-  });
-  if (!response.ok) {
-    throw new Error(`Ollama API error: ${response.statusText}`);
-  }
-  const data = await response.json() as { embedding: number[] };
-  return data.embedding;
-}
 
 export function startChunkingWorker() {
   if (chunkingWorker) return;
@@ -94,8 +80,21 @@ export function startChunkingWorker() {
 
         if (page.classification === "VISUAL") {
           // Prepend context for VISUAL pages
-          const contextLine = lastHeading ? `Context: Under section "${lastHeading}"\n\n` : `Context: Visual Page\n\n`;
-          embedText = contextLine + page.textContent;
+          const contextPrefix = lastHeading ? `Context: Under section "${lastHeading}"\n\n` : `Context: Visual Page\n\n`;
+          const textContent = page.textContent || "";
+          let ocrText = page.ocrText || "";
+          
+          const SEPARATOR = "\n\n";
+          const rawBudget = 4000 - contextPrefix.length - textContent.length - (textContent && ocrText ? SEPARATOR.length : 0);
+          const budget = Math.max(0, rawBudget);
+          
+          if (budget > 0 && ocrText.length > budget) {
+            ocrText = ocrText.substring(0, budget);
+          } else if (budget === 0) {
+            ocrText = "";
+          }
+
+          embedText = contextPrefix + [textContent, ocrText].filter(Boolean).join(SEPARATOR);
         }
 
         const embedding = await generateEmbedding(embedText);

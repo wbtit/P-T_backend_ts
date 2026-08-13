@@ -28,20 +28,31 @@ export class SubmittalResponseRepository {
     data: CreateSubmittalsResponseDto,
     userId: string
   ) {
-    return prisma.submittalsResponse.create({
-      data: {
-        reason: data.reason || "",
-        description: data.description || "",
-        files: data.files,
-        status: data.status,
-        wbtStatus: data.wbtStatus,
+    return prisma.$transaction(async (tx) => {
+      // 1. Create the response
+      const response = await tx.submittalsResponse.create({
+        data: {
+          reason: data.reason || "",
+          description: data.description || "",
+          files: data.files,
+          status: data.status,
+          wbtStatus: data.wbtStatus,
 
-        submittalsId: data.submittalsId,
-        submittalVersionId: data.submittalVersionId ?? null,
+          submittalsId: data.submittalsId,
+          submittalVersionId: data.submittalVersionId ?? null,
 
-        userId,
-        parentResponseId: data.parentResponseId ?? null,
-      },
+          userId,
+          parentResponseId: data.parentResponseId ?? null,
+        },
+      });
+
+      // 2. Update the parent submittal's clientResponseStatus to reflect this latest response
+      await tx.submittals.update({
+        where: { id: data.submittalsId },
+        data: { clientResponseStatus: data.status },
+      });
+
+      return response;
     });
   }
 

@@ -2588,13 +2588,15 @@ model StandardChatAnswer {
   sourceType        StandardSourceType @map("source_type")
   chunkType         StandardChunkType  @map("chunk_type")
   answerText        String?            @map("answer_text") @db.Text
-  citationPdfName   String             @map("citation_pdf_name")
-  citationPageStart Int                @map("citation_page_start")
-  citationPageEnd   Int                @map("citation_page_end")
+  citationPdfName   String?            @map("citation_pdf_name")
+  citationPageStart Int?               @map("citation_page_start")
+  citationPageEnd   Int?               @map("citation_page_end")
   anchorPageStart   Int?               @map("anchor_page_start")
   anchorPageEnd     Int?               @map("anchor_page_end")
   imagePaths        String[]           @map("image_paths") // Array of string paths
   pinnedDocumentId  String             @map("pinned_document_id") @db.Uuid
+
+  citations         StandardChatCitation[]
 
   // Relations
   message        StandardChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
@@ -2603,12 +2605,30 @@ model StandardChatAnswer {
   @@map("standard_chat_answers")
 }
 
+model StandardChatCitation {
+  id                String             @id @default(uuid()) @db.Uuid
+  answerId          String             @map("answer_id") @db.Uuid
+  chunkType         StandardChunkType  @map("chunk_type")
+  citationPdfName   String             @map("citation_pdf_name")
+  citationPageStart Int                @map("citation_page_start")
+  citationPageEnd   Int                @map("citation_page_end")
+  anchorPageStart   Int?               @map("anchor_page_start")
+  anchorPageEnd     Int?               @map("anchor_page_end")
+  imagePaths        String[]           @map("image_paths")
+  rank              Int                @map("rank")
+
+  answer StandardChatAnswer @relation(fields: [answerId], references: [id], onDelete: Cascade)
+
+  @@map("standard_chat_citations")
+}
+
 model StandardPage {
   id          String   @id @default(uuid()) @db.Uuid
   documentId  String   @map("document_id") @db.Uuid
   pageNumber  Int      @map("page_number")
   imagePath   String   @map("image_path")
   textContent String   @map("text_content") @db.Text
+  ocrText     String?  @map("ocr_text") @db.Text
   createdAt   DateTime @default(now()) @map("created_at")
 
   classification StandardChunkType? @map("classification")

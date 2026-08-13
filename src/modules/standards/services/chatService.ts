@@ -4,7 +4,7 @@ import { standardsGenerationQueue, standardsGenerationEvents } from "../jobs/sta
 import { StandardChunkType, StandardSourceType, StandardChatMessage, StandardChatAnswer } from "@prisma/client";
 
 export type ChatMessageWithAnswers = StandardChatMessage & {
-  answers: StandardChatAnswer[];
+  answers: (StandardChatAnswer & { citations: any[] })[];
 };
 
 function buildImagePaths(hit: RetrievedChunk, anchor?: RetrievedChunk): string[] {
@@ -42,125 +42,97 @@ export async function askStandards(
   // content"). However, raising it that high drops legitimate sparse VISUAL matches (e.g., "clip angles" 
   // scores ~0.63). We accept the false positive risk for broad queries to preserve recall on visual pages.
   console.log(`[ChatService] Received query for projectId ${projectId}: "${queryText}"`);
-  console.log(`[ChatService] Starting vector search (threshold: 0.6)...`);
-  const searchResults = await searchStandards({ query: queryText, projectId, threshold: 0.6 });
+  console.log(`[ChatService] Starting vector search (candidate floor: 0.45, acceptance threshold: 0.60)...`);
+  const searchResults = await searchStandards({ 
+    query: queryText, 
+    projectId, 
+    threshold: 0.45, 
+    acceptanceThreshold: 0.00, 
+    alpha: 0.05 
+  });
   console.log(`[ChatService] Vector search complete. Found ${searchResults.general.length} GENERAL hits and ${searchResults.fabricator.length} FABRICATOR hits.`);
 
   async function processSource(chunks: RetrievedChunk[], sourceType: StandardSourceType) {
-    if (chunks.length === 0) {
-      return prisma.standardChatAnswer.create({
-        data: {
-          messageId: message.id,
-          sourceType,
-          chunkType: "PROSE", // Default to prose for "Not covered"
-          answerText: "Not covered by this standard.",
-          citationPdfName: "N/A",
-          citationPageStart: 0,
-          citationPageEnd: 0,
-          pinnedDocumentId: "00000000-0000-0000-0000-000000000000" // Requires a valid UUID for tests if they check it, but we can't insert a fake one due to foreign key constraints.
-          // Wait, if "not covered", we might not have a document ID. But standardChatAnswer requires pinnedDocumentId.
-          // Let's see if we can find any document to pin, or if we should skip creating the answer.
-          // The schema has `pinnedDocumentId String @db.Uuid`. It's required!
-          // We must grab the first active document of that source type to attach it to, or the schema implies we only create answers when there IS a document.
-          // Actually, if we don't have a document, we can't create the answer. Let's find a dummy doc for that source.
-        }
-      });
-    }
+    const startMeasure = performance.now();
+    // Floor rule: only return answers if the top hit clears 0.60.
+    // No hit means retrieval found nothing above the candidate floor.
+    // Score below 0.60 means nothing is accepted — return "not covered".
+    if (chunks.length === 0 || chunks[0].similarity < 0.60) {
+      // Resolve the ACTIVE document scoped correctly to this source/project.
+      // GENERAL is project-agnostic; FABRICATOR must be scoped to this project.
+      // If no ACTIVE document exists for this scope, that is an error state —
+      // the standard has not been uploaded yet and we cannot create a "not covered" answer
+      // without a valid pinnedDocumentId. We throw rather than silently pin a wrong document.
+      const docQuery = sourceType === "FABRICATOR"
+        ? { sourceType, projectId, status: "ACTIVE" as const }
+        : { sourceType, status: "ACTIVE" as const };
+      const doc = await prisma.standardDocument.findFirst({ where: docQuery });
 
-    // Grab the best hit (first in the array since they are sorted by similarity)
-    // Wait, RetrievedChunk has isAnchor. We need to find the direct hit.
-    const directHit = chunks.find(c => !c.isAnchor) || chunks[0];
-    const anchor = chunks.find(c => c.isAnchor);
-
-    // Get the document to get the pdfName
-    const doc = await prisma.standardDocument.findUnique({ where: { id: directHit.documentId } });
-    if (!doc) throw new Error("Document not found");
-
-    if (directHit.chunkType === "VISUAL") {
-      return prisma.standardChatAnswer.create({
-        data: {
-          messageId: message.id,
-          sourceType,
-          chunkType: "VISUAL",
-          answerText: null,
-          citationPdfName: doc.pdfName,
-          citationPageStart: directHit.pageStart,
-          citationPageEnd: directHit.pageEnd,
-          anchorPageStart: anchor ? anchor.pageStart : null,
-          anchorPageEnd: anchor ? anchor.pageEnd : null,
-          imagePaths: buildImagePaths(directHit, anchor),
-          pinnedDocumentId: doc.id
-        }
-      });
-    } else {
-      // PROSE: Need to generate an answer
-      console.log(`[ChatService] Query matches PROSE. Queuing generation job for query: "${queryText}"`);
-      const topChunks = chunks.slice(0, 3); // Limit to top 3 chunks to prevent massive 5-minute CPU processing delays!
-      const job = await standardsGenerationQueue.add("generate", {
-        query: queryText,
-        chunks: topChunks // Pass the limited context
-      });
-
-      console.log(`[ChatService] Waiting for generation job ${job.id} to finish...`);
-      const generatedText = await job.waitUntilFinished(standardsGenerationEvents);
-      console.log(`[ChatService] Generation job ${job.id} finished successfully.`);
+      if (!doc) {
+        throw new Error(
+          `[ChatService] No ACTIVE ${sourceType} document found for projectId=${projectId}. ` +
+          `Cannot create a "not covered" answer without a valid pinnedDocumentId. ` +
+          `Upload a standard for this scope before querying.`
+        );
+      }
 
       return prisma.standardChatAnswer.create({
         data: {
           messageId: message.id,
           sourceType,
           chunkType: "PROSE",
-          answerText: generatedText,
-          citationPdfName: doc.pdfName,
-          citationPageStart: directHit.pageStart,
-          citationPageEnd: directHit.pageEnd,
-          imagePaths: [],
+          answerText: "Not covered by this standard.",
           pinnedDocumentId: doc.id
         }
       });
     }
-  }
 
-  // Handle the missing document for "not covered" scenario:
-  const getFallbackAnswer = async (sourceType: StandardSourceType) => {
-    // Need any document of this type to satisfy foreign key for "Not covered"
-    let doc = await prisma.standardDocument.findFirst({
-      where: { sourceType, status: "ACTIVE" },
-      ...(sourceType === "FABRICATOR" ? { where: { sourceType, projectId, status: "ACTIVE" } } : {})
+    // Grab up to 3 best direct hits
+    const topHits = chunks.filter(c => !c.isAnchor).slice(0, 3);
+    const doc = await prisma.standardDocument.findUnique({ where: { id: topHits[0].documentId } });
+    if (!doc) throw new Error("Document not found");
+
+    const citationsData = topHits.map((hit, index) => {
+      // Use the anchor explicitly linked by retrievalService during the heading-expansion
+      // pass. This is the Phase 5 definition: same document + same heading.
+      // Proximity is NOT used — anchors can be many pages from the hit (Phase 6).
+      const anchor = hit.anchor;
+      return {
+        chunkType: hit.chunkType as StandardChunkType,
+        citationPdfName: doc.pdfName,
+        citationPageStart: hit.pageStart,
+        citationPageEnd: hit.pageEnd,
+        anchorPageStart: anchor ? anchor.pageStart : null,
+        anchorPageEnd: anchor ? anchor.pageEnd : null,
+        imagePaths: buildImagePaths(hit, anchor),
+        rank: index + 1
+      };
     });
-    
-    // If no document exists at all, we can't create an answer. But our tests provide one.
-    if (!doc) {
-      doc = await prisma.standardDocument.findFirst({ where: { sourceType } });
-    }
 
-    return prisma.standardChatAnswer.create({
+    const answer = await prisma.standardChatAnswer.create({
       data: {
         messageId: message.id,
         sourceType,
-        chunkType: "PROSE",
-        answerText: "Not covered by this standard.",
-        citationPdfName: doc?.pdfName || "N/A",
-        citationPageStart: 0,
-        citationPageEnd: 0,
-        imagePaths: [],
-        pinnedDocumentId: doc!.id
+        chunkType: topHits[0].chunkType as StandardChunkType,
+        answerText: null, // No LLM generation
+        pinnedDocumentId: doc.id,
+        citations: {
+          create: citationsData
+        }
       }
     });
-  };
+    
+    console.log(`[ChatService] processSource for ${sourceType} latency: ${(performance.now() - startMeasure).toFixed(2)}ms`);
+    return answer;
+  }
 
-  const generalPromise = searchResults.general.length > 0 
-    ? processSource(searchResults.general, "GENERAL")
-    : getFallbackAnswer("GENERAL");
-
-  const fabricatorPromise = searchResults.fabricator.length > 0
-    ? processSource(searchResults.fabricator, "FABRICATOR")
-    : getFallbackAnswer("FABRICATOR");
+  const generalPromise = processSource(searchResults.general, "GENERAL");
+  const fabricatorPromise = processSource(searchResults.fabricator, "FABRICATOR");
 
   await Promise.all([generalPromise, fabricatorPromise]);
 
   return prisma.standardChatMessage.findUniqueOrThrow({
     where: { id: message.id },
-    include: { answers: true }
+    include: { answers: { include: { citations: true } } }
   });
 }

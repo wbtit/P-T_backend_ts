@@ -20,6 +20,8 @@ export interface RetrievedChunk {
   vectorSimilarity: number;
   lexicalScore: number;
   isAnchor?: boolean;
+  /** Anchor chunk expanded from this hit via shared heading. Undefined for anchor rows themselves. */
+  anchor?: RetrievedChunk;
 }
 
 export interface SearchStandardsResponse {
@@ -40,7 +42,7 @@ function tokenizeAndNormalize(text: string): string[] {
   const tokens: string[] = [];
   for (const t of rawTokens) {
     if (STOPWORDS.has(t)) continue;
-    const expanded = standardAbbreviations[t] || t;
+    const expanded = Object.prototype.hasOwnProperty.call(standardAbbreviations, t) ? standardAbbreviations[t] : t;
     if (expanded.includes(" ")) {
       tokens.push(...expanded.split(" "));
     } else {
@@ -123,8 +125,12 @@ async function searchScope(
     results = await prisma.$queryRawUnsafe(querySql, vectorString, projectId, threshold);
   }
 
-  const finalChunks: RetrievedChunk[] = [];
+  // Map of chunk id -> anchor chunk (expanded from shared heading).
+  // Built during the loop below, then attached after the sort.
+  const anchorByHitId = new Map<string, RetrievedChunk>();
   const processedAnchorHeadings = new Set<string>();
+
+  const directHits: RetrievedChunk[] = [];
 
   for (const row of results) {
     const lexicalScore = calculateLexicalScore(queryTokens, row.textContent);
@@ -143,81 +149,92 @@ async function searchScope(
       similarity: finalScore
     };
     
-    // Apply final acceptance threshold
+    // Apply final acceptance threshold — 0.0 when caller wants all and applies floor itself
     if (finalScore > acceptanceThreshold) {
-      finalChunks.push(chunk);
-    }
+      directHits.push(chunk);
 
-    // Expand VISUAL chunks
-    if (chunk.chunkType === "VISUAL" && row.heading) {
-      const anchorKey = `${chunk.documentId}-${row.heading}`;
-      if (!processedAnchorHeadings.has(anchorKey)) {
-        processedAnchorHeadings.add(anchorKey);
-        
-        // Find the VISUAL chunks under this heading in this document
-        const anchorResult = await prisma.$queryRawUnsafe<any[]>(`
-          SELECT 
-            id, 
-            document_id as "documentId",
-            chunk_type as "chunkType",
-            page_start as "pageStart",
-            page_end as "pageEnd",
-            text_content as "textContent",
-            source_type as "sourceType",
-            heading,
-            1 - (embedding <=> $1::vector) AS similarity
-          FROM standard_chunks
-          WHERE document_id = $2::uuid 
-            AND heading = $3
-            AND chunk_type = 'VISUAL'
-          ORDER BY page_start ASC
-        `, vectorString, chunk.documentId, row.heading);
-
-        if (anchorResult.length > 0) {
-          let anchorRow = anchorResult[0];
+      // Expand VISUAL chunks ONLY if the direct hit clears the threshold.
+      // The anchor is identified by shared heading within the same document (Phase 5 definition).
+      // Anchors can be many pages away from the hit (Phase 6 observation) — proximity is not used.
+      if (chunk.chunkType === "VISUAL" && row.heading) {
+        const anchorKey = `${chunk.documentId}-${row.heading}`;
+        if (!processedAnchorHeadings.has(anchorKey)) {
+          processedAnchorHeadings.add(anchorKey);
           
-          if (anchorResult.length > 1) {
-            // Skip title/intro pages where the heading is repeated in the body content.
-            // The context preamble injects the heading once. If it appears >= 2 times, it's a title page.
-            const trueAnchor = anchorResult.find(c => {
-              if (!c.heading) return true;
-              const occurrences = c.textContent.split(c.heading).length - 1;
-              return occurrences < 2;
-            });
-            if (trueAnchor) {
-              anchorRow = trueAnchor;
+          // Find VISUAL chunks under this heading in this document, ordered by page
+          const anchorResult = await prisma.$queryRawUnsafe<any[]>(`
+            SELECT 
+              id, 
+              document_id as "documentId",
+              chunk_type as "chunkType",
+              page_start as "pageStart",
+              page_end as "pageEnd",
+              text_content as "textContent",
+              source_type as "sourceType",
+              heading,
+              1 - (embedding <=> $1::vector) AS similarity
+            FROM standard_chunks
+            WHERE document_id = $2::uuid 
+              AND heading = $3
+              AND chunk_type = 'VISUAL'
+            ORDER BY page_start ASC
+          `, vectorString, chunk.documentId, row.heading);
+
+          if (anchorResult.length > 0) {
+            let anchorRow = anchorResult[0];
+            
+            if (anchorResult.length > 1) {
+              // Skip title/intro pages where the heading is repeated verbatim in the body content
+              const trueAnchor = anchorResult.find(c => {
+                if (!c.heading) return true;
+                const occurrences = c.textContent.split(c.heading).length - 1;
+                return occurrences < 2;
+              });
+              if (trueAnchor) {
+                anchorRow = trueAnchor;
+              }
             }
-          }
-          
-          // Deduplicate if the anchor is the direct hit itself
-          if (anchorRow.id !== chunk.id) {
-            finalChunks.push({
-              id: anchorRow.id,
-              documentId: anchorRow.documentId,
-              chunkType: anchorRow.chunkType,
-              pageStart: anchorRow.pageStart,
-              pageEnd: anchorRow.pageEnd,
-              textContent: anchorRow.textContent,
-              sourceType: anchorRow.sourceType,
-              vectorSimilarity: anchorRow.similarity,
-              lexicalScore: 0,
-              similarity: anchorRow.similarity,
-              isAnchor: true
-            });
+            
+            // Only attach if the anchor is a different chunk from the hit itself
+            if (anchorRow.id !== chunk.id) {
+              const anchorChunk: RetrievedChunk = {
+                id: anchorRow.id,
+                documentId: anchorRow.documentId,
+                chunkType: anchorRow.chunkType,
+                pageStart: anchorRow.pageStart,
+                pageEnd: anchorRow.pageEnd,
+                textContent: anchorRow.textContent,
+                sourceType: anchorRow.sourceType,
+                vectorSimilarity: anchorRow.similarity,
+                lexicalScore: 0,
+                similarity: anchorRow.similarity, // Exempt from hybrid filter, raw score kept
+                isAnchor: true
+              };
+              // Record the explicit hit → anchor linkage by the hit's id
+              anchorByHitId.set(chunk.id, anchorChunk);
+            }
           }
         }
       }
     }
   }
 
-  // Re-sort final chunks by the new hybrid similarity score descending
-  finalChunks.sort((a, b) => b.similarity - a.similarity);
+  // Sort direct hits by hybrid score descending
+  directHits.sort((a, b) => b.similarity - a.similarity);
 
-  return finalChunks;
+  // Attach the explicit anchor onto each direct hit that has one
+  for (const hit of directHits) {
+    const anchor = anchorByHitId.get(hit.id);
+    if (anchor) {
+      hit.anchor = anchor;
+    }
+  }
+
+  return directHits;
 }
 
 export async function searchStandards(options: SearchStandardsOptions): Promise<SearchStandardsResponse> {
-  const { query, projectId, threshold = 0.5 } = options;
+  const { query, projectId } = options;
   const queryEmbedding = await generateEmbedding(query);
 
   const [general, fabricator] = await Promise.all([

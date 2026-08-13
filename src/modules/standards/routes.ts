@@ -24,11 +24,13 @@ standardsRoutes.post(
 projectStandardsRoutes.post(
   "/chat",
   authMiddleware,
+  // roleGuard(["STAFF", "DETAILER"]),
   controller.chat.bind(controller)
 );
 
 projectStandardsRoutes.get(
   "/chat/history",
   authMiddleware,
+  // roleGuard(["STAFF", "DETAILER"]),
   controller.getChatHistory.bind(controller)
 );

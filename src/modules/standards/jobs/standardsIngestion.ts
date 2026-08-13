@@ -8,6 +8,7 @@ import pdfParse from "pdf-parse";
 import { v4 as uuidv4 } from "uuid";
 import prisma from "../../../config/database/client";
 import { pageClassificationQueue } from "./pageClassification";
+import { isStandaloneStandardImage } from "../services/standardDocumentType";
 
 const execFileAsync = util.promisify(execFile);
 
@@ -83,6 +84,40 @@ export const startStandardsIngestionWorker = () => {
       
       const doc = await prisma.standardDocument.findUnique({ where: { id: documentId } });
       if (!doc) throw new Error(`Document not found: ${documentId}`);
+
+      if (isStandaloneStandardImage(doc.storagePath)) {
+        const uploadBaseDir = path.resolve(process.cwd(), "uploads");
+        const outputDir = path.join(uploadBaseDir, "standards", doc.sourceType, doc.id, "pages");
+        await fs.promises.mkdir(outputDir, { recursive: true });
+
+        const finalFilename = "page-1.png";
+        const finalPath = path.join(outputDir, finalFilename);
+        
+        // Copy the uploaded image to match the convention for the PDF pages,
+        // so that the current image endpoint serves it unchanged without needing special routes.
+        await fs.promises.copyFile(doc.storagePath, finalPath);
+
+        const relativeImagePath = `/uploads/standards/${doc.sourceType}/${doc.id}/pages/${finalFilename}`;
+
+        await prisma.$transaction([
+          prisma.standardPage.deleteMany({ where: { documentId: doc.id } }),
+          prisma.standardPage.create({
+            data: {
+              documentId: doc.id,
+              pageNumber: 1,
+              imagePath: relativeImagePath,
+              textContent: "",
+            }
+          })
+        ]);
+
+        try {
+          await pageClassificationQueue.add("classify", { documentId: doc.id });
+        } catch (err) {
+          console.error(`[Standards Ingestion] Failed to enqueue classification for ${doc.id}`, err);
+        }
+        return true;
+      }
 
       const pdfBuffer = await fs.promises.readFile(doc.storagePath);
       
