@@ -12,9 +12,14 @@ export class StandardsController {
         return;
       }
       
-      const { sourceType, projectId, fabricatorId } = req.body;
+      const { sourceType, projectId, fabricatorId, documentFamilyId } = req.body;
       if (!sourceType || !Object.values(StandardSourceType).includes(sourceType as any)) {
         res.status(400).json({ message: "Invalid or missing sourceType" });
+        return;
+      }
+
+      if (sourceType === "GENERAL" && !documentFamilyId) {
+        res.status(400).json({ message: "documentFamilyId is required for GENERAL sourceType" });
         return;
       }
 
@@ -34,6 +39,7 @@ export class StandardsController {
           sourceType: sourceType as StandardSourceType,
           projectId: projectId || null,
           fabricatorId: fabricatorId || null,
+          documentFamilyId: documentFamilyId || null,
           pdfName: originalName,
           storagePath: storagePath,
           status: "PENDING"

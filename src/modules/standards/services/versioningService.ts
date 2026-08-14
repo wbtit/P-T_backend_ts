@@ -22,6 +22,10 @@ export class StandardsVersioningService {
       if (newDoc.sourceType === "FABRICATOR") {
         whereClause.projectId = newDoc.projectId;
         whereClause.fabricatorId = newDoc.fabricatorId;
+      } else if (newDoc.sourceType === "GENERAL" && newDoc.documentFamilyId) {
+        // For GENERAL, scope by family if provided. 
+        // This allows multiple global standards (e.g. AISC and ACI) to coexist.
+        whereClause.documentFamilyId = newDoc.documentFamilyId;
       }
 
       // Supersede all existing active docs in scope

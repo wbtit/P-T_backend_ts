@@ -7,6 +7,8 @@ export type ChatMessageWithAnswers = StandardChatMessage & {
   answers: (StandardChatAnswer & { citations: any[] })[];
 };
 
+const ENABLE_GENERATION = true; // Gowtham wants to evaluate LLM answers
+
 function buildImagePaths(hit: RetrievedChunk, anchor?: RetrievedChunk): string[] {
   // Convert documentId and pageStart into proper paths
   // A generic function that maps to the physical uploads
@@ -89,17 +91,22 @@ export async function askStandards(
 
     // Grab up to 3 best direct hits
     const topHits = chunks.filter(c => !c.isAnchor).slice(0, 3);
-    const doc = await prisma.standardDocument.findUnique({ where: { id: topHits[0].documentId } });
-    if (!doc) throw new Error("Document not found");
+    const documentIds = [...new Set(topHits.map(h => h.documentId))];
+    const docs = await prisma.standardDocument.findMany({ where: { id: { in: documentIds } } });
+    const docMap = new Map(docs.map(d => [d.id, d]));
+    
+    if (!docMap.has(topHits[0].documentId)) throw new Error("Document not found");
 
     const citationsData = topHits.map((hit, index) => {
       // Use the anchor explicitly linked by retrievalService during the heading-expansion
       // pass. This is the Phase 5 definition: same document + same heading.
       // Proximity is NOT used — anchors can be many pages from the hit (Phase 6).
       const anchor = hit.anchor;
+      const hitDoc = docMap.get(hit.documentId);
+      
       return {
         chunkType: hit.chunkType as StandardChunkType,
-        citationPdfName: doc.pdfName,
+        citationPdfName: hitDoc?.pdfName || "Unknown",
         citationPageStart: hit.pageStart,
         citationPageEnd: hit.pageEnd,
         anchorPageStart: anchor ? anchor.pageStart : null,
@@ -114,14 +121,34 @@ export async function askStandards(
         messageId: message.id,
         sourceType,
         chunkType: topHits[0].chunkType as StandardChunkType,
-        answerText: null, // No LLM generation
-        pinnedDocumentId: doc.id,
+        answerText: null, // Initial
+        pinnedDocumentId: topHits[0].documentId,
         citations: {
           create: citationsData
         }
       }
     });
     
+    // Optional Generation
+    if (ENABLE_GENERATION && topHits[0].chunkType === "PROSE") {
+      const genStart = performance.now();
+      try {
+        const job = await standardsGenerationQueue.add("generate", {
+          query: queryText,
+          chunks: [topHits[0]] // ONLY rank-1 context
+        });
+        const generatedText = await job.waitUntilFinished(standardsGenerationEvents);
+        
+        await prisma.standardChatAnswer.update({
+          where: { id: answer.id },
+          data: { answerText: generatedText }
+        });
+        console.log(`[ChatService] processSource for ${sourceType} GENERATION latency: ${(performance.now() - genStart).toFixed(2)}ms`);
+      } catch (err) {
+        console.error(`[ChatService] Generation failed for ${sourceType}:`, err);
+      }
+    }
+
     console.log(`[ChatService] processSource for ${sourceType} latency: ${(performance.now() - startMeasure).toFixed(2)}ms`);
     return answer;
   }

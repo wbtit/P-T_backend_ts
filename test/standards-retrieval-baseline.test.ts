@@ -24,8 +24,9 @@ const evalCases: EvalCase[] = [
   { query: "column without cap plate", docKey: "GSMS", expectedPages: [18] },
   { query: "what is the c/c of the standard beam angles", docKey: "GSMS", expectedPages: [12, 13, 14, 15] },
   { query: "What sheet sizes should I use for detail drawings?", docKey: "MM", expectedPages: [2] },
-  { query: "minimum slab thickness", docKey: "GSMS", expectedPages: [] },
-  { query: "constructor for minimum slab thickness", docKey: "GSMS", expectedPages: [] },
+  // Pending evaluation (waiting for ACI ingestion)
+  // { query: "minimum slab thickness", docKey: "ACI", expectedPages: [] },
+  // { query: "constructor for minimum slab thickness", docKey: "ACI", expectedPages: [] },
   { query: "how do I calibrate a marine GPS compass", docKey: "GSMS", expectedPages: [] },
   { query: "should drawing submittals be sent as one combined file or separately", docKey: "GSMS", expectedPages: [2] },
   { query: "do i need to provide gather sheets for plates with holes", docKey: "GSMS", expectedPages: [2] },

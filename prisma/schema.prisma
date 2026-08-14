@@ -2529,10 +2529,12 @@ model StandardDocument {
   sourceType   StandardSourceType @map("source_type")
   projectId    String?            @map("project_id") @db.Uuid
   fabricatorId String?            @map("fabricator_id") @db.Uuid
-  pdfName      String             @map("pdf_name")
-  storagePath  String             @map("storage_path")
-  status       StandardDocumentStatus @default(PENDING)
-  uploadedAt   DateTime           @default(now()) @map("uploaded_at")
+  pdfName          String                 @map("pdf_name")
+  storagePath      String                 @map("storage_path")
+  status           StandardDocumentStatus @default(PENDING)
+  documentFamilyId String?                @map("document_family_id")
+  excludedPages    Int[]                  @default([]) @map("excluded_pages")
+  uploadedAt       DateTime               @default(now()) @map("uploaded_at")
 
   // Relations
   project       Project?             @relation(fields: [projectId], references: [id], onDelete: Restrict)

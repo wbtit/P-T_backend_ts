@@ -34,6 +34,7 @@
     "@socket.io/redis-adapter": "^8.3.0",
     "@types/cron": "^2.0.1",
     "@types/ioredis": "^4.28.10",
+    "@xenova/transformers": "^2.17.2",
     "bcrypt": "^6.0.0",
     "bcrypt-ts": "^7.1.0",
     "bullmq": "^6.0.9",

@@ -34,9 +34,13 @@ async function run() {
     { query: "what is the c/c of the standard beam angles", correctPages: [11, 19], docKey: 'MM' },
     { query: "What sheet sizes should I use for detail drawings?", correctPages: [2], docKey: 'MM' },
     // Irrelevance queries
-    { query: "minimum slab thickness", correctPages: [], docKey: 'NONE' },
-    { query: "constructor for minimum slab thickness", correctPages: [], docKey: 'NONE' },
     { query: "how do I calibrate a marine GPS compass", correctPages: [], docKey: 'NONE' }
+  ];
+
+  // Pending evaluation (waiting for ACI ingestion)
+  const pendingQueries = [
+    { query: "minimum slab thickness", correctPages: [], docKey: 'ACI_PENDING' },
+    { query: "constructor for minimum slab thickness", correctPages: [], docKey: 'ACI_PENDING' }
   ];
 
   // 1. Fetch project IDs from the database dynamically

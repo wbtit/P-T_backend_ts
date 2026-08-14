@@ -4,6 +4,7 @@ import prisma from "../../../config/database/client";
 import { Prisma } from "@prisma/client";
 import { StandardsVersioningService } from "../services/versioningService";
 import { generateEmbedding } from "../services/retrievalService";
+import { env, AutoTokenizer } from "@xenova/transformers";
 
 // Connection for Queue
 export const chunkingQueueConnection = new IORedis(process.env.REDIS_URL || "redis://localhost:6379", {
@@ -24,6 +25,7 @@ export const chunkingQueue = new Queue("chunking-queue", {
 });
 
 export let chunkingWorker: Worker | null = null;
+let cachedTokenizer: any = null;
 
 export function startChunkingWorker() {
   if (chunkingWorker) return;
@@ -33,6 +35,11 @@ export function startChunkingWorker() {
     async (job: Job) => {
       const { documentId } = job.data;
       if (!documentId) throw new Error("Missing documentId");
+
+      if (!cachedTokenizer) {
+        env.allowLocalModels = false;
+        cachedTokenizer = await AutoTokenizer.from_pretrained('nomic-ai/nomic-embed-text-v1.5');
+      }
 
       console.log(`[Chunking] Worker picked up job for documentId: ${documentId}`);
       if ((global as any).io) {
@@ -68,6 +75,12 @@ export function startChunkingWorker() {
       for (const page of doc.StandardPage) {
         if (!page.textContent || !page.classification) continue;
 
+        // Skip chunking for explicitly excluded pages
+        if (doc.excludedPages && doc.excludedPages.includes(page.pageNumber)) {
+          console.log(`[Chunking] Skipping excluded page: ${page.pageNumber}`);
+          continue;
+        }
+
         let embedText = page.textContent;
 
         // Check for a new heading on ALL pages (headings can appear on VISUAL pages too)
@@ -97,7 +110,29 @@ export function startChunkingWorker() {
           embedText = contextPrefix + [textContent, ocrText].filter(Boolean).join(SEPARATOR);
         }
 
-        const embedding = await generateEmbedding(embedText);
+        let finalEmbedText = embedText;
+        let tokens = await cachedTokenizer(finalEmbedText, { truncation: false });
+        let tokenCount = tokens.input_ids.data.length;
+
+        if (tokenCount > 2000) {
+          console.warn(`[Chunking] WARNING: Token backstop fired! Page ${page.pageNumber} of document ${doc.id} has ${tokenCount} tokens, truncating to ~2000 tokens for embedding.`);
+          
+          // Truncate by characters proportionally first as a fast approximation
+          let charLimit = Math.floor(finalEmbedText.length * (2000 / tokenCount));
+          finalEmbedText = finalEmbedText.substring(0, charLimit);
+          
+          // Verify and loop until genuinely under 2000 tokens
+          tokens = await cachedTokenizer(finalEmbedText, { truncation: false });
+          while (tokens.input_ids.data.length > 2000 && finalEmbedText.length > 100) {
+            finalEmbedText = finalEmbedText.substring(0, finalEmbedText.length - 100);
+            tokens = await cachedTokenizer(finalEmbedText, { truncation: false });
+          }
+
+          if (tokens.input_ids.data.length > 2000) {
+            throw new Error(`Token backstop failed: Page ${page.pageNumber} is still ${tokens.input_ids.data.length} tokens after truncation loop.`);
+          }
+        }
+        const embedding = await generateEmbedding(finalEmbedText);
 
         chunksToInsert.push({
           documentId: doc.id,
@@ -142,7 +177,7 @@ export function startChunkingWorker() {
             )
           `;
         }
-      });
+      }, { timeout: 60000 });
 
       // Atomic swap to activate the new document version
       const versioningService = new StandardsVersioningService();
