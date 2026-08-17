@@ -6,7 +6,7 @@ const DOCS = {
   MM: '0207eb4a-aa94-4ae0-8fd5-dd13d5ec2ab1'
 };
 
-const OLLAMA_URL = "http://127.0.0.1:11434/api/generate";
+const OLLAMA_URL = `${process.env.OLLAMA_URL || "http://127.0.0.1:11434"}/api/generate`;
 
 async function generateQuestionsForText(text: string): Promise<string[]> {
   if (!text.trim()) return [];

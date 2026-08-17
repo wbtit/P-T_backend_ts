@@ -23,7 +23,7 @@ export class WbsTemplateService {
         ...input,
         version: 1,
       });
-    });
+    }, { timeout: 30000 });
   }
 
   /**
@@ -82,6 +82,6 @@ export class WbsTemplateService {
       });
 
       return newTemplate;
-    });
+    }, { timeout: 30000 });
   }
 }
