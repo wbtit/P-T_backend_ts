@@ -1,5 +1,5 @@
 import { RFQRepository } from "../repositeries";
-import { PaginationQuery } from "../../../utils/pagination";
+import { RfqPaginationQuery } from "../dtos";
 import { CreateRfqInput,
     GetRfqInput,
     UpdateRfqInput
@@ -170,13 +170,13 @@ export class RFQService {
     async getResponsesByRfqId(rfqId: string, user: any) {
         return await rfqrepo.getResponsesByRfqId(rfqId, user);
     }
-    async getAllRFQ(query: PaginationQuery){
+    async getAllRFQ(query: RfqPaginationQuery){
         return await rfqrepo.getAllRFQ(query);
     }
-    async sents(query: PaginationQuery, senderId:string, projectId?: string){
+    async sents(query: RfqPaginationQuery, senderId:string, projectId?: string){
         return await rfqrepo.sentTouser(query, senderId, projectId);
     }
-    async received(query: PaginationQuery, recipientId:string, projectId?: string){
+    async received(query: RfqPaginationQuery, recipientId:string, projectId?: string){
         return await rfqrepo.Inbox(query, recipientId, projectId);
     }
 

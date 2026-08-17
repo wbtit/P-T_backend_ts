@@ -1,4 +1,5 @@
 import { Request,Response } from "express";
+import { CreateRfqSchema, UpdateRfqSchema, RfqPaginationQuerySchema } from "../dtos/rfq.dtos";
 import { AuthenticateRequest } from "../../../middleware/authMiddleware";
 import { AppError } from "../../../config/utils/AppError";
 import { RFQService } from "../services/rfq.service";
@@ -542,8 +543,8 @@ export class RFQController {
     }
 
     async handleGetAllRFQ(req:Request,res:Response){
-        const pagination = PaginationQuerySchema.parse(req.query);
-        const rfq = await rfqService.getAllRFQ(pagination);
+        const queryParams = RfqPaginationQuerySchema.parse(req.query);
+        const rfq = await rfqService.getAllRFQ(queryParams);
         res.status(200).json({
             status: 'success',
             data: rfq.data,
@@ -556,8 +557,8 @@ export class RFQController {
         }
         const { id } = req.user;
         const { projectId } = req.params;
-        const pagination = PaginationQuerySchema.parse(req.query);
-        const rfq = await rfqService.sents(pagination, id, projectId);
+        const queryParams = RfqPaginationQuerySchema.parse(req.query);
+        const rfq = await rfqService.sents(queryParams, id, projectId);
         
         res.status(200).json({
             status: 'success',
@@ -571,8 +572,8 @@ export class RFQController {
         }
         const { id } = req.user;
         const { projectId } = req.params;
-        const pagination = PaginationQuerySchema.parse(req.query);
-        const rfq = await rfqService.received(pagination, id, projectId);
+        const queryParams = RfqPaginationQuerySchema.parse(req.query);
+        const rfq = await rfqService.received(queryParams, id, projectId);
         res.status(200).json({
             status: 'success',
             data: rfq.data,

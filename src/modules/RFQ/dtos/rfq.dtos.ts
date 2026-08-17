@@ -95,3 +95,12 @@ export const UpdateRfqPayloadSchema = CreateRfqSchema.omit({ status: true, wbtSt
 export type CreateRfqInput = z.infer<typeof CreateRfqSchema>;
 export type UpdateRfqInput = z.infer<typeof UpdateRfqSchema>;
 export type GetRfqInput = { id: string };
+
+import { PaginationQuerySchema } from "../../../utils/pagination";
+
+export const RfqPaginationQuerySchema = PaginationQuerySchema.extend({
+  searchByProjectName: z.string().optional(),
+  status: z.enum(RFQStatus).optional(),
+});
+
+export type RfqPaginationQuery = z.infer<typeof RfqPaginationQuerySchema>;

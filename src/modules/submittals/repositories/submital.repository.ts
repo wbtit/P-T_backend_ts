@@ -185,7 +185,7 @@ export class SubmitalRepository {
         project: { status: { in: ["ACTIVE", "ONHOLD"] } },
         currentVersionId: { not: null },
         bfaStatus: false,
-        stage: { not: "IFC" },
+        stage: { notIn: ["IFC", "RIFC"] },
         isAproovedByAdmin: true,               // WBT has sent it
         clientResponseStatus: "PENDING",       // Client has NOT replied yet (so it's pending on their side)
         ...getRfiSubmittalVisibilityFilter(role),
@@ -228,7 +228,7 @@ async getPendingSubmittalsForClientAdmin(userId: string, role?: UserRole) {
         project: { status: { in: ["ACTIVE", "ONHOLD"] } },
         currentVersionId: { not: null },
         bfaStatus: false,
-        stage: { not: "IFC" },
+        stage: { notIn: ["IFC", "RIFC"] },
         ...getRfiSubmittalVisibilityFilter(role),
       },
       include: {
@@ -255,7 +255,7 @@ async getPendingSubmittalsForClientAdmin(userId: string, role?: UserRole) {
         project: { clientProjectManagers: { some: { id: userId } }, status: { not: "INACTIVE" } },
         currentVersionId: { not: null },
         bfaStatus: false,
-        stage: { not: "IFC" },
+        stage: { notIn: ["IFC", "RIFC"] },
         ...getRfiSubmittalVisibilityFilter(role),
       },
       include: {
@@ -519,7 +519,7 @@ async getPendingSubmittalsForProjectManager(managerId: string, role?: UserRole) 
     return prisma.submittals.findMany({
       where: {
         bfaStatus: false,
-        stage: { not: "IFC" },
+        stage: { notIn: ["IFC", "RIFC"] },
         currentVersionId: { not: null },
         isAproovedByAdmin: true,
         clientResponseStatus: { not: "PENDING" },

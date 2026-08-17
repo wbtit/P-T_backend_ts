@@ -1,9 +1,10 @@
 import { Prisma } from "@prisma/client";
 import prisma from "../../../config/database/client";
-import { paginate, PaginationQuery } from "../../../utils/pagination";
+import { paginate } from "../../../utils/pagination";
 import { CreateRfqInput,
     GetRfqInput,
-    UpdateRfqInput
+    UpdateRfqInput,
+    RfqPaginationQuery
  } from "../dtos";
 import { cleandata } from "../../../config/utils/cleanDataObject";
 
@@ -98,9 +99,20 @@ export class RFQRepository {
         });
     }
 
-    async getAllRFQ(query: PaginationQuery){
+    async getAllRFQ(query: RfqPaginationQuery){
         return await paginate(prisma.rFQ, {
-            where: { isDeleted: false },
+            where: {
+                isDeleted: false,
+                ...(query.status ? { status: query.status } : {}),
+                ...(query.searchByProjectName
+                    ? {
+                        projectName: {
+                            contains: query.searchByProjectName,
+                            mode: "insensitive" as Prisma.QueryMode,
+                        },
+                      }
+                    : {}),
+            },
             select: RFQ_LIST_SELECT,
             orderBy: { createdAt: "desc" },
         }, query)
@@ -287,7 +299,7 @@ export class RFQRepository {
         });
 
     }
-    async sentTouser(query: PaginationQuery, senderId:string, projectId?: string){
+    async sentTouser(query: RfqPaginationQuery, senderId:string, projectId?: string){
         return await paginate(prisma.rFQ, {
             where:{
                 isDeleted: false,
@@ -299,7 +311,7 @@ export class RFQRepository {
         }, query)
     }
 
-    async Inbox(query: PaginationQuery, recipientId:string, projectId?: string){
+    async Inbox(query: RfqPaginationQuery, recipientId:string, projectId?: string){
         return await paginate(prisma.rFQ, {
             where: {
                 isDeleted: false,
