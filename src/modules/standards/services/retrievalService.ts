@@ -25,8 +25,9 @@ export interface RetrievedChunk {
 }
 
 export interface SearchStandardsResponse {
-  general: RetrievedChunk[];
-  fabricator: RetrievedChunk[];
+  general: RetrievedChunk[] | null;
+  fabricator: RetrievedChunk[] | null;
+  project: RetrievedChunk[] | null;
 }
 
 import { standardAbbreviations } from "../../../utils/abbreviations";
@@ -85,7 +86,7 @@ async function searchScope(
   embedding: number[],
   scopeCondition: string,
   options: SearchStandardsOptions
-): Promise<RetrievedChunk[]> {
+): Promise<RetrievedChunk[] | null> {
   const { query, projectId, threshold = 0.45, alpha = 0.0, acceptanceThreshold = 0.60 } = options;
   const vectorString = `[${embedding.join(",")}]`;
   const queryTokens = tokenizeAndNormalize(query);
@@ -106,24 +107,72 @@ async function searchScope(
   `;
 
   let results: any[];
-  if (scopeCondition === "GENERAL") {
+  if (scopeCondition === "GENERAL" || scopeCondition === "PROJECT") {
+    if (!projectId) {
+      return [];
+    }
+
+    const prefs = await prisma.projectStandardPreference.findMany({
+      where: { 
+        projectId,
+        sourceType: scopeCondition
+      },
+      select: { standardFamilyId: true }
+    });
+    const preferredFamilyIds = prefs.map(p => p.standardFamilyId);
+
+    // Short-circuit: if the project has zero preferences, it gets zero results.
+    if (preferredFamilyIds.length === 0) {
+      console.log(`[RetrievalService] scopeCondition '${scopeCondition}' short-circuiting: 0 preferences selected for project.`);
+      return null;
+    }
+
     querySql += `
       JOIN standard_documents d ON c.document_id = d.id
-      WHERE c.source_type = 'GENERAL' AND d.status = 'ACTIVE'
+      WHERE c.source_type = $4::"StandardSourceType" AND d.status = 'ACTIVE' AND d.document_family_id = ANY($3::text[])
       AND 1 - (c.embedding <=> $1::vector) > $2
       ORDER BY c.embedding <=> $1::vector
       LIMIT 10
     `;
-    results = await prisma.$queryRawUnsafe(querySql, vectorString, threshold);
-  } else {
+    console.log(`[RetrievalService] Executing vector search for '${scopeCondition}' against families:`, preferredFamilyIds);
+    results = await prisma.$queryRawUnsafe(querySql, vectorString, threshold, preferredFamilyIds, scopeCondition);
+  } else if (scopeCondition === "FABRICATOR") {
+    const proj = await prisma.project.findUnique({
+      where: { id: projectId },
+      select: { fabricatorID: true }
+    });
+    
+    if (!proj || !proj.fabricatorID) {
+      console.log(`[RetrievalService] scopeCondition 'FABRICATOR' short-circuiting: Project has no fabricator ID.`);
+      return null;
+    }
+
+    // Check if fabricator has any ACTIVE FABRICATOR-tier document
+    const activeDoc = await prisma.standardDocument.findFirst({
+      where: { 
+        fabricatorId: proj.fabricatorID,
+        sourceType: "FABRICATOR",
+        status: "ACTIVE"
+      }
+    });
+
+    if (!activeDoc) {
+      console.log(`[RetrievalService] scopeCondition 'FABRICATOR' short-circuiting: Fabricator ${proj.fabricatorID} has no ACTIVE documents.`);
+      return null; // Distinct "not applicable" state
+    }
+
     querySql += `
       JOIN standard_documents d ON c.document_id = d.id
-      WHERE c.source_type = 'FABRICATOR' AND c.project_id = $2::uuid AND d.status = 'ACTIVE'
+      WHERE c.source_type = $4::"StandardSourceType" AND c.fabricator_id = $2::uuid AND d.status = 'ACTIVE'
       AND 1 - (c.embedding <=> $1::vector) > $3
       ORDER BY c.embedding <=> $1::vector
       LIMIT 10
     `;
-    results = await prisma.$queryRawUnsafe(querySql, vectorString, projectId, threshold);
+    console.log(`[RetrievalService] Executing vector search for 'FABRICATOR' against fabricatorId: ${proj.fabricatorID}`);
+    results = await prisma.$queryRawUnsafe(querySql, vectorString, proj.fabricatorID, threshold, scopeCondition);
+  } else {
+    // Unsupported scope
+    return [];
   }
 
   // Map of chunk id -> anchor chunk (expanded from shared heading).
@@ -238,10 +287,11 @@ export async function searchStandards(options: SearchStandardsOptions): Promise<
   const { query, projectId } = options;
   const queryEmbedding = await generateEmbedding(query);
 
-  const [general, fabricator] = await Promise.all([
+  const [general, fabricator, project] = await Promise.all([
     searchScope(queryEmbedding, "GENERAL", options),
-    searchScope(queryEmbedding, "FABRICATOR", options)
+    searchScope(queryEmbedding, "FABRICATOR", options),
+    searchScope(queryEmbedding, "PROJECT", options)
   ]);
 
-  return { general, fabricator };
+  return { general, fabricator, project };
 }

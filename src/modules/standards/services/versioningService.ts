@@ -18,14 +18,21 @@ export class StandardsVersioningService {
       }
       
       // Determine scope
-      const whereClause: any = { status: "ACTIVE", sourceType: newDoc.sourceType };
+      const whereClause: any = { 
+        status: "ACTIVE", 
+        sourceType: newDoc.sourceType,
+        documentFamilyId: newDoc.documentFamilyId 
+      };
+
       if (newDoc.sourceType === "FABRICATOR") {
-        whereClause.projectId = newDoc.projectId;
         whereClause.fabricatorId = newDoc.fabricatorId;
-      } else if (newDoc.sourceType === "GENERAL" && newDoc.documentFamilyId) {
-        // For GENERAL, scope by family if provided. 
-        // This allows multiple global standards (e.g. AISC and ACI) to coexist.
-        whereClause.documentFamilyId = newDoc.documentFamilyId;
+        whereClause.projectId = null;
+      } else if (newDoc.sourceType === "PROJECT") {
+        whereClause.fabricatorId = newDoc.fabricatorId;
+        whereClause.projectId = newDoc.projectId;
+      } else if (newDoc.sourceType === "GENERAL") {
+        whereClause.fabricatorId = null;
+        whereClause.projectId = null;
       }
 
       // Supersede all existing active docs in scope
@@ -37,7 +44,10 @@ export class StandardsVersioningService {
       // Activate the new doc
       await tx.standardDocument.update({
         where: { id: documentId },
-        data: { status: "ACTIVE" }
+        data: { 
+          status: "ACTIVE",
+          processingStage: null 
+        }
       });
     });
   }

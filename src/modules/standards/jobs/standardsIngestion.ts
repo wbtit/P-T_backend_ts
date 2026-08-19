@@ -85,6 +85,17 @@ export const startStandardsIngestionWorker = () => {
       const doc = await prisma.standardDocument.findUnique({ where: { id: documentId } });
       if (!doc) throw new Error(`Document not found: ${documentId}`);
 
+      // Update DB to reflect EXTRACTING start
+      await prisma.standardDocument.update({
+        where: { id: documentId },
+        data: {
+          processingStage: "EXTRACTING",
+          pagesProcessed: 0,
+          totalPages: 0,
+          failureReason: null
+        }
+      });
+
       if (isStandaloneStandardImage(doc.storagePath)) {
         const uploadBaseDir = path.resolve(process.cwd(), "uploads");
         const outputDir = path.join(uploadBaseDir, "standards", doc.sourceType, doc.id, "pages");
@@ -172,11 +183,27 @@ export const startStandardsIngestionWorker = () => {
         // Atomically move the fully staged temp directory into place
         await fs.promises.rename(tempDir, outputDir);
         
-        // 3. Atomic database commit
-        await prisma.$transaction([
-          prisma.standardPage.deleteMany({ where: { documentId: doc.id } }),
-          prisma.standardPage.createMany({ data: allPagesData })
-        ]);
+        // 3. Database commit with batching
+        await prisma.standardPage.deleteMany({ where: { documentId: doc.id } });
+        
+        await prisma.standardDocument.update({
+          where: { id: documentId },
+          data: { totalPages: pngFiles.length }
+        });
+
+        const BATCH_SIZE = 50;
+        let pagesProcessed = 0;
+        for (let i = 0; i < allPagesData.length; i += BATCH_SIZE) {
+          const batch = allPagesData.slice(i, i + BATCH_SIZE);
+          await prisma.standardPage.createMany({ data: batch });
+          pagesProcessed += batch.length;
+          
+          await prisma.standardDocument.update({
+            where: { id: documentId },
+            data: { pagesProcessed }
+          });
+        }
+
         
         // Cleanup backup if transaction succeeds
         if (hadPreviousOutput) {

@@ -925,6 +925,7 @@ model Project {
   coordinationDrawings    CoordinationDrawing[]
   standardDocuments       StandardDocument[]
   standardChatMessages    StandardChatMessage[]
+  standardPreferences     ProjectStandardPreference[]
 
   @@index([name])
   @@index([fabricatorID])
@@ -2505,11 +2506,10 @@ enum BfaStatus {
   complete
 }
 
-
-
 enum StandardSourceType {
   GENERAL
   FABRICATOR
+  PROJECT
 }
 
 enum StandardChunkType {
@@ -2524,14 +2524,43 @@ enum StandardDocumentStatus {
   FAILED
 }
 
+model StandardFamily {
+  id          String   @id // e.g., "AISC-CM-14", "GSMS"
+  familyCode  String   @map("family_code")
+  edition     String
+  isDefault   Boolean  @default(false) @map("is_default")
+
+  preferences ProjectStandardPreference[]
+  documents   StandardDocument[]
+
+  @@map("standard_families")
+}
+
+model ProjectStandardPreference {
+  id               String             @id @default(uuid()) @db.Uuid
+  projectId        String             @map("project_id") @db.Uuid
+  standardFamilyId String             @map("standard_family_id")
+  sourceType       StandardSourceType @default(GENERAL) @map("source_type")
+
+  project        Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  standardFamily StandardFamily @relation(fields: [standardFamilyId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, standardFamilyId, sourceType])
+  @@map("project_standard_preferences")
+}
+
 model StandardDocument {
-  id           String             @id @default(uuid()) @db.Uuid
-  sourceType   StandardSourceType @map("source_type")
-  projectId    String?            @map("project_id") @db.Uuid
-  fabricatorId String?            @map("fabricator_id") @db.Uuid
+  id               String                 @id @default(uuid()) @db.Uuid
+  sourceType       StandardSourceType     @map("source_type")
+  projectId        String?                @map("project_id") @db.Uuid
+  fabricatorId     String?                @map("fabricator_id") @db.Uuid
   pdfName          String                 @map("pdf_name")
   storagePath      String                 @map("storage_path")
   status           StandardDocumentStatus @default(PENDING)
+  processingStage  String?                @map("processing_stage") // EXTRACTING, CLASSIFYING, CHUNKING
+  pagesProcessed   Int                    @default(0) @map("pages_processed")
+  totalPages       Int                    @default(0) @map("total_pages")
+  failureReason    String?                @map("failure_reason")
   documentFamilyId String?                @map("document_family_id")
   excludedPages    Int[]                  @default([]) @map("excluded_pages")
   uploadedAt       DateTime               @default(now()) @map("uploaded_at")
@@ -2539,6 +2568,7 @@ model StandardDocument {
   // Relations
   project       Project?             @relation(fields: [projectId], references: [id], onDelete: Restrict)
   fabricator    Fabricator?          @relation(fields: [fabricatorId], references: [id], onDelete: Restrict)
+  documentFamily StandardFamily?      @relation(fields: [documentFamilyId], references: [id], onDelete: Restrict)
   chunks        StandardChunk[]
   pinnedAnswers StandardChatAnswer[]
   StandardPage  StandardPage[]
@@ -2547,18 +2577,18 @@ model StandardDocument {
 }
 
 model StandardChunk {
-  id           String            @id @default(uuid()) @db.Uuid
-  documentId   String            @map("document_id") @db.Uuid
-  chunkType    StandardChunkType @map("chunk_type")
-  pageStart    Int               @map("page_start")
-  pageEnd      Int               @map("page_end")
-  textContent  String            @map("text_content") @db.Text
-  
+  id          String            @id @default(uuid()) @db.Uuid
+  documentId  String            @map("document_id") @db.Uuid
+  chunkType   StandardChunkType @map("chunk_type")
+  pageStart   Int               @map("page_start")
+  pageEnd     Int               @map("page_end")
+  textContent String            @map("text_content") @db.Text
+
   // Denormalized metadata for efficient vector filtering
-  sourceType   StandardSourceType   @map("source_type")
-  projectId    String?              @map("project_id") @db.Uuid
-  fabricatorId String?              @map("fabricator_id") @db.Uuid
-  heading      String?              @map("heading")
+  sourceType   StandardSourceType @map("source_type")
+  projectId    String?            @map("project_id") @db.Uuid
+  fabricatorId String?            @map("fabricator_id") @db.Uuid
+  heading      String?            @map("heading")
 
   // Storing a 768-dimensional vector for Ollama nomic-embed-text embeddings.
   embedding Unsupported("vector(768)")?
@@ -2596,28 +2626,28 @@ model StandardChatAnswer {
   anchorPageStart   Int?               @map("anchor_page_start")
   anchorPageEnd     Int?               @map("anchor_page_end")
   imagePaths        String[]           @map("image_paths") // Array of string paths
-  pinnedDocumentId  String             @map("pinned_document_id") @db.Uuid
+  pinnedDocumentId  String?            @map("pinned_document_id") @db.Uuid
 
-  citations         StandardChatCitation[]
+  citations StandardChatCitation[]
 
   // Relations
   message        StandardChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
-  pinnedDocument StandardDocument    @relation(fields: [pinnedDocumentId], references: [id], onDelete: Restrict)
+  pinnedDocument StandardDocument?   @relation(fields: [pinnedDocumentId], references: [id], onDelete: Restrict)
 
   @@map("standard_chat_answers")
 }
 
 model StandardChatCitation {
-  id                String             @id @default(uuid()) @db.Uuid
-  answerId          String             @map("answer_id") @db.Uuid
-  chunkType         StandardChunkType  @map("chunk_type")
-  citationPdfName   String             @map("citation_pdf_name")
-  citationPageStart Int                @map("citation_page_start")
-  citationPageEnd   Int                @map("citation_page_end")
-  anchorPageStart   Int?               @map("anchor_page_start")
-  anchorPageEnd     Int?               @map("anchor_page_end")
-  imagePaths        String[]           @map("image_paths")
-  rank              Int                @map("rank")
+  id                String            @id @default(uuid()) @db.Uuid
+  answerId          String            @map("answer_id") @db.Uuid
+  chunkType         StandardChunkType @map("chunk_type")
+  citationPdfName   String            @map("citation_pdf_name")
+  citationPageStart Int               @map("citation_page_start")
+  citationPageEnd   Int               @map("citation_page_end")
+  anchorPageStart   Int?              @map("anchor_page_start")
+  anchorPageEnd     Int?              @map("anchor_page_end")
+  imagePaths        String[]          @map("image_paths")
+  rank              Int               @map("rank")
 
   answer StandardChatAnswer @relation(fields: [answerId], references: [id], onDelete: Cascade)
 

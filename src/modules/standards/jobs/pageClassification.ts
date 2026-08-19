@@ -49,6 +49,10 @@ export const startPageClassificationWorker = () => {
       if ((global as any).io) {
         (global as any).io.emit("standards-progress", { documentId, status: "CLASSIFYING", progress: 33 });
       }
+      const doc = await prisma.standardDocument.findUnique({ where: { id: documentId } });
+      if (!doc) {
+        throw new Error(`Document not found: ${documentId}`);
+      }
 
       const pages = await prisma.standardPage.findMany({
         where: { documentId },
@@ -57,18 +61,28 @@ export const startPageClassificationWorker = () => {
       if (pages.length === 0) {
         throw new Error(`No pages found for document: ${documentId}`);
       }
-
-      const doc = await prisma.standardDocument.findUnique({ where: { id: documentId } });
-      if (!doc) {
-        throw new Error(`Document not found: ${documentId}`);
-      }
       
+      // Update DB to reflect CLASSIFYING start
+      await prisma.standardDocument.update({
+        where: { id: documentId },
+        data: {
+          processingStage: "CLASSIFYING",
+          totalPages: pages.length,
+          pagesProcessed: 0,
+          failureReason: null
+        }
+      });
+
       const isStandaloneImage = isStandaloneStandardImage(doc.storagePath);
 
       const classifiedPages = pages.map(page => {
         const classification = isStandaloneImage ? "VISUAL" : classifyPageText(page.textContent);
         return { ...page, classification, ocrText: page.ocrText };
       });
+
+      let pagesProcessed = 0;
+      let batch: any[] = [];
+      const BATCH_SIZE = 50;
 
       for (const page of classifiedPages) {
         if (page.classification === "VISUAL" && page.imagePath) {
@@ -84,20 +98,36 @@ export const startPageClassificationWorker = () => {
         } else {
           page.ocrText = null;
         }
+
+        batch.push(
+          prisma.standardPage.update({
+            where: { id: page.id },
+            data: { 
+              classification: page.classification,
+              ocrText: page.ocrText || null
+            },
+          })
+        );
+
+        pagesProcessed++;
+
+        if (batch.length >= BATCH_SIZE) {
+          await prisma.$transaction(batch);
+          await prisma.standardDocument.update({
+            where: { id: documentId },
+            data: { pagesProcessed }
+          });
+          batch = [];
+        }
       }
 
-      const updates = classifiedPages.map(page => {
-        return prisma.standardPage.update({
-          where: { id: page.id },
-          data: { 
-            classification: page.classification,
-            ocrText: page.ocrText || null
-          },
+      if (batch.length > 0) {
+        await prisma.$transaction(batch);
+        await prisma.standardDocument.update({
+          where: { id: documentId },
+          data: { pagesProcessed }
         });
-      });
-
-      // Execute all updates in a single transaction
-      await prisma.$transaction(updates);
+      }
       
       try {
         const { chunkingQueue } = require("./chunking");

@@ -7,15 +7,27 @@ import path from "path";
 describe("Standard Document Family Scoping", () => {
   let dummyPdfPath: string;
 
-  beforeAll(() => {
+  beforeAll(async () => {
     dummyPdfPath = path.join("/tmp", `dummy-${Date.now()}.pdf`);
     fs.writeFileSync(dummyPdfPath, "dummy content");
+    await prisma.standardFamily.createMany({
+      data: [
+        { id: "TEST_FAMILY_1", familyCode: "TF1", edition: "1", isDefault: false },
+        { id: "TEST_FAMILY_2", familyCode: "TF2", edition: "1", isDefault: false },
+        { id: "TEST_FAMILY_3", familyCode: "TF3", edition: "1", isDefault: false },
+        { id: "TEST_FAMILY_4", familyCode: "TF4", edition: "1", isDefault: false }
+      ],
+      skipDuplicates: true
+    });
   });
 
   afterAll(async () => {
     // cleanup
     await prisma.standardDocument.deleteMany({
-      where: { documentFamilyId: { in: ["TEST_FAMILY_1", "TEST_FAMILY_2"] } }
+      where: { documentFamilyId: { in: ["TEST_FAMILY_1", "TEST_FAMILY_2", "TEST_FAMILY_3", "TEST_FAMILY_4"] } }
+    });
+    await prisma.standardFamily.deleteMany({
+      where: { id: { in: ["TEST_FAMILY_1", "TEST_FAMILY_2", "TEST_FAMILY_3", "TEST_FAMILY_4"] } }
     });
     await prisma.standardDocument.deleteMany({
       where: { pdfName: { startsWith: "fam" } }

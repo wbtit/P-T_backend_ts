@@ -123,6 +123,7 @@ export class CommentService{
 
         return await prisma.comment.findMany({
             where: {
+                acknowledged: true,
                 task: { user_id: userId },
                 user: { role: { in: MANAGER_ROLES as any } },
                 reads: { none: { userId } }
@@ -144,6 +145,7 @@ export class CommentService{
 
         return await prisma.comment.findMany({
             where: {
+                acknowledged: true,
                 OR: [
                     { task: { created_by: managerId } },
                     { task: { project: { managerID: managerId } } }

@@ -1,13 +1,10 @@
 import prisma from "../../../config/database/client";
 import { searchStandards, RetrievedChunk } from "./retrievalService";
-import { standardsGenerationQueue, standardsGenerationEvents } from "../jobs/standardsGeneration";
 import { StandardChunkType, StandardSourceType, StandardChatMessage, StandardChatAnswer } from "@prisma/client";
 
 export type ChatMessageWithAnswers = StandardChatMessage & {
   answers: (StandardChatAnswer & { citations: any[] })[];
 };
-
-const ENABLE_GENERATION = true; // Gowtham wants to evaluate LLM answers
 
 function buildImagePaths(hit: RetrievedChunk, anchor?: RetrievedChunk): string[] {
   // Convert documentId and pageStart into proper paths
@@ -32,17 +29,6 @@ export async function askStandards(
   projectId: string,
   queryText: string
 ): Promise<ChatMessageWithAnswers> {
-  const message = await prisma.standardChatMessage.create({
-    data: {
-      projectId,
-      queryText,
-    }
-  });
-  // Note on Threshold Precision Ceiling: 
-  // We use 0.6 as a compromise. A higher threshold (~0.69) is required to eliminate all cross-document 
-  // false positives (e.g., the AGA galvanizing appendix scores ~0.67 against "steel recipe and carbon 
-  // content"). However, raising it that high drops legitimate sparse VISUAL matches (e.g., "clip angles" 
-  // scores ~0.63). We accept the false positive risk for broad queries to preserve recall on visual pages.
   console.log(`[ChatService] Received query for projectId ${projectId}: "${queryText}"`);
   console.log(`[ChatService] Starting vector search (candidate floor: 0.45, acceptance threshold: 0.60)...`);
   const searchResults = await searchStandards({ 
@@ -52,30 +38,75 @@ export async function askStandards(
     acceptanceThreshold: 0.00, 
     alpha: 0.05 
   });
-  console.log(`[ChatService] Vector search complete. Found ${searchResults.general.length} GENERAL hits and ${searchResults.fabricator.length} FABRICATOR hits.`);
+  console.log(`[ChatService] Vector search complete. Found ` +
+    `${searchResults.general ? searchResults.general.length : "null (no prefs)"} GENERAL, ` +
+    `${searchResults.fabricator ? searchResults.fabricator.length : "null (no docs)"} FABRICATOR, ` +
+    `${searchResults.project ? searchResults.project.length : "null (no prefs)"} PROJECT hits.`
+  );
 
-  async function processSource(chunks: RetrievedChunk[], sourceType: StandardSourceType) {
+  const message = await prisma.standardChatMessage.create({
+    data: {
+      projectId,
+      queryText,
+    }
+  });
+
+  async function processSource(chunks: RetrievedChunk[] | null, sourceType: StandardSourceType) {
     const startMeasure = performance.now();
+    
+    // "Not applicable" check: zero-preference or no docs
+    if (chunks === null) {
+      console.log(`[ChatService] ${sourceType} tier has chunks=null. Reason: 0 preferences or no applicable docs.`);
+      if (sourceType === "FABRICATOR") {
+        console.log(`[ChatService] ${sourceType} tier skipping entirely (no FABRICATOR docs found).`);
+        // Just return null for FABRICATOR if not applicable (absent completely).
+        return null;
+      }
+      console.log(`[ChatService] ${sourceType} tier returning 'Not covered by your selected standard families'.`);
+      // For GENERAL/PROJECT, return distinct response for 0 preferences
+      return prisma.standardChatAnswer.create({
+        data: {
+          messageId: message.id,
+          sourceType,
+          chunkType: "PROSE",
+          answerText: "Not covered by your selected standard families.",
+          pinnedDocumentId: null
+        }
+      });
+    }
+
     // Floor rule: only return answers if the top hit clears 0.60.
-    // No hit means retrieval found nothing above the candidate floor.
-    // Score below 0.60 means nothing is accepted — return "not covered".
     if (chunks.length === 0 || chunks[0].similarity < 0.60) {
+      if (chunks.length === 0) {
+        console.log(`[ChatService] ${sourceType} tier found 0 chunks. Proceeding to fallback logic.`);
+      } else {
+        console.log(`[ChatService] ${sourceType} tier top hit scored ${chunks[0].similarity.toFixed(3)} which is BELOW the 0.60 floor. Proceeding to fallback logic.`);
+      }
+      
       // Resolve the ACTIVE document scoped correctly to this source/project.
-      // GENERAL is project-agnostic; FABRICATOR must be scoped to this project.
-      // If no ACTIVE document exists for this scope, that is an error state —
-      // the standard has not been uploaded yet and we cannot create a "not covered" answer
-      // without a valid pinnedDocumentId. We throw rather than silently pin a wrong document.
-      const docQuery = sourceType === "FABRICATOR"
-        ? { sourceType, projectId, status: "ACTIVE" as const }
-        : { sourceType, status: "ACTIVE" as const };
+      const docQuery: any = { sourceType, status: "ACTIVE" as const };
+      if (sourceType === "FABRICATOR") {
+        const p = await prisma.project.findUnique({ where: { id: projectId }, select: { fabricatorID: true } });
+        if (p?.fabricatorID) docQuery.fabricatorId = p.fabricatorID;
+      } else if (sourceType === "PROJECT") {
+        docQuery.projectId = projectId;
+      }
+      
+      console.log(`[ChatService] Searching for a fallback document for ${sourceType} tier using query:`, docQuery);
       const doc = await prisma.standardDocument.findFirst({ where: docQuery });
 
       if (!doc) {
-        throw new Error(
-          `[ChatService] No ACTIVE ${sourceType} document found for projectId=${projectId}. ` +
-          `Cannot create a "not covered" answer without a valid pinnedDocumentId. ` +
-          `Upload a standard for this scope before querying.`
-        );
+        // Should not happen for FABRICATOR (since null was handled), but could happen if db changes
+        console.warn(`[ChatService] WARNING: No ACTIVE document found for ${sourceType} fallback, using null pin.`);
+        return prisma.standardChatAnswer.create({
+          data: {
+            messageId: message.id,
+            sourceType,
+            chunkType: "PROSE",
+            answerText: "Not covered by this standard.",
+            pinnedDocumentId: null
+          }
+        });
       }
 
       return prisma.standardChatAnswer.create({
@@ -98,9 +129,6 @@ export async function askStandards(
     if (!docMap.has(topHits[0].documentId)) throw new Error("Document not found");
 
     const citationsData = topHits.map((hit, index) => {
-      // Use the anchor explicitly linked by retrievalService during the heading-expansion
-      // pass. This is the Phase 5 definition: same document + same heading.
-      // Proximity is NOT used — anchors can be many pages from the hit (Phase 6).
       const anchor = hit.anchor;
       const hitDoc = docMap.get(hit.documentId);
       
@@ -129,34 +157,15 @@ export async function askStandards(
       }
     });
     
-    // Optional Generation
-    if (ENABLE_GENERATION && topHits[0].chunkType === "PROSE") {
-      const genStart = performance.now();
-      try {
-        const job = await standardsGenerationQueue.add("generate", {
-          query: queryText,
-          chunks: [topHits[0]] // ONLY rank-1 context
-        });
-        const generatedText = await job.waitUntilFinished(standardsGenerationEvents);
-        
-        await prisma.standardChatAnswer.update({
-          where: { id: answer.id },
-          data: { answerText: generatedText }
-        });
-        console.log(`[ChatService] processSource for ${sourceType} GENERATION latency: ${(performance.now() - genStart).toFixed(2)}ms`);
-      } catch (err) {
-        console.error(`[ChatService] Generation failed for ${sourceType}:`, err);
-      }
-    }
-
     console.log(`[ChatService] processSource for ${sourceType} latency: ${(performance.now() - startMeasure).toFixed(2)}ms`);
     return answer;
   }
 
   const generalPromise = processSource(searchResults.general, "GENERAL");
   const fabricatorPromise = processSource(searchResults.fabricator, "FABRICATOR");
+  const projectPromise = processSource(searchResults.project, "PROJECT");
 
-  await Promise.all([generalPromise, fabricatorPromise]);
+  await Promise.all([generalPromise, fabricatorPromise, projectPromise]);
 
   return prisma.standardChatMessage.findUniqueOrThrow({
     where: { id: message.id },

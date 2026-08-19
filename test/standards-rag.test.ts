@@ -102,8 +102,8 @@ describe("Phase 1: Standards RAG Foundation", () => {
 
     // We must use $executeRawUnsafe to insert the vector because Prisma ignores Unsupported types in .create()
     await prisma.$executeRawUnsafe(`
-      INSERT INTO standard_chunks (id, document_id, chunk_type, page_start, page_end, text_content, embedding)
-      VALUES ($1::uuid, $2::uuid, 'PROSE', 1, 1, 'test prose content', $3::vector)
+      INSERT INTO standard_chunks (id, document_id, chunk_type, page_start, page_end, text_content, embedding, source_type)
+      VALUES ($1::uuid, $2::uuid, 'PROSE', 1, 1, 'test prose content', $3::vector, 'GENERAL')
     `, chunkId, documentId, JSON.stringify(mockVector));
 
     const result: any = await prisma.$queryRawUnsafe(`
@@ -133,6 +133,7 @@ describe("Phase 1: Standards RAG Foundation", () => {
       data: {
         messageId,
         sourceType: "FABRICATOR",
+        chunkType: "PROSE",
         answerText: "You do X like this.",
         citationPdfName: "test_standards.pdf",
         citationPageStart: 1,
