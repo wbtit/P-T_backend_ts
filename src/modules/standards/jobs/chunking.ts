@@ -1,3 +1,26 @@
+
+export function constructChunkText(page: any, lastHeading: string): string {
+  if (page.classification === "VISUAL") {
+    const contextPrefix = lastHeading ? `Context: Under section "${lastHeading}"\n\n` : `Context: Visual Page\n\n`;
+    const textContent = page.textContent || "";
+    let ocrText = page.ocrText || "";
+    
+    const SEPARATOR = "\n\n";
+    const rawBudget = 4000 - contextPrefix.length - textContent.length - (textContent && ocrText ? SEPARATOR.length : 0);
+    const budget = Math.max(0, rawBudget);
+    
+    if (budget > 0 && ocrText.length > budget) {
+      ocrText = ocrText.substring(0, budget);
+    } else if (budget === 0) {
+      ocrText = "";
+    }
+
+    return contextPrefix + [textContent, ocrText].filter(Boolean).join(SEPARATOR);
+  }
+  
+  return page.textContent || "";
+}
+
 import { Queue, Worker, Job } from "bullmq";
 import IORedis from "ioredis";
 import prisma from "../../../config/database/client";
@@ -84,8 +107,6 @@ export function startChunkingWorker() {
         
         if (page.textContent && page.classification) {
           if (!doc.excludedPages || !doc.excludedPages.includes(page.pageNumber)) {
-            let embedText = page.textContent;
-
             const lines = page.textContent.split("\n");
             for (const line of lines) {
               if (headingRegex.test(line.trim())) {
@@ -93,23 +114,7 @@ export function startChunkingWorker() {
               }
             }
 
-            if (page.classification === "VISUAL") {
-              const contextPrefix = lastHeading ? `Context: Under section "${lastHeading}"\n\n` : `Context: Visual Page\n\n`;
-              const textContent = page.textContent || "";
-              let ocrText = page.ocrText || "";
-              
-              const SEPARATOR = "\n\n";
-              const rawBudget = 4000 - contextPrefix.length - textContent.length - (textContent && ocrText ? SEPARATOR.length : 0);
-              const budget = Math.max(0, rawBudget);
-              
-              if (budget > 0 && ocrText.length > budget) {
-                ocrText = ocrText.substring(0, budget);
-              } else if (budget === 0) {
-                ocrText = "";
-              }
-
-              embedText = contextPrefix + [textContent, ocrText].filter(Boolean).join(SEPARATOR);
-            }
+            let embedText = constructChunkText(page, lastHeading);
 
             let finalEmbedText = embedText;
             let tokens = await cachedTokenizer(finalEmbedText, { truncation: false });

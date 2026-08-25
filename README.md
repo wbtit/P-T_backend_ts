@@ -608,3 +608,13 @@ How it helps overall:
 - Surfaces stuck communication early, improves follow-up discipline, and prevents process drift.
 
 ---
+
+---
+
+## ⚠️ Standards Retrieval: Known Limitations
+
+### Hallucination Risk on Misranked Queries
+The `askStandards` generation pipeline uses multi-chunk fusion (evaluating the top 3 chunks) to reduce hallucination when the retrieval layer (`searchStandards`) fails to rank the correct page at #1. 
+However, **the system reduces but does NOT eliminate confident-wrong-answer risk** on these misranked queries.
+* **Measured residual rate:** ~42% of misranked queries (based on a 95-query sample) still produce a confidently wrong answer rather than a correct answer or safe refusal.
+* **Status:** This is a known, open, unresolved limitation — not a solved problem — and should be treated as such by anyone building on top of this system later.

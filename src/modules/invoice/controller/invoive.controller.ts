@@ -29,6 +29,8 @@ export class InvoiceController {
   async handleCreateInvoice(req: AuthenticateRequest, res: Response) {
     try {
       const data = req.body;
+      console.log("=== INVOICE CREATE PAYLOAD FROM FE ===", data);
+      
       const user = req.user;
 
       if (!user?.id) {
@@ -230,8 +232,10 @@ export class InvoiceController {
   // ---------------------------------------------------------------------------
   async handleUpdateInvoice(req: Request, res: Response) {
     try {
-      const { id } = req.params;
       const data = req.body;
+      const { id } = req.params;
+      
+      console.log(`=== INVOICE UPDATE PAYLOAD FROM FE (ID: ${id}) ===`, data);
       const updaterId = (req as AuthenticateRequest).user?.id;
       const hasStatusChange = Object.prototype.hasOwnProperty.call(data, "status");
       const hasPaymentStatusChange = Object.prototype.hasOwnProperty.call(data, "paymentStatus");

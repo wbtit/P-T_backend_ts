@@ -302,10 +302,31 @@ export const rFIOpenApiDoc: ModuleOpenApiDoc = {
         }
       },
     },
+    "/rfi/delete/{id}": {
+      delete: {
+        tags: ["RFI"],
+        summary: "DELETE /rfi/delete/{id} - True/Hard Delete RFI",
+        description: "Permanently deletes the RFI and all associated responses from the database. Requires ADMIN, OPERATION_EXECUTIVE, or DEPUTY_MANAGER role.",
+        operationId: "delete_RFI_rfi_true_delete_id",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { in: "path", name: "id", required: true, schema: { type: "string" } },
+        ],
+        responses: {
+          "200": { description: "Success" },
+          "400": { description: "Bad Request" },
+          "401": { description: "Unauthorized" },
+          "403": { description: "Forbidden" },
+          "404": { description: "RFI not found" },
+          "500": { description: "Internal Server Error" }
+        }
+      },
+    },
     "/rfi/{id}": {
       delete: {
         tags: ["RFI"],
-        summary: "DELETE /rfi/{id}",
+        summary: "DELETE /rfi/{id} - Close RFI (Soft Delete)",
+        description: "Closes the RFI by setting its status to false. Does not remove it from the database.",
         operationId: "delete_RFI_rfi_id",
         security: [{ bearerAuth: [] }],
         parameters: [

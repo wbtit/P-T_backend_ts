@@ -2661,6 +2661,7 @@ model StandardPage {
   imagePath   String   @map("image_path")
   textContent String   @map("text_content") @db.Text
   ocrText     String?  @map("ocr_text") @db.Text
+  visionExtracted Boolean @default(false) @map("vision_extracted")
   createdAt   DateTime @default(now()) @map("created_at")
 
   classification StandardChunkType? @map("classification")

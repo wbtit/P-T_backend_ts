@@ -3,18 +3,18 @@ import { COSTATUS, Prisma } from "@prisma/client";
 
 export const CoResponseSchema = z.object({
   Status: z.enum(COSTATUS).default("NOT_REPLIED"),
-  description: z.string().min(2).max(500),
-  userId: z.string(),
+  description: z.string().optional().default(""),
+  userId: z.string().optional(),
   CoId: z.string().optional(),
   changeOrderVersionId: z.string().optional(),
   parentResponseId: z.string().optional(),       
-    files: z
-              .union([
-                z.array(z.any()),
-                z.literal(null),
-              ])
-              .transform((val) => (val === null ? Prisma.JsonNull : val))
-              .optional(),
+  files: z
+    .union([
+      z.array(z.any()),
+      z.literal(null),
+    ])
+    .transform((val) => (val === null ? Prisma.JsonNull : val))
+    .optional(),
 });
 export const UpdateCoResponseSchema = CoResponseSchema.partial();
 

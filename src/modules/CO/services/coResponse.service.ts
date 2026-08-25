@@ -24,13 +24,13 @@ export class CoResponseService {
     }
 
     // 🔒 Enforce version reference
-    const versionId = changeOrderVersionId || data.changeOrderVersionId;
+    const versionId = changeOrderVersionId || data.changeOrderVersionId || changeOrder.currentVersionId;
     if (!versionId) {
       throw new AppError("changeOrderVersionId is required to create a response", 400);
     }
 
     // 🔒 Only allow responding to the latest version
-    if (changeOrder.currentVersionId !== versionId) {
+    if (changeOrder.currentVersionId && changeOrder.currentVersionId !== versionId) {
       throw new AppError("Responses are allowed only on the latest Change Order version", 400);
     }
 
@@ -46,7 +46,7 @@ export class CoResponseService {
       } else if (!process.env.PMO_EMAIL) {
         console.warn("PMO_EMAIL is not configured; skipping change order invoice alert");
       } else {
-        const ccEmails = await getCCEmails();
+        const ccEmails = await getCCEmails(changeOrder.project);
         const mailOptions={
                 to:process.env.PMO_EMAIL,
                 cc: ccEmails,

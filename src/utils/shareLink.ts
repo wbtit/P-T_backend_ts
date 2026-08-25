@@ -44,10 +44,11 @@ const MODEL_MAP: Record<string, string> = {
   projectProgressReportResponse: "projectProgressReportResponse",
   projectprogressreport: "projectProgressReport",
   projectprogressreportresponse: "projectProgressReportResponse",
-  coordinationDrawing: "coordinationDrawing",
   coordinationDrawingResponse: "coordinationDrawingResponse",
   coordinationdrawing: "coordinationDrawing",
   coordinationdrawingresponse: "coordinationDrawingResponse",
+  bfa: "bFA",
+  bfaVersion: "bfaVersion",
 };
 
 const createShareLink = async (req: Request, res: Response) => {
@@ -76,6 +77,8 @@ const createShareLink = async (req: Request, res: Response) => {
       files = (row.CDAttachments as any[]) || [];
     } else if (table === "rFQ") {
       files = [...((row.files as any[]) || []), ...((row.CDAttachments as any[]) || [])];
+    } else if (table === "bfaVersion") {
+      files = (row.file as any[]) || [];
     } else {
       files = (row.files as any[]) || [];
     }

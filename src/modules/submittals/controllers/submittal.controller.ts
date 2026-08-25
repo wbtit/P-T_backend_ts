@@ -151,11 +151,15 @@ export class SubmittalController {
         });
         const internalEmails = Array.from(new Set(internalUsers.map(u => u.email).filter(Boolean))) as string[];
 
-        if (internalEmails.length > 0) {
+        const targetEmails = isAproovedByAdmin
+          ? Array.from(new Set([...uniqueSubmittalEmails, ...internalEmails]))
+          : internalEmails;
+
+        if (targetEmails.length > 0) {
           const fabricatorName = (await getFabricatorNameForUser(userId, role)) || undefined;
           const ccEmails = await getCCEmails(submittal.project_id);
           await sendEmail({
-            to: internalEmails.join(","),
+            to: targetEmails.join(","),
             cc: ccEmails,
             subject: submittal.subject,
             html: submittalhtmlContent(submittal, fabricatorName),
@@ -543,7 +547,7 @@ export class SubmittalController {
     const existing = await submittalService.getSubmittalById(id, req.user?.role);
     const approvalStatus = updateData.isAproovedByAdmin ?? updateData.isApprovedByAdmin ?? updateData.approval;
     if (approvalStatus !== undefined) {
-      updateData.isAproovedByAdmin = approvalStatus;
+      updateData.isAproovedByAdmin = approvalStatus === true || approvalStatus === "true";
     }
 
     const approvalWasGranted = !existing.isAproovedByAdmin && updateData.isAproovedByAdmin === true;

@@ -82,7 +82,7 @@ export async function generateEmbedding(text: string): Promise<number[]> {
   return data.embedding;
 }
 
-async function searchScope(
+export async function searchScope(
   embedding: number[],
   scopeCondition: string,
   options: SearchStandardsOptions

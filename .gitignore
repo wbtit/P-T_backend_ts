@@ -163,3 +163,19 @@ test_*.ts
 
 # AI tooling
 .gemini/
+
+# Output files and logs
+/*.txt
+/*.jsonl
+
+# Temporary or one-off root scripts
+/run_*.ts
+/status_*.ts
+/migration.sql
+
+# Scratch directory artifacts
+scratch/*.txt
+scratch/*.json
+scratch/diagnose_*.ts
+scratch/fix-*.ts
+scratch/check-*.ts

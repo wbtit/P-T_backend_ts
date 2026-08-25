@@ -24,9 +24,13 @@ function emptyMetrics(): Metrics {
 
 async function run() {
   const data = JSON.parse(fs.readFileSync("docs/specs/eval-set.json", "utf-8"));
-  const devSet: EvalRecord[] = data.dev.filter((d: any) => typeof d.question === 'string' && d.question.trim().length > 0);
-  const holdoutSet: EvalRecord[] = data.holdout.filter((d: any) => typeof d.question === 'string' && d.question.trim().length > 0);
-  const fullSet = [...devSet, ...holdoutSet];
+  const all = [...(data.dev || []), ...(data.holdout || [])].filter((d: any) => typeof d.question === 'string' && d.question.trim().length > 0);
+  
+  const indices = JSON.parse(fs.readFileSync("scratch/benchmark_test_indices.json", "utf-8"));
+  
+  const trainSet = indices.trainIndices.map((i: number) => all[i]);
+  const testSet = indices.testIndices.map((i: number) => all[i]);
+  const fullSet = [...trainSet, ...testSet];
 
   const regressionQueries = [
     { query: "column with cap plate", correctPages: [16, 17], docKey: 'GSMS' },
@@ -43,16 +47,32 @@ async function run() {
     { query: "constructor for minimum slab thickness", correctPages: [], docKey: 'ACI_PENDING' }
   ];
 
+  // Map docKey to docId if missing
+  const docKeyMap: Record<string, string> = {
+    'GSMS': '20ad65bd-03fa-4a33-a26b-a9512b7bfd13',
+    'MM': '5d0ac449-865d-446c-9503-25e68205d51a'
+  };
+  const docProjectMap: Record<string, string> = {
+    '20ad65bd-03fa-4a33-a26b-a9512b7bfd13': '1467dc99-2a50-4bb9-a09d-7b03db2e536d', // GSMS
+    '5d0ac449-865d-446c-9503-25e68205d51a': '1750b493-e567-4f19-a217-041dcafcb209', // MM
+    'c98019bf-dfbb-460f-971a-f003a0c53077': '1467dc99-2a50-4bb9-a09d-7b03db2e536d', // AISC
+  };
+  for (const r of fullSet) {
+    if (!r.docId && docKeyMap[r.docKey]) {
+      r.docId = docKeyMap[r.docKey];
+    }
+  }
+
   // 1. Fetch project IDs from the database dynamically
   const docs = await prisma.standardDocument.findMany({
-    where: { id: { in: [...new Set(fullSet.map((d: any) => d.docId))] } },
+    where: { id: { in: [...new Set(fullSet.map((d: any) => d.docId).filter(Boolean))] } },
     select: { id: true, projectId: true, sourceType: true, pdfName: true }
   });
   const docInfoMap = Object.fromEntries(docs.map(d => [d.id, d]));
 
   // 2. Self-Check: Verify each document returns at least one chunk matching itself
   console.log("Running pre-evaluation self-check...");
-  const uniqueDocIds = [...new Set(fullSet.map(d => d.docId))];
+  const uniqueDocIds = [...new Set(fullSet.map(d => d.docId))].filter(Boolean);
   const docHitCheck: Record<string, boolean> = {};
 
   for (const docId of uniqueDocIds) {
@@ -63,16 +83,17 @@ async function run() {
       console.error(`\nCRITICAL ABORT: Document ${docId} missing from DB.`);
       process.exit(1);
     }
+    const projectId = docInfo.projectId || docProjectMap[docId] || '1467dc99-2a50-4bb9-a09d-7b03db2e536d';
     for (const record of queriesForDoc) {
       // Exercise the same per-source path as production: never merge general+fabricator
       const results = await searchStandards({
         query: record.question,
-        projectId: docInfo.projectId ?? '',
+        projectId,
         threshold: 0.0,
         alpha: 0.05,
         acceptanceThreshold: 0.0
       });
-      const candidates = docInfo.sourceType === 'GENERAL' ? results.general : results.fabricator;
+      const candidates = (docInfo.sourceType === 'GENERAL' ? results.general : results.fabricator) || [];
       if (candidates.some(c => c.documentId === docId)) {
         docHitCheck[docId] = true;
         break;
@@ -100,11 +121,12 @@ async function run() {
 
     let i = 0;
     for (const record of set) {
+      if (!record.docId) continue;
       i++;
-      if (i % 10 === 0) console.log(`  Progress: ${i} / ${set.length}`);
+      if (i % 10 === 0) console.log(`  Progress: ${i} / ${set.filter((r: any) => r.docId).length}`);
       
       const docInfo = docInfoMap[record.docId];
-      const projectId = docInfo?.projectId || '';
+      const projectId = docInfo?.projectId || docProjectMap[record.docId] || '1467dc99-2a50-4bb9-a09d-7b03db2e536d';
       const sourceType = docInfo?.sourceType;
       
       const results = await searchStandards({
@@ -115,7 +137,7 @@ async function run() {
         acceptanceThreshold: 0.00
       });
 
-      let candidates = sourceType === 'GENERAL' ? results.general : results.fabricator;
+      let candidates = (sourceType === 'GENERAL' ? results.general : results.fabricator) || [];
       candidates.sort((a, b) => b.similarity - a.similarity);
 
       const top1 = candidates[0];
@@ -167,8 +189,8 @@ async function run() {
     printMetrics('VISUAL', byType['VISUAL']);
   }
 
-  await evalSet('DEV', devSet);
-  await evalSet('HOLDOUT', holdoutSet);
+  await evalSet('TRAIN (80%)', trainSet);
+  await evalSet('TEST (20% HOLDOUT)', testSet);
 
   // Evaluate regression set
   console.log(`\n=== Evaluating REGRESSION set (${regressionQueries.length} queries) ===`);
@@ -176,7 +198,7 @@ async function run() {
   let irrelevanceTotal = 0;
   
   // Need GSMS project ID for regressions
-  const gsmsProjectId = docInfoMap['80cf6e98-5efc-44a1-adc0-9e2b9445dd9d']?.projectId || '';
+  const gsmsProjectId = docInfoMap['80cf6e98-5efc-44a1-adc0-9e2b9445dd9d']?.projectId || '1467dc99-2a50-4bb9-a09d-7b03db2e536d';
   
   for (const record of regressionQueries) {
     if (record.correctPages.length === 0) {
@@ -190,8 +212,8 @@ async function run() {
         acceptanceThreshold: 0.0 // Production applies floor itself on the sorted list
       });
       // Check each source independently (production behavior)
-      const fabricatorTop1 = results.fabricator[0];
-      const generalTop1 = results.general[0];
+      const fabricatorTop1 = (results.fabricator || [])[0];
+      const generalTop1 = (results.general || [])[0];
       const fabricatorAccepted = fabricatorTop1 && fabricatorTop1.similarity >= 0.60;
       const generalAccepted = generalTop1 && generalTop1.similarity >= 0.60;
       if (fabricatorAccepted || generalAccepted) {
@@ -201,6 +223,38 @@ async function run() {
   }
   if (irrelevanceTotal > 0) {
     console.log(`[IRRELEVANCE] False Positive Rate: ${(fpCount / irrelevanceTotal * 100).toFixed(1)}% (${fpCount}/${irrelevanceTotal})`);
+  }
+
+  // AISC RETRIEVAL QUALITY TEST (Evaluating newly vision-extracted AISC Manual)
+  console.log(`\n=============================================`);
+  console.log(`=== AISC TABLE & PROSE RETRIEVAL PROFILES ===`);
+  console.log(`=============================================\n`);
+
+  const aiscDocId = 'c98019bf-dfbb-460f-971a-f003a0c53077';
+  const aiscQueries = [
+    { query: "W44x335 dimensions and properties", targetPages: [47, 48, 49], type: 'TABLE (Dense W-Shape Table 1-1)' },
+    { query: "W14x90 available strength in axial compression", targetPages: [584, 585, 586], type: 'TABLE (Compression Capacity Table 4-1)' },
+    { query: "available shear strength of bolts", targetPages: [1174, 1175, 1176], type: 'TABLE (Bolt Shear Table 7-1)' },
+    { query: "scope and applicable building codes for structural steel buildings", targetPages: [1630, 1631, 1632], type: 'PROSE (Specification Chapter A)' }
+  ];
+
+  for (const aq of aiscQueries) {
+    const results = await searchStandards({
+      query: aq.query,
+      projectId: '1467dc99-2a50-4bb9-a09d-7b03db2e536d',
+      threshold: 0.45,
+      alpha: 0.05,
+      acceptanceThreshold: 0.0
+    });
+
+    const generalCandidates = (results.general || []).filter(c => c.documentId === aiscDocId);
+    generalCandidates.sort((a, b) => b.similarity - a.similarity);
+    const top = generalCandidates[0];
+    const hitInTop3 = generalCandidates.slice(0, 3).some(c => aq.targetPages.includes(c.pageStart));
+
+    console.log(`Query [${aq.type}]: "${aq.query}"`);
+    console.log(`  Top 1 Result: Page ${top?.pageStart} (Score: ${top?.similarity.toFixed(4)} | Vec: ${top?.vectorSimilarity.toFixed(4)} | Lex: ${top?.lexicalScore.toFixed(4)})`);
+    console.log(`  Target Pages [${aq.targetPages.join(', ')}] in Top 3: ${hitInTop3 ? 'YES' : 'NO'}`);
   }
 }
 

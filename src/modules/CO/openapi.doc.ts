@@ -11,12 +11,13 @@ export const cOOpenApiDoc: ModuleOpenApiDoc = {
     "/changeOrder": {
       post: {
         tags: ["ChangeOrder"],
-        summary: "POST /changeOrder - Create Change Order (Initial version v1 created automatically)",
+        summary: "POST /changeOrder - Create Change Order (Atomically creates CO, initial version v1, and optional coTable rows)",
+        description: "Creates a new Change Order. Automatically generates initial version (v1). Optionally accepts `coTable` (array of table items) to create all table line items atomically in the same transaction before triggering notifications and emails.",
         operationId: "post_CO_changeOrder",
         security: [{ bearerAuth: [] }],
         requestBody: zodRequestBody(CreateCoSchema),
         responses: {
-          "200": { description: "Success" },
+          "201": { description: "Change Order created successfully" },
           "400": { description: "Bad Request" },
           "401": { description: "Unauthorized" },
           "500": { description: "Internal Server Error" }

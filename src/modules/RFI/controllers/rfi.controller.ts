@@ -131,7 +131,11 @@ export class RFIController {
         });
         const internalEmails = Array.from(new Set(internalUsers.map(u => u.email).filter(Boolean))) as string[];
 
-        if (internalEmails.length > 0) {
+        const targetEmails = isAproovedByAdmin
+          ? Array.from(new Set([...uniqueEmails, ...internalEmails]))
+          : internalEmails;
+
+        if (targetEmails.length > 0) {
           const projectInfo = await prisma.project.findUnique({
             where: { id: req.body.project_id },
             select: { isAwarded: true }
@@ -142,7 +146,7 @@ export class RFIController {
             const ccEmails = await getCCEmails(newrfi.project_id);
             await sendEmail({
               html: rfihtmlContent(newrfi, fabricatorName),
-              to: internalEmails.join(","),
+              to: targetEmails.join(","),
               cc: ccEmails,
               subject: newrfi.subject,
               text: newrfi.description,
@@ -219,12 +223,16 @@ export class RFIController {
       "rfi"
     );
 
+    const rawApproval = (req.body as any)?.isAproovedByAdmin ?? (req.body as any)?.isApprovedByAdmin ?? (req.body as any)?.approval;
+    const isApprovedBool = rawApproval === true || rawApproval === "true";
+
     const approvalWasGranted =
       !existingRfi.isAproovedByAdmin &&
-      req.body.isAproovedByAdmin === true;
+      isApprovedBool;
 
     if (approvalWasGranted) {
       req.body.approvedById = req.user.id;
+      req.body.isAproovedByAdmin = true;
     }
 
     const updatedRfi = await rfiService.updateRfi(rfiId, {
