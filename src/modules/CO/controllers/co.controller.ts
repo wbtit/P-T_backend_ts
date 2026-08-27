@@ -239,10 +239,13 @@ async handlePendingCOsForClient(req: AuthenticateRequest, res: Response) {
       updatePayload.isApprovedByManager = true;
     }
 
-    const updatedCo = await coService.updateCo(id, {
-      ...updatePayload,
-      files: uploadedFiles,
-    }, userId);
+    if (uploadedFiles && uploadedFiles.length > 0) {
+      updatePayload.files = [...(existingCo.files as any || []), ...uploadedFiles];
+    } else {
+      updatePayload.files = existingCo.files;
+    }
+
+    const updatedCo = await coService.updateCo(id, updatePayload, userId);
     const updatedCoNumber = updatedCo.changeOrderNumber?.trim();
     const updaterId = req.user.id;
     const bodyStatus = req.body?.status;

@@ -3,6 +3,7 @@ import { ProjectService } from "../services";
 import { ProjectAssistService } from "../services/projectAssist.service";
 import { mapUploadedFiles } from "../../uploads/fileUtil";
 import { AuthenticateRequest } from "../../../middleware/authMiddleware";
+import { AppError } from "../../../config/utils/AppError";
 import { notifyProjectStakeholdersByRole } from "../../../utils/notifyProjectStakeholders";
 import { UserRole } from "@prisma/client";
 import { buildRoleScopedNotification } from "../../../utils/stakeholderNotificationMessages";
@@ -104,10 +105,16 @@ export class ProjectController {
           (req.files as Express.Multer.File[]) || [],
           "project"
         );
-        const project = await projectService.update({
-          ...req.body,
-          files: uploadedFiles
-        }, id);
+        const existingProject = await projectService.get({ id });
+        if (!existingProject) throw new AppError("Project not found", 404);
+        const payload = { ...req.body };
+        if (uploadedFiles && uploadedFiles.length > 0) {
+          payload.files = [...(existingProject.files as any || []), ...uploadedFiles];
+        } else {
+          payload.files = existingProject.files;
+        }
+
+        const project = await projectService.update(payload, id);
         const updates = req.body ?? {};
         const updaterId = req.user?.id;
         const updatesForMeta = { ...updates };

@@ -152,9 +152,12 @@ export class FabricatorController {
       "fabricators"
     );
 
+    const existingFab = await this.fabService.getFabricatorById(id);
+    if (!existingFab) throw new AppError("Fabricator not found", 404);
+
     const payload = {
       ...body,
-      files: uploadedFiles,
+      files: uploadedFiles.length > 0 ? [...(existingFab.files as any || []), ...uploadedFiles] : existingFab.files,
     };
 
     const fabricator = await this.fabService.updateFabricator(id, payload);

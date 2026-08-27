@@ -235,10 +235,14 @@ export class RFIController {
       req.body.isAproovedByAdmin = true;
     }
 
-    const updatedRfi = await rfiService.updateRfi(rfiId, {
-      ...req.body,
-      files: uploadedFiles,
-    });
+    const updatePayload = { ...req.body };
+    if (uploadedFiles && uploadedFiles.length > 0) {
+      updatePayload.files = [...(existingRfi.files as any || []), ...uploadedFiles];
+    } else {
+      updatePayload.files = existingRfi.files;
+    }
+
+    const updatedRfi = await rfiService.updateRfi(rfiId, updatePayload);
     const updatedRfiSubject = (updatedRfi as any)?.subject?.trim?.();
     const updaterId = req.user.id;
     const updaterUsername = req.user.username;

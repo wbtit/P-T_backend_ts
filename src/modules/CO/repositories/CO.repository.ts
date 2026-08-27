@@ -63,6 +63,7 @@ export class CORepository {
         stage: rest.stage,
         status: rest.status,
         reason: rest.reason,
+        files: rest.files ?? undefined,
         isAproovedByAdmin: rest.isAproovedByAdmin,
         isApprovedByManager: rest.isApprovedByManager,
         multipleRecipients: multipleRecipients?.length
