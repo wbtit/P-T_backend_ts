@@ -13,6 +13,9 @@ export const rfihtmlContent = (newrfi: any, fabricatorName?: string) => {
     ? recipientNames.join(", ")
     : recipientNames[0] || "Recipient";
 
+  const senderObj = newrfi.approvedBy || newrfi.sender;
+  const displaySender = [senderObj?.firstName, senderObj?.lastName].filter(Boolean).join(" ") || senderObj?.username || "N/A";
+
   return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
 <head>
@@ -83,7 +86,7 @@ export const rfihtmlContent = (newrfi: any, fabricatorName?: string) => {
                 </tr>
                 <tr>
                   <td width="140" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #888888; font-weight: bold; font-size: 14px;">Sender</td>
-                  <td valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333;">${[newrfi?.sender?.firstName, newrfi?.sender?.lastName].filter(Boolean).join(" ") || newrfi?.sender?.username || "N/A"}</td>
+                  <td valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333;">${displaySender}</td>
                 </tr>
                 <tr>
                   <td width="140" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #888888; font-weight: bold; font-size: 14px;">Date</td>

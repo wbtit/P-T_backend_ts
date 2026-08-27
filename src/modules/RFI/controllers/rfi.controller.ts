@@ -267,7 +267,13 @@ export class RFIController {
         if (approvalWasGranted) {
           const rfiWithRecipients = await prisma.rFI.findUnique({
             where: { id: rfiId },
-            include: { recepients: true, multipleRecipients: true }
+            include: { 
+              recepients: true, 
+              multipleRecipients: true,
+              project: true,
+              sender: { select: { firstName: true, middleName: true, lastName: true, username: true, email: true, id: true } },
+              approvedBy: { select: { firstName: true, lastName: true, username: true } }
+            }
           });
           const recipientEmails = [
             ...(rfiWithRecipients?.multipleRecipients?.map((r: any) => r.email).filter(Boolean) || []),

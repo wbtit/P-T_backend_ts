@@ -562,7 +562,13 @@ export class SubmittalController {
         try {
           const submittalWithRecipients = await prisma.submittals.findUnique({
             where: { id },
-            include: { recepients: true, multipleRecipients: true }
+            include: { 
+              recepients: true, 
+              multipleRecipients: true,
+              project: true,
+              sender: { select: { firstName: true, middleName: true, lastName: true, username: true, email: true, id: true } },
+              approvedBy: { select: { firstName: true, lastName: true, username: true } }
+            }
           });
           const recipientEmails = [
             ...(submittalWithRecipients?.multipleRecipients?.map((r: any) => r.email).filter(Boolean) || []),
