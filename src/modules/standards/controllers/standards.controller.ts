@@ -123,182 +123,10 @@ export class StandardsController {
     }
   }
 
-  public async getProjectPreferences(req: Request, res: Response): Promise<void> {
-    try {
-      const { projectId } = req.params;
-      const tier = (req.query.tier as string) || "GENERAL";
-      
-      if (tier !== "GENERAL" && tier !== "PROJECT") {
-        res.status(400).json({ message: "Invalid tier. Must be GENERAL or PROJECT." });
-        return;
-      }
-
-      const prefs = await prisma.projectStandardPreference.findMany({
-        where: { 
-          projectId,
-          sourceType: tier as StandardSourceType 
-        },
-        select: { standardFamilyId: true }
-      });
-      res.status(200).json({ standardFamilyIds: prefs.map(p => p.standardFamilyId) });
-    } catch (error: any) {
-      console.error("[StandardsController] getProjectPreferences error:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  }
-
-  public async getAvailableFamilies(req: Request, res: Response): Promise<void> {
-    try {
-      const tier = (req.query.tier as string);
-      const projectId = (req.query.projectId as string);
-
-      let families;
-      
-      if (!tier) {
-        // Return all families if no tier provided
-        families = await prisma.standardFamily.findMany();
-      } else {
-        if (tier !== "GENERAL" && tier !== "PROJECT") {
-          res.status(400).json({ message: "Invalid tier. Must be GENERAL or PROJECT." });
-          return;
-        }
-
-        // Return only families that have an ACTIVE document for this tier (and projectId if PROJECT)
-        const docWhere: any = {
-          sourceType: tier as StandardSourceType,
-          status: "ACTIVE"
-        };
-        
-        if (tier === "PROJECT") {
-          if (!projectId) {
-            res.status(400).json({ message: "projectId is required when querying PROJECT tier families." });
-            return;
-          }
-          docWhere.projectId = projectId;
-        }
-
-        const activeDocs = await prisma.standardDocument.findMany({
-          where: docWhere,
-          select: { documentFamilyId: true },
-          distinct: ['documentFamilyId']
-        });
-        
-        const familyIds = activeDocs
-          .map(d => d.documentFamilyId)
-          .filter((id): id is string => id !== null);
-
-        families = await prisma.standardFamily.findMany({
-          where: { id: { in: familyIds } }
-        });
-      }
-
-      res.status(200).json({ families });
-    } catch (error: any) {
-      console.error("[StandardsController] getAvailableFamilies error:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  }
-
-  public async getFabricatorFamilies(req: Request, res: Response): Promise<void> {
-    try {
-      const { fabricatorId } = req.params;
-
-      if (!fabricatorId) {
-        res.status(400).json({ message: "fabricatorId is required" });
-        return;
-      }
-
-      const activeDocs = await prisma.standardDocument.findMany({
-        where: {
-          status: "ACTIVE",
-          OR: [
-            { sourceType: "GENERAL" },
-            { 
-              sourceType: "FABRICATOR",
-              fabricatorId: fabricatorId 
-            }
-          ]
-        },
-        select: { documentFamilyId: true },
-        distinct: ['documentFamilyId']
-      });
-
-      const familyIds = activeDocs
-        .map(d => d.documentFamilyId)
-        .filter((id): id is string => id !== null);
-
-      const families = await prisma.standardFamily.findMany({
-        where: { id: { in: familyIds } }
-      });
-
-      res.status(200).json({ families });
-    } catch (error: any) {
-      console.error("[StandardsController] getFabricatorFamilies error:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  }
-
-  public async setProjectPreferences(req: Request, res: Response): Promise<void> {
-    try {
-      console.log(`[StandardsController] setProjectPreferences called. Tier from query: ${req.query.tier}`, "Body:", req.body);
-      const { projectId } = req.params;
-      const tier = (req.query.tier as string) || "GENERAL";
-      let { standardFamilyIds } = req.body;
-
-      if (tier !== "GENERAL" && tier !== "PROJECT") {
-        res.status(400).json({ message: "Invalid tier. Must be GENERAL or PROJECT." });
-        return;
-      }
-
-      if (!Array.isArray(standardFamilyIds)) {
-        res.status(400).json({ message: "standardFamilyIds must be an array" });
-        return;
-      }
-
-      // Deduplicate to avoid unique constraint violations
-      standardFamilyIds = [...new Set(standardFamilyIds)];
-
-      // Validate families
-      if (standardFamilyIds.length > 0) {
-        const families = await prisma.standardFamily.findMany({
-          where: { id: { in: standardFamilyIds } }
-        });
-        if (families.length !== standardFamilyIds.length) {
-          res.status(400).json({ message: "One or more standardFamilyIds are invalid" });
-          return;
-        }
-      }
-
-      await prisma.$transaction(async (tx) => {
-        await tx.projectStandardPreference.deleteMany({
-          where: { 
-            projectId,
-            sourceType: tier as StandardSourceType
-          }
-        });
-        
-        if (standardFamilyIds.length > 0) {
-          await tx.projectStandardPreference.createMany({
-            data: standardFamilyIds.map((id: string) => ({
-              projectId,
-              standardFamilyId: id,
-              sourceType: tier as StandardSourceType
-            }))
-          });
-        }
-      });
-
-      res.status(200).json({ message: "Preferences updated successfully" });
-    } catch (error: any) {
-      console.error("[StandardsController] setProjectPreferences error:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  }
-
   public async chat(req: Request, res: Response): Promise<void> {
     try {
       const { projectId } = req.params;
-      const { query, standardFamilyIds } = req.body;
+      const { query } = req.body;
 
       console.log(`\n\n[ChatController] --- NEW CHAT REQUEST ---`);
       console.log(`[ChatController] ProjectId: ${projectId}`);
@@ -310,35 +138,13 @@ export class StandardsController {
         return;
       }
 
-      // FABRICATOR-tier family scoping. Optional -- matches the existing setProjectPreferences
-      // shape (standardFamilyIds: string[]) for consistency, but this is a proposed convention,
-      // not verified against a real captured FE payload (none exists to inspect -- see
-      // tests/KNOWN_ISSUES.md). Omitted/empty is not an error: it means "no family selected,"
-      // which pools all of the fabricator's documents (unchanged prior behavior).
-      let fabricatorFamilyIds: string[] | undefined;
-      if (standardFamilyIds !== undefined) {
-        if (!Array.isArray(standardFamilyIds) || standardFamilyIds.some((id: any) => typeof id !== "string")) {
-          console.log(`[ChatController] Rejected: standardFamilyIds must be an array of strings`);
-          res.status(400).json({ message: "standardFamilyIds must be an array of strings" });
-          return;
-        }
-        fabricatorFamilyIds = [...new Set(standardFamilyIds)];
-        console.log(`[ChatController] FABRICATOR family filter: ${JSON.stringify(fabricatorFamilyIds)}`);
-      }
-
       console.log(`[ChatController] Passing query to askStandards...`);
-      const result = await askStandards(projectId, query, fabricatorFamilyIds);
-      
+      const result = await askStandards(projectId, query);
+
       console.log(`[ChatController] Received result from askStandards!`);
-      // Optional: uncomment below to print the full json
-      // console.log(`[ChatController] Result JSON:`, JSON.stringify(result, null, 2));
 
       res.status(200).json(result);
     } catch (error: any) {
-      if (error.message === "NO_PREFERENCES_SET") {
-        res.status(200).json({ status: "no_preferences_set", message: "No standard preferences set for this project." });
-        return;
-      }
       console.error("[StandardsController] chat error:", error);
       res.status(500).json({ message: "Internal server error" });
     }

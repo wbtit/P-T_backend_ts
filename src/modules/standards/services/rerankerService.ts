@@ -33,8 +33,6 @@ export interface RerankerConfig {
   maxLength: number;
   /** How many first-stage candidates to rerank. */
   candidates: number;
-  /** Which tiers to rerank. GENERAL only by default. */
-  tiers: string[];
 }
 
 const envBool = (v: string | undefined, d: boolean) => (v === undefined ? d : /^(1|true|yes|on)$/i.test(v));
@@ -55,7 +53,6 @@ export const rerankerConfig: RerankerConfig = {
   model: process.env.STANDARDS_RERANKER_MODEL || "Xenova/bge-reranker-base",
   maxLength: envInt(process.env.STANDARDS_RERANKER_MAX_LENGTH, 256),
   candidates: envInt(process.env.STANDARDS_RERANKER_CANDIDATES, 20),
-  tiers: (process.env.STANDARDS_RERANKER_TIERS || "GENERAL").split(",").map(s => s.trim().toUpperCase()).filter(Boolean),
 };
 
 /** DEV/TEST provider: ONNX Runtime via @xenova/transformers (already a project dependency). */
@@ -98,8 +95,8 @@ export function getRerankProvider(): RerankProvider {
   return p;
 }
 
-export function shouldRerank(sourceType: string): boolean {
-  return rerankerConfig.enabled && rerankerConfig.tiers.includes(sourceType.toUpperCase());
+export function shouldRerank(): boolean {
+  return rerankerConfig.enabled;
 }
 
 /**

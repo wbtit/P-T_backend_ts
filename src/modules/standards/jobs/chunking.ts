@@ -1,7 +1,7 @@
 
-export function constructChunkText(page: any, lastHeading: string): string {
+export function constructChunkText(page: any): string {
   if (page.classification === "VISUAL") {
-    const contextPrefix = lastHeading ? `Context: Under section "${lastHeading}"\n\n` : `Context: Visual Page\n\n`;
+    const contextPrefix = `Context: Visual Page\n\n`;
     const textContent = page.textContent || "";
     let ocrText = page.ocrText || "";
     
@@ -94,30 +94,6 @@ export function startChunkingWorker() {
         where: { documentId: doc.id }
       });
 
-      let lastHeading = "";
-      // Real AISC subsection headings look like "2.Size and Use of Holes" (digit, period, no
-      // space, immediate capital) -- confirmed against the full corpus: 375 matches across 211
-      // pages, every one a genuine subsection title. The two exclusions strip false positives
-      // this pattern would otherwise catch: table-of-contents leader-dot lines
-      // ("9.High-Strength Bolts . . . . . 127") and bibliography citations
-      // ("5.Low- and Medium-Rise Steel Buildings, Design Guide 5 (Allison, 1991)").
-      // The PREVIOUS regex (/^\d+\)\s+.+$/, digit-PAREN not digit-period) never matched a real
-      // heading at all -- it only matched numbered footnote markers in body prose (e.g. "6)  The
-      // web-to-flange weld..."), which then got treated as a heading and silently persisted for
-      // up to 422 pages before another false match overwrote it. See tests/KNOWN_ISSUES.md.
-      const headingRegex = /^\d{1,2}\.[A-Z][a-zA-Z]/;
-      const isHeadingLeaderDots = (t: string) => /\.\s*\.\s*\./.test(t);
-      const isHeadingCitation = (t: string) => /\(\D*\d{4}\)/.test(t) || /,\s*\d{4}\)/.test(t);
-      const isRealHeading = (t: string) =>
-        headingRegex.test(t) && !isHeadingLeaderDots(t) && !isHeadingCitation(t) && t.length <= 70;
-
-      // Safety net independent of regex precision: no real subsection heading in the corpus
-      // persists unchanged for more than 36 pages (measured). 50 gives margin above that while
-      // still bounding how far any future false match (or a genuinely heading-less stretch, e.g.
-      // dense table/appendix pages) can propagate -- versus the previous unbounded carry-forward.
-      let lastHeadingPage: number | null = null;
-      const MAX_HEADING_PAGE_GAP = 50;
-
       let pagesProcessed = 0;
       let batch: any[] = [];
       const BATCH_SIZE = 50;
@@ -128,20 +104,7 @@ export function startChunkingWorker() {
 
         if (page.textContent && page.classification) {
           if (!doc.excludedPages || !doc.excludedPages.includes(page.pageNumber)) {
-            if (lastHeadingPage !== null && page.pageNumber - lastHeadingPage > MAX_HEADING_PAGE_GAP) {
-              lastHeading = "";
-              lastHeadingPage = null;
-            }
-            const lines = page.textContent.split("\n");
-            for (const line of lines) {
-              const trimmed = line.trim();
-              if (isRealHeading(trimmed)) {
-                lastHeading = trimmed;
-                lastHeadingPage = page.pageNumber;
-              }
-            }
-
-            let embedText = constructChunkText(page, lastHeading);
+            let embedText = constructChunkText(page);
             let finalEmbedText = embedText;
             let tokens = await cachedTokenizer(finalEmbedText, { truncation: false });
             let tokenCount = tokens.input_ids.data.length;
@@ -212,7 +175,7 @@ export function startChunkingWorker() {
                 sourceType: doc.sourceType,
                 projectId: doc.projectId,
                 fabricatorId: doc.fabricatorId,
-                heading: lastHeading || null,
+                heading: null,
                 embedding,
                 parentPageId: page.id
               });
@@ -261,29 +224,6 @@ export function startChunkingWorker() {
           }
         }
       }
-
-      // 2.5. Surface a silent failure mode: the heading regex is tuned to one document's
-      // numbering convention (confirmed 2026-09-02 not to generalize -- see
-      // tests/KNOWN_ISSUES.md) and previously failed with zero symptoms -- heading stays null
-      // on every chunk, degrading anchor-chunk grouping and VISUAL-page retrieval context, with
-      // no error anywhere. This doesn't fix detection; it just stops it from being invisible.
-      const headingCount = await prisma.standardChunk.count({
-        where: { documentId: doc.id, heading: { not: null } },
-      });
-      const noHeadingsDetected = headingCount === 0;
-      if (noHeadingsDetected) {
-        console.warn(
-          `[Chunking] WARNING: zero headings detected across all ${doc.StandardPage.length} pages ` +
-          `of documentId ${doc.id} ("${doc.pdfName}"). The heading regex may not match this ` +
-          `document's numbering convention -- anchor-chunk grouping and VISUAL-page retrieval ` +
-          `context will silently lack section context for this entire document. See ` +
-          `tests/KNOWN_ISSUES.md ("heading detection does not generalize").`
-        );
-      }
-      await prisma.standardDocument.update({
-        where: { id: documentId },
-        data: { noHeadingsDetected },
-      });
 
       // 3. Atomic swap to activate the new document version
       const versioningService = new StandardsVersioningService();

@@ -66,7 +66,7 @@ function buildDeferralText(hit: RetrievedChunk, pdfName: string): string {
   // never checks RETRIEVAL RELEVANCE (is this page actually about the query at all). The 0.60
   // floor has a documented ~42% residual wrong-match rate on misranked queries; asserting
   // relevance here would overclaim confidence the system never actually verified. Found via a
-  // real case: "1/2 bolt dia hole size in shear plate" deferring to a GSMS weep-hole/galvanizing
+  // real case: a query about a bolt hole size deferring to an unrelated weep-hole/galvanizing
   // detail page whose only real connection to the query was the shared word "hole".
   return `A possible match was found at ${pageRef} — please check the attached image to confirm this is actually the right page before relying on it, as automated data extraction here is not yet reliable enough to quote from directly.`;
 }
@@ -99,7 +99,7 @@ async function generateAnswerText(chunks: RetrievedChunk[], queryText: string): 
       // Widen to the full parent page ONLY when it actually adds context.
       // VISUAL chunks carry the page's OCR text (baked in by constructChunkText at
       // ingestion); standardPage.textContent is only the bare PDF text layer, which on a
-      // drawing page is a title block (26 of 31 GSMS VISUAL pages are under 50 chars).
+      // drawing page is often just a title block (a handful of characters).
       // Overwriting unconditionally destroyed the only usable content on those pages.
       if (parent && parent.textContent && parent.textContent.length > c.textContent.length) {
         text = parent.textContent;
@@ -202,32 +202,40 @@ QUERY: ${queryText}
   }
 }
 
+/**
+ * Resolves an ACTIVE document visible to this project -- same visibility rule as
+ * searchStandards's candidate pool (GENERAL, or the project's fabricator's FABRICATOR
+ * documents, or the project's own PROJECT documents). Used to pin a below-floor fallback
+ * answer to a real, browsable document rather than leaving pinnedDocumentId null.
+ */
+async function findVisibleDocument(projectId: string): Promise<{ id: string; sourceType: StandardSourceType } | null> {
+  const project = await prisma.project.findUnique({ where: { id: projectId }, select: { fabricatorID: true } });
+  const or: any[] = [{ sourceType: "GENERAL" }, { sourceType: "PROJECT", projectId }];
+  if (project?.fabricatorID) {
+    or.push({ sourceType: "FABRICATOR", fabricatorId: project.fabricatorID });
+  }
+  return prisma.standardDocument.findFirst({
+    where: { status: "ACTIVE", OR: or },
+    select: { id: true, sourceType: true }
+  });
+}
+
 export async function askStandards(
   projectId: string,
-  queryText: string,
-  // Scopes FABRICATOR tier to these document_family_id values (e.g. "search only the Stair
-  // Standard, not the Detailing Manual"). Omitted/empty pools all of the fabricator's ACTIVE
-  // documents, unchanged from before this filter existed. Has no effect on GENERAL/PROJECT.
-  fabricatorFamilyIds?: string[]
+  queryText: string
 ): Promise<ChatMessageWithAnswers> {
   console.log(`[ChatService] Received query for projectId ${projectId}: "${queryText}"`);
   console.log(`[ChatService] Starting vector search (candidate floor: 0.45, acceptance threshold: 0.60)...`);
-  const searchResults = await searchStandards({
+  const chunks = await searchStandards({
     query: queryText,
     projectId,
     threshold: 0.45,
     acceptanceThreshold: 0.00,
     alpha: 0.05,
-    // Widened to feed the reranker. Tiers that are not reranked still take the same
-    // top-3 they took at topK=10, so this is behaviourally neutral for them.
+    // Widened to feed the reranker; behaviourally neutral (still top-3) when reranking is off.
     topK: rerankerConfig.enabled ? rerankerConfig.candidates : 10,
-    fabricatorFamilyIds
   });
-  console.log(`[ChatService] Vector search complete. Found ` +
-    `${searchResults.general ? searchResults.general.length : "null (no prefs)"} GENERAL, ` +
-    `${searchResults.fabricator ? searchResults.fabricator.length : "null (no docs)"} FABRICATOR, ` +
-    `${searchResults.project ? searchResults.project.length : "null (no prefs)"} PROJECT hits.`
-  );
+  console.log(`[ChatService] Vector search complete. Found ${chunks.length} hits.`);
 
   const message = await prisma.standardChatMessage.create({
     data: {
@@ -236,64 +244,25 @@ export async function askStandards(
     }
   });
 
-  async function processSource(chunks: RetrievedChunk[] | null, sourceType: StandardSourceType) {
+  async function processSource(chunks: RetrievedChunk[]) {
     const startMeasure = performance.now();
-    
-    // "Not applicable" check: zero-preference or no docs
-    if (chunks === null) {
-      console.log(`[ChatService] ${sourceType} tier has chunks=null. Reason: 0 preferences or no applicable docs.`);
-      if (sourceType === "FABRICATOR") {
-        console.log(`[ChatService] ${sourceType} tier skipping entirely (no FABRICATOR docs found).`);
-        // Just return null for FABRICATOR if not applicable (absent completely).
-        return null;
-      }
-      console.log(`[ChatService] ${sourceType} tier returning 'Not covered by your selected standard families'.`);
-      // For GENERAL/PROJECT, return distinct response for 0 preferences
-      return prisma.standardChatAnswer.create({
-        data: {
-          messageId: message.id,
-          sourceType,
-          chunkType: "PROSE",
-          answerText: "Not covered by your selected standard families.",
-          pinnedDocumentId: null
-        }
-      });
-    }
 
-    // Floor rule: only return answers if the top hit clears 0.60.
+    // Floor rule: only return an answer if the top hit clears 0.60.
     if (chunks.length === 0 || chunks[0].similarity < 0.60) {
       if (chunks.length === 0) {
-        console.log(`[ChatService] ${sourceType} tier found 0 chunks. Proceeding to fallback logic.`);
+        console.log(`[ChatService] Found 0 chunks. Proceeding to fallback logic.`);
       } else {
-        console.log(`[ChatService] ${sourceType} tier top hit scored ${chunks[0].similarity.toFixed(3)} which is BELOW the 0.60 floor. Proceeding to fallback logic.`);
+        console.log(`[ChatService] Top hit scored ${chunks[0].similarity.toFixed(3)} which is BELOW the 0.60 floor. Proceeding to fallback logic.`);
       }
-      
-      // Resolve the ACTIVE document scoped correctly to this source/project.
-      const docQuery: any = { sourceType, status: "ACTIVE" as const };
-      if (sourceType === "FABRICATOR") {
-        const p = await prisma.project.findUnique({ where: { id: projectId }, select: { fabricatorID: true } });
-        if (p?.fabricatorID) docQuery.fabricatorId = p.fabricatorID;
-        // Must match searchScope's own family scoping, or a below-floor answer can end up
-        // pinned to a document from an entirely different, unselected family (e.g. citing the
-        // Detailing Manual on a query scoped to just the Stair Standard) -- found via real
-        // testing, not assumed. Omitted/empty filter = unchanged prior behavior.
-        if (Array.isArray(fabricatorFamilyIds) && fabricatorFamilyIds.length > 0) {
-          docQuery.documentFamilyId = { in: fabricatorFamilyIds };
-        }
-      } else if (sourceType === "PROJECT") {
-        docQuery.projectId = projectId;
-      }
-      
-      console.log(`[ChatService] Searching for a fallback document for ${sourceType} tier using query:`, docQuery);
-      const doc = await prisma.standardDocument.findFirst({ where: docQuery });
+
+      const doc = await findVisibleDocument(projectId);
 
       if (!doc) {
-        // Should not happen for FABRICATOR (since null was handled), but could happen if db changes
-        console.warn(`[ChatService] WARNING: No ACTIVE document found for ${sourceType} fallback, using null pin.`);
+        console.warn(`[ChatService] WARNING: No ACTIVE document visible to project ${projectId}, using null pin.`);
         return prisma.standardChatAnswer.create({
           data: {
             messageId: message.id,
-            sourceType,
+            sourceType: "GENERAL",
             chunkType: "PROSE",
             answerText: "Not covered by this standard.",
             pinnedDocumentId: null
@@ -304,7 +273,7 @@ export async function askStandards(
       return prisma.standardChatAnswer.create({
         data: {
           messageId: message.id,
-          sourceType,
+          sourceType: doc.sourceType,
           chunkType: "PROSE",
           answerText: "Not covered by this standard.",
           pinnedDocumentId: doc.id
@@ -312,13 +281,13 @@ export async function askStandards(
       });
     }
 
-    // Second stage: cross-encoder reranking (GENERAL tier only by default).
+    // Second stage: cross-encoder reranking, gated only on whether it's enabled.
     // NOTE: this runs AFTER the 0.60 floor check above, deliberately. The floor is
     // evaluated on the first-stage vector+lexical score so acceptance/refusal
     // semantics are identical with the reranker on or off; reranking only changes
     // WHICH 3 chunks are selected and in what order.
     let candidates = chunks.filter(c => !c.isAnchor);
-    if (shouldRerank(sourceType) && candidates.length > 1) {
+    if (shouldRerank() && candidates.length > 1) {
       const before = candidates.slice(0, 3).map(c => c.pageStart);
       // RERANK-SPECIFIC TEXT (2026-09-02): c.textContent is built by constructChunkText, which
       // puts the page's raw textContent FIRST for generation's benefit (framing/context), then
@@ -341,10 +310,10 @@ export async function askStandards(
       };
       const textByChunkId = new Map<string, string>();
       await Promise.all(candidates.map(async c => textByChunkId.set(c.id, await rerankText(c))));
-      const r = await rerank(queryText, candidates, c => textByChunkId.get(c.id) || c.textContent, sourceType);
+      const r = await rerank(queryText, candidates, c => textByChunkId.get(c.id) || c.textContent, "chat");
       candidates = r.items;
       if (r.reranked) {
-        console.log(`[ChatService] ${sourceType} top-3 before rerank: [${before}] -> after: [${candidates.slice(0, 3).map(c => c.pageStart)}]`);
+        console.log(`[ChatService] top-3 before rerank: [${before}] -> after: [${candidates.slice(0, 3).map(c => c.pageStart)}]`);
       }
     }
 
@@ -353,10 +322,10 @@ export async function askStandards(
     const documentIds = [...new Set(topHits.map(h => h.documentId))];
     const docs = await prisma.standardDocument.findMany({ where: { id: { in: documentIds } } });
     const docMap = new Map(docs.map(d => [d.id, d]));
-    
+
     if (!docMap.has(topHits[0].documentId)) throw new Error("Document not found");
 
-    console.log(`[ChatService] Generating text for ${sourceType} tier...`);
+    console.log(`[ChatService] Generating text...`);
 
     // RESIDUAL RISK DOCUMENTATION
     // The system reduces but does NOT eliminate confident-wrong-answer risk on queries where retrieval doesn't rank the correct page first.
@@ -396,7 +365,7 @@ export async function askStandards(
       const pdfName = docMap.get(deferHit.documentId)?.pdfName || "Unknown";
       generatedText = buildDeferralText(deferHit, pdfName);
       sourceChunk = deferHit;
-      console.log(`[ChatService] ${sourceType} DEFERRED to citation image: page ${deferHit.pageStart} (low-confidence extraction, no reliable text to quote).`);
+      console.log(`[ChatService] DEFERRED to citation image: page ${deferHit.pageStart} (low-confidence extraction, no reliable text to quote).`);
     }
 
     let orderedHits = [...topHits];
@@ -424,10 +393,14 @@ export async function askStandards(
       };
     });
 
+    // sourceType is descriptive metadata here (which document tier the winning citation came
+    // from), not a selection mechanism -- see retrievalService.ts's candidate pool.
+    const winningDoc = docMap.get((sourceChunk || topHits[0]).documentId);
+
     const answer = await prisma.standardChatAnswer.create({
       data: {
         messageId: message.id,
-        sourceType,
+        sourceType: (winningDoc?.sourceType || topHits[0].sourceType) as StandardSourceType,
         chunkType: sourceChunk ? sourceChunk.chunkType as StandardChunkType : topHits[0].chunkType as StandardChunkType,
         answerText: generatedText, // LLM output or null fallback
         pinnedDocumentId: sourceChunk ? sourceChunk.documentId : null, // Safely null if attribution failed
@@ -438,18 +411,14 @@ export async function askStandards(
         }
       }
     });
-    
-    console.log(`[ChatService] processSource for ${sourceType} latency: ${(performance.now() - startMeasure).toFixed(2)}ms`);
+
+    console.log(`[ChatService] processSource latency: ${(performance.now() - startMeasure).toFixed(2)}ms`);
     console.log(`[ChatService] ---> Final Assigned Source: Document ID = ${answer.pinnedDocumentId}, ChunkType = ${answer.chunkType}`);
-    
+
     return answer;
   }
 
-  const generalPromise = processSource(searchResults.general, "GENERAL");
-  const fabricatorPromise = processSource(searchResults.fabricator, "FABRICATOR");
-  const projectPromise = processSource(searchResults.project, "PROJECT");
-
-  await Promise.all([generalPromise, fabricatorPromise, projectPromise]);
+  await processSource(chunks);
 
   const chatMessage = await prisma.standardChatMessage.findUniqueOrThrow({
     where: { id: message.id },
@@ -457,12 +426,8 @@ export async function askStandards(
   });
 
   chatMessage.answers.forEach(ans => {
-    const tierChunks = ans.sourceType === "GENERAL" ? searchResults.general :
-                       ans.sourceType === "FABRICATOR" ? searchResults.fabricator :
-                       searchResults.project;
-                       
     ans.citations.forEach(cit => {
-      const chunk = (tierChunks || []).find(c => c.pageStart === cit.citationPageStart && !c.isAnchor);
+      const chunk = chunks.find(c => c.pageStart === cit.citationPageStart && !c.isAnchor);
       if (chunk) {
         (cit as any).finalScore = chunk.similarity;
       }

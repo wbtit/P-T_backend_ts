@@ -22,33 +22,9 @@ standardsRoutes.post(
 );
 
 standardsRoutes.get(
-  "/families",
-  authMiddleware,
-  controller.getAvailableFamilies.bind(controller)
-);
-
-standardsRoutes.get(
-  "/fabricators/:fabricatorId/families",
-  authMiddleware,
-  controller.getFabricatorFamilies.bind(controller)
-);
-
-standardsRoutes.get(
   "/documents/:id/progress",
   authMiddleware,
   controller.getDocumentProgress.bind(controller)
-);
-
-standardsRoutes.get(
-  "/projects/:projectId/preferences",
-  authMiddleware,
-  controller.getProjectPreferences.bind(controller)
-);
-
-standardsRoutes.post(
-  "/projects/:projectId/preferences",
-  authMiddleware,
-  controller.setProjectPreferences.bind(controller)
 );
 
 projectStandardsRoutes.post(
