@@ -1,5 +1,5 @@
 import { Request,Response } from "express";
-import { CreateRfqSchema, UpdateRfqSchema, RfqPaginationQuerySchema } from "../dtos/rfq.dtos";
+import { CreateRfqSchema, UpdateRfqSchema, RfqPaginationQuerySchema, RfqAllPaginationQuerySchema } from "../dtos/rfq.dtos";
 import { AuthenticateRequest } from "../../../middleware/authMiddleware";
 import { AppError } from "../../../config/utils/AppError";
 import { RFQService } from "../services/rfq.service";
@@ -543,7 +543,7 @@ export class RFQController {
     }
 
     async handleGetAllRFQ(req:Request,res:Response){
-        const queryParams = RfqPaginationQuerySchema.parse(req.query);
+        const queryParams = RfqAllPaginationQuerySchema.parse(req.query);
         const rfq = await rfqService.getAllRFQ(queryParams);
         res.status(200).json({
             status: 'success',

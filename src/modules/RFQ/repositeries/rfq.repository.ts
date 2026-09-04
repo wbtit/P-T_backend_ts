@@ -4,7 +4,8 @@ import { paginate } from "../../../utils/pagination";
 import { CreateRfqInput,
     GetRfqInput,
     UpdateRfqInput,
-    RfqPaginationQuery
+    RfqPaginationQuery,
+    RfqAllPaginationQuery
  } from "../dtos";
 import { cleandata } from "../../../config/utils/cleanDataObject";
 
@@ -99,7 +100,7 @@ export class RFQRepository {
         });
     }
 
-    async getAllRFQ(query: RfqPaginationQuery){
+    async getAllRFQ(query: RfqAllPaginationQuery){
         return await paginate(prisma.rFQ, {
             where: {
                 isDeleted: false,

@@ -104,3 +104,9 @@ export const RfqPaginationQuerySchema = PaginationQuerySchema.extend({
 });
 
 export type RfqPaginationQuery = z.infer<typeof RfqPaginationQuerySchema>;
+
+export const RfqAllPaginationQuerySchema = RfqPaginationQuerySchema.extend({
+  fabricatorName: z.string().optional(),
+});
+
+export type RfqAllPaginationQuery = z.infer<typeof RfqAllPaginationQuerySchema>;
