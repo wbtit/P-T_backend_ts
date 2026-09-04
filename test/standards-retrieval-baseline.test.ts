@@ -65,7 +65,7 @@ describe("Phase 10 Retrieval Tuning Harness", () => {
         });
         
         // Find which array has our chunks (GSMS -> FABRICATOR for this project, MM is likely GENERAL if not uploaded to this project. We'll just merge both for testing)
-        let candidates = [...(resp.general || []), ...resp.fabricator];
+        let candidates = [...(resp.general || []), ...(resp.fabricator || []), ...(resp.project || [])];
         // Filter out anchors, we just want direct hits
         candidates = candidates.filter(c => !c.isAnchor);
         // Ensure they belong to the correct document

@@ -179,3 +179,8 @@ scratch/*.json
 scratch/diagnose_*.ts
 scratch/fix-*.ts
 scratch/check-*.ts
+
+# Docs and tests directories
+docs/
+tests/
+test/

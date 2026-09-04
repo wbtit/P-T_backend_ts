@@ -95,8 +95,29 @@ export function startChunkingWorker() {
       });
 
       let lastHeading = "";
-      const headingRegex = /^\d+\)\s+.+$/;
-      
+      // Real AISC subsection headings look like "2.Size and Use of Holes" (digit, period, no
+      // space, immediate capital) -- confirmed against the full corpus: 375 matches across 211
+      // pages, every one a genuine subsection title. The two exclusions strip false positives
+      // this pattern would otherwise catch: table-of-contents leader-dot lines
+      // ("9.High-Strength Bolts . . . . . 127") and bibliography citations
+      // ("5.Low- and Medium-Rise Steel Buildings, Design Guide 5 (Allison, 1991)").
+      // The PREVIOUS regex (/^\d+\)\s+.+$/, digit-PAREN not digit-period) never matched a real
+      // heading at all -- it only matched numbered footnote markers in body prose (e.g. "6)  The
+      // web-to-flange weld..."), which then got treated as a heading and silently persisted for
+      // up to 422 pages before another false match overwrote it. See tests/KNOWN_ISSUES.md.
+      const headingRegex = /^\d{1,2}\.[A-Z][a-zA-Z]/;
+      const isHeadingLeaderDots = (t: string) => /\.\s*\.\s*\./.test(t);
+      const isHeadingCitation = (t: string) => /\(\D*\d{4}\)/.test(t) || /,\s*\d{4}\)/.test(t);
+      const isRealHeading = (t: string) =>
+        headingRegex.test(t) && !isHeadingLeaderDots(t) && !isHeadingCitation(t) && t.length <= 70;
+
+      // Safety net independent of regex precision: no real subsection heading in the corpus
+      // persists unchanged for more than 36 pages (measured). 50 gives margin above that while
+      // still bounding how far any future false match (or a genuinely heading-less stretch, e.g.
+      // dense table/appendix pages) can propagate -- versus the previous unbounded carry-forward.
+      let lastHeadingPage: number | null = null;
+      const MAX_HEADING_PAGE_GAP = 50;
+
       let pagesProcessed = 0;
       let batch: any[] = [];
       const BATCH_SIZE = 50;
@@ -104,51 +125,98 @@ export function startChunkingWorker() {
       // 2. Process and insert in incremental batches
       for (const page of doc.StandardPage) {
         let producedChunk = false;
-        
+
         if (page.textContent && page.classification) {
           if (!doc.excludedPages || !doc.excludedPages.includes(page.pageNumber)) {
+            if (lastHeadingPage !== null && page.pageNumber - lastHeadingPage > MAX_HEADING_PAGE_GAP) {
+              lastHeading = "";
+              lastHeadingPage = null;
+            }
             const lines = page.textContent.split("\n");
             for (const line of lines) {
-              if (headingRegex.test(line.trim())) {
-                lastHeading = line.trim();
+              const trimmed = line.trim();
+              if (isRealHeading(trimmed)) {
+                lastHeading = trimmed;
+                lastHeadingPage = page.pageNumber;
               }
             }
 
             let embedText = constructChunkText(page, lastHeading);
-
             let finalEmbedText = embedText;
             let tokens = await cachedTokenizer(finalEmbedText, { truncation: false });
             let tokenCount = tokens.input_ids.data.length;
 
-            if (tokenCount > 2000) {
-              console.warn(`[Chunking] WARNING: Token backstop fired! Page ${page.pageNumber} has ${tokenCount} tokens.`);
-              let charLimit = Math.floor(finalEmbedText.length * (2000 / tokenCount));
-              finalEmbedText = finalEmbedText.substring(0, charLimit);
-              
-              tokens = await cachedTokenizer(finalEmbedText, { truncation: false });
-              while (tokens.input_ids.data.length > 2000 && finalEmbedText.length > 100) {
-                finalEmbedText = finalEmbedText.substring(0, finalEmbedText.length - 100);
+            let chunksToEmbed: string[] = [];
+
+            // P1: Dilution Fix - Sliding window for PROSE pages (unless vision-extracted)
+            if (page.classification === "PROSE" && !page.visionExtracted) {
+              const paragraphs = embedText.split("\n");
+              let currentTokens = 0;
+              let paraBuffer: { text: string, tokens: number }[] = [];
+
+              for (const p of paragraphs) {
+                const pTokens = (await cachedTokenizer(p, { truncation: false })).input_ids.data.length;
+                // Sliding window: keep under 400 tokens per chunk for better semantic isolation
+                if (currentTokens + pTokens > 400 && paraBuffer.length > 0) {
+                  chunksToEmbed.push(paraBuffer.map(x => x.text).join("\n"));
+                  
+                  // Overlap: genuinely carry over roughly the last ~50 tokens of the previous chunk
+                  let overlapText: {text: string, tokens: number}[] = [];
+                  let overlapTokens = 0;
+                  for (let i = paraBuffer.length - 1; i >= 0; i--) {
+                    if (overlapTokens + paraBuffer[i].tokens <= 100) {
+                      overlapText.unshift(paraBuffer[i]);
+                      overlapTokens += paraBuffer[i].tokens;
+                      // Target ~50 tokens overlap
+                      if (overlapTokens >= 40) break;
+                    } else {
+                      break;
+                    }
+                  }
+                  
+                  paraBuffer = [...overlapText, { text: p, tokens: pTokens }];
+                  currentTokens = overlapTokens + pTokens;
+                } else {
+                  paraBuffer.push({ text: p, tokens: pTokens });
+                  currentTokens += pTokens;
+                }
+              }
+              if (paraBuffer.length > 0) {
+                chunksToEmbed.push(paraBuffer.map(x => x.text).join("\n"));
+              }
+            } else {
+              // P0: Truncation Fix - Hard truncate only if it's over 2000 tokens (e.g. VISUAL tables)
+              let finalEmbedText = embedText;
+              if (tokenCount > 2000) {
+                console.warn(`[Chunking] WARNING: Token backstop fired! Page ${page.pageNumber} has ${tokenCount} tokens.`);
+                let charLimit = Math.floor(finalEmbedText.length * (2000 / tokenCount));
+                finalEmbedText = finalEmbedText.substring(0, charLimit);
+                
                 tokens = await cachedTokenizer(finalEmbedText, { truncation: false });
+                while (tokens.input_ids.data.length > 2000 && finalEmbedText.length > 100) {
+                  finalEmbedText = finalEmbedText.substring(0, finalEmbedText.length - 100);
+                  tokens = await cachedTokenizer(finalEmbedText, { truncation: false });
+                }
               }
-
-              if (tokens.input_ids.data.length > 2000) {
-                throw new Error(`Token backstop failed for Page ${page.pageNumber}.`);
-              }
+              chunksToEmbed.push(finalEmbedText);
             }
-            const embedding = await generateEmbedding(finalEmbedText);
 
-            batch.push({
-              documentId: doc.id,
-              chunkType: page.classification,
-              pageStart: page.pageNumber,
-              pageEnd: page.pageNumber,
-              textContent: embedText,
-              sourceType: doc.sourceType,
-              projectId: doc.projectId,
-              fabricatorId: doc.fabricatorId,
-              heading: lastHeading || null,
-              embedding
-            });
+            for (const textChunk of chunksToEmbed) {
+              const embedding = await generateEmbedding(textChunk);
+              batch.push({
+                documentId: doc.id,
+                chunkType: page.classification,
+                pageStart: page.pageNumber,
+                pageEnd: page.pageNumber,
+                textContent: textChunk,
+                sourceType: doc.sourceType,
+                projectId: doc.projectId,
+                fabricatorId: doc.fabricatorId,
+                heading: lastHeading || null,
+                embedding,
+                parentPageId: page.id
+              });
+            }
             producedChunk = true;
           } else {
             console.log(`[Chunking] Skipping excluded page: ${page.pageNumber}`);
@@ -160,21 +228,20 @@ export function startChunkingWorker() {
         // End of batch or end of document
         if (pagesProcessed % BATCH_SIZE === 0 || pagesProcessed === doc.StandardPage.length) {
           if (batch.length > 0) {
-            await prisma.$transaction(async (tx) => {
-              for (const c of batch) {
-                const vectorString = `[${c.embedding.join(",")}]`;
-                await tx.$executeRaw`
-                  INSERT INTO standard_chunks (
-                    id, document_id, chunk_type, page_start, page_end, text_content, 
-                    source_type, project_id, fabricator_id, heading, embedding, created_at
-                  ) VALUES (
-                    gen_random_uuid(), ${c.documentId}::uuid, ${c.chunkType}::"StandardChunkType", 
-                    ${c.pageStart}, ${c.pageEnd}, ${c.textContent}, ${c.sourceType}::"StandardSourceType", 
-                    ${c.projectId}::uuid, ${c.fabricatorId}::uuid, ${c.heading}, ${vectorString}::vector, NOW()
-                  )
-                `;
-              }
+            const transactionOps = batch.map(c => {
+              const vectorString = `[${c.embedding.join(",")}]`;
+              return prisma.$executeRaw`
+                INSERT INTO standard_chunks (
+                  id, document_id, chunk_type, page_start, page_end, text_content, 
+                  source_type, project_id, fabricator_id, heading, embedding, created_at, parent_page_id
+                ) VALUES (
+                  gen_random_uuid(), ${c.documentId}::uuid, ${c.chunkType}::"StandardChunkType", 
+                  ${c.pageStart}, ${c.pageEnd}, ${c.textContent}, ${c.sourceType}::"StandardSourceType", 
+                  ${c.projectId}::uuid, ${c.fabricatorId}::uuid, ${c.heading}, ${vectorString}::vector, NOW(), ${c.parentPageId}::uuid
+                )
+              `;
             });
+            await prisma.$transaction(transactionOps);
             batch = [];
           }
           
@@ -194,6 +261,29 @@ export function startChunkingWorker() {
           }
         }
       }
+
+      // 2.5. Surface a silent failure mode: the heading regex is tuned to one document's
+      // numbering convention (confirmed 2026-09-02 not to generalize -- see
+      // tests/KNOWN_ISSUES.md) and previously failed with zero symptoms -- heading stays null
+      // on every chunk, degrading anchor-chunk grouping and VISUAL-page retrieval context, with
+      // no error anywhere. This doesn't fix detection; it just stops it from being invisible.
+      const headingCount = await prisma.standardChunk.count({
+        where: { documentId: doc.id, heading: { not: null } },
+      });
+      const noHeadingsDetected = headingCount === 0;
+      if (noHeadingsDetected) {
+        console.warn(
+          `[Chunking] WARNING: zero headings detected across all ${doc.StandardPage.length} pages ` +
+          `of documentId ${doc.id} ("${doc.pdfName}"). The heading regex may not match this ` +
+          `document's numbering convention -- anchor-chunk grouping and VISUAL-page retrieval ` +
+          `context will silently lack section context for this entire document. See ` +
+          `tests/KNOWN_ISSUES.md ("heading detection does not generalize").`
+        );
+      }
+      await prisma.standardDocument.update({
+        where: { id: documentId },
+        data: { noHeadingsDetected },
+      });
 
       // 3. Atomic swap to activate the new document version
       const versioningService = new StandardsVersioningService();

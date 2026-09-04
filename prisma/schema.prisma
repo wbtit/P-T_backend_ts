@@ -2564,6 +2564,14 @@ model StandardDocument {
   documentFamilyId String?                @map("document_family_id")
   excludedPages    Int[]                  @default([]) @map("excluded_pages")
   uploadedAt       DateTime               @default(now()) @map("uploaded_at")
+  // Set at the end of chunking if the heading regex (tuned to AISC's numbering convention,
+  // confirmed 2026-09-02 NOT to generalize -- see tests/KNOWN_ISSUES.md) matched zero lines
+  // across the whole document. Previously this failure mode was completely silent: heading
+  // stays null on every chunk, degrading anchor-chunk grouping and VISUAL-page retrieval
+  // context with no error and no visible symptom. NULL until a chunking run completes;
+  // true means zero headings were found and this document's retrieval quality has not been
+  // validated to work without them.
+  noHeadingsDetected Boolean?             @map("no_headings_detected")
 
   // Relations
   project       Project?             @relation(fields: [projectId], references: [id], onDelete: Restrict)
@@ -2592,11 +2600,13 @@ model StandardChunk {
 
   // Storing a 768-dimensional vector for Ollama nomic-embed-text embeddings.
   embedding Unsupported("vector(768)")?
+  parentPageId String?            @map("parent_page_id") @db.Uuid
 
   createdAt DateTime @default(now()) @map("created_at")
 
   // Relations
   document StandardDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  page     StandardPage?    @relation(fields: [parentPageId], references: [id], onDelete: Cascade)
 
   @@map("standard_chunks")
 }
@@ -2627,6 +2637,19 @@ model StandardChatAnswer {
   anchorPageEnd     Int?               @map("anchor_page_end")
   imagePaths        String[]           @map("image_paths") // Array of string paths
   pinnedDocumentId  String?            @map("pinned_document_id") @db.Uuid
+
+  // Discriminates why answerText is null (or, for a deferral, what generateAnswerText returned
+  // before the deferral text overwrote it) -- 'answered' | 'refused' | 'failed', or NULL when
+  // generateAnswerText was never invoked for this answer (no-preferences / floor-fallback /
+  // all-candidates-deferred paths, which already have distinct, non-ambiguous answerText).
+  // 'refused' = the model ran and explicitly declined. 'failed' = generation never produced a
+  // real model judgment (timeout, non-OK HTTP status, thrown error) -- see
+  // generationFailureReason. Added 2026-09-02 to close the null/timeout ambiguity documented in
+  // tests/KNOWN_ISSUES.md: previously both cases persisted as the same indistinguishable NULL.
+  generationStatus         String? @map("generation_status")
+  // Populated only when generationStatus = 'failed': 'timeout' | 'http_error_<status>' |
+  // 'error: <message>'.
+  generationFailureReason  String? @map("generation_failure_reason")
 
   citations StandardChatCitation[]
 
@@ -2664,9 +2687,20 @@ model StandardPage {
   visionExtracted Boolean @default(false) @map("vision_extracted")
   createdAt   DateTime @default(now()) @map("created_at")
 
+  // Whether this page's extracted content (textContent/ocrText) has been verified accurate
+  // enough for generation to quote specific values from it. Defaults to false (LOW confidence)
+  // for every page -- only pages with real, human-verified value-level correctness should ever
+  // be set true. Structural gate-passing (arity/fraction/merge checks) is NOT sufficient on its
+  // own: it has been observed to false-positive on non-table content (e.g. chart/plot pages
+  // whose axis-tick values happen to look like a well-formed table). Generation logic
+  // (chatService.ts) uses this to decide whether a VISUAL chunk may be used to state a specific
+  // extracted value, or must defer to the citation image instead.
+  highConfidenceExtraction Boolean @default(false) @map("high_confidence_extraction")
+
   classification StandardChunkType? @map("classification")
 
   document StandardDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  chunks   StandardChunk[]
 
   @@unique([documentId, pageNumber])
   @@map("standard_pages")

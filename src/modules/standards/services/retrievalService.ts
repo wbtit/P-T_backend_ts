@@ -6,6 +6,18 @@ export interface SearchStandardsOptions {
   threshold?: number; // candidate floor (default 0.45)
   alpha?: number;
   acceptanceThreshold?: number; // final threshold (default 0.60)
+  /** How many pooled candidates to return per tier (default 10).
+   *  Widened to feed the cross-encoder reranker — see rerankerService.ts. */
+  topK?: number;
+  /** FABRICATOR tier only. Scopes the candidate pool to these document_family_id values
+   *  (e.g. a fabricator with both a Detailing Manual and a Stair Standard). Omitted or empty
+   *  means "no family selected" -- pools ALL of the fabricator's ACTIVE documents, same as
+   *  before this filter existed. Deliberately NOT the same convention as GENERAL/PROJECT's
+   *  "zero preferences = zero results": a project's fabricator assignment is already a scoping
+   *  decision, so no family choice reasonably means "everything my fabricator has," and this
+   *  keeps any caller that predates the family selector working unchanged. See
+   *  tests/KNOWN_ISSUES.md ("FABRICATOR tier had no family scoping"). */
+  fabricatorFamilyIds?: string[];
 }
 
 export interface RetrievedChunk {
@@ -22,6 +34,8 @@ export interface RetrievedChunk {
   isAnchor?: boolean;
   /** Anchor chunk expanded from this hit via shared heading. Undefined for anchor rows themselves. */
   anchor?: RetrievedChunk;
+  parentPageId?: string;
+  heading?: string;
 }
 
 export interface SearchStandardsResponse {
@@ -87,7 +101,7 @@ export async function searchScope(
   scopeCondition: string,
   options: SearchStandardsOptions
 ): Promise<RetrievedChunk[] | null> {
-  const { query, projectId, threshold = 0.45, alpha = 0.0, acceptanceThreshold = 0.60 } = options;
+  const { query, projectId, threshold = 0.45, alpha = 0.0, acceptanceThreshold = 0.60, topK = 10, fabricatorFamilyIds } = options;
   const vectorString = `[${embedding.join(",")}]`;
   const queryTokens = tokenizeAndNormalize(query);
   
@@ -102,6 +116,7 @@ export async function searchScope(
       c.text_content as "textContent",
       c.source_type as "sourceType",
       c.heading,
+      c.parent_page_id as "parentPageId",
       1 - (c.embedding <=> $1::vector) AS similarity
     FROM standard_chunks c
   `;
@@ -132,7 +147,7 @@ export async function searchScope(
       WHERE c.source_type = $4::"StandardSourceType" AND d.status = 'ACTIVE' AND d.document_family_id = ANY($3::text[])
       AND 1 - (c.embedding <=> $1::vector) > $2
       ORDER BY c.embedding <=> $1::vector
-      LIMIT 10
+      LIMIT 40
     `;
     console.log(`[RetrievalService] Executing vector search for '${scopeCondition}' against families:`, preferredFamilyIds);
     results = await prisma.$queryRawUnsafe(querySql, vectorString, threshold, preferredFamilyIds, scopeCondition);
@@ -147,17 +162,23 @@ export async function searchScope(
       return null;
     }
 
-    // Check if fabricator has any ACTIVE FABRICATOR-tier document
+    const hasFamilyFilter = Array.isArray(fabricatorFamilyIds) && fabricatorFamilyIds.length > 0;
+
+    // Check if fabricator has any ACTIVE FABRICATOR-tier document -- scoped to the selected
+    // families, if any, so this short-circuit reflects what will actually be searched rather
+    // than "does this fabricator have ANY document at all" (which could be true while the
+    // specifically-selected family has none).
     const activeDoc = await prisma.standardDocument.findFirst({
-      where: { 
+      where: {
         fabricatorId: proj.fabricatorID,
         sourceType: "FABRICATOR",
-        status: "ACTIVE"
+        status: "ACTIVE",
+        ...(hasFamilyFilter ? { documentFamilyId: { in: fabricatorFamilyIds } } : {})
       }
     });
 
     if (!activeDoc) {
-      console.log(`[RetrievalService] scopeCondition 'FABRICATOR' short-circuiting: Fabricator ${proj.fabricatorID} has no ACTIVE documents.`);
+      console.log(`[RetrievalService] scopeCondition 'FABRICATOR' short-circuiting: Fabricator ${proj.fabricatorID} has no ACTIVE documents${hasFamilyFilter ? ` in families [${fabricatorFamilyIds!.join(", ")}]` : ""}.`);
       return null; // Distinct "not applicable" state
     }
 
@@ -165,11 +186,14 @@ export async function searchScope(
       JOIN standard_documents d ON c.document_id = d.id
       WHERE c.source_type = $4::"StandardSourceType" AND c.fabricator_id = $2::uuid AND d.status = 'ACTIVE'
       AND 1 - (c.embedding <=> $1::vector) > $3
+      ${hasFamilyFilter ? "AND d.document_family_id = ANY($5::text[])" : ""}
       ORDER BY c.embedding <=> $1::vector
-      LIMIT 10
+      LIMIT 40
     `;
-    console.log(`[RetrievalService] Executing vector search for 'FABRICATOR' against fabricatorId: ${proj.fabricatorID}`);
-    results = await prisma.$queryRawUnsafe(querySql, vectorString, proj.fabricatorID, threshold, scopeCondition);
+    console.log(`[RetrievalService] Executing vector search for 'FABRICATOR' against fabricatorId: ${proj.fabricatorID}` + (hasFamilyFilter ? `, families: ${JSON.stringify(fabricatorFamilyIds)}` : " (no family filter -- pooling all)"));
+    results = hasFamilyFilter
+      ? await prisma.$queryRawUnsafe(querySql, vectorString, proj.fabricatorID, threshold, scopeCondition, fabricatorFamilyIds)
+      : await prisma.$queryRawUnsafe(querySql, vectorString, proj.fabricatorID, threshold, scopeCondition);
   } else {
     // Unsupported scope
     return [];
@@ -180,7 +204,7 @@ export async function searchScope(
   const anchorByHitId = new Map<string, RetrievedChunk>();
   const processedAnchorHeadings = new Set<string>();
 
-  const directHits: RetrievedChunk[] = [];
+  const allHits: RetrievedChunk[] = [];
 
   for (const row of results) {
     const lexicalScore = calculateLexicalScore(queryTokens, row.textContent);
@@ -196,18 +220,34 @@ export async function searchScope(
       sourceType: row.sourceType,
       vectorSimilarity: row.similarity,
       lexicalScore,
-      similarity: finalScore
+      similarity: finalScore,
+      parentPageId: row.parentPageId,
+      heading: row.heading
     };
-    
+    allHits.push(chunk);
+  }
+
+  // Max-pool finalScore by parentPageId
+  const pooledMap = new Map<string, RetrievedChunk>();
+  for (const hit of allHits) {
+    const groupKey = hit.parentPageId || hit.id;
+    const existing = pooledMap.get(groupKey);
+    if (!existing || hit.similarity > existing.similarity) {
+      pooledMap.set(groupKey, hit);
+    }
+  }
+
+  const directHits: RetrievedChunk[] = [];
+  for (const chunk of pooledMap.values()) {
     // Apply final acceptance threshold — 0.0 when caller wants all and applies floor itself
-    if (finalScore > acceptanceThreshold) {
+    if (chunk.similarity > acceptanceThreshold) {
       directHits.push(chunk);
 
       // Expand VISUAL chunks ONLY if the direct hit clears the threshold.
       // The anchor is identified by shared heading within the same document (Phase 5 definition).
       // Anchors can be many pages away from the hit (Phase 6 observation) — proximity is not used.
-      if (chunk.chunkType === "VISUAL" && row.heading) {
-        const anchorKey = `${chunk.documentId}-${row.heading}`;
+      if (chunk.chunkType === "VISUAL" && chunk.heading) {
+        const anchorKey = `${chunk.documentId}-${chunk.heading}`;
         if (!processedAnchorHeadings.has(anchorKey)) {
           processedAnchorHeadings.add(anchorKey);
           
@@ -228,7 +268,7 @@ export async function searchScope(
               AND heading = $3
               AND chunk_type = 'VISUAL'
             ORDER BY page_start ASC
-          `, vectorString, chunk.documentId, row.heading);
+          `, vectorString, chunk.documentId, chunk.heading);
 
           if (anchorResult.length > 0) {
             let anchorRow = anchorResult[0];
@@ -280,7 +320,7 @@ export async function searchScope(
     }
   }
 
-  return directHits;
+  return directHits.slice(0, topK);
 }
 
 export async function searchStandards(options: SearchStandardsOptions): Promise<SearchStandardsResponse> {

@@ -298,7 +298,7 @@ export class StandardsController {
   public async chat(req: Request, res: Response): Promise<void> {
     try {
       const { projectId } = req.params;
-      const { query } = req.body;
+      const { query, standardFamilyIds } = req.body;
 
       console.log(`\n\n[ChatController] --- NEW CHAT REQUEST ---`);
       console.log(`[ChatController] ProjectId: ${projectId}`);
@@ -310,8 +310,24 @@ export class StandardsController {
         return;
       }
 
+      // FABRICATOR-tier family scoping. Optional -- matches the existing setProjectPreferences
+      // shape (standardFamilyIds: string[]) for consistency, but this is a proposed convention,
+      // not verified against a real captured FE payload (none exists to inspect -- see
+      // tests/KNOWN_ISSUES.md). Omitted/empty is not an error: it means "no family selected,"
+      // which pools all of the fabricator's documents (unchanged prior behavior).
+      let fabricatorFamilyIds: string[] | undefined;
+      if (standardFamilyIds !== undefined) {
+        if (!Array.isArray(standardFamilyIds) || standardFamilyIds.some((id: any) => typeof id !== "string")) {
+          console.log(`[ChatController] Rejected: standardFamilyIds must be an array of strings`);
+          res.status(400).json({ message: "standardFamilyIds must be an array of strings" });
+          return;
+        }
+        fabricatorFamilyIds = [...new Set(standardFamilyIds)];
+        console.log(`[ChatController] FABRICATOR family filter: ${JSON.stringify(fabricatorFamilyIds)}`);
+      }
+
       console.log(`[ChatController] Passing query to askStandards...`);
-      const result = await askStandards(projectId, query);
+      const result = await askStandards(projectId, query, fabricatorFamilyIds);
       
       console.log(`[ChatController] Received result from askStandards!`);
       // Optional: uncomment below to print the full json

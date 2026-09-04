@@ -26,11 +26,11 @@ async function run() {
   const data = JSON.parse(fs.readFileSync("docs/specs/eval-set.json", "utf-8"));
   const all = [...(data.dev || []), ...(data.holdout || [])].filter((d: any) => typeof d.question === 'string' && d.question.trim().length > 0);
   
-  const indices = JSON.parse(fs.readFileSync("scratch/benchmark_test_indices.json", "utf-8"));
   
-  const trainSet = indices.trainIndices.map((i: number) => all[i]);
-  const testSet = indices.testIndices.map((i: number) => all[i]);
-  const fullSet = [...trainSet, ...testSet];
+  
+  
+  
+  const fullSet = all;
 
   const regressionQueries = [
     { query: "column with cap plate", correctPages: [16, 17], docKey: 'GSMS' },
@@ -189,10 +189,7 @@ async function run() {
     printMetrics('VISUAL', byType['VISUAL']);
   }
 
-  await evalSet('TRAIN (80%)', trainSet);
-  await evalSet('TEST (20% HOLDOUT)', testSet);
-
-  // Evaluate regression set
+  await evalSet('FULL BENCHMARK', fullSet);
   console.log(`\n=== Evaluating REGRESSION set (${regressionQueries.length} queries) ===`);
   let fpCount = 0;
   let irrelevanceTotal = 0;
