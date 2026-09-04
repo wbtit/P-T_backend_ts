@@ -1,3 +1,5 @@
+
+console.log('DATABASE_URL loaded:', !!process.env.DATABASE_URL, 'length:', process.env.DATABASE_URL?.length);
 import express from 'express'
 import dotenv from "dotenv";
 import path from "path";
