@@ -100,6 +100,7 @@ import { PaginationQuerySchema } from "../../../utils/pagination";
 
 export const RfqPaginationQuerySchema = PaginationQuerySchema.extend({
   searchByProjectName: z.string().optional(),
+  fabricatorName: z.string().optional(),
   status: z.enum(RFQStatus).optional(),
 });
 

@@ -112,6 +112,16 @@ export class RFQRepository {
                         },
                       }
                     : {}),
+                ...(query.fabricatorName
+                    ? {
+                        fabricator: {
+                            fabName: {
+                                contains: query.fabricatorName,
+                                mode: "insensitive" as Prisma.QueryMode,
+                            },
+                        },
+                      }
+                    : {}),
             },
             select: RFQ_LIST_SELECT,
             orderBy: { createdAt: "desc" },

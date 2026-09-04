@@ -101,6 +101,13 @@ export const rFQOpenApiDoc: ModuleOpenApiDoc = {
         summary: "GET /rfq/all",
         operationId: "get_RFQ_rfq_all",
         security: [{ bearerAuth: [] }],
+        parameters: [
+          { in: "query", name: "page", required: false, schema: { type: "integer", default: 1 } },
+          { in: "query", name: "limit", required: false, schema: { type: "integer", default: 10 } },
+          { in: "query", name: "searchByProjectName", required: false, schema: { type: "string" } },
+          { in: "query", name: "fabricatorName", required: false, schema: { type: "string" } },
+          { in: "query", name: "status", required: false, schema: { type: "string" } },
+        ],
         responses: {
           "200": { description: "Success" },
           "400": { description: "Bad Request" },
