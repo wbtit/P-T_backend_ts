@@ -123,7 +123,8 @@ export class RFQService {
             "ADMIN", 
             "DEPUTY_MANAGER", 
             "PROJECT_MANAGER_OFFICER", 
-            "OPERATION_EXECUTIVE"
+            "OPERATION_EXECUTIVE",
+            "ESTIMATION_HEAD"
         ].includes(user.role);
 
         if (!isOwner && !isInternalAdmin) {
