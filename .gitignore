@@ -16,7 +16,6 @@ pids
 *.pid.lock
 .codex
 
-public/
 uploads/
 docker-cmds.txt
 build
@@ -90,16 +89,12 @@ dist
 
 # Gatsby files
 .cache/
-# Comment in the public line in if your project uses Gatsby and not Next.js
-# https://nextjs.org/blog/next-9-1#public-directory-support
-# public
 
 # vuepress build output
 .vuepress/dist
 
 # vuepress v2.x temp and cache directory
 .temp
-.cache
 
 # Sveltekit cache directory
 .svelte-kit/
@@ -179,3 +174,15 @@ scratch/*.json
 scratch/diagnose_*.ts
 scratch/fix-*.ts
 scratch/check-*.ts
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Standalone benchmark scratch work — not part of the tracked app.
+# Source PDFs: third-party reference material, kept on disk for Phase 2
+# regression testing but never tracked (copyright, not just size).
+# Everything else under here is regenerable extraction/render output.
+benchmark-source/
