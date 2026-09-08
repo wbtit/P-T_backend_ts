@@ -410,7 +410,7 @@ async getCoTableByCoId(CoId:string,userId:string, changeOrderVersionId?: string)
     let coRow = await prisma.changeOrdertable.findMany({
       where: targetVersionId ? { changeOrderVersionId: targetVersionId } : { CoId }
     });
-    if(curruser?.role==="ADMIN"||curruser?.role==="PROJECT_MANAGER"){
+    if(curruser?.role==="PROJECT_MANAGER"){
         coRow=coRow.map(row=>{
             if(row.costUpdatedBy!==curruser?.id){
                 return { ...row, cost: null } as any;
