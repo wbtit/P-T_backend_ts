@@ -181,8 +181,21 @@ Thumbs.db
 .vscode/
 .idea/
 
+# Python (extraction service)
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
 # Standalone benchmark scratch work — not part of the tracked app.
 # Source PDFs: third-party reference material, kept on disk for Phase 2
 # regression testing but never tracked (copyright, not just size).
 # Everything else under here is regenerable extraction/render output.
 benchmark-source/
+specs/
+
+# Phase 2 migration draft: review artifacts, not app code. schema.prisma is the
+# thing that gets applied; these document why.
+prisma/phase2_draft/
+src/modules/standards/extraction/tests/expected

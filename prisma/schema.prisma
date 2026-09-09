@@ -2514,7 +2514,29 @@ enum StandardSourceType {
 
 enum StandardChunkType {
   PROSE
+  TABLE
   VISUAL
+}
+
+enum ExtractionStatus {
+  EXTRACTED
+  VISUAL_ONLY
+}
+
+enum VisualOnlyReason {
+  EMPTY
+  UNMAPPED_GLYPH
+  DUPLICATE_TEXT
+  NO_CONFIDENT_REGION
+  SCANNED
+}
+
+// NULL_SOURCE is an explicit member, not SQL NULL: it records that detection
+// ran and produced no trusted heading, as distinct from "not yet computed".
+enum HeadingSource {
+  OUTLINE
+  REGEX
+  NULL_SOURCE
 }
 
 enum StandardDocumentStatus {
@@ -2525,10 +2547,10 @@ enum StandardDocumentStatus {
 }
 
 model StandardFamily {
-  id          String   @id // e.g., "AISC-CM-14", "GSMS"
-  familyCode  String   @map("family_code")
-  edition     String
-  isDefault   Boolean  @default(false) @map("is_default")
+  id         String  @id // e.g., "AISC-CM-14", "GSMS"
+  familyCode String  @map("family_code")
+  edition    String
+  isDefault  Boolean @default(false) @map("is_default")
 
   preferences ProjectStandardPreference[]
   documents   StandardDocument[]
@@ -2565,13 +2587,20 @@ model StandardDocument {
   excludedPages    Int[]                  @default([]) @map("excluded_pages")
   uploadedAt       DateTime               @default(now()) @map("uploaded_at")
 
+  // Phase 2: per-document heading provenance. All nullable -- documents
+  // ingested before the new pipeline have no measurement.
+  noHeadingsDetected   Boolean? @map("no_headings_detected")
+  headingCoverageRatio Float?   @map("heading_coverage_ratio")
+  outlineCoverageRatio Float?   @map("outline_coverage_ratio")
+  outlineFillEnabled   Boolean? @map("outline_fill_enabled")
+
   // Relations
-  project       Project?             @relation(fields: [projectId], references: [id], onDelete: Restrict)
-  fabricator    Fabricator?          @relation(fields: [fabricatorId], references: [id], onDelete: Restrict)
+  project        Project?             @relation(fields: [projectId], references: [id], onDelete: Restrict)
+  fabricator     Fabricator?          @relation(fields: [fabricatorId], references: [id], onDelete: Restrict)
   documentFamily StandardFamily?      @relation(fields: [documentFamilyId], references: [id], onDelete: Restrict)
-  chunks        StandardChunk[]
-  pinnedAnswers StandardChatAnswer[]
-  StandardPage  StandardPage[]
+  chunks         StandardChunk[]
+  pinnedAnswers  StandardChatAnswer[]
+  StandardPage   StandardPage[]
 
   @@map("standard_documents")
 }
@@ -2590,6 +2619,25 @@ model StandardChunk {
   fabricatorId String?            @map("fabricator_id") @db.Uuid
   heading      String?            @map("heading")
 
+  // Exists live but was missing from this file; recorded here so `db push`
+  // cannot drop it. Legacy page-level parent link (FK -> standard_pages).
+  // Currently 0 rows. NOT reused for table parent/child -- see phase2_draft.
+  parentPageId String? @map("parent_page_id") @db.Uuid
+
+  // Phase 2. All nullable, NO default: a default would backfill existing rows
+  // and destroy the null-vs-set boundary that identifies legacy rows.
+  documentFamilyId String? @map("document_family_id")
+  edition          String? @map("edition")
+
+  // Table parent/child. A parent is one whole table (citation identity, full
+  // serialized grid). Children are header row + ~10 data rows, embedded
+  // separately and max-pooled to the parent at query time.
+  parentChunkId String? @map("parent_chunk_id") @db.Uuid
+  rowGroupIndex Int?    @map("row_group_index")
+
+  parentChunk StandardChunk?  @relation("ChunkRowGroups", fields: [parentChunkId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  rowGroups   StandardChunk[] @relation("ChunkRowGroups")
+
   // Storing a 768-dimensional vector for Ollama nomic-embed-text embeddings.
   embedding Unsupported("vector(768)")?
 
@@ -2598,6 +2646,14 @@ model StandardChunk {
   // Relations
   document StandardDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
 
+  // Retrieval fetches a parent's children by parent id, in row-group order.
+  @@index([parentChunkId, rowGroupIndex])
+  // Modality-separated retrieval: table branch vs prose branch, per document.
+  @@index([documentId, chunkType])
+  // Duplicate children become impossible rather than dependent on the
+  // idempotency strategy. Parents all carry (NULL, NULL) and Postgres treats
+  // NULLs as distinct in a unique index, so parents never collide.
+  @@unique([parentChunkId, rowGroupIndex])
   @@map("standard_chunks")
 }
 
@@ -2628,6 +2684,11 @@ model StandardChatAnswer {
   imagePaths        String[]           @map("image_paths") // Array of string paths
   pinnedDocumentId  String?            @map("pinned_document_id") @db.Uuid
 
+  // Exist live but were missing from this file; recorded here so `db push`
+  // cannot drop them. Both are on the Phase 0 "keep" list.
+  generationStatus        String? @map("generation_status")
+  generationFailureReason String? @map("generation_failure_reason")
+
   citations StandardChatCitation[]
 
   // Relations
@@ -2655,14 +2716,28 @@ model StandardChatCitation {
 }
 
 model StandardPage {
-  id          String   @id @default(uuid()) @db.Uuid
-  documentId  String   @map("document_id") @db.Uuid
-  pageNumber  Int      @map("page_number")
-  imagePath   String   @map("image_path")
-  textContent String   @map("text_content") @db.Text
-  ocrText     String?  @map("ocr_text") @db.Text
+  id              String  @id @default(uuid()) @db.Uuid
+  documentId      String  @map("document_id") @db.Uuid
+  pageNumber      Int     @map("page_number")
+  imagePath       String  @map("image_path")
+  textContent     String  @map("text_content") @db.Text
+  ocrText         String? @map("ocr_text") @db.Text
   visionExtracted Boolean @default(false) @map("vision_extracted")
-  createdAt   DateTime @default(now()) @map("created_at")
+
+  // Exists live (boolean NOT NULL) but was missing from this file; recorded
+  // here so `db push` cannot drop it. Legacy heuristic flag from the current
+  // system -- new code must NOT read or write it. Extraction confidence is now
+  // structural: extractionStatus + visualOnlyReason is the real signal.
+  highConfidenceExtraction Boolean @default(false) @map("high_confidence_extraction")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Phase 2: structural extraction outcome. Set from spec §1-2 results, never
+  // by heuristic. extractionStatus + visualOnlyReason together are THE
+  // confidence signal; highConfidenceExtraction above is legacy and frozen.
+  extractionStatus ExtractionStatus? @map("extraction_status")
+  visualOnlyReason VisualOnlyReason? @map("visual_only_reason")
+  headingSource    HeadingSource?    @map("heading_source")
 
   classification StandardChunkType? @map("classification")
 
