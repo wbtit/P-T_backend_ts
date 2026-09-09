@@ -24,6 +24,19 @@ from .validity import EMPTY
 log = logging.getLogger("fabextract")
 
 
+def _is_scanned(page):
+    """A page with no text layer -- the §6 OCR gate, and nothing more.
+
+    This is the EMPTY branch of validity.check_page() reduced to what the gate
+    actually needs. check_page() also runs the unmapped-glyph and duplicate-text
+    passes, which the manifest builder runs anyway; calling it here as well
+    doubled the most expensive check across every page of the document.
+    """
+    if page.chars:
+        return False
+    return not (page.extract_text() or "").strip()
+
+
 def _setup_logging(log_path, verbose):
     log.setLevel(logging.DEBUG if verbose else logging.INFO)
     fmt = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
@@ -88,11 +101,16 @@ def extract_document(pdf_path, out_dir, min_edge_length=None, ocr=True,
     # so concurrency is capped in config rather than discovered under load.
     ocr_texts = {}
     if ocr:
-        from .validity import check_page as _check
         img_dir = out_dir / "_ocr_images"
         jobs = []
         for i in indices:
-            if _check(pdf.pages[i])["status"] == EMPTY:
+            # "Is this page scanned?" is exactly "does it have a text layer?",
+            # which is one cheap attribute read. This used to call the full §1
+            # check_page(), whose duplicate-text pass is the expensive one --
+            # and build_page_manifest() then ran the same check again, so
+            # validity was computed TWICE for every page in the document. On a
+            # 2,325-page book that is 2,325 wasted duplicate-text scans.
+            if _is_scanned(pdf.pages[i]):
                 img_dir.mkdir(parents=True, exist_ok=True)
                 img_path = img_dir / f"page_{i}.png"
                 ocr_mod.render_page_image(pdf.pages[i], img_path)

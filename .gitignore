@@ -198,4 +198,3 @@ specs/
 # Phase 2 migration draft: review artifacts, not app code. schema.prisma is the
 # thing that gets applied; these document why.
 prisma/phase2_draft/
-src/modules/standards/extraction/tests/expected

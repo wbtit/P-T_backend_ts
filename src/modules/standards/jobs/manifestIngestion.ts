@@ -175,31 +175,42 @@ async function embedChunks(
     if (!requiresEmbedding(c)) continue;
 
     const full = c.textContent;
-    if (full.length <= budget) {
-      embeddings.set(c.localId, await generateEmbedding(full));
-      continue;
+
+    // The ladder applies to every chunk, not only ones already over budget.
+    // An earlier version fast-pathed anything <= budget straight to
+    // generateEmbedding() with no fallback -- and SJI p199's table row (4,001
+    // chars, well under the 4,500 budget) still got a real 500 from Ollama
+    // ("the input length exceeds the context length"). Amendment 7's point
+    // exactly: char count is not a reliable proxy for token count, and a
+    // static budget is a starting guess, not a guarantee -- including for
+    // text the budget says should be safe. Rung 1 is the full text when it is
+    // within budget (matching the old fast path's common case exactly, same
+    // number of Ollama calls), or the budget-length prefix when it is not.
+    const rungs = [Math.min(full.length, budget)];
+    for (const factor of TRUNCATION_LADDER.slice(1)) {
+      const limit = Math.floor(budget * factor);
+      if (limit < rungs[rungs.length - 1]) rungs.push(limit);
     }
 
-    // Over budget: truncate for the EMBEDDING only. text_content is stored
-    // complete regardless -- only the vector covers a prefix.
     let lastErr: unknown = null;
     let attempts = 0;
-    for (const factor of TRUNCATION_LADDER) {
-      const limit = Math.floor(budget * factor);
+    for (const limit of rungs) {
       attempts++;
       try {
         const vec = await generateEmbedding(full.slice(0, limit));
         embeddings.set(c.localId, vec);
-        console.error(
-          `[embed-truncated] document=${chunked.documentId} page=${c.pageStart} ` +
-            `chunkType=${c.chunkType} localId=${c.localId} originalChars=${full.length} ` +
-            `embeddedChars=${limit} attempts=${attempts} ` +
-            `-- vector covers a prefix only; stored text is complete`
-        );
-        stats.truncated.push({
-          localId: c.localId, chunkType: c.chunkType, page: c.pageStart,
-          from: full.length, to: limit, attempts,
-        });
+        if (limit < full.length) {
+          console.error(
+            `[embed-truncated] document=${chunked.documentId} page=${c.pageStart} ` +
+              `chunkType=${c.chunkType} localId=${c.localId} originalChars=${full.length} ` +
+              `embeddedChars=${limit} attempts=${attempts} ` +
+              `-- vector covers a prefix only; stored text is complete`
+          );
+          stats.truncated.push({
+            localId: c.localId, chunkType: c.chunkType, page: c.pageStart,
+            from: full.length, to: limit, attempts,
+          });
+        }
         lastErr = null;
         break;
       } catch (e) {
@@ -211,8 +222,8 @@ async function embedChunks(
       // for a VISUAL chunk that is the only way its page can be found.
       throw new Error(
         `chunk ${c.localId} (page ${c.pageStart}, ${c.chunkType}, ${full.length} chars) could ` +
-          `not be embedded after ${attempts} truncation attempts down to ` +
-          `${Math.floor(budget * TRUNCATION_LADDER[TRUNCATION_LADDER.length - 1])} chars: ${lastErr}`
+          `not be embedded after ${attempts} attempts down to ${rungs[rungs.length - 1]} ` +
+          `chars: ${lastErr}`
       );
     }
   }

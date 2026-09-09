@@ -63,8 +63,7 @@ function vectorLiteral(v: number[]): string {
 }
 
 /**
- * Idempotency: DELETE the document's chunks, then insert, both inside one
- * transaction.
+ * Idempotency: DELETE the document's chunks, then insert.
  *
  * Chosen over an upsert key because a chunk has no natural stable identity.
  * Text content repeats legitimately across pages (shared headers, boilerplate),
@@ -74,9 +73,33 @@ function vectorLiteral(v: number[]): string {
  * Re-ingest semantics are "replace this document's chunks" regardless, so
  * delete-then-insert says exactly that.
  *
- * The delete is scoped to `document_id` and never touches another document. It
- * is inside the transaction, so a failure mid-insert rolls the delete back
- * rather than leaving the document with no chunks.
+ * TRANSACTION BOUNDARY: one per batch of 50, NOT one for the document.
+ *
+ * An earlier version wrapped the delete and every insert in a single
+ * transaction. That is fine for a 15-page document and wrong for AISC's 2,325:
+ * it holds locks on standard_chunks for minutes and dies on any timeout.
+ *
+ * What replaces it relies on a gate that already exists rather than a new one:
+ * `retrievalService` joins standard_documents and filters `d.status = 'ACTIVE'`
+ * on every scope branch, so a document that is not ACTIVE contributes nothing
+ * to retrieval. The ingest therefore drops the document to PENDING first, and
+ * only an explicit, opt-in activation puts it back.
+ *
+ * FAILURE SEMANTICS, which is the point of the design:
+ *   - Die anywhere mid-insert and the document stays PENDING, so every one of
+ *     its chunks is EXCLUDED from retrieval. Partial data is GATED, never
+ *     served. It is absent, not wrong.
+ *   - `pages_processed` records how far it got.
+ *   - Re-running is safe: the delete clears whatever partial state exists.
+ *   - Callers may set status FAILED; the enum already carries it.
+ *
+ * Known limits, stated rather than hidden:
+ *   - The gate is in the query layer, not the database. Anything querying
+ *     standard_chunks WITHOUT joining standard_documents would see partial
+ *     rows. Today only retrievalService and the legacy chunking.ts do.
+ *   - Re-ingesting an already-ACTIVE document makes it unavailable for the
+ *     duration. Zero-downtime needs a version-swap (an `ingest_id` column plus
+ *     a retrieval filter) — deferred until Phase 4 retrieval exists.
  */
 export async function persistChunks(
   chunked: ChunkedDocument,
@@ -186,28 +209,39 @@ export async function persistChunks(
     `;
   };
 
-  await prisma.$transaction(
-    async (tx: any) => {
-      const deleted: number = await tx.$executeRaw`
-        DELETE FROM standard_chunks WHERE document_id = ${documentId}::uuid
-      `;
-      result.deletedChunks = Number(deleted) || 0;
+  // Step 1: drop out of ACTIVE before touching anything. From here until an
+  // explicit activation, retrieval cannot see this document at all.
+  await prisma.standardDocument.update({
+    where: { id: documentId },
+    data: { status: "PENDING" },
+  });
 
-      // Parents first, in full, so every parent row exists before any child
-      // references it. The FK is deferred to no such thing -- ordering is the
-      // guarantee.
-      for (let i = 0; i < parents.length; i += BATCH_SIZE) {
-        for (const c of parents.slice(i, i + BATCH_SIZE)) await insert(tx, c);
-        result.insertedParents += Math.min(BATCH_SIZE, parents.length - i);
-      }
-      for (let i = 0; i < children.length; i += BATCH_SIZE) {
-        for (const c of children.slice(i, i + BATCH_SIZE)) await insert(tx, c);
-        result.insertedChildren += Math.min(BATCH_SIZE, children.length - i);
-      }
-    },
-    { timeout: TRANSACTION_TIMEOUT_MS, maxWait: TRANSACTION_MAX_WAIT_MS }
-  );
+  // Step 2: clear prior chunks. One statement, its own implicit transaction.
+  const deleted: number = await prisma.$executeRaw`
+    DELETE FROM standard_chunks WHERE document_id = ${documentId}::uuid
+  `;
+  result.deletedChunks = Number(deleted) || 0;
 
+  // Step 3: insert in batches, each its own transaction. Parents in full
+  // BEFORE any child, because the child carries the FK -- ordering is the
+  // guarantee, there is no deferred constraint here.
+  const insertBatched = async (rows: DraftChunk[], onDone: (n: number) => void) => {
+    for (let i = 0; i < rows.length; i += BATCH_SIZE) {
+      const batch = rows.slice(i, i + BATCH_SIZE);
+      await prisma.$transaction(
+        async (tx: any) => {
+          for (const c of batch) await insert(tx, c);
+        },
+        { timeout: TRANSACTION_TIMEOUT_MS, maxWait: TRANSACTION_MAX_WAIT_MS }
+      );
+      onDone(batch.length);
+    }
+  };
+  await insertBatched(parents, (n) => (result.insertedParents += n));
+  await insertBatched(children, (n) => (result.insertedChildren += n));
+
+  // Step 4 (activation) is deliberately NOT here. Putting a document into
+  // service is an explicit act -- see activateIngestedDocument below.
   return result;
 }
 
@@ -307,6 +341,24 @@ export function reportEmbedTruncationRisk(
     );
   }
   return over;
+}
+
+/**
+ * Step 4 of the ingest, deliberately separate and opt-in.
+ *
+ * Nothing in the ingest path calls this. A document only becomes visible to
+ * retrieval when someone decides it should be, which is why a half-finished
+ * ingest is harmless: it simply never reaches this call.
+ *
+ * This does NOT supersede prior editions the way
+ * StandardsVersioningService.activateStandardDocument does -- that belongs to
+ * the tier/versioning path the pivot removes. This only flips one document.
+ */
+export async function activateIngestedDocument(documentId: string): Promise<void> {
+  await prisma.standardDocument.update({
+    where: { id: documentId },
+    data: { status: "ACTIVE" },
+  });
 }
 
 /** Per-document heading provenance, so a bad heading run is queryable rather

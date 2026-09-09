@@ -213,21 +213,28 @@ export async function searchScope(
           
           // Find VISUAL chunks under this heading in this document, ordered by page
           const anchorResult = await prisma.$queryRawUnsafe<any[]>(`
-            SELECT 
-              id, 
-              document_id as "documentId",
-              chunk_type as "chunkType",
-              page_start as "pageStart",
-              page_end as "pageEnd",
-              text_content as "textContent",
-              source_type as "sourceType",
-              heading,
-              1 - (embedding <=> $1::vector) AS similarity
-            FROM standard_chunks
-            WHERE document_id = $2::uuid 
-              AND heading = $3
-              AND chunk_type = 'VISUAL'
-            ORDER BY page_start ASC
+            SELECT
+              c.id,
+              c.document_id as "documentId",
+              c.chunk_type as "chunkType",
+              c.page_start as "pageStart",
+              c.page_end as "pageEnd",
+              c.text_content as "textContent",
+              c.source_type as "sourceType",
+              c.heading,
+              1 - (c.embedding <=> $1::vector) AS similarity
+            FROM standard_chunks c
+            JOIN standard_documents d ON d.id = c.document_id
+            WHERE c.document_id = $2::uuid
+              AND c.heading = $3
+              AND c.chunk_type = 'VISUAL'
+              -- The status gate held here only transitively: this query is
+              -- reachable only from a chunk already returned by a status-gated
+              -- search on the same document. Making it explicit costs nothing
+              -- and stops a partially-ingested (PENDING) document leaking in
+              -- if this query is ever called from somewhere else.
+              AND d.status = 'ACTIVE'
+            ORDER BY c.page_start ASC
           `, vectorString, chunk.documentId, row.heading);
 
           if (anchorResult.length > 0) {

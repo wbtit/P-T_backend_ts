@@ -2527,8 +2527,16 @@ enum VisualOnlyReason {
   EMPTY
   UNMAPPED_GLYPH
   DUPLICATE_TEXT
-  NO_CONFIDENT_REGION
   SCANNED
+  REJECTED_REGION
+
+  // Retired by Phase 2 amendment 9 (see specs/): conflated "no table on this
+  // page" with "a table we could not read" -- only the second is
+  // visual-only. New code never writes this value. Kept in the enum only
+  // because Postgres cannot drop an enum value without recreating the type,
+  // and 7 EA rows and any un-reingested legacy rows still carry it. Drop it
+  // in a later cleanup once nothing references it live.
+  NO_CONFIDENT_REGION
 }
 
 // NULL_SOURCE is an explicit member, not SQL NULL: it records that detection

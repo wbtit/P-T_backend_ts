@@ -23,10 +23,19 @@ EXTRACTED = "EXTRACTED"
 VISUAL_ONLY = "VISUAL_ONLY"
 
 # visualOnlyReason -- one of the §1 validity failures, or a §2 region outcome.
+#
+# Phase 2 amendment 9: NO_CONFIDENT_REGION retired, replaced by REJECTED_REGION.
+# The retired name conflated two different things -- "this page has no table"
+# and "this page has a table we could not read." Only the second is visual-only.
+# A page with zero candidate regions at all (no table on it) is not untrustworthy;
+# its prose is extracted and it is EXTRACTED with visualOnlyReason=None. Only a
+# page carrying at least one REJECTED region (amendment 2/3/6 fired on something)
+# falls back to visual-only, because that is the case where a real table was
+# found and could not be verified (spec §5).
 REASON_EMPTY = "EMPTY"
 REASON_UNMAPPED_GLYPH = "UNMAPPED_GLYPH"
 REASON_DUPLICATE_TEXT = "DUPLICATE_TEXT"
-REASON_NO_CONFIDENT_REGION = "NO_CONFIDENT_REGION"
+REASON_REJECTED_REGION = "REJECTED_REGION"
 REASON_SCANNED = "SCANNED"
 
 _VALIDITY_TO_REASON = {
@@ -67,8 +76,7 @@ def build_page_manifest(page, page_index, heading=None, min_edge_length=None,
 
     if validity["status"] != validity_mod.VALID:
         # Untrustworthy page: no table extraction attempted (spec §5).
-        manifest["visualOnlyReason"] = _VALIDITY_TO_REASON.get(
-            validity["status"], REASON_NO_CONFIDENT_REGION)
+        manifest["visualOnlyReason"] = _VALIDITY_TO_REASON[validity["status"]]
         if ocr_text:
             manifest["extractionMethod"] = PADDLEOCR
             manifest["visualOnlyReason"] = REASON_SCANNED
@@ -83,9 +91,17 @@ def build_page_manifest(page, page_index, heading=None, min_edge_length=None,
     if result["status"] == tables_mod.EXTRACTED:
         manifest["tables"] = result["tables"]
         manifest["extractionStatus"] = EXTRACTED
-    else:
+    elif result["rejected"]:
+        # At least one candidate region was found and rejected (amendment
+        # 2/3/6): a real table was suspected and could not be verified. This is
+        # the only case spec §5's fallback was meant to describe.
         manifest["extractionStatus"] = VISUAL_ONLY
-        manifest["visualOnlyReason"] = REASON_NO_CONFIDENT_REGION
+        manifest["visualOnlyReason"] = REASON_REJECTED_REGION
+    else:
+        # Zero candidate regions at all: this page simply has no table on it.
+        # Its prose is trustworthy (validity passed) and is extracted normally.
+        manifest["extractionStatus"] = EXTRACTED
+        manifest["visualOnlyReason"] = None
 
     manifest["timingMs"] = round((time.perf_counter() - started) * 1000, 1)
     return manifest

@@ -71,12 +71,22 @@ export function requiresEmbedding(c: DraftChunk): boolean {
 }
 
 export type ExtractionStatus = "EXTRACTED" | "VISUAL_ONLY";
+/**
+ * NO_CONFIDENT_REGION retired (Phase 2 amendment 9), replaced by
+ * REJECTED_REGION. The retired name conflated "no table on this page" with "a
+ * table we could not read" -- only the second is visual-only. New code never
+ * writes NO_CONFIDENT_REGION; the value stays a valid Postgres enum member
+ * only because rows written before this amendment (and not yet re-ingested)
+ * still carry it, and dropping an enum value in place is a heavier migration
+ * than adding one. Do not write it going forward.
+ */
 export type VisualOnlyReason =
   | "EMPTY"
   | "UNMAPPED_GLYPH"
   | "DUPLICATE_TEXT"
-  | "NO_CONFIDENT_REGION"
-  | "SCANNED";
+  | "REJECTED_REGION"
+  | "SCANNED"
+  | "NO_CONFIDENT_REGION"; // legacy read-path only -- see comment above
 export type HeadingSource = "OUTLINE" | "REGEX" | "NULL_SOURCE";
 export type ChunkType = "PROSE" | "TABLE" | "VISUAL";
 
@@ -400,7 +410,20 @@ export function chunkDocument(
       // VISUAL is the row to keep: it is what the retrieval design names for
       // the locating branch, and chatService keys its OCR-noise hedging off
       // chunk_type = VISUAL.
-      chunks.push(visualOnlyTableChunk(m, opts));
+      //
+      // Guard: only emit it if there is locating text. A page whose heading,
+      // prose, and OCR text are all empty (SJI p5: visualOnlyReason=EMPTY,
+      // nothing recovered by either the text layer or OCR) has nothing to put
+      // in the chunk. Emitting one anyway sends an empty string to the
+      // embedding endpoint, which returns an empty vector rather than an
+      // error -- a silent failure this codebase does not tolerate elsewhere
+      // (see the OCR fail-fast and the embed-budget checks). This mirrors the
+      // guard chunkPage() already applies to PROSE, and the AISC precedent
+      // (p2170, a genuinely blank page): a page with nothing to say gets zero
+      // chunks, not an empty one. Its standard_pages row is written regardless
+      // by persistPages(), so it stays reachable by page browsing.
+      const visual = visualOnlyTableChunk(m, opts);
+      if (visual.textContent.trim()) chunks.push(visual);
     } else {
       chunks.push(...chunkPage(m, opts));
     }
