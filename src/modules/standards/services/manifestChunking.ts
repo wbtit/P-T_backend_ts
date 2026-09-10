@@ -148,8 +148,16 @@ export interface ChunkingOptions {
 /** A merged fraction cell stays on one line: "1 1/4", never split across a
  *  newline (spec §4). Applies to header keys too — a multi-line label cell like
  *  "DESIGN\nINFORMATION" must not inject a newline mid-pair. */
+/** Normalizes the unicode multiplication sign (U+00D7, "×") to ASCII "x" --
+ *  otherwise Postgres's to_tsvector splits "W44×335" into two lexemes
+ *  ('w44','335') while a typed query "W44x335" tokenizes as one ('w44x335'),
+ *  so BM25 can never match a shape identifier against its own table cell. */
+function normalizeMultiplicationSign(s: string): string {
+  return s.replace(/×/g, "x");
+}
+
 function flattenCell(c: string | undefined): string {
-  return (c ?? "").replace(/\s*\n\s*/g, " ").trim();
+  return normalizeMultiplicationSign((c ?? "").replace(/\s*\n\s*/g, " ").trim());
 }
 
 export function serializeRow(header: string[], row: string[]): string {
@@ -166,7 +174,7 @@ export function serializeRow(header: string[], row: string[]): string {
 /** The whole table, as the parent's citation text. */
 export function serializeGrid(cells: string[][]): string {
   return cells
-    .map((row) => row.map((c) => (c ?? "").replace(/\s*\n\s*/g, " ").trim()).join(" | "))
+    .map((row) => row.map((c) => normalizeMultiplicationSign((c ?? "").replace(/\s*\n\s*/g, " ").trim())).join(" | "))
     .join("\n");
 }
 
