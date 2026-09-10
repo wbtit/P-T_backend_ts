@@ -55,11 +55,11 @@ export const NON_CHILD_FILTER = "parent_chunk_id IS NULL";
  * An EXTRACTED table parent gets `embedding = NULL`. It ranks through its
  * max-pooled children and never on its own vector, so embedding it buys
  * nothing — and it is the one chunk that would blow past nomic-embed-text's
- * 2048-token cap, since it carries the whole serialized grid. Ollama truncates
- * silently rather than erroring, so a large parent would carry a vector
- * representing only its opening rows while looking perfectly healthy. Not
- * embedding it removes that failure mode instead of managing it. Every child
- * repeats the header row, so header matching is still covered.
+ * 2048-token cap, since it carries the whole serialized grid. Ollama hard-errors
+ * with a 500 on an over-cap request rather than truncating, so a large parent
+ * would fail ingestion outright instead of degrading quietly. Not embedding it
+ * removes that failure mode instead of managing it. Every child repeats the
+ * header row, so header matching is still covered.
  *
  * Everything else is embedded, including the VISUAL locating chunk of a
  * visual-only page — that embedding is precisely how such a page is findable,

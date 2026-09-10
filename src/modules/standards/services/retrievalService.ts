@@ -66,7 +66,7 @@ function calculateLexicalScore(queryTokens: string[], chunkText: string): number
 const ollamaUrl = process.env.OLLAMA_URL || "http://127.0.0.1:11434";
 
 export async function generateEmbedding(text: string): Promise<number[]> {
-  // NOTE: Ollama's /api/embeddings ignores the num_ctx option for nomic-embed-text. The model remains strictly capped at 2048 tokens.
+  // NOTE: Ollama's /api/embeddings ignores the num_ctx option for nomic-embed-text. The model remains strictly capped at 2048 tokens, and exceeding that cap hard-errors with a 500 ("the input length exceeds the context length") rather than truncating -- measured on Ollama 0.32.14, see Phase 2 spec Amendment 7.
   const response = await fetch(`${ollamaUrl}/api/embeddings`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
