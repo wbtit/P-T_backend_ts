@@ -3,6 +3,7 @@ import { DesignDrawingsController } from "./controller";
 import validate from "../../middleware/validate";
 import authMiddleware from "../../middleware/authMiddleware";
 import { scanUploadMiddleware } from "../../middleware/scanUpload.middleware";
+import { roleOrDesignationGuard } from "../../middleware/designationGuard";
 import {
   CreateDesignDrawingsSchema,
   UpdateDesignDrawingsSchema,
@@ -22,6 +23,7 @@ const designController = new DesignDrawingsController();
 router.post(
   "/",
   authMiddleware,
+  roleOrDesignationGuard,
   designUploads.array("files"),
   scanUploadMiddleware,
   validate({ body: CreateDesignDrawingsSchema }),
@@ -32,6 +34,7 @@ router.post(
 router.put(
   "/:id",
   authMiddleware,
+  roleOrDesignationGuard,
   designUploads.array("files"),
   scanUploadMiddleware,
   validate({

@@ -3,6 +3,7 @@ import { BfaController } from "./controllers";
 import validate from "../../middleware/validate";
 import authMiddleware from "../../middleware/authMiddleware";
 import { scanUploadMiddleware } from "../../middleware/scanUpload.middleware";
+import { roleOrDesignationGuard } from "../../middleware/designationGuard";
 import { createBfaDto, updateBfaDto } from "./dtos";
 import { bfaUploads } from "../../utils/multerUploader.util";
 import z from "zod";
@@ -14,6 +15,7 @@ const bfaController = new BfaController();
 router.post(
   "/",
   authMiddleware,
+  roleOrDesignationGuard,
   bfaUploads.array("files"),
   scanUploadMiddleware,
   validate({ body: createBfaDto }),
@@ -55,6 +57,7 @@ router.get(
 router.put(
   "/:id",
   authMiddleware,
+  roleOrDesignationGuard,
   bfaUploads.array("files"),
   scanUploadMiddleware,
   validate({

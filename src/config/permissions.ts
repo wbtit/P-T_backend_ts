@@ -148,6 +148,12 @@ export const permissions: PermissionsConfig = {
   'OPERATION_EXECUTIVE': {
     ...createFullRolePermissions(),
   },
+  'OPERATION_EXECUTIVE_TRAINEE': {
+    ...createFullRolePermissions(),
+    user: { create: false, read: false, update: false, delete: false },
+    team: { create: false, read: false, update: false, delete: false },
+    rfq: { create: false, read: false, update: false, delete: false }
+  },
   'HUMAN_RESOURCE': {
     ...createDefaultRolePermissions(),
     project: { create: false, read: true, update: false, delete: false },

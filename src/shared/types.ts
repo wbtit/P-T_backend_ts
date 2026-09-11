@@ -5,6 +5,7 @@ interface UserJwt extends JwtPayload{
     username:string;
     connectionDesignerId?: string | null;
     departmentId?: string | null;
+    designation?: string | null;
     role: 'STAFF'|
            'CLIENT'|
            'CLIENT_ESTIMATOR'|
@@ -28,6 +29,7 @@ interface UserJwt extends JwtPayload{
           'PROJECT_MANAGER_OFFICER'|
           'DEPUTY_MANAGER'|
           'OPERATION_EXECUTIVE'|
+          'OPERATION_EXECUTIVE_TRAINEE'|
           'HUMAN_RESOURCE'
 }
 export {UserJwt}

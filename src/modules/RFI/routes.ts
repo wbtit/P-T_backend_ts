@@ -6,6 +6,7 @@ import authMiddleware from "../../middleware/authMiddleware";
 import { RFISchema,UpdateRFISchema,RFIResponseSchema,UpdateRFIResponseDto} from "./dtos";
 import { rfiUploads, rfiResponseUploads } from "../../utils/multerUploader.util";
 import { scanUploadMiddleware } from "../../middleware/scanUpload.middleware";
+import { roleOrDesignationGuard } from "../../middleware/designationGuard";
 import z from "zod";
 
 const router = Router();
@@ -157,6 +158,7 @@ router.delete(
 router.post(
   "/:rfiId/responses",
   authMiddleware,
+  roleOrDesignationGuard,
   rfiResponseUploads.array("files"),
   scanUploadMiddleware,
   validate({

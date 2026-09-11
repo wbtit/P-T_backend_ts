@@ -19,7 +19,7 @@ const CO_NOTIFY_ROLES: UserRole[] = [
   "DEPT_MANAGER",
   "PROJECT_MANAGER_OFFICER",
   "DEPUTY_MANAGER",
-  "OPERATION_EXECUTIVE",
+  "OPERATION_EXECUTIVE", "OPERATION_EXECUTIVE_TRAINEE",
   "CONNECTION_DESIGNER_ENGINEER",
   "CONNECTION_DESIGNER_ADMIN",
   "CLIENT",
@@ -99,7 +99,7 @@ export class COController {
     // Background non-blocking tasks
     (async () => {
       try {
-        const internalRoles: UserRole[] = ["ADMIN", "DEPUTY_MANAGER", "OPERATION_EXECUTIVE", "PROJECT_MANAGER_OFFICER"];
+        const internalRoles: UserRole[] = ["ADMIN", "DEPUTY_MANAGER", "OPERATION_EXECUTIVE", "OPERATION_EXECUTIVE_TRAINEE", "PROJECT_MANAGER_OFFICER"];
         const internalEmails = await getEmailsByRoles(internalRoles);
 
         if (co.isAproovedByAdmin === true) {
@@ -151,7 +151,7 @@ export class COController {
   async handleClientSidePendingCOs(req: AuthenticateRequest, res: Response) {
     if (
       req.user?.role !== "ADMIN" &&
-      req.user?.role !== "OPERATION_EXECUTIVE" &&
+      req.user?.role !== "OPERATION_EXECUTIVE" && req.user?.role !== "OPERATION_EXECUTIVE_TRAINEE" &&
       req.user?.role !== "DEPUTY_MANAGER" &&
       req.user?.role !== "DEPT_MANAGER" &&
       req.user?.role !== "PROJECT_MANAGER"
@@ -224,7 +224,7 @@ async handlePendingCOsForClient(req: AuthenticateRequest, res: Response) {
       }
     }
 
-    const allowedApprovalRoles = ["ADMIN", "DEPUTY_MANAGER", "OPERATION_EXECUTIVE", "PROJECT_MANAGER_OFFICER", "DEPT_MANAGER"];
+    const allowedApprovalRoles = ["ADMIN", "DEPUTY_MANAGER", "OPERATION_EXECUTIVE", "OPERATION_EXECUTIVE_TRAINEE", "PROJECT_MANAGER_OFFICER", "DEPT_MANAGER"];
     const updatePayload = { ...req.body };
     if (!allowedApprovalRoles.includes(req.user?.role || "")) {
       delete updatePayload.isAproovedByAdmin;
@@ -266,7 +266,7 @@ async handlePendingCOsForClient(req: AuthenticateRequest, res: Response) {
           const fabricatorName = (await getFabricatorNameForUser(updaterId, req.user?.role)) || undefined;
           const coHtml = coHtmlContent(coAny, fabricatorName);
 
-          const internalRoles: UserRole[] = ["ADMIN", "DEPUTY_MANAGER", "OPERATION_EXECUTIVE", "PROJECT_MANAGER_OFFICER"];
+          const internalRoles: UserRole[] = ["ADMIN", "DEPUTY_MANAGER", "OPERATION_EXECUTIVE", "OPERATION_EXECUTIVE_TRAINEE", "PROJECT_MANAGER_OFFICER"];
           const internalEmails = await getEmailsByRoles(internalRoles);
 
           if (uniqueCoEmails.length > 0) {
@@ -408,6 +408,7 @@ async handlePendingCOsForClient(req: AuthenticateRequest, res: Response) {
   // ------------------- CO TABLE -------------------
 
   async handleCreateCoTable(req: AuthenticateRequest, res: Response) {
+    if (req.user?.role === "OPERATION_EXECUTIVE_TRAINEE") throw new AppError("You do not have permission to view or manage the change order table data.", 403);
     if (!req.user) throw new AppError("User not found", 404);
     const { id } = req.user;
     const { coId } = req.params;
@@ -421,6 +422,7 @@ async handlePendingCOsForClient(req: AuthenticateRequest, res: Response) {
   }
 
   async handleUpdateCoTableRow(req: AuthenticateRequest, res: Response) {
+    if (req.user?.role === "OPERATION_EXECUTIVE_TRAINEE") throw new AppError("You do not have permission to view or manage the change order table data.", 403);
     if (!req.user) throw new AppError("User not found", 404);
     const { id: userId } = req.user;
     const { id } = req.params;
@@ -437,6 +439,7 @@ async handlePendingCOsForClient(req: AuthenticateRequest, res: Response) {
   }
 
   async handleGetCoTableByCoId(req: AuthenticateRequest, res: Response) {
+    if (req.user?.role === "OPERATION_EXECUTIVE_TRAINEE") throw new AppError("You do not have permission to view or manage the change order table data.", 403);
     if (!req.user) throw new AppError("User not found", 404);
     const { id } = req.user;
     const { coId } = req.params;
@@ -629,7 +632,7 @@ async handlePendingCOsForClient(req: AuthenticateRequest, res: Response) {
     const { id } = req.params;
     const role = req.user?.role;
 
-    if (role !== "ADMIN" && role !== "OPERATION_EXECUTIVE" && role !== "DEPUTY_MANAGER") {
+    if (role !== "ADMIN" && role !== "OPERATION_EXECUTIVE" && role !== "OPERATION_EXECUTIVE_TRAINEE" && role !== "DEPUTY_MANAGER") {
       throw new AppError("Access denied. Only ADMIN, OPERATION_EXECUTIVE, or DEPUTY_MANAGER can delete.", 403);
     }
 

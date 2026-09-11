@@ -6,6 +6,7 @@ import {
 import validate from "../../middleware/validate";
 import authMiddleware from "../../middleware/authMiddleware";
 import { scanUploadMiddleware } from "../../middleware/scanUpload.middleware";
+import { roleOrDesignationGuard } from "../../middleware/designationGuard";
 import {
   createSubmittalsDto,
   createSubmittalsResponseDto,
@@ -169,6 +170,7 @@ router.get(
 router.post(
   "/responses",
   authMiddleware,
+  roleOrDesignationGuard,
   submittalResponseUploads.array("files"),
   scanUploadMiddleware,
   validate({

@@ -67,6 +67,7 @@ export const handleSignin = async (req: Request, res: Response) => {
             username: user.username,
             connectionDesignerId: user.connectionDesignerId || null,
             departmentId: user.departmentId || null,
+            designation: user.designation || null,
             role: user.role,
         };
         const token = generateToken(tokenPayload);

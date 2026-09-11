@@ -79,7 +79,7 @@ export async function getRfqStakeholderRecipients(
   roles.forEach((role) => {
     switch (role) {
       case "SALES_PERSON":
-        if (rfq.salesPerson?.isActive) {
+        if (rfq.salesPerson?.isActive && rfq.salesPerson.role === "SALES_PERSON") {
           addRecipient(role, rfq.salesPerson.id);
         }
         break;

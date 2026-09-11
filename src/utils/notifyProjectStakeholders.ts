@@ -157,7 +157,7 @@ export async function getProjectStakeholderRecipients(
         }
         break;
       case "SALES_PERSON":
-        if (project.rfq?.salesPerson?.isActive) {
+        if (project.rfq?.salesPerson?.isActive && project.rfq.salesPerson.role === "SALES_PERSON") {
           addRecipient(role, project.rfq.salesPerson.id);
         }
         break;
@@ -172,7 +172,7 @@ export async function getProjectStakeholderRecipients(
       case "CLIENT":
         if (project.clientProjectManagers?.length) {
           project.clientProjectManagers.forEach((pm) => {
-            if (pm.isActive) addRecipient(role, pm.id);
+            if (pm.isActive && pm.role === role) addRecipient(role, pm.id);
           });
         }
         break;
