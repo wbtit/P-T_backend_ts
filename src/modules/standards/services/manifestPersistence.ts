@@ -187,7 +187,7 @@ export async function persistChunks(
         id, document_id, chunk_type, page_start, page_end, text_content,
         source_type, project_id, fabricator_id, heading,
         document_family_id, edition, parent_chunk_id, row_group_index,
-        embedding, created_at
+        reliability_reason, embedding, created_at
       ) VALUES (
         ${id}::uuid,
         ${documentId}::uuid,
@@ -203,6 +203,7 @@ export async function persistChunks(
         ${c.edition},
         ${parentId}::uuid,
         ${c.rowGroupIndex},
+        ${c.reliabilityReason}::"ChunkReliabilityReason",
         ${vectorString}::vector,
         NOW()
       )

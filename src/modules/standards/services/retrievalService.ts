@@ -16,6 +16,10 @@ export interface RetrievedChunk {
   pageEnd: number;
   textContent: string;
   sourceType: string;
+  /** Phase 2 amendment 11. Set only on some PROSE chunks -- see
+   *  manifestChunking.ts's ChunkReliabilityReason. Generation checks this
+   *  independent of chunkType to decide whether to hedge. */
+  reliabilityReason: string | null;
   similarity: number; // Final score
   vectorSimilarity: number;
   lexicalScore: number;
@@ -102,6 +106,7 @@ export async function searchScope(
       c.text_content as "textContent",
       c.source_type as "sourceType",
       c.heading,
+      c.reliability_reason as "reliabilityReason",
       1 - (c.embedding <=> $1::vector) AS similarity
     FROM standard_chunks c
   `;
@@ -194,6 +199,7 @@ export async function searchScope(
       pageEnd: row.pageEnd,
       textContent: row.textContent,
       sourceType: row.sourceType,
+      reliabilityReason: row.reliabilityReason ?? null,
       vectorSimilarity: row.similarity,
       lexicalScore,
       similarity: finalScore
@@ -222,6 +228,7 @@ export async function searchScope(
               c.text_content as "textContent",
               c.source_type as "sourceType",
               c.heading,
+              c.reliability_reason as "reliabilityReason",
               1 - (c.embedding <=> $1::vector) AS similarity
             FROM standard_chunks c
             JOIN standard_documents d ON d.id = c.document_id
@@ -262,6 +269,7 @@ export async function searchScope(
                 pageEnd: anchorRow.pageEnd,
                 textContent: anchorRow.textContent,
                 sourceType: anchorRow.sourceType,
+                reliabilityReason: anchorRow.reliabilityReason ?? null,
                 vectorSimilarity: anchorRow.similarity,
                 lexicalScore: 0,
                 similarity: anchorRow.similarity, // Exempt from hybrid filter, raw score kept

@@ -89,6 +89,16 @@ export type VisualOnlyReason =
   | "NO_CONFIDENT_REGION"; // legacy read-path only -- see comment above
 export type HeadingSource = "OUTLINE" | "REGEX" | "NULL_SOURCE";
 export type ChunkType = "PROSE" | "TABLE" | "VISUAL";
+/**
+ * Phase 2 amendment 11. Chunk-level, deliberately not a VisualOnlyReason:
+ * trustworthiness of TEXT is a property of the chunk, independent of which
+ * retrieval branch (table vs. prose) happens to surface it -- coupling it to
+ * chunkType/extractionStatus was the rejected alternative (spec amendment
+ * 11's "option A"). Only ever set on the PROSE chunk of a page where a
+ * confirmed table region coexists with interleaved-text lines that fall
+ * entirely outside that region's bbox; every TABLE parent/child stays NULL.
+ */
+export type ChunkReliabilityReason = "INTERLEAVED_TEXT";
 
 export interface ManifestTable {
   bbox: number[];
@@ -117,6 +127,10 @@ export interface PageManifest {
   extractionMethod: string;
   extractionStatus: ExtractionStatus;
   visualOnlyReason: VisualOnlyReason | null;
+  /** Amendment 11. Set iff the page's prose was demoted by interleaved-text
+   *  detection but a confirmed table region on the same page was geometrically
+   *  unaffected and stays EXTRACTED -- see ChunkReliabilityReason. */
+  proseReliabilityReason?: ChunkReliabilityReason | null;
   imagePath?: string | null;
 }
 
@@ -134,6 +148,10 @@ export interface DraftChunk {
   rowGroupIndex: number | null;
   documentFamilyId: string | null;
   edition: string | null;
+  /** Amendment 11 -- see ChunkReliabilityReason. NULL on every TABLE parent
+   *  and child by construction: only the prose-emission block below ever
+   *  sets it. */
+  reliabilityReason: ChunkReliabilityReason | null;
 }
 
 export interface ChunkingOptions {
@@ -247,10 +265,14 @@ export function chunkPage(m: PageManifest, opts: ChunkingOptions = {}): DraftChu
       chunkType: "PROSE",
       textContent: prose,
       rowGroupIndex: null,
+      reliabilityReason: m.proseReliabilityReason ?? null,
     });
   }
 
   // --- tables ------------------------------------------------------------
+  // reliabilityReason is always null here (Amendment 11 concerns prose
+  // trustworthiness only; a table kept EXTRACTED under the exception is, by
+  // definition, the geometrically-clean part of the page).
   for (const table of m.tables) {
     const parentId = nextLocalId("table");
     const grid = serializeGrid(table.cells);
@@ -261,6 +283,7 @@ export function chunkPage(m: PageManifest, opts: ChunkingOptions = {}): DraftChu
       chunkType: "TABLE",
       textContent: grid,
       rowGroupIndex: null,
+      reliabilityReason: null,
     });
 
     const header = pickHeaderRow(table.cells);
@@ -285,6 +308,7 @@ export function chunkPage(m: PageManifest, opts: ChunkingOptions = {}): DraftChu
         chunkType: "TABLE",
         textContent: headerLine ? `${headerLine}\n${body}` : body,
         rowGroupIndex: emitted,
+        reliabilityReason: null,
       });
       emitted++;
     }
@@ -304,6 +328,7 @@ export function chunkPage(m: PageManifest, opts: ChunkingOptions = {}): DraftChu
         chunkType: "TABLE",
         textContent: grid,
         rowGroupIndex: 0,
+        reliabilityReason: null,
       });
     }
   }
@@ -335,6 +360,7 @@ export function visualOnlyTableChunk(
     rowGroupIndex: null,
     documentFamilyId: opts.documentFamilyId ?? null,
     edition: opts.edition ?? null,
+    reliabilityReason: null,
   };
 }
 

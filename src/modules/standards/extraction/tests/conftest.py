@@ -26,6 +26,7 @@ DOCS = {
     "plant": BENCHMARK / "Joist & Hilti/JOIST/PLANT STANDARD GAGES-NMBS.pdf",
     "canam": BENCHMARK / "Joist & Hilti/JOIST/canam-joist-catalog.pdf",
     "hilti": BENCHMARK / "Joist & Hilti/HILTI/Expansion_Anchor_(316-327)r021.pdf",
+    "hilti_kb2": BENCHMARK / "Joist & Hilti/HILTI/Hilti_KB_2_ER_4627_2001_Feb.pdf",
     "newmill": BENCHMARK / "Joist & Hilti/JOIST/NewmillCatalog.pdf",
     "ccd": BENCHMARK / "Joist & Hilti/JOIST/completeconnectiondetails-2.pdf",
 }

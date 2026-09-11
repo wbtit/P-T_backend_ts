@@ -2537,6 +2537,37 @@ enum VisualOnlyReason {
   // and 7 EA rows and any un-reingested legacy rows still carry it. Drop it
   // in a later cleanup once nothing references it live.
   NO_CONFIDENT_REGION
+
+  // Added by Phase 2 amendment 10 (PROPOSED, see specs/ -- draft only, not
+  // yet applied to the database). Both are page-level verdicts detected at
+  // finer-than-page granularity -- same "unit is the page" decision as every
+  // existing reason, evidence measured finer-grained, not a new unit. Given
+  // distinct codes rather than folded into REJECTED_REGION/UNMAPPED_GLYPH,
+  // per the same precedent that retired NO_CONFIDENT_REGION for conflating
+  // causes that need to stay distinguishable downstream.
+  //
+  // TABLE_LOCAL_CORRUPTION is live: fabextract.tables writes it today.
+  // INTERLEAVED_TEXT is NOT YET REACHABLE -- fabextract.validity computes the
+  // signal but does not gate page status with it yet (false-positives on real
+  // table content; needs §2-region-exclusion, which conflicts with §1's
+  // "runs before §2 exists" ordering -- an open design question). Kept in
+  // this same migration as forward-compatible scaffolding so wiring it in
+  // later needs no second enum migration.
+  TABLE_LOCAL_CORRUPTION
+  INTERLEAVED_TEXT
+}
+
+// Added by Phase 2 amendment 11 (PROPOSED, see specs/ -- draft only, not yet
+// applied to the database). Deliberately NOT a VisualOnlyReason: that enum
+// records page-level verdicts; this one records chunk-level trustworthiness,
+// independent of which retrieval branch (table vs. prose) surfaces the
+// chunk -- see StandardChunk.reliabilityReason below and Amendment 11 in the
+// spec for why chunk granularity was chosen over reusing extractionStatus.
+enum ChunkReliabilityReason {
+  // A page had >=1 confirmed table region AND interleaved-text lines, but
+  // every flagged line's bbox had zero 2D overlap with every table's bbox.
+  // The table stays EXTRACTED; the page's PROSE chunk (only) carries this.
+  INTERLEAVED_TEXT
 }
 
 // NULL_SOURCE is an explicit member, not SQL NULL: it records that detection
@@ -2645,6 +2676,13 @@ model StandardChunk {
 
   parentChunk StandardChunk?  @relation("ChunkRowGroups", fields: [parentChunkId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   rowGroups   StandardChunk[] @relation("ChunkRowGroups")
+
+  // Phase 2 amendment 11 (PROPOSED, draft only). Nullable, no default: a
+  // default would backfill every existing row and destroy the null-vs-set
+  // boundary that identifies which chunks actually hit the Amendment 11
+  // exception. Set only on a PROSE chunk; every TABLE parent/child and every
+  // VISUAL chunk is NULL by construction (manifestChunking.ts).
+  reliabilityReason ChunkReliabilityReason? @map("reliability_reason")
 
   // Storing a 768-dimensional vector for Ollama nomic-embed-text embeddings.
   embedding Unsupported("vector(768)")?

@@ -218,6 +218,48 @@ def test_length_filter_at_9_would_regress_newmill_180(docs):
         "p180 no longer regresses at 9pt -- re-evaluate amendment 1")
 
 
+# ---------- amendment 10: table-local corruption ----------
+
+def test_hilti_kb2_p2_flags_table_local_corruption(docs):
+    """Hilti_KB_2_ER_4627_2001_Feb.pdf, never ingested (held pending review).
+    p2's page-wide unmapped ratio is 12.45% -- under §1's 15% threshold, so §1
+    itself passes this page. Both detected tables' header rows are ~100%
+    unmapped glyphs, diluted page-wide by the tables' own clean data rows.
+    Measured: both regions rejected as TABLE_LOCAL_CORRUPTION, 0 kept, page
+    falls to FALLBACK_SHOW_IMAGE -- not a partial/degraded EXTRACTED result."""
+    page = docs("hilti_kb2").pages[2]
+    result = process_page(page)
+    assert result["status"] == FALLBACK_SHOW_IMAGE
+    assert result["tables"] == []
+    assert len(result["rejected"]) == 2
+    assert all(r["reason"] == "TABLE_LOCAL_CORRUPTION" for r in result["rejected"])
+
+
+def test_hilti_kb2_p3_one_of_four_regions_also_corrupted(docs):
+    """Not a negative control -- a genuine additional finding from adding this
+    check, not previously reported. p3's page-wide unmapped ratio is 0.76%,
+    reported clean by the original dry-run. But 1 of its 4 candidate regions
+    has a header row at 68.3% unmapped (28/41 chars) -- the same dilution
+    mechanism as p2, just below p2's severity and invisible in the page-wide
+    number. The page still correctly stays EXTRACTED: 3 of 4 regions are
+    genuinely clean, so this is a partial, not total, rejection -- confirms
+    the check works at true per-region granularity rather than being a
+    disguised page-level check."""
+    page = docs("hilti_kb2").pages[3]
+    result = process_page(page)
+    assert result["status"] == EXTRACTED
+    assert len(result["tables"]) == 3
+    assert len(result["rejected"]) == 1
+    assert result["rejected"][0]["reason"] == "TABLE_LOCAL_CORRUPTION"
+
+
+def test_expansion_anchor_table_stays_clean(docs):
+    """Negative control from outside Hilti_KB_2_ER_4627 entirely: a genuinely
+    clean table must not trip the new per-row check."""
+    result = process_page(docs("hilti").pages[5])
+    assert not any(r["reason"] == "TABLE_LOCAL_CORRUPTION" for r in result["rejected"])
+
+
 # ---------- golden files: full grid equality ----------
 
 @pytest.mark.parametrize("name,doc,idx", [

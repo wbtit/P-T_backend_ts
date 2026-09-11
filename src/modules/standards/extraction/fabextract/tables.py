@@ -12,6 +12,8 @@ pinned by tests/test_tables.py.
 """
 from statistics import median
 
+from .validity import UNMAPPED_DOMINANCE_THRESHOLD, is_unmapped_char
+
 SIZE_REL_THRESH = 0.15
 SIZE_ABS_THRESH = 0.6
 WORD_GAP_FACTOR = 0.35
@@ -259,6 +261,41 @@ def extract_table_grid(table_obj, chars):
     return grid, all_transitions
 
 
+def _row_chars(row, region_chars):
+    out = []
+    for cell_bbox in row.cells:
+        if cell_bbox is None:
+            continue
+        cx0, ctop, cx1, cbottom = cell_bbox
+        out.extend(ch for ch in region_chars
+                   if cx0 <= (ch["x0"] + ch["x1"]) / 2 <= cx1
+                   and ctop <= (ch["top"] + ch["bottom"]) / 2 <= cbottom)
+    return out
+
+
+def check_table_region_corruption(refined, region_chars, threshold=UNMAPPED_DOMINANCE_THRESHOLD):
+    """Spec Amendment 10 -- a table's page-wide unmapped-glyph ratio can sit well
+    under §1's 15% page threshold while one row (typically the header) is
+    entirely unmapped-glyph garbage, diluted by the table's own clean data
+    rows plus the rest of the page's clean text. Checked per row, reusing §1's
+    own is_unmapped_char/threshold -- not a new number, the same 15% applied at
+    a finer grain. Returns the first corrupted row found as
+    (row_index, ratio, n_chars, n_unmapped), or None if every row is clean.
+
+    Confirmed on Hilti_KB_2_ER_4627 p2: page-wide ratio 12.45% (under 15%,
+    passes §1), while both detected tables' header rows are 100% unmapped --
+    exactly the dilution this check exists to catch."""
+    for i, row in enumerate(refined.rows):
+        rchars = [c for c in _row_chars(row, region_chars) if c.get("text", "").strip()]
+        if not rchars:
+            continue
+        n_unmapped = sum(1 for c in rchars if is_unmapped_char(c.get("text", "")))
+        ratio = n_unmapped / len(rchars)
+        if ratio >= threshold:
+            return i, ratio, len(rchars), n_unmapped
+    return None
+
+
 def _is_frame_region(page, region):
     x0, top, x1, bottom = region.bbox
     height = bottom - top
@@ -280,9 +317,13 @@ def process_page(page, min_edge_length=MIN_EDGE_LENGTH_FILTER):
     logic never runs without first passing through detect_table_regions. Never
     call segment_chars/extract_table_grid directly on a whole page.
 
-    Processes EVERY confident region, then applies the two region-level
-    rejections (amendments 2 and 3). A page whose every candidate is rejected
-    falls to FALLBACK_SHOW_IMAGE, same as a page with zero candidates.
+    Processes EVERY confident region, then applies the region-level rejections
+    (amendments 2, 3, 4, and 10 -- numbered per this file's own inline
+    comments; the spec document numbers the amendment-4 sparse-region rule as
+    6, a pre-existing drift between code comments and the spec noticed while
+    adding amendment 10, not fixed here -- out of scope for this change).
+    A page whose every candidate is rejected falls to FALLBACK_SHOW_IMAGE,
+    same as a page with zero candidates.
 
     Returns {status, reason, tables[], rejected[], proseText}. Characters outside
     every ACCEPTED table region -- including those inside rejected regions --
@@ -310,6 +351,22 @@ def process_page(page, min_edge_length=MIN_EDGE_LENGTH_FILTER):
             page, region, min_edge_length=min_edge_length)
         region_chars = [c for c in page.chars if _char_in_bbox(c, refined.bbox)]
         grid, transitions = extract_table_grid(refined, region_chars)
+
+        # Amendment 10: a row (typically the header) can be entirely
+        # unmapped-glyph garbage while the table's page-wide ratio stays under
+        # §1's 15% threshold, diluted by clean data rows. Checked before the
+        # emptiness/sparseness rejections below -- a corrupted header still has
+        # "non-empty" cells (they're just unreadable), so those checks alone
+        # would not catch it.
+        corruption = check_table_region_corruption(refined, region_chars)
+        if corruption is not None:
+            row_idx, ratio, n_row_chars, n_row_unmapped = corruption
+            rejected.append({"bbox": list(refined.bbox),
+                             "reason": "TABLE_LOCAL_CORRUPTION",
+                             "detail": f"row {row_idx} is {ratio:.2%} unmapped glyphs "
+                                       f"({n_row_unmapped}/{n_row_chars} chars) -- page-wide "
+                                       f"ratio would dilute this below the {UNMAPPED_DOMINANCE_THRESHOLD:.0%} threshold"})
+            continue
 
         # Amendment 2: a region with zero non-empty cells is not a table --
         # decorative vector-line grids elsewhere on the page (AISC 1100, 1444)

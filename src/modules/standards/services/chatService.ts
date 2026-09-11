@@ -28,12 +28,24 @@ function buildImagePaths(hit: RetrievedChunk, anchor?: RetrievedChunk): string[]
 async function generateAnswerText(chunks: RetrievedChunk[], queryText: string): Promise<{ text: string | null, sourceChunkIndex: number | null }> {
   const ollamaUrl = process.env.OLLAMA_URL || "http://192.168.1.11:11434";
   
+  // Two independent reasons a chunk's text may not be verbatim-trustworthy:
+  // hasVisual (chunk_type = VISUAL) is OCR'd drawing/table text -- possible
+  // misread glyphs. hasUnreliableProse (reliabilityReason set, Phase 2
+  // amendment 11) is vector text whose word order was reconstructed by the
+  // extractor next to a table it could not cleanly separate from -- no OCR
+  // involved, the risk is scrambled/misordered words, not misread characters.
+  // Deliberately NOT keyed off chunkType for the second case: a PROSE chunk
+  // stays chunkType=PROSE (so the prose retrieval branch still finds it), but
+  // is still not citable as verbatim -- the hedge must follow the chunk's own
+  // reliabilityReason, not which branch surfaced it.
   const hasVisual = chunks.some(c => c.chunkType === "VISUAL");
+  const hasUnreliableProse = chunks.some(c => c.reliabilityReason != null);
+  const needsHedge = hasVisual || hasUnreliableProse;
   const contextBlocks = chunks.map((c, i) => `--- CHUNK ${i + 1} ---\n${c.textContent.substring(0, 2000)}`).join("\n\n");
 
-  let visualWarning = hasVisual ? `
-3. The context includes OCR-derived text from a drawing or table which may contain noise, artifacts, or misread characters.
-4. If you are not highly confident about specific dimensions, numbers, or facts due to OCR noise, you MUST explicitly hedge your answer (e.g., "The OCR text appears to indicate..."). Do not state uncertain OCR artifacts as absolute fact.` : `
+  let visualWarning = needsHedge ? `
+3. Some context may be unreliable: it may be OCR-derived text from a drawing or table (which can contain noise, artifacts, or misread characters), or it may be text whose word order could not be fully verified during extraction (which can read as jumbled or out of sequence). Either way, do not assume the wording or values are exact.
+4. If you are not highly confident about specific dimensions, numbers, or facts due to this, you MUST explicitly hedge your answer (e.g., "The source text appears to indicate..."). Do not state uncertain or unreliable content as absolute fact.` : `
 3. Do not hallucinate or guess.`;
 
   const prompt = `You are a structural steel detailing assistant. 
