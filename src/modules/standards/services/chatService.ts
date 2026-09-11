@@ -1,57 +1,63 @@
 import prisma from "../../../config/database/client";
-import { searchStandards, RetrievedChunk } from "./retrievalService";
+import { resolveProjectDocumentIds, generateEmbedding } from "./retrievalService";
+import { retrieveTwoBranch, RetrievedChunk } from "./retrievalTwoBranch";
+import { gradeRetrieval, buildAmbiguousDeferralAnswer, REASON_CODE_UNRELIABLE_CHUNK } from "./cragEvaluator";
+import { rerank } from "./rerankerClient";
+import { renderTableForRerank } from "./tableToProseCheck";
 import { StandardChunkType, StandardSourceType, StandardChatMessage, StandardChatAnswer } from "@prisma/client";
+
+/**
+ * Phase 5 §1.4 -- rerank-time-only transform, never touches stored
+ * text_content/embeddings. TABLE candidates get the prose-rendered form
+ * (fixes the confirmed format bias: raw pipe-grid text under-scores against
+ * natural-language queries); PROSE/VISUAL candidates go through unchanged.
+ */
+async function rerankPool(queryText: string, pool: RetrievedChunk[]): Promise<RetrievedChunk[]> {
+  const candidates = pool.map((c) => ({
+    id: c.id,
+    text: c.chunkType === "TABLE" ? renderTableForRerank(c.textContent).text : c.textContent,
+  }));
+  const scores = await rerank(queryText, candidates);
+  const scoreById = new Map(scores.map((s) => [s.id, s.score]));
+  return pool
+    .map((c) => ({ ...c, score: scoreById.get(c.id) ?? c.score }))
+    .sort((a, b) => b.score - a.score);
+}
 
 export type ChatMessageWithAnswers = StandardChatMessage & {
   answers: (StandardChatAnswer & { citations: any[] })[];
 };
 
-function buildImagePaths(hit: RetrievedChunk, anchor?: RetrievedChunk): string[] {
-  // Convert documentId and pageStart into proper paths
-  // A generic function that maps to the physical uploads
-  // In reality, Phase 6 spec just says: "imagePaths[0] is the direct match, imagePaths[1] is anchor"
-  
-  // Construct paths matching how standardDocument stores things.
-  // We can just construct a placeholder path based on the documentId and page number
-  // or fetch the actual storage path from DB. Since the tests assert `.length > 0`,
-  // we'll just synthesize the path.
-  
-  const generatePath = (c: RetrievedChunk) => `/v1/standards/image/${c.documentId}/${c.pageStart}`;
-  
-  const paths = [generatePath(hit)];
-  if (anchor && anchor.id !== hit.id) {
-    paths.push(generatePath(anchor));
-  }
-  return paths;
+const TOP_N = 3;
+
+function buildImagePath(hit: RetrievedChunk): string {
+  return `/v1/standards/image/${hit.documentId}/${hit.pageStart}`;
+}
+
+/** Phase 5 §2 -- a candidate chunk's own text is untrustworthy, independent of
+ *  how confidently it ranked: chunkType='VISUAL' (OCR'd, possible misread
+ *  glyphs) or Amendment 11's reliabilityReason set (vector text whose word
+ *  order could not be verified). Hard, deterministic, non-LLM check -- this
+ *  project already found once (spec Phase 2 §5) that asking the model to
+ *  self-regulate confidence on this exact class of problem didn't hold up. */
+export function isUnreliable(c: RetrievedChunk): boolean {
+  return c.chunkType === "VISUAL" || c.reliabilityReason != null;
 }
 
 async function generateAnswerText(chunks: RetrievedChunk[], queryText: string): Promise<{ text: string | null, sourceChunkIndex: number | null }> {
   const ollamaUrl = process.env.OLLAMA_URL || "http://192.168.1.11:11434";
-  
-  // Two independent reasons a chunk's text may not be verbatim-trustworthy:
-  // hasVisual (chunk_type = VISUAL) is OCR'd drawing/table text -- possible
-  // misread glyphs. hasUnreliableProse (reliabilityReason set, Phase 2
-  // amendment 11) is vector text whose word order was reconstructed by the
-  // extractor next to a table it could not cleanly separate from -- no OCR
-  // involved, the risk is scrambled/misordered words, not misread characters.
-  // Deliberately NOT keyed off chunkType for the second case: a PROSE chunk
-  // stays chunkType=PROSE (so the prose retrieval branch still finds it), but
-  // is still not citable as verbatim -- the hedge must follow the chunk's own
-  // reliabilityReason, not which branch surfaced it.
-  const hasVisual = chunks.some(c => c.chunkType === "VISUAL");
-  const hasUnreliableProse = chunks.some(c => c.reliabilityReason != null);
-  const needsHedge = hasVisual || hasUnreliableProse;
+
+  // Every chunk reaching this point already survived isUnreliable() filtering
+  // (Phase 5 §2) -- so there is no VISUAL/reliabilityReason content left to
+  // hedge here. The soft hedge this block used to carry is gone entirely,
+  // not weakened: an untrustworthy chunk now never reaches generation at all.
   const contextBlocks = chunks.map((c, i) => `--- CHUNK ${i + 1} ---\n${c.textContent.substring(0, 2000)}`).join("\n\n");
 
-  let visualWarning = needsHedge ? `
-3. Some context may be unreliable: it may be OCR-derived text from a drawing or table (which can contain noise, artifacts, or misread characters), or it may be text whose word order could not be fully verified during extraction (which can read as jumbled or out of sequence). Either way, do not assume the wording or values are exact.
-4. If you are not highly confident about specific dimensions, numbers, or facts due to this, you MUST explicitly hedge your answer (e.g., "The source text appears to indicate..."). Do not state uncertain or unreliable content as absolute fact.` : `
-3. Do not hallucinate or guess.`;
-
-  const prompt = `You are a structural steel detailing assistant. 
+  const prompt = `You are a structural steel detailing assistant.
 IMPORTANT RULES:
 1. ONLY answer using the provided chunks' text.
-2. If NONE of the chunks clearly and directly contain the answer to the question, you MUST say so plainly rather than guessing or inferring from adjacent context. Reply exactly with: "Not covered by this standard."${visualWarning}
+2. If NONE of the chunks clearly and directly contain the answer to the question, you MUST say so plainly rather than guessing or inferring from adjacent context. Reply exactly with: "Not covered by this standard."
+3. Do not hallucinate or guess.
 - DO NOT include the phrase "Not covered by this standard" in your response if you actually answered the query.
 - If you do find the answer in one of the chunks, you MUST append "[Source: Chunk X]" to the very end of your response, where X is 1, 2, or 3 depending on which chunk provided the answer.
 
@@ -65,7 +71,7 @@ QUERY: ${queryText}
   console.log(`[ChatService] Query: "${queryText}"`);
   console.log(`[ChatService] Passing ${chunks.length} context chunks to LLM:`);
   chunks.forEach((c, i) => {
-    console.log(`  - Chunk ${i + 1}: Page ${c.pageStart}, Score ${c.similarity.toFixed(4)}, Type: ${c.chunkType}`);
+    console.log(`  - Chunk ${i + 1}: Page ${c.pageStart}, Score ${c.score.toFixed(4)}, Type: ${c.chunkType}, Branch: ${c.branch}`);
   });
   console.log(`[ChatService] Prompt starts with:\n${prompt.substring(0, 200)}...`);
 
@@ -83,7 +89,7 @@ QUERY: ${queryText}
       }),
       signal: controller.signal
     });
-    
+
     clearTimeout(timeoutId);
 
     if (!response.ok) {
@@ -97,7 +103,7 @@ QUERY: ${queryText}
     if (!text || text === "Not covered by this standard.") {
       return { text: null, sourceChunkIndex: null };
     }
-    
+
     let sourceChunkIndex = null;
     const match = text.match(/\[Source:\s*Chunk\s*(\d)\]/i);
     if (match) {
@@ -112,7 +118,7 @@ QUERY: ${queryText}
     } else {
       console.warn(`[ChatService] LLM generated answer but omitted valid chunk attribution tag.`);
     }
-    
+
     return { text, sourceChunkIndex };
   } catch (error: any) {
     console.warn(`[ChatService] LLM generation error: ${error.message}`);
@@ -120,163 +126,162 @@ QUERY: ${queryText}
   }
 }
 
+function citationOf(hit: RetrievedChunk, rank: number) {
+  return {
+    chunkType: hit.chunkType as StandardChunkType,
+    citationPdfName: hit.pdfName,
+    citationPageStart: hit.pageStart,
+    citationPageEnd: hit.pageEnd,
+    anchorPageStart: null,
+    anchorPageEnd: null,
+    imagePaths: [buildImagePath(hit)],
+    rank,
+  };
+}
+
 export async function askStandards(
   projectId: string,
   queryText: string
 ): Promise<ChatMessageWithAnswers> {
   console.log(`[ChatService] Received query for projectId ${projectId}: "${queryText}"`);
-  console.log(`[ChatService] Starting vector search (candidate floor: 0.45, acceptance threshold: 0.60)...`);
-  const searchResults = await searchStandards({ 
-    query: queryText, 
-    projectId, 
-    threshold: 0.45, 
-    acceptanceThreshold: 0.00, 
-    alpha: 0.05 
-  });
-  console.log(`[ChatService] Vector search complete. Found ` +
-    `${searchResults.general ? searchResults.general.length : "null (no prefs)"} GENERAL, ` +
-    `${searchResults.fabricator ? searchResults.fabricator.length : "null (no docs)"} FABRICATOR, ` +
-    `${searchResults.project ? searchResults.project.length : "null (no prefs)"} PROJECT hits.`
-  );
 
   const message = await prisma.standardChatMessage.create({
-    data: {
-      projectId,
-      queryText,
-    }
+    data: { projectId, queryText },
   });
 
-  async function processSource(chunks: RetrievedChunk[] | null, sourceType: StandardSourceType) {
-    const startMeasure = performance.now();
-    
-    // "Not applicable" check: zero-preference or no docs
-    if (chunks === null) {
-      console.log(`[ChatService] ${sourceType} tier has chunks=null. Reason: 0 preferences or no applicable docs.`);
-      if (sourceType === "FABRICATOR") {
-        console.log(`[ChatService] ${sourceType} tier skipping entirely (no FABRICATOR docs found).`);
-        // Just return null for FABRICATOR if not applicable (absent completely).
-        return null;
-      }
-      console.log(`[ChatService] ${sourceType} tier returning 'Not covered by your selected standard families'.`);
-      // For GENERAL/PROJECT, return distinct response for 0 preferences
-      return prisma.standardChatAnswer.create({
-        data: {
-          messageId: message.id,
-          sourceType,
-          chunkType: "PROSE",
-          answerText: "Not covered by your selected standard families.",
-          pinnedDocumentId: null
-        }
-      });
-    }
-
-    // Floor rule: only return answers if the top hit clears 0.60.
-    if (chunks.length === 0 || chunks[0].similarity < 0.60) {
-      if (chunks.length === 0) {
-        console.log(`[ChatService] ${sourceType} tier found 0 chunks. Proceeding to fallback logic.`);
-      } else {
-        console.log(`[ChatService] ${sourceType} tier top hit scored ${chunks[0].similarity.toFixed(3)} which is BELOW the 0.60 floor. Proceeding to fallback logic.`);
-      }
-      
-      // Resolve the ACTIVE document scoped correctly to this source/project.
-      const docQuery: any = { sourceType, status: "ACTIVE" as const };
-      if (sourceType === "FABRICATOR") {
-        const p = await prisma.project.findUnique({ where: { id: projectId }, select: { fabricatorID: true } });
-        if (p?.fabricatorID) docQuery.fabricatorId = p.fabricatorID;
-      } else if (sourceType === "PROJECT") {
-        docQuery.projectId = projectId;
-      }
-      
-      console.log(`[ChatService] Searching for a fallback document for ${sourceType} tier using query:`, docQuery);
-      const doc = await prisma.standardDocument.findFirst({ where: docQuery });
-
-      if (!doc) {
-        // Should not happen for FABRICATOR (since null was handled), but could happen if db changes
-        console.warn(`[ChatService] WARNING: No ACTIVE document found for ${sourceType} fallback, using null pin.`);
-        return prisma.standardChatAnswer.create({
-          data: {
-            messageId: message.id,
-            sourceType,
-            chunkType: "PROSE",
-            answerText: "Not covered by this standard.",
-            pinnedDocumentId: null
-          }
-        });
-      }
-
-      return prisma.standardChatAnswer.create({
-        data: {
-          messageId: message.id,
-          sourceType,
-          chunkType: "PROSE",
-          answerText: "Not covered by this standard.",
-          pinnedDocumentId: doc.id
-        }
-      });
-    }
-
-    // Grab up to 3 best direct hits
-    const topHits = chunks.filter(c => !c.isAnchor).slice(0, 3);
-    const documentIds = [...new Set(topHits.map(h => h.documentId))];
-    const docs = await prisma.standardDocument.findMany({ where: { id: { in: documentIds } } });
-    const docMap = new Map(docs.map(d => [d.id, d]));
-    
-    if (!docMap.has(topHits[0].documentId)) throw new Error("Document not found");
-
-    const citationsData = topHits.map((hit, index) => {
-      const anchor = hit.anchor;
-      const hitDoc = docMap.get(hit.documentId);
-      
-      return {
-        chunkType: hit.chunkType as StandardChunkType,
-        citationPdfName: hitDoc?.pdfName || "Unknown",
-        citationPageStart: hit.pageStart,
-        citationPageEnd: hit.pageEnd,
-        anchorPageStart: anchor ? anchor.pageStart : null,
-        anchorPageEnd: anchor ? anchor.pageEnd : null,
-        imagePaths: buildImagePaths(hit, anchor),
-        rank: index + 1
-      };
+  const finish = () =>
+    prisma.standardChatMessage.findUniqueOrThrow({
+      where: { id: message.id },
+      include: { answers: { include: { citations: true } } },
     });
 
-    console.log(`[ChatService] Generating text for ${sourceType} tier rank-1 hit...`);
-    
-    // RESIDUAL RISK DOCUMENTATION
-    // The system reduces but does NOT eliminate confident-wrong-answer risk on queries where retrieval doesn't rank the correct page first.
-    // Measured residual rate: ~42% of such misranked queries (N=95 sample) still produce a confidently wrong answer rather than a correct answer or safe refusal.
-    // This is a known, open, unresolved limitation — not a solved problem — and should be treated as such by anyone building on top of this system later.
-    const genResult = await generateAnswerText(topHits, queryText);
-    
-    const generatedText = genResult.text;
-    const sourceChunk = genResult.sourceChunkIndex !== null ? topHits[genResult.sourceChunkIndex] : null;
+  // Phase 5 §1.3: pooled scope, no tier selection. Every ACTIVE GENERAL
+  // document, org-wide, plus this project's fabricator's ACTIVE FABRICATOR
+  // documents, auto-derived -- see resolveProjectDocumentIds's own docstring.
+  const documentIds = await resolveProjectDocumentIds(projectId);
+  console.log(`[ChatService] Resolved ${documentIds.length} in-scope document(s) for project ${projectId}.`);
 
-    const answer = await prisma.standardChatAnswer.create({
+  if (documentIds.length === 0) {
+    // Per resolveProjectDocumentIds' docstring: this only happens if there are
+    // zero ACTIVE GENERAL documents at all, a real ingestion-side problem, not
+    // a normal per-project state -- one answer, not three tiers' worth of
+    // distinct null-state messages, since there is only one scope now.
+    await prisma.standardChatAnswer.create({
       data: {
         messageId: message.id,
-        sourceType,
-        chunkType: sourceChunk ? sourceChunk.chunkType as StandardChunkType : topHits[0].chunkType as StandardChunkType,
-        answerText: generatedText, // LLM output or null fallback
-        pinnedDocumentId: sourceChunk ? sourceChunk.documentId : null, // Safely null if attribution failed
-        citations: {
-          create: citationsData
-        }
-      }
+        sourceType: "GENERAL",
+        chunkType: "PROSE",
+        answerText: "No standards are currently available.",
+        pinnedDocumentId: null,
+      },
     });
-    
-    console.log(`[ChatService] processSource for ${sourceType} latency: ${(performance.now() - startMeasure).toFixed(2)}ms`);
-    console.log(`[ChatService] ---> Final Assigned Source: Document ID = ${answer.pinnedDocumentId}, ChunkType = ${answer.chunkType}`);
-    
-    return answer;
+    return finish();
   }
 
-  const generalPromise = processSource(searchResults.general, "GENERAL");
-  const fabricatorPromise = processSource(searchResults.fabricator, "FABRICATOR");
-  const projectPromise = processSource(searchResults.project, "PROJECT");
+  const queryVec = await generateEmbedding(queryText);
+  const pool = await retrieveTwoBranch(queryText, queryVec, documentIds, 5);
 
-  await Promise.all([generalPromise, fabricatorPromise, projectPromise]);
+  if (pool.length === 0) {
+    const doc = await prisma.standardDocument.findFirst({
+      where: { id: { in: documentIds }, status: "ACTIVE" },
+    });
+    await prisma.standardChatAnswer.create({
+      data: {
+        messageId: message.id,
+        sourceType: (doc?.sourceType as StandardSourceType) ?? "GENERAL",
+        chunkType: "PROSE",
+        answerText: "Not covered by this standard.",
+        pinnedDocumentId: doc?.id ?? null,
+      },
+    });
+    return finish();
+  }
 
-  return prisma.standardChatMessage.findUniqueOrThrow({
-    where: { id: message.id },
-    include: { answers: { include: { citations: true } } }
+  // Phase 5 §1.4: gradeRetrieval() requires a pool "already sorted descending
+  // by post-rerank score" -- this is now that pool. Confirmed directly (not
+  // assumed) that this actually resolves the pre-rerank cross-branch tie:
+  // before the reranker was wired, every real query graded AMBIGUOUS (the
+  // best table candidate and best prose candidate each separately normalized
+  // to exactly 1.0 under combineDocumentResultsNormalized's per-branch
+  // min-max). The reranker produces one real, unified score across every
+  // candidate regardless of which branch found it, so that forced tie cannot
+  // recur structurally, not just in the cases tested.
+  const rerankedPool = await rerankPool(queryText, pool);
+  const grade = gradeRetrieval(rerankedPool, { queryText });
+  console.log(`[ChatService] CRAG grade: ${grade.grade} (gap=${grade.gap}, rank1=${grade.rank1Score}, rank2=${grade.rank2Score})`);
+
+  if (grade.grade === "AMBIGUOUS") {
+    const top = rerankedPool[0];
+    const deferral = buildAmbiguousDeferralAnswer({
+      pdfName: top.pdfName,
+      pageStart: top.pageStart,
+      pageEnd: top.pageEnd,
+      documentId: top.documentId,
+    });
+    await prisma.standardChatAnswer.create({
+      data: {
+        messageId: message.id,
+        sourceType: top.sourceType as StandardSourceType,
+        chunkType: top.chunkType as StandardChunkType,
+        answerText: deferral.answerText,
+        generationFailureReason: deferral.generationFailureReason,
+        pinnedDocumentId: top.documentId,
+        citations: { create: [citationOf(top, 1)] },
+      },
+    });
+    return finish();
+  }
+
+  // CONFIDENT. Phase 5 §2 hard deferral: strip any candidate whose own text is
+  // untrustworthy BEFORE generation ever sees it -- scoped per chunk, not per
+  // page or per query, so a flagged PROSE chunk sitting beside a clean TABLE
+  // chunk on the same page (Amendment 11's whole point) never suppresses the
+  // table; only the flagged chunk itself is ever excluded.
+  const topRanked = rerankedPool.slice(0, TOP_N);
+  const reliable = topRanked.filter((c) => !isUnreliable(c));
+
+  if (reliable.length === 0) {
+    // Every top candidate is itself unreliable -- same hard, non-LLM deferral
+    // as VISUAL_ONLY/AMBIGUOUS, pointed at the top candidate's own page image.
+    const top = topRanked[0];
+    await prisma.standardChatAnswer.create({
+      data: {
+        messageId: message.id,
+        sourceType: top.sourceType as StandardSourceType,
+        chunkType: top.chunkType as StandardChunkType,
+        answerText: "Not confidently found in the retrieved context — see page image.",
+        generationFailureReason: REASON_CODE_UNRELIABLE_CHUNK,
+        pinnedDocumentId: top.documentId,
+        citations: { create: [citationOf(top, 1)] },
+      },
+    });
+    return finish();
+  }
+
+  console.log(`[ChatService] Generating text from ${reliable.length}/${topRanked.length} reliable candidate(s)...`);
+
+  // RESIDUAL RISK DOCUMENTATION
+  // The system reduces but does NOT eliminate confident-wrong-answer risk on queries where retrieval doesn't rank the correct page first.
+  // Measured residual rate: ~42% of such misranked queries (N=95 sample) still produce a confidently wrong answer rather than a correct answer or safe refusal.
+  // This is a known, open, unresolved limitation — not a solved problem — and should be treated as such by anyone building on top of this system later.
+  const genResult = await generateAnswerText(reliable, queryText);
+
+  const generatedText = genResult.text;
+  const sourceChunk = genResult.sourceChunkIndex !== null ? reliable[genResult.sourceChunkIndex] : null;
+  const citationsData = reliable.map((hit, i) => citationOf(hit, i + 1));
+
+  const answer = await prisma.standardChatAnswer.create({
+    data: {
+      messageId: message.id,
+      sourceType: (sourceChunk?.sourceType ?? reliable[0].sourceType) as StandardSourceType,
+      chunkType: (sourceChunk ? sourceChunk.chunkType : reliable[0].chunkType) as StandardChunkType,
+      answerText: generatedText,
+      pinnedDocumentId: sourceChunk ? sourceChunk.documentId : null,
+      citations: { create: citationsData },
+    },
   });
+
+  console.log(`[ChatService] ---> Final Assigned Source: Document ID = ${answer.pinnedDocumentId}, ChunkType = ${answer.chunkType}`);
+
+  return finish();
 }

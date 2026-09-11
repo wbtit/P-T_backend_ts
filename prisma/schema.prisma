@@ -925,7 +925,6 @@ model Project {
   coordinationDrawings    CoordinationDrawing[]
   standardDocuments       StandardDocument[]
   standardChatMessages    StandardChatMessage[]
-  standardPreferences     ProjectStandardPreference[]
 
   @@index([name])
   @@index([fabricatorID])
@@ -2506,6 +2505,19 @@ enum BfaStatus {
   complete
 }
 
+// PROJECT retired -- Phase 5, confirmed with the client: PROJECT-tier scoping
+// is old 3-tier architecture, no longer written by any code (last writer,
+// the tier-preference controller endpoints, removed in the same change).
+// Same precedent as NO_CONFIDENT_REGION above: kept live in the enum rather
+// than dropped, decided after finding 366 real `standard_chat_answers` rows
+// still carry it (all boilerplate "not covered" stubs, zero real content, but
+// real history nonetheless) -- Postgres cannot drop an enum value without
+// recreating the type and remapping every row using it, and relabeling or
+// deleting real historical rows to buy a marginally tidier enum was judged a
+// worse trade than the one already made for NO_CONFIDENT_REGION. See
+// prisma/phase2_draft/005_phase5_remove_project_tier.sql for the draft DDL --
+// only the ProjectStandardPreference table is actually dropped; this enum
+// value is not.
 enum StandardSourceType {
   GENERAL
   FABRICATOR
@@ -2580,6 +2592,13 @@ enum HeadingSource {
 
 enum StandardDocumentStatus {
   PENDING
+  // Phase 6: the document row exists and a background ingestion job is
+  // actively running against it right now (see documentIngestion.ts).
+  // Distinct from PENDING, which now covers both "queued, not yet picked up"
+  // and "a run finished, awaiting ACTIVATE" -- processingStage + pagesProcessed/
+  // totalPages distinguish those two within PENDING; PROCESSING is only the
+  // in-between state a poller needs to show a real "running" indicator for.
+  PROCESSING
   ACTIVE
   SUPERSEDED
   FAILED
@@ -2591,24 +2610,19 @@ model StandardFamily {
   edition    String
   isDefault  Boolean @default(false) @map("is_default")
 
-  preferences ProjectStandardPreference[]
-  documents   StandardDocument[]
+  documents StandardDocument[]
 
   @@map("standard_families")
 }
 
-model ProjectStandardPreference {
-  id               String             @id @default(uuid()) @db.Uuid
-  projectId        String             @map("project_id") @db.Uuid
-  standardFamilyId String             @map("standard_family_id")
-  sourceType       StandardSourceType @default(GENERAL) @map("source_type")
-
-  project        Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  standardFamily StandardFamily @relation(fields: [standardFamilyId], references: [id], onDelete: Cascade)
-
-  @@unique([projectId, standardFamilyId, sourceType])
-  @@map("project_standard_preferences")
-}
+// ProjectStandardPreference (model + table `project_standard_preferences`)
+// removed -- Phase 5, confirmed with the client: PROJECT-tier scoping and
+// per-project GENERAL curation were both old 3-tier architecture, retired by
+// the same client pivot that removed tier selection from the user. GENERAL is
+// now unconditional/org-wide (retrievalService.ts's resolveProjectDocumentIds);
+// FABRICATOR is auto-derived from Project.fabricatorID. No table replaces this
+// one -- there is nothing left for a project to curate. See prisma/phase2_draft
+// for the draft DROP TABLE.
 
 model StandardDocument {
   id               String                 @id @default(uuid()) @db.Uuid
@@ -2618,13 +2632,25 @@ model StandardDocument {
   pdfName          String                 @map("pdf_name")
   storagePath      String                 @map("storage_path")
   status           StandardDocumentStatus @default(PENDING)
-  processingStage  String?                @map("processing_stage") // EXTRACTING, CLASSIFYING, CHUNKING
+  // Phase 6: real stage names for the actual Phase 2 pipeline (ingestDocument()),
+  // not the legacy pipeline's EXTRACTING/CLASSIFYING/CHUNKING -- set by
+  // documentIngestion.ts's onProgress callback: EXTRACTING -> CHUNKING ->
+  // EMBEDDING (commit only) -> PERSISTING (commit only) -> null on completion.
+  processingStage  String?                @map("processing_stage")
   pagesProcessed   Int                    @default(0) @map("pages_processed")
   totalPages       Int                    @default(0) @map("total_pages")
   failureReason    String?                @map("failure_reason")
   documentFamilyId String?                @map("document_family_id")
   excludedPages    Int[]                  @default([]) @map("excluded_pages")
   uploadedAt       DateTime               @default(now()) @map("uploaded_at")
+
+  // Phase 6: the IngestReport ingestDocument() returns (pages, chunks, byType,
+  // parents/children, embedded/notEmbedded, truncationRisk, and -- once
+  // committed -- written counts). The async UPLOAD endpoint returns
+  // immediately, before this exists; a poller reads it from here once
+  // processingStage clears. Nullable, no default: absent until a run
+  // completes, whether that run was a dry-run or a commit.
+  ingestReport Json? @map("ingest_report")
 
   // Phase 2: per-document heading provenance. All nullable -- documents
   // ingested before the new pipeline have no measurement.

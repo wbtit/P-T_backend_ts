@@ -37,7 +37,7 @@ const TRANSACTION_MAX_WAIT_MS = 10_000;
 
 export interface PersistOptions {
   documentId: string;
-  sourceType: "GENERAL" | "FABRICATOR" | "PROJECT";
+  sourceType: "GENERAL" | "FABRICATOR";
   projectId?: string | null;
   fabricatorId?: string | null;
   /** localId -> embedding vector. Produced by the job, not here. */

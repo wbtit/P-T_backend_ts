@@ -1,8 +1,18 @@
 import { Request, Response } from "express";
+import fs from "fs";
+import path from "path";
 import prisma from "../../../config/database/client";
 import { standardsIngestionQueue } from "../jobs/standardsIngestion";
+import { documentIngestionQueue } from "../jobs/documentIngestion";
 import { StandardSourceType } from "@prisma/client";
 import { askStandards } from "../services/chatService";
+import { StandardsVersioningService } from "../services/versioningService";
+import {
+  ensureDocumentDirs,
+  sourcePdfPath,
+  pagesDir,
+  manifestWorkDir,
+} from "../services/documentStorage";
 
 export class StandardsController {
   public async uploadStandard(req: Request, res: Response): Promise<void> {
@@ -28,13 +38,6 @@ export class StandardsController {
       if (sourceType === "FABRICATOR") {
         if (isOmitted(fabricatorId) || !isOmitted(projectId)) {
           res.status(400).json({ message: "fabricatorId is required and projectId must be omitted for FABRICATOR sourceType" });
-          return;
-        }
-      }
-
-      if (sourceType === "PROJECT") {
-        if (isOmitted(fabricatorId) || isOmitted(projectId)) {
-          res.status(400).json({ message: "fabricatorId and projectId are required for PROJECT sourceType" });
           return;
         }
       }
@@ -96,6 +99,254 @@ export class StandardsController {
     }
   }
 
+  // ---------------------------------------------------------------------
+  // Phase 6: the real endpoints, wired only to the tested Phase 2-5
+  // pipeline. `uploadStandard` above (and the legacy queue it enqueues to)
+  // is an old-RAG leftover, held only until these are verified, then removed.
+  // ---------------------------------------------------------------------
+
+  /** Wraps `ingestDocument()` (manifestIngestion.ts) via the new
+   *  `documentIngestionQueue` -- async, not synchronous: extraction alone
+   *  measured up to ~68s for a 166-page document this session, and a
+   *  2000+-page document is expected to take minutes, which no synchronous
+   *  HTTP response should hold a connection open for. Returns immediately
+   *  (202) with the document id; the caller polls `getDocumentStatus`. */
+  public async uploadDocument(req: Request, res: Response): Promise<void> {
+    try {
+      if (!req.file) {
+        res.status(400).json({ message: "No file uploaded" });
+        return;
+      }
+
+      const { sourceType, fabricatorId, documentFamilyId, isDefault, familyCode, edition } = req.body;
+      const commit = req.body.commit === "true" || req.body.commit === true;
+
+      if (!sourceType || (sourceType !== "GENERAL" && sourceType !== "FABRICATOR")) {
+        res.status(400).json({ message: "sourceType must be GENERAL or FABRICATOR" });
+        return;
+      }
+
+      const isOmitted = (val: any) => !val || val === "null" || val === "undefined" || (typeof val === "string" && val.trim() === "");
+
+      if (isOmitted(documentFamilyId)) {
+        res.status(400).json({ message: "documentFamilyId is required" });
+        return;
+      }
+      if (sourceType === "FABRICATOR" && isOmitted(fabricatorId)) {
+        res.status(400).json({ message: "fabricatorId is required for FABRICATOR sourceType" });
+        return;
+      }
+      if (isOmitted(familyCode) || isOmitted(edition)) {
+        res.status(400).json({ message: "familyCode and edition are required when providing documentFamilyId" });
+        return;
+      }
+
+      const familyIsDefault = !isOmitted(isDefault) ? (isDefault === "true" || isDefault === true) : false;
+      await prisma.standardFamily.upsert({
+        where: { id: documentFamilyId },
+        update: { isDefault: isOmitted(isDefault) ? undefined : familyIsDefault },
+        create: { id: documentFamilyId, familyCode, edition, isDefault: familyIsDefault },
+      });
+
+      // Create the row first so its real id drives the storage paths --
+      // avoids generating a UUID in application code when Prisma already
+      // owns that responsibility everywhere else in this project.
+      const document = await prisma.standardDocument.create({
+        data: {
+          sourceType: sourceType as StandardSourceType,
+          fabricatorId: isOmitted(fabricatorId) ? null : fabricatorId,
+          documentFamilyId,
+          pdfName: req.file.originalname,
+          storagePath: "", // set below, once the real destination is known
+          status: "PENDING",
+        },
+      });
+
+      const resolvedFabricatorId = isOmitted(fabricatorId) ? null : fabricatorId;
+      await ensureDocumentDirs(sourceType, document.id, resolvedFabricatorId);
+      const destPdfPath = sourcePdfPath(sourceType, document.id, resolvedFabricatorId);
+      await fs.promises.rename(req.file.path, destPdfPath);
+
+      await prisma.standardDocument.update({
+        where: { id: document.id },
+        data: { storagePath: destPdfPath },
+      });
+
+      try {
+        await documentIngestionQueue.add("ingest", {
+          documentId: document.id,
+          pdfPath: destPdfPath,
+          manifestDir: manifestWorkDir(sourceType, document.id, resolvedFabricatorId),
+          imageDir: pagesDir(sourceType, document.id, resolvedFabricatorId),
+          sourceType,
+          fabricatorId: resolvedFabricatorId,
+          documentFamilyId,
+          edition,
+          commit,
+        });
+      } catch (enqueueErr) {
+        console.error(`[StandardsController] Failed to enqueue documentId ${document.id}:`, enqueueErr);
+        await prisma.standardDocument.update({
+          where: { id: document.id },
+          data: { status: "FAILED", failureReason: "Failed to enqueue ingestion job" },
+        });
+        throw enqueueErr;
+      }
+
+      res.status(202).json({
+        documentId: document.id,
+        status: "PENDING",
+        commit,
+        message: "Ingestion queued. Poll GET /standards/documents/:id for progress.",
+      });
+    } catch (error: any) {
+      console.error("[StandardsController] uploadDocument error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  }
+
+  /** Wraps `activateStandardDocument()` -- adds the PENDING-only guard that
+   *  function itself never enforced (it would activate from any non-ACTIVE
+   *  status, including FAILED). Reports real row counts from the function's
+   *  own return value, not a separately-queried, race-prone guess. */
+  public async activateDocument(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const doc = await prisma.standardDocument.findUnique({ where: { id } });
+      if (!doc) {
+        res.status(404).json({ message: "Document not found" });
+        return;
+      }
+      if (doc.status !== "PENDING") {
+        res.status(409).json({
+          message: `Cannot activate a document with status ${doc.status}. Only PENDING documents can be activated.`,
+          status: doc.status,
+        });
+        return;
+      }
+
+      const versioningService = new StandardsVersioningService();
+      const result = await versioningService.activateStandardDocument(id);
+
+      res.status(200).json({
+        documentId: id,
+        activated: result.activated,
+        supersededCount: result.supersededCount,
+        status: result.activated ? "ACTIVE" : doc.status,
+      });
+    } catch (error: any) {
+      console.error("[StandardsController] activateDocument error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  }
+
+  /** New LIST endpoint -- nothing before this listed documents by
+   *  status/sourceType/family at all. */
+  public async listDocuments(req: Request, res: Response): Promise<void> {
+    try {
+      const { status, sourceType, documentFamilyId, fabricatorId } = req.query;
+      const where: any = {};
+      if (status) where.status = status;
+      if (sourceType) where.sourceType = sourceType;
+      if (documentFamilyId) where.documentFamilyId = documentFamilyId;
+      if (fabricatorId) where.fabricatorId = fabricatorId;
+
+      const documents = await prisma.standardDocument.findMany({
+        where,
+        select: {
+          id: true,
+          pdfName: true,
+          sourceType: true,
+          status: true,
+          documentFamilyId: true,
+          fabricatorId: true,
+          totalPages: true,
+          pagesProcessed: true,
+          uploadedAt: true,
+          documentFamily: { select: { familyCode: true, edition: true } },
+        },
+        orderBy: { uploadedAt: "desc" },
+      });
+
+      res.status(200).json({ documents });
+    } catch (error: any) {
+      console.error("[StandardsController] listDocuments error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  }
+
+  /** New STATUS endpoint -- same fields `getDocumentProgress` already
+   *  exposed, plus `ingestReport` (Phase 6's new column: the full
+   *  IngestReport once a run completes, dry-run or commit). This is the
+   *  endpoint UPLOAD's caller polls. */
+  public async getDocumentStatus(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const document = await prisma.standardDocument.findUnique({
+        where: { id },
+        select: {
+          id: true,
+          pdfName: true,
+          sourceType: true,
+          status: true,
+          processingStage: true,
+          pagesProcessed: true,
+          totalPages: true,
+          failureReason: true,
+          ingestReport: true,
+          documentFamilyId: true,
+          fabricatorId: true,
+          uploadedAt: true,
+        },
+      });
+
+      if (!document) {
+        res.status(404).json({ message: "Document not found" });
+        return;
+      }
+
+      res.status(200).json(document);
+    } catch (error: any) {
+      console.error("[StandardsController] getDocumentStatus error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  }
+
+  /** New image endpoint -- same URL shape `chatService.ts`'s citation
+   *  `imagePaths` already emit (`/v1/standards/image/:documentId/:pageNumber`),
+   *  new implementation. The old `getStandardImage` assumed a repo-relative
+   *  `/uploads/standards/...` path; real Phase 2 manifests store an absolute
+   *  path (confirmed this session: `/tmp/...`, which is also volatile) --
+   *  this serves whatever `image_path` actually contains, absolute or not,
+   *  rather than re-deriving a path from convention, so it works regardless
+   *  of which convention wrote it (including the new §storage one). */
+  public async getPageImage(req: Request, res: Response): Promise<void> {
+    try {
+      const { documentId, pageNumber } = req.params;
+      const page = await prisma.standardPage.findFirst({
+        where: { documentId, pageNumber: parseInt(pageNumber, 10) },
+      });
+
+      if (!page || !page.imagePath) {
+        res.status(404).json({ message: "Image not found for this page." });
+        return;
+      }
+
+      const absolutePath = path.isAbsolute(page.imagePath)
+        ? page.imagePath
+        : path.resolve(process.cwd(), page.imagePath.replace(/^\//, ""));
+
+      if (fs.existsSync(absolutePath)) {
+        res.sendFile(absolutePath);
+      } else {
+        res.status(404).json({ message: "Image file not found on disk." });
+      }
+    } catch (error: any) {
+      console.error("[StandardsController] getPageImage error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  }
+
   public async getDocumentProgress(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
@@ -123,66 +374,28 @@ export class StandardsController {
     }
   }
 
-  public async getProjectPreferences(req: Request, res: Response): Promise<void> {
-    try {
-      const { projectId } = req.params;
-      const tier = (req.query.tier as string) || "GENERAL";
-      
-      if (tier !== "GENERAL" && tier !== "PROJECT") {
-        res.status(400).json({ message: "Invalid tier. Must be GENERAL or PROJECT." });
-        return;
-      }
-
-      const prefs = await prisma.projectStandardPreference.findMany({
-        where: { 
-          projectId,
-          sourceType: tier as StandardSourceType 
-        },
-        select: { standardFamilyId: true }
-      });
-      res.status(200).json({ standardFamilyIds: prefs.map(p => p.standardFamilyId) });
-    } catch (error: any) {
-      console.error("[StandardsController] getProjectPreferences error:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  }
-
   public async getAvailableFamilies(req: Request, res: Response): Promise<void> {
     try {
       const tier = (req.query.tier as string);
-      const projectId = (req.query.projectId as string);
 
       let families;
-      
+
       if (!tier) {
         // Return all families if no tier provided
         families = await prisma.standardFamily.findMany();
       } else {
-        if (tier !== "GENERAL" && tier !== "PROJECT") {
-          res.status(400).json({ message: "Invalid tier. Must be GENERAL or PROJECT." });
+        if (tier !== "GENERAL") {
+          res.status(400).json({ message: "Invalid tier. Must be GENERAL." });
           return;
         }
 
-        // Return only families that have an ACTIVE document for this tier (and projectId if PROJECT)
-        const docWhere: any = {
-          sourceType: tier as StandardSourceType,
-          status: "ACTIVE"
-        };
-        
-        if (tier === "PROJECT") {
-          if (!projectId) {
-            res.status(400).json({ message: "projectId is required when querying PROJECT tier families." });
-            return;
-          }
-          docWhere.projectId = projectId;
-        }
-
+        // Return only families that have an ACTIVE GENERAL document.
         const activeDocs = await prisma.standardDocument.findMany({
-          where: docWhere,
+          where: { sourceType: "GENERAL", status: "ACTIVE" },
           select: { documentFamilyId: true },
           distinct: ['documentFamilyId']
         });
-        
+
         const familyIds = activeDocs
           .map(d => d.documentFamilyId)
           .filter((id): id is string => id !== null);
@@ -234,63 +447,6 @@ export class StandardsController {
       res.status(200).json({ families });
     } catch (error: any) {
       console.error("[StandardsController] getFabricatorFamilies error:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  }
-
-  public async setProjectPreferences(req: Request, res: Response): Promise<void> {
-    try {
-      console.log(`[StandardsController] setProjectPreferences called. Tier from query: ${req.query.tier}`, "Body:", req.body);
-      const { projectId } = req.params;
-      const tier = (req.query.tier as string) || "GENERAL";
-      let { standardFamilyIds } = req.body;
-
-      if (tier !== "GENERAL" && tier !== "PROJECT") {
-        res.status(400).json({ message: "Invalid tier. Must be GENERAL or PROJECT." });
-        return;
-      }
-
-      if (!Array.isArray(standardFamilyIds)) {
-        res.status(400).json({ message: "standardFamilyIds must be an array" });
-        return;
-      }
-
-      // Deduplicate to avoid unique constraint violations
-      standardFamilyIds = [...new Set(standardFamilyIds)];
-
-      // Validate families
-      if (standardFamilyIds.length > 0) {
-        const families = await prisma.standardFamily.findMany({
-          where: { id: { in: standardFamilyIds } }
-        });
-        if (families.length !== standardFamilyIds.length) {
-          res.status(400).json({ message: "One or more standardFamilyIds are invalid" });
-          return;
-        }
-      }
-
-      await prisma.$transaction(async (tx) => {
-        await tx.projectStandardPreference.deleteMany({
-          where: { 
-            projectId,
-            sourceType: tier as StandardSourceType
-          }
-        });
-        
-        if (standardFamilyIds.length > 0) {
-          await tx.projectStandardPreference.createMany({
-            data: standardFamilyIds.map((id: string) => ({
-              projectId,
-              standardFamilyId: id,
-              sourceType: tier as StandardSourceType
-            }))
-          });
-        }
-      });
-
-      res.status(200).json({ message: "Preferences updated successfully" });
-    } catch (error: any) {
-      console.error("[StandardsController] setProjectPreferences error:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   }

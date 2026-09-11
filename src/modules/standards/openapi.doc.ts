@@ -22,9 +22,9 @@ const standards_doc: ModuleOpenApiDoc = {
                 type: "object",
                 properties: {
                   file: { type: "string", format: "binary" },
-                  sourceType: { type: "string", enum: ["GENERAL", "FABRICATOR", "PROJECT"] },
-                  projectId: { type: "string", format: "uuid", nullable: true, description: "Required for PROJECT sourceType. Must be omitted for FABRICATOR sourceType." },
-                  fabricatorId: { type: "string", format: "uuid", nullable: true, description: "Required for FABRICATOR and PROJECT sourceTypes." },
+                  sourceType: { type: "string", enum: ["GENERAL", "FABRICATOR"] },
+                  projectId: { type: "string", format: "uuid", nullable: true, description: "Must be omitted for FABRICATOR sourceType." },
+                  fabricatorId: { type: "string", format: "uuid", nullable: true, description: "Required for FABRICATOR sourceType." },
                   documentFamilyId: { type: "string", nullable: false, description: "Required for all sourceTypes" },
                   familyCode: { type: "string", nullable: false, description: "Required for all sourceTypes. Immutable after family creation." },
                   edition: { type: "string", nullable: false, description: "Required for all sourceTypes. Immutable after family creation." },
@@ -65,22 +65,15 @@ const standards_doc: ModuleOpenApiDoc = {
       get: {
         tags: ["Standards"],
         summary: "Get available standard families",
-        description: "Returns a list of available standard families, optionally filtered by tier (GENERAL or PROJECT). If filtering by PROJECT tier, projectId is required. Only returns families that have at least one ACTIVE document for the given constraints.",
+        description: "Returns a list of available standard families, optionally filtered by tier (GENERAL). Only returns families that have at least one ACTIVE document for the given constraints.",
         security: [{ bearerAuth: [] }],
         parameters: [
           {
             name: "tier",
             in: "query",
             required: false,
-            schema: { type: "string", enum: ["GENERAL", "PROJECT"] },
-            description: "Filter by standard tier (GENERAL or PROJECT)"
-          },
-          {
-            name: "projectId",
-            in: "query",
-            required: false,
-            schema: { type: "string", format: "uuid" },
-            description: "Required when tier is PROJECT"
+            schema: { type: "string", enum: ["GENERAL"] },
+            description: "Filter by standard tier (GENERAL)"
           }
         ],
         responses: {
@@ -273,115 +266,6 @@ const standards_doc: ModuleOpenApiDoc = {
         }
       }
     },
-    "/standards/projects/{projectId}/preferences": {
-      get: {
-        tags: ["Standards"],
-        summary: "Get standard preferences for a project",
-        description: "Retrieves the standard families currently selected/associated with a project. To get the list of ALL valid standard families available for selection, use the `GET /standards/families` endpoint instead.",
-        security: [{ bearerAuth: [] }],
-        parameters: [
-          {
-            name: "projectId",
-            in: "path",
-            required: true,
-            schema: { type: "string", format: "uuid" },
-          },
-          {
-            name: "tier",
-            in: "query",
-            required: false,
-            schema: { type: "string", enum: ["GENERAL", "PROJECT"] },
-            description: "The standard tier to fetch preferences for (defaults to GENERAL). Note: FABRICATOR is explicitly rejected with 400 because it is auto-derived and has no user preferences."
-          }
-        ],
-        responses: {
-          "200": {
-            description: "Successfully retrieved preferences",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "object",
-                  properties: {
-                    standardFamilyIds: {
-                      type: "array",
-                      items: { type: "string" }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            description: "Unauthorized",
-          },
-          "500": {
-            description: "Internal server error",
-          }
-        }
-      },
-      post: {
-        tags: ["Standards"],
-        summary: "Set standard preferences for a project",
-        description: "Sets the standard families associated with a project (Full Replacement). To get the list of valid `standardFamilyIds` available for selection, use the `GET /standards/families` endpoint.",
-        security: [{ bearerAuth: [] }],
-        parameters: [
-          {
-            name: "projectId",
-            in: "path",
-            required: true,
-            schema: { type: "string", format: "uuid" },
-          },
-          {
-            name: "tier",
-            in: "query",
-            required: false,
-            schema: { type: "string", enum: ["GENERAL", "PROJECT"] },
-            description: "The standard tier to set preferences for (defaults to GENERAL). Note: FABRICATOR is explicitly rejected with 400 because it is auto-derived and has no user preferences."
-          }
-        ],
-        requestBody: {
-          required: true,
-          content: {
-            "application/json": {
-              schema: {
-                type: "object",
-                properties: {
-                  standardFamilyIds: {
-                    type: "array",
-                    items: { type: "string" }
-                  }
-                },
-                required: ["standardFamilyIds"]
-              }
-            }
-          }
-        },
-        responses: {
-          "200": {
-            description: "Successfully updated preferences",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "object",
-                  properties: {
-                    message: { type: "string" }
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            description: "Bad request - invalid payload format or invalid standard family IDs",
-          },
-          "401": {
-            description: "Unauthorized",
-          },
-          "500": {
-            description: "Internal server error",
-          }
-        }
-      }
-    },
     "/projects/{projectId}/standards/chat": {
       post: {
         tags: ["Standards"],
@@ -433,7 +317,7 @@ const standards_doc: ModuleOpenApiDoc = {
                         createdAt: { type: "string", format: "date-time" },
                         answers: {
                           type: "array",
-                          description: "Returns up to 3 answer objects (GENERAL, FABRICATOR, PROJECT). Each answer represents a discrete source tier and contains 0-3 citations. The FABRICATOR answer will be completely omitted (not a 0-citation stub) if the project has no fabricator or the fabricator lacks active documents. For GENERAL/PROJECT, a 0-citation answer indicates either no preferences set, or preferences were set but the query fell below the similarity threshold.",
+                          description: "Returns up to 2 answer objects (GENERAL, FABRICATOR). Each answer represents a discrete source tier and contains 0-3 citations. The FABRICATOR answer will be completely omitted (not a 0-citation stub) if the project has no fabricator or the fabricator lacks active documents. A 0-citation GENERAL answer indicates the query fell below the similarity threshold against every ACTIVE GENERAL document.",
                           items: {
                             type: "object",
                             properties: {

@@ -39,11 +39,15 @@ import { startStandardsIngestionWorker } from "./modules/standards/jobs/standard
 import { startPageClassificationWorker } from "./modules/standards/jobs/pageClassification";
 import { startChunkingWorker } from "./modules/standards/jobs/chunking";
 import { startStandardsGenerationWorker } from "./modules/standards/jobs/standardsGeneration";
+import { startDocumentIngestionWorker } from "./modules/standards/jobs/documentIngestion";
 
+// Phase 6: old-RAG leftovers, held only until the new /standards/documents
+// endpoints are verified end to end -- see standards.controller.ts.
 startStandardsIngestionWorker();
 startPageClassificationWorker();
 startChunkingWorker();
 startStandardsGenerationWorker();
+startDocumentIngestionWorker();
 
 import cors from 'cors'
 import {

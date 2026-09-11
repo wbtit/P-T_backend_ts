@@ -53,6 +53,17 @@ export interface CragGradeResult {
 export const REASON_CODE_VISUAL_ONLY = "VISUAL_ONLY" as const;
 export const REASON_CODE_AMBIGUOUS_RETRIEVAL = "AMBIGUOUS_RETRIEVAL" as const;
 
+/** Phase 5 §2 -- wired live in chatService.ts, unlike the two above. A hard,
+ *  deterministic, non-LLM deferral for a candidate chunk that is itself
+ *  untrustworthy (chunkType='VISUAL', or Amendment 11's reliabilityReason
+ *  set) -- same treatment VISUAL_ONLY pages were always meant to get (spec
+ *  Phase 2 §5: "never attempt a number from a table we can't verify"), now
+ *  actually enforced instead of only hedged in the generation prompt.
+ *  Distinct from AMBIGUOUS_RETRIEVAL: that's about retrieval CONFIDENCE
+ *  (multiple candidates too close to call); this is about a specific
+ *  candidate's own TEXT FIDELITY, independent of how confidently it ranked. */
+export const REASON_CODE_UNRELIABLE_CHUNK = "UNRELIABLE_CHUNK" as const;
+
 /**
  * CONFIDENT-WRONG (Q23-class) -- explicit open item, not deferred silently.
  *

@@ -39,16 +39,37 @@ standardsRoutes.get(
   controller.getDocumentProgress.bind(controller)
 );
 
-standardsRoutes.get(
-  "/projects/:projectId/preferences",
+// Phase 6: the real endpoints. See standards.controller.ts's own comment
+// block for why /upload and /image above are held, not reused, until these
+// are verified.
+standardsRoutes.post(
+  "/documents",
   authMiddleware,
-  controller.getProjectPreferences.bind(controller)
+  standardsUploads.single("file"),
+  controller.uploadDocument.bind(controller)
+);
+
+standardsRoutes.get(
+  "/documents",
+  authMiddleware,
+  controller.listDocuments.bind(controller)
+);
+
+standardsRoutes.get(
+  "/documents/:id",
+  authMiddleware,
+  controller.getDocumentStatus.bind(controller)
 );
 
 standardsRoutes.post(
-  "/projects/:projectId/preferences",
+  "/documents/:id/activate",
   authMiddleware,
-  controller.setProjectPreferences.bind(controller)
+  controller.activateDocument.bind(controller)
+);
+
+standardsRoutes.get(
+  "/image-v2/:documentId/:pageNumber",
+  controller.getPageImage.bind(controller)
 );
 
 projectStandardsRoutes.post(

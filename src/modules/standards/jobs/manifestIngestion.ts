@@ -64,7 +64,7 @@ export interface IngestOptions {
   documentId: string;
   pdfPath: string;
   manifestDir: string;
-  sourceType: "GENERAL" | "FABRICATOR" | "PROJECT";
+  sourceType: "GENERAL" | "FABRICATOR";
   projectId?: string | null;
   fabricatorId?: string | null;
   documentFamilyId?: string | null;
@@ -73,6 +73,13 @@ export interface IngestOptions {
   commit?: boolean;
   /** Reuse manifests already on disk instead of re-running the extractor. */
   skipExtraction?: boolean;
+  /** Phase 6: rendered page images go here instead of `manifestDir/page_images`
+   *  -- see runExtractor's docstring. */
+  imageDir?: string;
+  /** Phase 6: called at each real stage transition, for a caller (the async
+   *  UPLOAD job) to record progress somewhere pollable. Best-effort only --
+   *  not awaited seriously; a throwing callback should not fail the ingest. */
+  onProgress?: (stage: "EXTRACTING" | "CHUNKING" | "EMBEDDING" | "PERSISTING") => void;
 }
 
 export interface IngestReport {
@@ -97,8 +104,20 @@ export interface IngestReport {
 }
 
 /** Run the extractor. Dry-run is its only mode; it writes manifests and images
- *  and never opens a database connection. */
-export async function runExtractor(pdfPath: string, manifestDir: string, documentId: string) {
+ *  and never opens a database connection.
+ *
+ * Phase 6: `imageDir` lets the caller place rendered page images somewhere
+ * other than `manifestDir/page_images` (the CLI's own default when omitted)
+ * -- `fabextract.cli` already supports this via `--image-dir` (confirmed by
+ * reading its argparse definition before adding this), so this is a new
+ * optional parameter, not a new capability being added to the Python side.
+ * Every existing caller that omits it keeps the old default behavior. */
+export async function runExtractor(
+  pdfPath: string,
+  manifestDir: string,
+  documentId: string,
+  imageDir?: string
+) {
   const args = [
     "-m",
     "fabextract.cli",
@@ -110,6 +129,9 @@ export async function runExtractor(pdfPath: string, manifestDir: string, documen
     "--log-file",
     path.join(manifestDir, "extract.log"),
   ];
+  if (imageDir) {
+    args.push("--image-dir", imageDir);
+  }
   const { stdout } = await execFileAsync(PYTHON, args, {
     cwd: resolveExtractionRoot(),
     maxBuffer: 64 * 1024 * 1024,
@@ -234,9 +256,11 @@ export async function ingestDocument(opts: IngestOptions): Promise<IngestReport>
   const { documentId, pdfPath, manifestDir, sourceType } = opts;
 
   if (!opts.skipExtraction) {
-    await runExtractor(pdfPath, manifestDir, documentId);
+    opts.onProgress?.("EXTRACTING");
+    await runExtractor(pdfPath, manifestDir, documentId, opts.imageDir);
   }
 
+  opts.onProgress?.("CHUNKING");
   const chunked = chunkDocument(manifestDir, {
     documentFamilyId: opts.documentFamilyId ?? null,
     edition: opts.edition ?? null,
@@ -270,7 +294,9 @@ export async function ingestDocument(opts: IngestOptions): Promise<IngestReport>
   }
 
   // ---- the only writing path ----
+  opts.onProgress?.("EMBEDDING");
   const { embeddings, stats: embedStats } = await embedChunks(chunked);
+  opts.onProgress?.("PERSISTING");
   const pagesWritten = await persistPages(chunked, documentId);
   const chunkResult = await persistChunks(chunked, {
     documentId,

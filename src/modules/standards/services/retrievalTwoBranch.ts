@@ -18,14 +18,27 @@ export interface RetrievedChunk {
   id: string;
   documentId: string;
   pdfName: string;
+  sourceType: string;
   chunkType: string;
   pageStart: number;
   pageEnd: number;
   textContent: string;
   heading: string | null;
+  /** Phase 2 amendment 11. Set only on some PROSE chunks. Always null on a
+   *  TABLE chunk (parent or child) by construction -- see
+   *  manifestChunking.ts's ChunkReliabilityReason. Phase 5 §2 checks this,
+   *  independent of chunkType, before trusting a chunk as citable. */
+  reliabilityReason: string | null;
   score: number;
   branch: "table" | "prose";
 }
+
+// Phase 5 §1.3: project-scoping lives in retrievalService.ts's
+// resolveProjectDocumentIds(), the canonical implementation (a direct port of
+// the tested searchScope() logic). A second, divergent copy briefly existed
+// here (it matched documents by family alone, without checking source_type,
+// and still union'd in a PROJECT tier the client pivot removed) -- deleted,
+// unused anywhere else, confirmed by grep before removal.
 
 function vectorLiteral(v: number[]): string {
   return `[${v.join(",")}]`;
@@ -76,8 +89,17 @@ function normalizeMultiplicationSignForQuery(text: string): string {
 export async function tableBranch(
   queryVec: number[],
   queryText: string,
+  documentIds: string[],
   topKPerDoc: number = 5
 ): Promise<RetrievedChunk[]> {
+  // Phase 5 §1.3: this is the cross-project data-isolation boundary. An empty
+  // scope means the project has no associated documents at all (no GENERAL/
+  // PROJECT preferences, no FABRICATOR document) -- short-circuit before
+  // querying, both to match the old per-tier "0 preferences -> 0 results"
+  // behavior and to avoid a wasted round trip (an empty ANY() array would
+  // correctly match zero rows anyway, but there is no reason to ask Postgres).
+  if (documentIds.length === 0) return [];
+
   const vectorString = vectorLiteral(queryVec);
   const bm25QueryText = normalizeMultiplicationSignForQuery(queryText);
   const rows: any[] = await prisma.$queryRawUnsafe(
@@ -93,6 +115,7 @@ export async function tableBranch(
       WHERE c.chunk_type = 'TABLE'
         AND c.parent_chunk_id IS NOT NULL
         AND d.status = 'ACTIVE'
+        AND c.document_id = ANY($5::uuid[])
     ),
     pooled AS (
       SELECT parent_id, document_id,
@@ -125,9 +148,11 @@ export async function tableBranch(
       FROM fused
     )
     SELECT p.id, p.document_id AS "documentId", d.pdf_name AS "pdfName",
+           d.source_type AS "sourceType",
            p.chunk_type AS "chunkType", p.page_start AS "pageStart",
            p.page_end AS "pageEnd", p.text_content AS "textContent",
-           p.heading, r.dense_score AS score
+           p.heading, p.reliability_reason AS "reliabilityReason",
+           r.dense_score AS score
     FROM ranked r
     JOIN standard_chunks p ON p.id = r.parent_id
     JOIN standard_documents d ON d.id = r.document_id
@@ -137,7 +162,8 @@ export async function tableBranch(
     vectorString,
     bm25QueryText,
     RRF_K,
-    topKPerDoc
+    topKPerDoc,
+    documentIds
   );
   return rows.map((r) => ({ ...r, score: Number(r.score), branch: "table" as const }));
 }
@@ -164,14 +190,19 @@ export async function tableBranch(
 export async function proseBranch(
   queryText: string,
   queryVec: number[],
+  documentIds: string[],
   topKPerDoc: number = 5
 ): Promise<RetrievedChunk[]> {
+  // Phase 5 §1.3 -- see tableBranch's identical guard/comment.
+  if (documentIds.length === 0) return [];
+
   const vectorString = vectorLiteral(queryVec);
   const bm25QueryText = normalizeMultiplicationSignForQuery(queryText);
   const rows: any[] = await prisma.$queryRawUnsafe(
     `
     WITH base AS (
       SELECT c.id, c.document_id, c.chunk_type, c.page_start, c.page_end, c.text_content, c.heading,
+             c.reliability_reason,
              1 - (c.embedding <=> $1::vector) AS dense_score,
              ts_rank(to_tsvector('english', c.text_content),
                      plainto_tsquery('english', $2)) AS bm25_score
@@ -181,6 +212,7 @@ export async function proseBranch(
         AND c.chunk_type IN ('PROSE','VISUAL')
         AND d.status = 'ACTIVE'
         AND c.embedding IS NOT NULL
+        AND c.document_id = ANY($5::uuid[])
     ),
     dense_ranked AS (
       SELECT id, document_id, ROW_NUMBER() OVER (PARTITION BY document_id ORDER BY dense_score DESC) AS rnk
@@ -204,8 +236,10 @@ export async function proseBranch(
       FROM fused
     )
     SELECT b.id, b.document_id AS "documentId", d.pdf_name AS "pdfName",
+           d.source_type AS "sourceType",
            b.chunk_type AS "chunkType", b.page_start AS "pageStart",
            b.page_end AS "pageEnd", b.text_content AS "textContent", b.heading,
+           b.reliability_reason AS "reliabilityReason",
            b.dense_score AS score
     FROM ranked r
     JOIN base b ON b.id = r.id
@@ -216,7 +250,8 @@ export async function proseBranch(
     vectorString,
     bm25QueryText,
     RRF_K,
-    topKPerDoc
+    topKPerDoc,
+    documentIds
   );
   return rows.map((r) => ({ ...r, score: Number(r.score), branch: "prose" as const }));
 }
@@ -360,11 +395,12 @@ export function combineDocumentResultsNormalized(
 export async function retrieveTwoBranch(
   queryText: string,
   queryVec: number[],
+  documentIds: string[],
   topKPerDoc: number = 5
 ): Promise<RetrievedChunk[]> {
   const [table, prose] = await Promise.all([
-    tableBranch(queryVec, queryText, topKPerDoc),
-    proseBranch(queryText, queryVec, topKPerDoc),
+    tableBranch(queryVec, queryText, documentIds, topKPerDoc),
+    proseBranch(queryText, queryVec, documentIds, topKPerDoc),
   ]);
   return combineDocumentResultsNormalized(table, prose);
 }
@@ -374,11 +410,12 @@ export async function retrieveTwoBranch(
 export async function retrieveTwoBranchPerDocumentOrder(
   queryText: string,
   queryVec: number[],
+  documentIds: string[],
   topKPerDoc: number = 5
 ): Promise<Map<string, RetrievedChunk[]>> {
   const [table, prose] = await Promise.all([
-    tableBranch(queryVec, queryText, topKPerDoc),
-    proseBranch(queryText, queryVec, topKPerDoc),
+    tableBranch(queryVec, queryText, documentIds, topKPerDoc),
+    proseBranch(queryText, queryVec, documentIds, topKPerDoc),
   ]);
   const tableByDoc = groupByDocument(table);
   const proseByDoc = groupByDocument(prose);
