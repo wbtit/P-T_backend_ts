@@ -7,7 +7,7 @@
     "test": "test"
   },
   "scripts": {
-    "dev": "ts-node-dev --respawn src/server.ts",
+    "dev": "bash scripts/dev.sh",
     "run": "ts-node src/server.ts",
     "test": "jest",
     "build": "tsc",

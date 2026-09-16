@@ -2,10 +2,9 @@ import { Request, Response } from "express";
 import fs from "fs";
 import path from "path";
 import prisma from "../../../config/database/client";
-import { standardsIngestionQueue } from "../jobs/standardsIngestion";
 import { documentIngestionQueue } from "../jobs/documentIngestion";
 import { StandardSourceType } from "@prisma/client";
-import { askStandards } from "../services/chatService";
+import { askStandards, reconstructHistoryEntry } from "../services/chatService";
 import { StandardsVersioningService } from "../services/versioningService";
 import {
   ensureDocumentDirs,
@@ -15,94 +14,13 @@ import {
 } from "../services/documentStorage";
 
 export class StandardsController {
-  public async uploadStandard(req: Request, res: Response): Promise<void> {
-    try {
-      if (!req.file) {
-        res.status(400).json({ message: "No file uploaded" });
-        return;
-      }
-      
-      const { sourceType, projectId, fabricatorId, documentFamilyId, isDefault, familyCode, edition } = req.body;
-      if (!sourceType || !Object.values(StandardSourceType).includes(sourceType as any)) {
-        res.status(400).json({ message: "Invalid or missing sourceType" });
-        return;
-      }
-
-      const isOmitted = (val: any) => !val || val === "null" || val === "undefined" || (typeof val === "string" && val.trim() === "");
-
-      if (isOmitted(documentFamilyId)) {
-        res.status(400).json({ message: "documentFamilyId is required for all uploads" });
-        return;
-      }
-
-      if (sourceType === "FABRICATOR") {
-        if (isOmitted(fabricatorId) || !isOmitted(projectId)) {
-          res.status(400).json({ message: "fabricatorId is required and projectId must be omitted for FABRICATOR sourceType" });
-          return;
-        }
-      }
-
-      if (!isOmitted(documentFamilyId)) {
-        if (isOmitted(familyCode) || isOmitted(edition)) {
-          res.status(400).json({ message: "familyCode and edition are required when providing documentFamilyId" });
-          return;
-        }
-
-        const familyIsDefault = !isOmitted(isDefault) ? (isDefault === "true" || isDefault === true) : false;
-        await prisma.standardFamily.upsert({
-          where: { id: documentFamilyId },
-          update: {
-            // Ignore familyCode/edition on update so it stays immutable
-            isDefault: isOmitted(isDefault) ? undefined : familyIsDefault
-          },
-          create: {
-            id: documentFamilyId,
-            familyCode,
-            edition,
-            isDefault: familyIsDefault
-          }
-        });
-      }
-
-      const storagePath = req.file.path; // Path where multer saved it
-      const originalName = req.file.originalname;
-
-      // Create new standard document as PENDING
-      const document = await prisma.standardDocument.create({
-        data: {
-          sourceType: sourceType as StandardSourceType,
-          projectId: isOmitted(projectId) ? null : projectId,
-          fabricatorId: isOmitted(fabricatorId) ? null : fabricatorId,
-          documentFamilyId: isOmitted(documentFamilyId) ? null : documentFamilyId,
-          pdfName: originalName,
-          storagePath: storagePath,
-          status: "PENDING"
-        }
-      });
-
-      // Enqueue job
-      try {
-        await standardsIngestionQueue.add("ingest", { documentId: document.id });
-      } catch (enqueueErr) {
-        console.error(`[StandardsController] Failed to enqueue document ${document.id}:`, enqueueErr);
-        await prisma.standardDocument.update({
-          where: { id: document.id },
-          data: { status: "FAILED" }
-        });
-        throw enqueueErr;
-      }
-
-      res.status(201).json({ message: "Upload started", documentId: document.id });
-    } catch (error: any) {
-      console.error("[StandardsController] upload error:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  }
-
   // ---------------------------------------------------------------------
   // Phase 6: the real endpoints, wired only to the tested Phase 2-5
-  // pipeline. `uploadStandard` above (and the legacy queue it enqueues to)
-  // is an old-RAG leftover, held only until these are verified, then removed.
+  // pipeline. The old `uploadStandard` method (and the legacy
+  // standardsIngestion/pageClassification/chunking worker chain it fed) was
+  // removed once these were verified end to end -- confirmed via grep that
+  // nothing else server-side enqueued to any of those three queues before
+  // deleting the job files.
   // ---------------------------------------------------------------------
 
   /** Wraps `ingestDocument()` (manifestIngestion.ts) via the new
@@ -275,10 +193,11 @@ export class StandardsController {
     }
   }
 
-  /** New STATUS endpoint -- same fields `getDocumentProgress` already
-   *  exposed, plus `ingestReport` (Phase 6's new column: the full
-   *  IngestReport once a run completes, dry-run or commit). This is the
-   *  endpoint UPLOAD's caller polls. */
+  /** STATUS endpoint -- exposes `ingestReport` (Phase 6's column: the full
+   *  IngestReport once a run completes, dry-run or commit) alongside the
+   *  document's status fields. This is the endpoint UPLOAD's caller polls;
+   *  the older, narrower `/documents/:id/progress` (a strict subset of this
+   *  endpoint's fields, no `ingestReport`) was removed once this replaced it. */
   public async getDocumentStatus(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
@@ -343,33 +262,6 @@ export class StandardsController {
       }
     } catch (error: any) {
       console.error("[StandardsController] getPageImage error:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  }
-
-  public async getDocumentProgress(req: Request, res: Response): Promise<void> {
-    try {
-      const { id } = req.params;
-      const document = await prisma.standardDocument.findUnique({
-        where: { id },
-        select: {
-          id: true,
-          status: true,
-          processingStage: true,
-          pagesProcessed: true,
-          totalPages: true,
-          failureReason: true
-        }
-      });
-
-      if (!document) {
-        res.status(404).json({ message: "Document not found" });
-        return;
-      }
-
-      res.status(200).json(document);
-    } catch (error: any) {
-      console.error("[StandardsController] getDocumentProgress error:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   }
@@ -451,39 +343,45 @@ export class StandardsController {
     }
   }
 
-  public async chat(req: Request, res: Response): Promise<void> {
+  /** Phase 6 QUERY -- the real, product-shaped endpoint (Google-style: an AI
+   *  summary plus ranked candidate documents), wrapping the same
+   *  `askStandards()` the pre-existing `/chat` route calls. `messageId` is
+   *  included for a frontend that wants to link back into chat history
+   *  (`GET .../chat/history`), not required to render the response itself. */
+  public async query(req: Request, res: Response): Promise<void> {
     try {
       const { projectId } = req.params;
-      const { query } = req.body;
+      const { query: queryText } = req.body;
 
-      console.log(`\n\n[ChatController] --- NEW CHAT REQUEST ---`);
-      console.log(`[ChatController] ProjectId: ${projectId}`);
-      console.log(`[ChatController] Query: "${query}"`);
-
-      if (!query || typeof query !== "string" || query.trim() === "") {
-        console.log(`[ChatController] Rejected: empty query`);
+      if (!queryText || typeof queryText !== "string" || queryText.trim() === "") {
         res.status(400).json({ message: "Query string is required" });
         return;
       }
 
-      console.log(`[ChatController] Passing query to askStandards...`);
-      const result = await askStandards(projectId, query);
-      
-      console.log(`[ChatController] Received result from askStandards!`);
-      // Optional: uncomment below to print the full json
-      // console.log(`[ChatController] Result JSON:`, JSON.stringify(result, null, 2));
+      const result = await askStandards(projectId, queryText);
 
-      res.status(200).json(result);
+      res.status(200).json({
+        messageId: result.message.id,
+        aiSummary: result.aiSummary,
+        deferralReason: result.deferralReason,
+        results: result.results,
+        queryRewritten: result.queryRewritten,
+        effectiveQuery: result.effectiveQuery,
+      });
     } catch (error: any) {
-      if (error.message === "NO_PREFERENCES_SET") {
-        res.status(200).json({ status: "no_preferences_set", message: "No standard preferences set for this project." });
-        return;
-      }
-      console.error("[StandardsController] chat error:", error);
+      console.error("[StandardsController] query error:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   }
 
+  /** Reshaped to match QUERY's live response shape (`aiSummary`/
+   *  `deferralReason`/`results[]`) -- askStandards() (called only from QUERY
+   *  now that `/chat` is removed) is the sole write path, so history should
+   *  look like the thing that created it, not the old, now-gone `/chat`
+   *  route's single-answer shape. This is a real, documented approximation
+   *  of the live shape, not a replay of it -- see `reconstructHistoryEntry`'s
+   *  own docstring in chatService.ts for exactly what can and can't be
+   *  recovered from what's actually persisted. */
   public async getChatHistory(req: Request, res: Response): Promise<void> {
     try {
       const { projectId } = req.params;
@@ -498,35 +396,55 @@ export class StandardsController {
         }
       });
 
-      // Dual-format read path: 
-      // If a StandardChatAnswer lacks a citations array (or it is empty) but has citationPdfName,
-      // synthesize a citation object to match the Phase 11 structure for clients.
-      const mappedHistory = history.map(msg => ({
-        ...msg,
-        answers: msg.answers.map(ans => {
-          if (ans.citations && ans.citations.length > 0) {
-            return ans; // New format
-          }
+      // Dual-format read path: if a StandardChatAnswer lacks a citations
+      // array (or it's empty) but has citationPdfName set directly on it
+      // (pre-Citation-table rows), synthesize a citation object so
+      // reconstructHistoryEntry() has one consistent shape to work from.
+      const normalizedAnswers = history.map((msg) =>
+        msg.answers.map((ans) => {
+          if (ans.citations && ans.citations.length > 0) return ans;
           if (ans.citationPdfName) {
-            // Legacy format fallback
             return {
               ...ans,
               citations: [{
                 rank: 1,
                 chunkType: ans.chunkType,
                 citationPdfName: ans.citationPdfName,
-                citationPageStart: ans.citationPageStart,
-                citationPageEnd: ans.citationPageEnd,
+                citationPageStart: ans.citationPageStart ?? 0,
+                citationPageEnd: ans.citationPageEnd ?? 0,
                 anchorPageStart: ans.anchorPageStart,
                 anchorPageEnd: ans.anchorPageEnd,
                 imagePaths: ans.imagePaths || [],
-              }]
+              }],
             };
           }
-          // Fallback for empty answers (e.g., "Not covered")
           return { ...ans, citations: [] };
         })
-      }));
+      );
+
+      // Batch-recover documentId per citation (parsed from imagePaths, the
+      // only place it's stored) across the whole history page, then one
+      // query to fill in family/edition -- not one query per citation.
+      const documentIds = new Set<string>();
+      for (const answers of normalizedAnswers) {
+        for (const ans of answers) {
+          for (const cit of ans.citations) {
+            const match = cit.imagePaths[0]?.match(/\/image\/([^/]+)\//);
+            if (match) documentIds.add(match[1]);
+          }
+        }
+      }
+      const docs = documentIds.size
+        ? await prisma.standardDocument.findMany({
+            where: { id: { in: [...documentIds] } },
+            select: { id: true, documentFamilyId: true, documentFamily: { select: { familyCode: true, edition: true } } },
+          })
+        : [];
+      const familyByDocumentId = new Map(
+        docs.map((d) => [d.id, { documentFamilyId: d.documentFamilyId, familyCode: d.documentFamily?.familyCode ?? null, edition: d.documentFamily?.edition ?? null }])
+      );
+
+      const mappedHistory = history.map((msg, i) => reconstructHistoryEntry(msg, normalizedAnswers[i], familyByDocumentId));
 
       res.status(200).json(mappedHistory);
     } catch (error: any) {
@@ -535,33 +453,4 @@ export class StandardsController {
     }
   }
 
-  public async getStandardImage(req: Request, res: Response): Promise<void> {
-    try {
-      const { documentId, pageNumber } = req.params;
-      
-      const page = await prisma.standardPage.findFirst({
-        where: {
-          documentId,
-          pageNumber: parseInt(pageNumber, 10)
-        }
-      });
-
-      if (!page || !page.imagePath) {
-        res.status(404).json({ message: "Image not found for this page." });
-        return;
-      }
-
-      // page.imagePath is like "/uploads/standards/FABRICATOR/docId/pages/page-01.png"
-      const absolutePath = require("path").resolve(process.cwd(), page.imagePath.replace(/^\//, ""));
-
-      if (require("fs").existsSync(absolutePath)) {
-        res.sendFile(absolutePath);
-      } else {
-        res.status(404).json({ message: "Image file not found on disk." });
-      }
-    } catch (error: any) {
-      console.error("[StandardsController] getStandardImage error:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  }
 }

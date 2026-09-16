@@ -64,6 +64,17 @@ export const REASON_CODE_AMBIGUOUS_RETRIEVAL = "AMBIGUOUS_RETRIEVAL" as const;
  *  candidate's own TEXT FIDELITY, independent of how confidently it ranked. */
 export const REASON_CODE_UNRELIABLE_CHUNK = "UNRELIABLE_CHUNK" as const;
 
+/** Phase 6 -- not a CRAG signal at all (retrieval was CONFIDENT and every
+ *  candidate was reliable), included here anyway for the same "typo-proof,
+ *  greppable together" reason as the others. Covers the third real terminal
+ *  state chatService.ts can reach: generation ran on trustworthy context and
+ *  the model itself concluded the answer isn't in it ("Not covered by this
+ *  standard."). Found missing, not assumed handled: the Phase 5 closing
+ *  eval run had a real "LLM_DECLINED" bucket (5/22) that set NEITHER
+ *  answerText NOR any generationFailureReason -- silently ambiguous between
+ *  "no answer" and "an error swallowed somewhere." This makes it explicit. */
+export const REASON_CODE_NOT_COVERED = "NOT_COVERED" as const;
+
 /**
  * CONFIDENT-WRONG (Q23-class) -- explicit open item, not deferred silently.
  *

@@ -19,6 +19,13 @@ export interface RetrievedChunk {
   documentId: string;
   pdfName: string;
   sourceType: string;
+  documentFamilyId: string | null;
+  /** From standard_families, via a LEFT JOIN (a document's family is
+   *  optional on the schema) -- both null together iff documentFamilyId is
+   *  null. Phase 6: needed for QUERY's results[] (document name/family/
+   *  edition) -- previously computed nowhere in this module. */
+  familyCode: string | null;
+  edition: string | null;
   chunkType: string;
   pageStart: number;
   pageEnd: number;
@@ -148,7 +155,8 @@ export async function tableBranch(
       FROM fused
     )
     SELECT p.id, p.document_id AS "documentId", d.pdf_name AS "pdfName",
-           d.source_type AS "sourceType",
+           d.source_type AS "sourceType", d.document_family_id AS "documentFamilyId",
+           f.family_code AS "familyCode", f.edition,
            p.chunk_type AS "chunkType", p.page_start AS "pageStart",
            p.page_end AS "pageEnd", p.text_content AS "textContent",
            p.heading, p.reliability_reason AS "reliabilityReason",
@@ -156,6 +164,7 @@ export async function tableBranch(
     FROM ranked r
     JOIN standard_chunks p ON p.id = r.parent_id
     JOIN standard_documents d ON d.id = r.document_id
+    LEFT JOIN standard_families f ON f.id = d.document_family_id
     WHERE r.rn <= $4
     ORDER BY r.document_id, r.dense_score DESC
     `,
@@ -236,7 +245,8 @@ export async function proseBranch(
       FROM fused
     )
     SELECT b.id, b.document_id AS "documentId", d.pdf_name AS "pdfName",
-           d.source_type AS "sourceType",
+           d.source_type AS "sourceType", d.document_family_id AS "documentFamilyId",
+           f.family_code AS "familyCode", f.edition,
            b.chunk_type AS "chunkType", b.page_start AS "pageStart",
            b.page_end AS "pageEnd", b.text_content AS "textContent", b.heading,
            b.reliability_reason AS "reliabilityReason",
@@ -244,6 +254,7 @@ export async function proseBranch(
     FROM ranked r
     JOIN base b ON b.id = r.id
     JOIN standard_documents d ON d.id = r.document_id
+    LEFT JOIN standard_families f ON f.id = d.document_family_id
     WHERE r.rn <= $4
     ORDER BY r.document_id, r.rrf_score DESC
     `,

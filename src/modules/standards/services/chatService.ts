@@ -1,9 +1,17 @@
 import prisma from "../../../config/database/client";
 import { resolveProjectDocumentIds, generateEmbedding } from "./retrievalService";
 import { retrieveTwoBranch, RetrievedChunk } from "./retrievalTwoBranch";
-import { gradeRetrieval, buildAmbiguousDeferralAnswer, REASON_CODE_UNRELIABLE_CHUNK } from "./cragEvaluator";
+import {
+  gradeRetrieval,
+  buildAmbiguousDeferralAnswer,
+  CragGradeResult,
+  REASON_CODE_AMBIGUOUS_RETRIEVAL,
+  REASON_CODE_UNRELIABLE_CHUNK,
+  REASON_CODE_NOT_COVERED,
+} from "./cragEvaluator";
 import { rerank } from "./rerankerClient";
 import { renderTableForRerank } from "./tableToProseCheck";
+import { generateQueryRewrites } from "./queryRewrite";
 import { StandardChunkType, StandardSourceType, StandardChatMessage, StandardChatAnswer } from "@prisma/client";
 
 /**
@@ -29,9 +37,113 @@ export type ChatMessageWithAnswers = StandardChatMessage & {
 };
 
 const TOP_N = 3;
+/** Phase 6 -- how many distinct documents QUERY's results[] surfaces, not
+ *  how many chunks. A number picked for a first build, not derived from
+ *  anything measured -- flagged as adjustable, not a firm product decision. */
+const RESULTS_CAP = 10;
 
 function buildImagePath(hit: RetrievedChunk): string {
   return `/v1/standards/image/${hit.documentId}/${hit.pageStart}`;
+}
+
+/**
+ * Phase 6 -- QUERY's product-facing response shape (Google-style: an AI
+ * summary plus a ranked list of candidate documents), distinct from the
+ * `ChatMessageWithAnswers` shape the pre-existing `/chat` endpoint still
+ * returns unchanged (chat history persistence is a separate, working
+ * feature, not being redesigned here). `askStandards()` now computes and
+ * returns both from the same underlying pipeline run -- no second retrieval
+ * pass, no duplicated logic.
+ */
+export interface QueryCandidate {
+  documentId: string;
+  documentName: string;
+  documentFamilyId: string | null;
+  familyCode: string | null;
+  edition: string | null;
+  chunkType: string;
+  pageStart: number;
+  pageEnd: number;
+  imageUrl: string;
+  /** Raw reranker cross-encoder score, NOT a calibrated [0,1] confidence --
+   *  it's a logit and can be negative. Exposed as-is (useful for ranking/
+   *  comparison across this response's own candidates) rather than silently
+   *  rebranded as "confidence," which would overclaim calibration this
+   *  project has never measured. Always a real number from live QUERY; `null`
+   *  only from `/chat/history`'s reconstruction, where it was never
+   *  persisted anywhere to recover. */
+  score: number | null;
+  isPrimarySource: boolean;
+}
+
+export interface AskStandardsResult {
+  message: ChatMessageWithAnswers;
+  aiSummary: string | null;
+  deferralReason: string | null;
+  results: QueryCandidate[];
+  /** True only when a rewrite candidate actually rescued an AMBIGUOUS/empty
+   *  original query to CONFIDENT and was used for the returned answer --
+   *  never true just because rewriting was attempted. */
+  queryRewritten: boolean;
+  /** The exact rewrite text that produced the returned answer, or `null` if
+   *  no rewrite happened (original query was already CONFIDENT, or no
+   *  rewrite rescued it). Lets a frontend show "we searched for: X". */
+  effectiveQuery: string | null;
+}
+
+/** The exact plain-language `deferralReason` strings askStandards() returns
+ *  live, named so `/chat/history` (which reconstructs this shape from
+ *  persisted data, not a live pipeline run) can map back to the same text
+ *  instead of a second, hand-copied set of strings drifting out of sync. */
+export const DEFERRAL_TEXT = {
+  NO_DOCUMENTS: "No standards are currently available for this project.",
+  EMPTY_POOL: "No matching content found for this query.",
+  AMBIGUOUS_RETRIEVAL:
+    "Retrieval could not confidently distinguish the best match from close competitors -- showing top candidates instead of a synthesized answer.",
+  UNRELIABLE_CHUNK:
+    "The best-matching content could not be verified as reliable (an extraction-quality issue, not a retrieval miss) -- see the page image directly.",
+  NOT_COVERED: "The retrieved content does not appear to directly answer this query.",
+} as const;
+
+/** The two fixed `answerText` strings written by the no-documents/empty-pool
+ *  early-return paths below -- neither sets `generationFailureReason` (they
+ *  aren't CRAG deferrals, just structural "nothing to search" states), so
+ *  `/chat/history`'s reconstruction distinguishes them from a genuine
+ *  generated answer by exact string match against these, not a reason code. */
+export const STRUCTURAL_DEFERRAL_ANSWER_TEXT = {
+  NO_DOCUMENTS: "No standards are currently available.",
+  EMPTY_POOL: "Not covered by this standard.",
+} as const;
+
+/** Almost all of this is already computed by `retrieveTwoBranch()` + the
+ *  reranker -- pdfName/chunkType/pageStart/pageEnd/score were already on
+ *  every `RetrievedChunk`. The one genuinely new piece is family/edition
+ *  (added to retrievalTwoBranch.ts's SQL this pass, via a LEFT JOIN to
+ *  standard_families -- previously computed nowhere). This function's real
+ *  job is dedup-by-document (the product spec asks for "candidate
+ *  documents," not one row per chunk) and shaping, not new retrieval work. */
+function buildResults(pool: RetrievedChunk[], primaryDocumentId: string | null): QueryCandidate[] {
+  const bestByDoc = new Map<string, RetrievedChunk>();
+  for (const c of pool) {
+    const existing = bestByDoc.get(c.documentId);
+    if (!existing || c.score > existing.score) bestByDoc.set(c.documentId, c);
+  }
+  return [...bestByDoc.values()]
+    .sort((a, b) => b.score - a.score)
+    .slice(0, RESULTS_CAP)
+    .map((c) => ({
+      documentId: c.documentId,
+      documentName: c.pdfName,
+      documentFamilyId: c.documentFamilyId,
+      familyCode: c.familyCode,
+      edition: c.edition,
+      chunkType: c.chunkType,
+      pageStart: c.pageStart,
+      pageEnd: c.pageEnd,
+      imageUrl: buildImagePath(c),
+      score: c.score,
+      isPrimarySource: c.documentId === primaryDocumentId,
+    }));
 }
 
 /** Phase 5 §2 -- a candidate chunk's own text is untrustworthy, independent of
@@ -139,21 +251,105 @@ function citationOf(hit: RetrievedChunk, rank: number) {
   };
 }
 
+interface RetrievalPassResult {
+  rerankedPool: RetrievedChunk[];
+  /** `null` means an empty pool -- distinct from a real CragGradeResult, and
+   *  never fed to gradeRetrieval() (which has no real notion of "empty";
+   *  confirmed it would score an empty pool CONFIDENT via its own
+   *  `rank1Score = pool[0]?.score ?? -Infinity` / `gap === null` fallback,
+   *  which is wrong here -- empty-pool is its own terminal state, checked
+   *  before reranking or grading ever run, same as the pre-rewrite code did). */
+  grade: CragGradeResult | null;
+}
+
+/** One full embed -> retrieve -> rerank -> grade pass for a single query
+ *  string, extracted so the rewrite loop below can run it again per
+ *  candidate without duplicating the retrieval/rerank/grade logic itself.
+ *  Reused for both the original query and each rewrite candidate. */
+async function runRetrievalPass(queryText: string, documentIds: string[]): Promise<RetrievalPassResult> {
+  const queryVec = await generateEmbedding(queryText);
+  const pool = await retrieveTwoBranch(queryText, queryVec, documentIds, 5);
+
+  if (pool.length === 0) {
+    return { rerankedPool: [], grade: null };
+  }
+
+  const rerankedPool = await rerankPool(queryText, pool);
+  const grade = gradeRetrieval(rerankedPool, { queryText });
+  return { rerankedPool, grade };
+}
+
+/** Phase 6 -- conditional query rewrite, only ever invoked when the
+ *  ORIGINAL query graded AMBIGUOUS or returned an empty pool (never on an
+ *  already-CONFIDENT query -- no added latency for the common case).
+ *
+ *  Sequential, not parallel, deliberately: the reranker service is
+ *  explicitly single-request-only (its own startup log says so), so
+ *  concurrent calls would just queue behind each other at that layer, not
+ *  actually run in parallel -- there is no real wall-clock win available
+ *  from firing all 3 rewrite attempts at once, only real risk (an
+ *  unreviewed concurrent-request path the reranker was never built for).
+ *  Stops at the first rewrite that reaches CONFIDENT -- strictly faster than
+ *  always running all 3 in the (common) case where an early candidate
+ *  rescues it, and identical cost to running all 3 in the worst case where
+ *  none do, so there is no scenario where "always run all 3" would have
+ *  been faster. Measured real worst-case (3 sequential misses) latency is
+ *  reported in specs/ -- this was fast enough that no further optimization
+ *  (e.g. abandoning sequential for something riskier) was needed.
+ *
+ *  Returns the ORIGINAL pass's pool/grade unchanged if no rewrite rescues
+ *  it -- the caller must not treat "a rewrite ran" as "a rewrite won." */
+async function tryRewriteIfNeeded(
+  originalQueryText: string,
+  documentIds: string[],
+  original: RetrievalPassResult
+): Promise<{ chosen: RetrievalPassResult; queryRewritten: boolean; effectiveQuery: string | null }> {
+  const needsRewrite = original.grade === null || original.grade.grade === "AMBIGUOUS";
+  if (!needsRewrite) {
+    return { chosen: original, queryRewritten: false, effectiveQuery: null };
+  }
+
+  console.log(`[ChatService] Original query graded ${original.grade === null ? "EMPTY_POOL" : original.grade.grade} -- attempting rewrite rescue.`);
+  const rewriteResult = await generateQueryRewrites(originalQueryText);
+  if (rewriteResult.error) {
+    console.warn(`[ChatService] Query rewrite failed, falling back to original result: ${rewriteResult.error}`);
+  }
+
+  for (const candidate of rewriteResult.rewrites) {
+    console.log(`[ChatService] Trying rewrite candidate: "${candidate}"`);
+    const attempt = await runRetrievalPass(candidate, documentIds);
+    if (attempt.grade !== null && attempt.grade.grade === "CONFIDENT") {
+      console.log(`[ChatService] Rewrite rescued to CONFIDENT: "${candidate}"`);
+      return { chosen: attempt, queryRewritten: true, effectiveQuery: candidate };
+    }
+  }
+
+  console.log(`[ChatService] No rewrite candidate reached CONFIDENT -- falling back to the original query's result.`);
+  return { chosen: original, queryRewritten: false, effectiveQuery: null };
+}
+
 export async function askStandards(
   projectId: string,
   queryText: string
-): Promise<ChatMessageWithAnswers> {
+): Promise<AskStandardsResult> {
   console.log(`[ChatService] Received query for projectId ${projectId}: "${queryText}"`);
 
   const message = await prisma.standardChatMessage.create({
     data: { projectId, queryText },
   });
 
-  const finish = () =>
-    prisma.standardChatMessage.findUniqueOrThrow({
+  // Set once, right after the rewrite decision below settles -- `finish()`
+  // closes over these so every return site doesn't need to pass them.
+  let queryRewritten = false;
+  let effectiveQuery: string | null = null;
+
+  const finish = async (aiSummary: string | null, deferralReason: string | null, results: QueryCandidate[]): Promise<AskStandardsResult> => {
+    const full = await prisma.standardChatMessage.findUniqueOrThrow({
       where: { id: message.id },
       include: { answers: { include: { citations: true } } },
     });
+    return { message: full, aiSummary, deferralReason, results, queryRewritten, effectiveQuery };
+  };
 
   // Phase 5 §1.3: pooled scope, no tier selection. Every ACTIVE GENERAL
   // document, org-wide, plus this project's fabricator's ACTIVE FABRICATOR
@@ -171,17 +367,48 @@ export async function askStandards(
         messageId: message.id,
         sourceType: "GENERAL",
         chunkType: "PROSE",
-        answerText: "No standards are currently available.",
+        answerText: STRUCTURAL_DEFERRAL_ANSWER_TEXT.NO_DOCUMENTS,
         pinnedDocumentId: null,
       },
     });
-    return finish();
+    return finish(null, DEFERRAL_TEXT.NO_DOCUMENTS, []);
   }
 
-  const queryVec = await generateEmbedding(queryText);
-  const pool = await retrieveTwoBranch(queryText, queryVec, documentIds, 5);
+  // Phase 5 §1.4: gradeRetrieval() requires a pool "already sorted descending
+  // by post-rerank score" -- runRetrievalPass()'s rerankPool() step still
+  // guarantees that. Confirmed directly (not assumed) that this actually
+  // resolves the pre-rerank cross-branch tie: before the reranker was wired,
+  // every real query graded AMBIGUOUS (the best table candidate and best
+  // prose candidate each separately normalized to exactly 1.0 under
+  // combineDocumentResultsNormalized's per-branch min-max). The reranker
+  // produces one real, unified score across every candidate regardless of
+  // which branch found it, so that forced tie cannot recur structurally, not
+  // just in the cases tested.
+  const original = await runRetrievalPass(queryText, documentIds);
+  console.log(
+    original.grade === null
+      ? `[ChatService] Original query: empty pool.`
+      : `[ChatService] Original query CRAG grade: ${original.grade.grade} (gap=${original.grade.gap}, rank1=${original.grade.rank1Score}, rank2=${original.grade.rank2Score})`
+  );
 
-  if (pool.length === 0) {
+  // Phase 6 -- conditional rewrite. Only reaches here (and only calls the
+  // LLM rewriter, adding latency) when the original query graded AMBIGUOUS
+  // or returned an empty pool; an already-CONFIDENT original returns
+  // `{ chosen: original, queryRewritten: false, effectiveQuery: null }`
+  // immediately with no extra retrieval/rerank/LLM calls at all.
+  const rewriteOutcome = await tryRewriteIfNeeded(queryText, documentIds, original);
+  queryRewritten = rewriteOutcome.queryRewritten;
+  effectiveQuery = rewriteOutcome.effectiveQuery;
+  const { rerankedPool, grade } = rewriteOutcome.chosen;
+  // The phrasing that actually produced this result -- the rewrite if one
+  // rescued it, otherwise the user's original text. Used below for the final
+  // LLM generation prompt: if a rewrite fixed retrieval, generation should
+  // answer against that same clear intent, not the confusing original.
+  const activeQueryText = effectiveQuery ?? queryText;
+
+  if (grade === null) {
+    // Empty pool, even after any rewrite attempts -- same terminal state and
+    // same persisted answer shape the original (pre-rewrite) code used.
     const doc = await prisma.standardDocument.findFirst({
       where: { id: { in: documentIds }, status: "ACTIVE" },
     });
@@ -190,27 +417,21 @@ export async function askStandards(
         messageId: message.id,
         sourceType: (doc?.sourceType as StandardSourceType) ?? "GENERAL",
         chunkType: "PROSE",
-        answerText: "Not covered by this standard.",
+        answerText: STRUCTURAL_DEFERRAL_ANSWER_TEXT.EMPTY_POOL,
         pinnedDocumentId: doc?.id ?? null,
       },
     });
-    return finish();
+    return finish(null, DEFERRAL_TEXT.EMPTY_POOL, []);
   }
 
-  // Phase 5 §1.4: gradeRetrieval() requires a pool "already sorted descending
-  // by post-rerank score" -- this is now that pool. Confirmed directly (not
-  // assumed) that this actually resolves the pre-rerank cross-branch tie:
-  // before the reranker was wired, every real query graded AMBIGUOUS (the
-  // best table candidate and best prose candidate each separately normalized
-  // to exactly 1.0 under combineDocumentResultsNormalized's per-branch
-  // min-max). The reranker produces one real, unified score across every
-  // candidate regardless of which branch found it, so that forced tie cannot
-  // recur structurally, not just in the cases tested.
-  const rerankedPool = await rerankPool(queryText, pool);
-  const grade = gradeRetrieval(rerankedPool, { queryText });
-  console.log(`[ChatService] CRAG grade: ${grade.grade} (gap=${grade.gap}, rank1=${grade.rank1Score}, rank2=${grade.rank2Score})`);
-
   if (grade.grade === "AMBIGUOUS") {
+    // Either the original was AMBIGUOUS and no rewrite rescued it, or (rarer)
+    // the original had an empty pool and the best a rewrite could do was
+    // reach a non-empty but still-AMBIGUOUS pool -- `rewriteOutcome` already
+    // discarded that non-rescuing attempt and left `original` in place here,
+    // so this is always the ORIGINAL query's own AMBIGUOUS result, never a
+    // failed rewrite's -- satisfies "don't return a worse or random result
+    // just because a rewrite ran."
     const top = rerankedPool[0];
     const deferral = buildAmbiguousDeferralAnswer({
       pdfName: top.pdfName,
@@ -229,10 +450,15 @@ export async function askStandards(
         citations: { create: [citationOf(top, 1)] },
       },
     });
-    return finish();
+    return finish(
+      null,
+      DEFERRAL_TEXT.AMBIGUOUS_RETRIEVAL,
+      buildResults(rerankedPool, top.documentId)
+    );
   }
 
-  // CONFIDENT. Phase 5 §2 hard deferral: strip any candidate whose own text is
+  // CONFIDENT (either the original query's own grade, or a rewrite's rescue).
+  // Phase 5 §2 hard deferral: strip any candidate whose own text is
   // untrustworthy BEFORE generation ever sees it -- scoped per chunk, not per
   // page or per query, so a flagged PROSE chunk sitting beside a clean TABLE
   // chunk on the same page (Amendment 11's whole point) never suppresses the
@@ -255,7 +481,11 @@ export async function askStandards(
         citations: { create: [citationOf(top, 1)] },
       },
     });
-    return finish();
+    return finish(
+      null,
+      DEFERRAL_TEXT.UNRELIABLE_CHUNK,
+      buildResults(rerankedPool, top.documentId)
+    );
   }
 
   console.log(`[ChatService] Generating text from ${reliable.length}/${topRanked.length} reliable candidate(s)...`);
@@ -264,11 +494,17 @@ export async function askStandards(
   // The system reduces but does NOT eliminate confident-wrong-answer risk on queries where retrieval doesn't rank the correct page first.
   // Measured residual rate: ~42% of such misranked queries (N=95 sample) still produce a confidently wrong answer rather than a correct answer or safe refusal.
   // This is a known, open, unresolved limitation — not a solved problem — and should be treated as such by anyone building on top of this system later.
-  const genResult = await generateAnswerText(reliable, queryText);
+  const genResult = await generateAnswerText(reliable, activeQueryText);
 
   const generatedText = genResult.text;
   const sourceChunk = genResult.sourceChunkIndex !== null ? reliable[genResult.sourceChunkIndex] : null;
   const citationsData = reliable.map((hit, i) => citationOf(hit, i + 1));
+
+  // Phase 6: previously left BOTH answerText null AND generationFailureReason
+  // null in this case -- silently ambiguous between "the model declined" and
+  // "something failed unnoticed." Found via the Phase 5 closing eval run's
+  // own "LLM_DECLINED" bucket (5/22), fixed here, not left as discovered.
+  const declined = generatedText === null;
 
   const answer = await prisma.standardChatAnswer.create({
     data: {
@@ -276,6 +512,7 @@ export async function askStandards(
       sourceType: (sourceChunk?.sourceType ?? reliable[0].sourceType) as StandardSourceType,
       chunkType: (sourceChunk ? sourceChunk.chunkType : reliable[0].chunkType) as StandardChunkType,
       answerText: generatedText,
+      generationFailureReason: declined ? REASON_CODE_NOT_COVERED : null,
       pinnedDocumentId: sourceChunk ? sourceChunk.documentId : null,
       citations: { create: citationsData },
     },
@@ -283,5 +520,113 @@ export async function askStandards(
 
   console.log(`[ChatService] ---> Final Assigned Source: Document ID = ${answer.pinnedDocumentId}, ChunkType = ${answer.chunkType}`);
 
-  return finish();
+  return finish(
+    generatedText,
+    declined ? DEFERRAL_TEXT.NOT_COVERED : null,
+    buildResults(rerankedPool, sourceChunk ? sourceChunk.documentId : null)
+  );
+}
+
+/** `/chat/history` reconstruction -- maps one persisted message's single
+ *  answer (+ its citations) back to QUERY's live response shape, since
+ *  askStandards() is now the only write path (the old `/chat` route that
+ *  unwrapped to the pre-pivot single-answer shape was removed) and the
+ *  frontend should see one consistent shape everywhere.
+ *
+ *  This is a REAL, STRUCTURAL APPROXIMATION of the live shape, not a replay
+ *  of it -- confirmed directly against the schema before writing this:
+ *  - `results[]` here is only what was actually CITED (`TOP_N`=3, or 1 for a
+ *    deferral, or 0), never the full RESULTS_CAP=10 deduped-by-document pool
+ *    QUERY returns live -- the uncited candidates in that pool are never
+ *    persisted anywhere, so they cannot be recovered after the fact.
+ *  - `score` is never persisted on `StandardChatCitation` (the reranker's
+ *    score is purely an in-memory value at query time) -- always `null` here,
+ *    not a bug, not omitted by oversight.
+ *  - `documentFamilyId`/`familyCode`/`edition` are NOT stored on the citation
+ *    row either; this function requires the caller to pass a lookup map (a
+ *    single batched query across the whole history page) rather than doing
+ *    it here per-citation.
+ *  - `documentId` is recovered by parsing it out of the citation's own
+ *    `imagePaths[0]` (`/v1/standards/image/<documentId>/<page>`, exactly how
+ *    `citationOf()` builds it) -- not stored as its own column on
+ *    `StandardChatCitation` at all.
+ *  - `queryRewritten`/`effectiveQuery` are always `false`/`null` here --
+ *    whether a query rewrite fired, and what it rewrote to, is not persisted
+ *    anywhere (`StandardChatMessage.queryText` stores only the user's
+ *    original input), so it cannot be recovered for history either. */
+export function reconstructHistoryEntry(
+  message: { id: string; queryText: string; createdAt: Date },
+  answers: Array<{
+    answerText: string | null;
+    generationFailureReason: string | null;
+    pinnedDocumentId: string | null;
+    citations: Array<{
+      chunkType: string;
+      citationPdfName: string;
+      citationPageStart: number;
+      citationPageEnd: number;
+      imagePaths: string[];
+    }>;
+  }>,
+  familyByDocumentId: Map<string, { documentFamilyId: string | null; familyCode: string | null; edition: string | null }>
+): { messageId: string; queryText: string; createdAt: Date; aiSummary: string | null; deferralReason: string | null; results: QueryCandidate[]; queryRewritten: boolean; effectiveQuery: string | null } {
+  const answer = answers[0] ?? null;
+
+  let aiSummary: string | null = null;
+  let deferralReason: string | null = null;
+
+  if (answer) {
+    switch (answer.generationFailureReason) {
+      case REASON_CODE_AMBIGUOUS_RETRIEVAL:
+        deferralReason = DEFERRAL_TEXT.AMBIGUOUS_RETRIEVAL;
+        break;
+      case REASON_CODE_UNRELIABLE_CHUNK:
+        deferralReason = DEFERRAL_TEXT.UNRELIABLE_CHUNK;
+        break;
+      case REASON_CODE_NOT_COVERED:
+        deferralReason = DEFERRAL_TEXT.NOT_COVERED;
+        break;
+      default:
+        // No reason code -- either a genuine generated answer, or one of the
+        // two structural (no-documents / empty-pool) early returns, which
+        // never set a code. Distinguish by exact text, not inference.
+        if (answer.answerText === STRUCTURAL_DEFERRAL_ANSWER_TEXT.NO_DOCUMENTS) {
+          deferralReason = DEFERRAL_TEXT.NO_DOCUMENTS;
+        } else if (answer.answerText === STRUCTURAL_DEFERRAL_ANSWER_TEXT.EMPTY_POOL) {
+          deferralReason = DEFERRAL_TEXT.EMPTY_POOL;
+        } else {
+          aiSummary = answer.answerText;
+        }
+    }
+  }
+
+  const results: QueryCandidate[] = (answer?.citations ?? []).map((cit) => {
+    const match = cit.imagePaths[0]?.match(/\/image\/([^/]+)\//);
+    const documentId = match ? match[1] : "";
+    const family = familyByDocumentId.get(documentId);
+    return {
+      documentId,
+      documentName: cit.citationPdfName,
+      documentFamilyId: family?.documentFamilyId ?? null,
+      familyCode: family?.familyCode ?? null,
+      edition: family?.edition ?? null,
+      chunkType: cit.chunkType,
+      pageStart: cit.citationPageStart,
+      pageEnd: cit.citationPageEnd,
+      imageUrl: cit.imagePaths[0] ?? "",
+      score: null, // never persisted -- see docstring
+      isPrimarySource: documentId !== "" && documentId === answer?.pinnedDocumentId,
+    };
+  });
+
+  return {
+    messageId: message.id,
+    queryText: message.queryText,
+    createdAt: message.createdAt,
+    aiSummary,
+    deferralReason,
+    results,
+    queryRewritten: false, // not persisted -- see docstring
+    effectiveQuery: null, // not persisted -- see docstring
+  };
 }

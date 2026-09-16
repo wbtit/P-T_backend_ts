@@ -2,6 +2,22 @@
 
 ---
 
+## Local development
+
+```
+npm run dev
+```
+
+Starts the TS API server (`ts-node-dev`, hot-reload, port from `.env`'s `PORT`, `5156` by default) **and** the Standards RAG cross-encoder reranker service (`src/modules/standards/reranker/server.py`, port `8008` by default) together, in one terminal, with prefixed/colored output (`[server]` cyan, `[reranker]` magenta) so the two logs stay distinguishable. Previously these were started as two separate manual commands; `Ctrl+C` now stops both cleanly (see `scripts/dev.sh` for how — it puts each child in its own process group via `setsid` specifically so killing the `npx ts-node-dev` wrapper doesn't leave the actual node server process orphaned, which it did before that fix).
+
+The reranker is only needed for `POST /projects/:projectId/standards/query` (and the legacy `/chat` route) — everything else works without it.
+
+Override the reranker's interpreter/port via env vars if needed: `RERANKER_PYTHON` (default `/home/gpuserver1/benchmark-env/bin/python3`), `RERANKER_PORT` (default `8008`, must match `RERANKER_URL` the TS server reads).
+
+To run only the TS server without the reranker: `npx ts-node-dev --respawn src/server.ts`.
+
+---
+
 # 📘 **P-T_backend_ts — Transparent Task Tracking & Performance Analytics System**
 
 This backend powers a **robust, auditable, data-driven task tracking system** designed to eliminate manipulation, ensure fairness, and give management full clarity into productivity and planning accuracy.

@@ -35,17 +35,15 @@ console.error = (...args: unknown[]) => {
 };
 
 import "./corn-jobs/safeCorn"
-import { startStandardsIngestionWorker } from "./modules/standards/jobs/standardsIngestion";
-import { startPageClassificationWorker } from "./modules/standards/jobs/pageClassification";
-import { startChunkingWorker } from "./modules/standards/jobs/chunking";
 import { startStandardsGenerationWorker } from "./modules/standards/jobs/standardsGeneration";
 import { startDocumentIngestionWorker } from "./modules/standards/jobs/documentIngestion";
 
-// Phase 6: old-RAG leftovers, held only until the new /standards/documents
-// endpoints are verified end to end -- see standards.controller.ts.
-startStandardsIngestionWorker();
-startPageClassificationWorker();
-startChunkingWorker();
+// Phase 6: the legacy standardsIngestion/pageClassification/chunking worker
+// chain (fed only by the old POST /standards/upload route) was removed along
+// with that route -- confirmed nothing else enqueued to any of those three
+// queues before deleting. standardsGenerationWorker is unrelated dead code
+// (nothing enqueues to it either) but out of scope for this pass -- flagged,
+// not removed.
 startStandardsGenerationWorker();
 startDocumentIngestionWorker();
 
