@@ -30,6 +30,7 @@ import {
   persistPages,
   reportEmbedTruncationRisk,
 } from "../services/manifestPersistence";
+import { generatePageDescription } from "../services/pageDescription";
 
 const execFileAsync = util.promisify(execFile);
 
@@ -79,7 +80,7 @@ export interface IngestOptions {
   /** Phase 6: called at each real stage transition, for a caller (the async
    *  UPLOAD job) to record progress somewhere pollable. Best-effort only --
    *  not awaited seriously; a throwing callback should not fail the ingest. */
-  onProgress?: (stage: "EXTRACTING" | "CHUNKING" | "EMBEDDING" | "PERSISTING") => void;
+  onProgress?: (stage: "EXTRACTING" | "CHUNKING" | "EMBEDDING" | "DESCRIBING" | "PERSISTING") => void;
 }
 
 export interface IngestReport {
@@ -296,6 +297,23 @@ export async function ingestDocument(opts: IngestOptions): Promise<IngestReport>
   // ---- the only writing path ----
   opts.onProgress?.("EMBEDDING");
   const { embeddings, stats: embedStats } = await embedChunks(chunked);
+
+  // Feature: per-page description, commit-gated same as embedding -- a
+  // dry-run stays cheap, no LLM calls. Sequential, one Ollama call per page
+  // (~1.6s measured average; approved as-is for a 2325-page document's
+  // ~60-minute real cost -- no batching/parallelization built speculatively).
+  // Skips pages with zero real text/OCR content entirely rather than
+  // generating from nothing -- design-time testing confirmed that produces a
+  // real, confident, fabricated description. Every page of a document
+  // ingested before this feature shipped never runs through here at all;
+  // their pageDescription stays whatever chunkDocument() set it to (null).
+  opts.onProgress?.("DESCRIBING");
+  for (const p of chunked.pages) {
+    const pageText = (p.proseText || p.ocrText || "").trim();
+    if (!pageText) continue; // stays null -- see comment above
+    p.pageDescription = await generatePageDescription(pageText);
+  }
+
   opts.onProgress?.("PERSISTING");
   const pagesWritten = await persistPages(chunked, documentId);
   const chunkResult = await persistChunks(chunked, {

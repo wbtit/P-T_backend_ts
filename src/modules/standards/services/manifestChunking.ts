@@ -132,6 +132,12 @@ export interface PageManifest {
    *  unaffected and stays EXTRACTED -- see ChunkReliabilityReason. */
   proseReliabilityReason?: ChunkReliabilityReason | null;
   imagePath?: string | null;
+  /** Real external hyperlinks on this page (`{uri, text}`), extracted via
+   *  pdfplumber's `page.hyperlinks` -- see manifest.py's `_extract_hyperlinks`
+   *  docstring for what's real vs. best-effort here. Always present (an
+   *  empty array, never omitted) since it's set unconditionally in Python,
+   *  independent of table-extraction validity. */
+  hyperlinks: { uri: string; text: string | null }[];
 }
 
 /** A chunk ready for persistence. `localId`/`parentLocalId` are resolved to
@@ -398,6 +404,11 @@ export interface ChunkedDocument {
     proseText: string;
     ocrText: string;
     imagePath: string | null;
+    hyperlinks: { uri: string; text: string | null }[];
+    /** Set by a separate, later, commit-gated step (manifestIngestion.ts's
+     *  generatePageDescriptions()) -- null here always; chunkDocument() itself
+     *  makes no LLM calls, stays synchronous/deterministic. */
+    pageDescription: string | null;
   }[];
   stats: {
     pages: number;
@@ -470,6 +481,8 @@ export function chunkDocument(
       proseText: m.proseText,
       ocrText: m.ocrText,
       imagePath: m.imagePath ?? null,
+      hyperlinks: m.hyperlinks ?? [],
+      pageDescription: null,
     });
   }
 

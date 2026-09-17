@@ -11,6 +11,7 @@ import {
   sourcePdfPath,
   pagesDir,
   manifestWorkDir,
+  slugifyFabricatorName,
 } from "../services/documentStorage";
 
 export class StandardsController {
@@ -59,6 +60,26 @@ export class StandardsController {
         return;
       }
 
+      // Resolve the real fabricator name for the storage path (real name,
+      // not the UUID -- for human traceability browsing the disk directly)
+      // BEFORE creating anything, so a bad/stale fabricatorId fails cleanly
+      // with a 400 naming the problem rather than creating a stray document
+      // row or silently falling back to using the id as the folder name.
+      let fabricatorFolder: string | null = null;
+      if (sourceType === "FABRICATOR") {
+        const fabricator = await prisma.fabricator.findUnique({
+          where: { id: fabricatorId },
+          select: { fabName: true },
+        });
+        if (!fabricator) {
+          res.status(400).json({ message: `fabricatorId ${fabricatorId} does not match any real fabricator` });
+          return;
+        }
+        // Sanitized for the path only -- the real, unsanitized fabName stays
+        // in the database as-is, never overwritten.
+        fabricatorFolder = slugifyFabricatorName(fabricator.fabName, fabricatorId);
+      }
+
       const familyIsDefault = !isOmitted(isDefault) ? (isDefault === "true" || isDefault === true) : false;
       await prisma.standardFamily.upsert({
         where: { id: documentFamilyId },
@@ -81,8 +102,8 @@ export class StandardsController {
       });
 
       const resolvedFabricatorId = isOmitted(fabricatorId) ? null : fabricatorId;
-      await ensureDocumentDirs(sourceType, document.id, resolvedFabricatorId);
-      const destPdfPath = sourcePdfPath(sourceType, document.id, resolvedFabricatorId);
+      await ensureDocumentDirs(sourceType, document.id, fabricatorFolder);
+      const destPdfPath = sourcePdfPath(sourceType, document.id, fabricatorFolder);
       await fs.promises.rename(req.file.path, destPdfPath);
 
       await prisma.standardDocument.update({
@@ -94,8 +115,8 @@ export class StandardsController {
         await documentIngestionQueue.add("ingest", {
           documentId: document.id,
           pdfPath: destPdfPath,
-          manifestDir: manifestWorkDir(sourceType, document.id, resolvedFabricatorId),
-          imageDir: pagesDir(sourceType, document.id, resolvedFabricatorId),
+          manifestDir: manifestWorkDir(sourceType, document.id, fabricatorFolder),
+          imageDir: pagesDir(sourceType, document.id, fabricatorFolder),
           sourceType,
           fabricatorId: resolvedFabricatorId,
           documentFamilyId,
@@ -126,10 +147,17 @@ export class StandardsController {
   /** Wraps `activateStandardDocument()` -- adds the PENDING-only guard that
    *  function itself never enforced (it would activate from any non-ACTIVE
    *  status, including FAILED). Reports real row counts from the function's
-   *  own return value, not a separately-queried, race-prone guess. */
+   *  own return value, not a separately-queried, race-prone guess.
+   *
+   *  No longer auto-supersedes by family -- the caller must explicitly name
+   *  `supersedesDocumentId` (request body) to replace one specific prior
+   *  document (the legitimate case: re-ingesting the exact same source
+   *  content to fix a bug). Omitted: activates, supersedes nothing, allowing
+   *  multiple ACTIVE documents in the same family to coexist. */
   public async activateDocument(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
+      const { supersedesDocumentId } = req.body ?? {};
       const doc = await prisma.standardDocument.findUnique({ where: { id } });
       if (!doc) {
         res.status(404).json({ message: "Document not found" });
@@ -144,7 +172,10 @@ export class StandardsController {
       }
 
       const versioningService = new StandardsVersioningService();
-      const result = await versioningService.activateStandardDocument(id);
+      const result = await versioningService.activateStandardDocument(
+        id,
+        typeof supersedesDocumentId === "string" && supersedesDocumentId.trim() !== "" ? supersedesDocumentId : undefined
+      );
 
       res.status(200).json({
         documentId: id,
@@ -153,6 +184,10 @@ export class StandardsController {
         status: result.activated ? "ACTIVE" : doc.status,
       });
     } catch (error: any) {
+      if (error.message?.includes("supersedesDocumentId")) {
+        res.status(400).json({ message: error.message });
+        return;
+      }
       console.error("[StandardsController] activateDocument error:", error);
       res.status(500).json({ message: "Internal server error" });
     }
@@ -444,7 +479,38 @@ export class StandardsController {
         docs.map((d) => [d.id, { documentFamilyId: d.documentFamilyId, familyCode: d.documentFamily?.familyCode ?? null, edition: d.documentFamily?.edition ?? null }])
       );
 
-      const mappedHistory = history.map((msg, i) => reconstructHistoryEntry(msg, normalizedAnswers[i], familyByDocumentId));
+      // Same treatment, one more batched lookup: hyperlinks/pageDescription
+      // aren't stored on StandardChatCitation either -- one query across the
+      // whole history page, keyed by (documentId, pageNumber), not one query
+      // per citation.
+      const pageKeys = new Set<string>();
+      for (const answers of normalizedAnswers) {
+        for (const ans of answers) {
+          for (const cit of ans.citations) {
+            const match = cit.imagePaths[0]?.match(/\/image\/([^/]+)\//);
+            if (match) pageKeys.add(`${match[1]}:${cit.citationPageStart}`);
+          }
+        }
+      }
+      const pages = pageKeys.size
+        ? await prisma.standardPage.findMany({
+            where: {
+              OR: [...pageKeys].map((key) => {
+                const [documentId, pageNumberStr] = key.split(":");
+                return { documentId, pageNumber: Number(pageNumberStr) };
+              }),
+            },
+            select: { documentId: true, pageNumber: true, hyperlinks: true, pageDescription: true },
+          })
+        : [];
+      const pageByDocumentIdAndPage = new Map(
+        pages.map((p) => [
+          `${p.documentId}:${p.pageNumber}`,
+          { hyperlinks: (p.hyperlinks as { uri: string; text: string | null }[] | null) ?? null, pageDescription: p.pageDescription },
+        ])
+      );
+
+      const mappedHistory = history.map((msg, i) => reconstructHistoryEntry(msg, normalizedAnswers[i], familyByDocumentId, pageByDocumentIdAndPage));
 
       res.status(200).json(mappedHistory);
     } catch (error: any) {

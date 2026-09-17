@@ -43,6 +43,7 @@ test("amendment 11: table chunks stay reliabilityReason=null, prose chunk carrie
     extractionStatus: "EXTRACTED",
     visualOnlyReason: null,
     proseReliabilityReason: "INTERLEAVED_TEXT",
+    hyperlinks: [],
   };
 
   const chunks = chunkPage(manifest);
@@ -88,6 +89,7 @@ test("unaffected page: proseReliabilityReason absent leaves every chunk null", (
     extractionMethod: "VECTOR_LINES",
     extractionStatus: "EXTRACTED",
     visualOnlyReason: null,
+    hyperlinks: [],
   };
 
   const chunks = chunkPage(manifest);

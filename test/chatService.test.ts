@@ -28,6 +28,8 @@ function chunk(overrides: Partial<RetrievedChunk>): RetrievedChunk {
     reliabilityReason: null,
     score: 1,
     branch: "prose",
+    hyperlinks: null,
+    pageDescription: null,
     ...overrides,
   };
 }

@@ -74,6 +74,17 @@ export interface QueryCandidate {
    *  persisted anywhere to recover. */
   score: number | null;
   isPrimarySource: boolean;
+  /** Real external hyperlinks found on this page (`{uri, text}`), or `null`
+   *  if none. `null` for all 16 pre-existing documents (checked directly:
+   *  only 1 of 8 sampled real documents had any hyperlinks at all) and for
+   *  any future page with zero real links. */
+  hyperlinks: { uri: string; text: string | null }[] | null;
+  /** 2-3 sentence LLM-generated page description (Google-image-search
+   *  style), or `null`. FUTURE DOCUMENTS ONLY -- `null` for all 16
+   *  pre-existing documents by design, never backfilled; also `null` for any
+   *  future page with zero real text/OCR content (generating from nothing
+   *  produced a confirmed hallucination during design testing). */
+  pageDescription: string | null;
 }
 
 export interface AskStandardsResult {
@@ -115,35 +126,50 @@ export const STRUCTURAL_DEFERRAL_ANSWER_TEXT = {
   EMPTY_POOL: "Not covered by this standard.",
 } as const;
 
-/** Almost all of this is already computed by `retrieveTwoBranch()` + the
- *  reranker -- pdfName/chunkType/pageStart/pageEnd/score were already on
- *  every `RetrievedChunk`. The one genuinely new piece is family/edition
- *  (added to retrievalTwoBranch.ts's SQL this pass, via a LEFT JOIN to
- *  standard_families -- previously computed nowhere). This function's real
- *  job is dedup-by-document (the product spec asks for "candidate
- *  documents," not one row per chunk) and shaping, not new retrieval work. */
-function buildResults(pool: RetrievedChunk[], primaryDocumentId: string | null): QueryCandidate[] {
+/** Dedup-by-document (the product spec asks for "candidate documents," not
+ *  one row per chunk) + cap at `RESULTS_CAP`, sorted by score descending.
+ *  Extracted from `buildResults()` so citation persistence (below) can
+ *  persist the EXACT SAME set `results[]` shows live, not a smaller subset --
+ *  see the real bug this fixed, documented on `reconstructHistoryEntry()`. */
+function dedupedTopPool(pool: RetrievedChunk[]): RetrievedChunk[] {
   const bestByDoc = new Map<string, RetrievedChunk>();
   for (const c of pool) {
     const existing = bestByDoc.get(c.documentId);
     if (!existing || c.score > existing.score) bestByDoc.set(c.documentId, c);
   }
-  return [...bestByDoc.values()]
-    .sort((a, b) => b.score - a.score)
-    .slice(0, RESULTS_CAP)
-    .map((c) => ({
-      documentId: c.documentId,
-      documentName: c.pdfName,
-      documentFamilyId: c.documentFamilyId,
-      familyCode: c.familyCode,
-      edition: c.edition,
-      chunkType: c.chunkType,
-      pageStart: c.pageStart,
-      pageEnd: c.pageEnd,
-      imageUrl: buildImagePath(c),
-      score: c.score,
-      isPrimarySource: c.documentId === primaryDocumentId,
-    }));
+  return [...bestByDoc.values()].sort((a, b) => b.score - a.score).slice(0, RESULTS_CAP);
+}
+
+/** Almost all of this is already computed by `retrieveTwoBranch()` + the
+ *  reranker -- pdfName/chunkType/pageStart/pageEnd/score were already on
+ *  every `RetrievedChunk`. The one genuinely new piece is family/edition
+ *  (added to retrievalTwoBranch.ts's SQL this pass, via a LEFT JOIN to
+ *  standard_families -- previously computed nowhere). This function's real
+ *  job is shaping `dedupedTopPool()`'s output, not new retrieval work. */
+function buildResults(pool: RetrievedChunk[], primaryDocumentId: string | null): QueryCandidate[] {
+  return dedupedTopPool(pool).map((c) => ({
+    documentId: c.documentId,
+    documentName: c.pdfName,
+    documentFamilyId: c.documentFamilyId,
+    familyCode: c.familyCode,
+    edition: c.edition,
+    chunkType: c.chunkType,
+    pageStart: c.pageStart,
+    pageEnd: c.pageEnd,
+    imageUrl: buildImagePath(c),
+    score: c.score,
+    isPrimarySource: c.documentId === primaryDocumentId,
+    hyperlinks: c.hyperlinks,
+    pageDescription: c.pageDescription,
+  }));
+}
+
+/** Real bug fix: persist the SAME set `results[]` shows live (up to
+ *  `RESULTS_CAP`=10, deduped by document) as citations, not a smaller
+ *  cited-only subset -- see this function's callers below and
+ *  `reconstructHistoryEntry()`'s docstring for the full before/after. */
+function citationsForResults(rerankedPool: RetrievedChunk[]): ReturnType<typeof citationOf>[] {
+  return dedupedTopPool(rerankedPool).map((c, i) => citationOf(c, i + 1));
 }
 
 /** Phase 5 §2 -- a candidate chunk's own text is untrustworthy, independent of
@@ -447,7 +473,13 @@ export async function askStandards(
         answerText: deferral.answerText,
         generationFailureReason: deferral.generationFailureReason,
         pinnedDocumentId: top.documentId,
-        citations: { create: [citationOf(top, 1)] },
+        // Real bug fix: persist ALL of what results[] shows (up to
+        // RESULTS_CAP=10, deduped by document), not just the top-1 cited
+        // here for the deferral message -- /chat/history reconstructs
+        // results[] from exactly these rows, so persisting only 1 meant
+        // history showed 1 image where the original live response showed up
+        // to 10. See reconstructHistoryEntry()'s docstring for the full fix.
+        citations: { create: citationsForResults(rerankedPool) },
       },
     });
     return finish(
@@ -478,7 +510,9 @@ export async function askStandards(
         answerText: "Not confidently found in the retrieved context — see page image.",
         generationFailureReason: REASON_CODE_UNRELIABLE_CHUNK,
         pinnedDocumentId: top.documentId,
-        citations: { create: [citationOf(top, 1)] },
+        // Same fix as the AMBIGUOUS branch above -- persist the full
+        // results[]-equivalent pool, not just the top-1 cited candidate.
+        citations: { create: citationsForResults(rerankedPool) },
       },
     });
     return finish(
@@ -498,7 +532,6 @@ export async function askStandards(
 
   const generatedText = genResult.text;
   const sourceChunk = genResult.sourceChunkIndex !== null ? reliable[genResult.sourceChunkIndex] : null;
-  const citationsData = reliable.map((hit, i) => citationOf(hit, i + 1));
 
   // Phase 6: previously left BOTH answerText null AND generationFailureReason
   // null in this case -- silently ambiguous between "the model declined" and
@@ -514,7 +547,16 @@ export async function askStandards(
       answerText: generatedText,
       generationFailureReason: declined ? REASON_CODE_NOT_COVERED : null,
       pinnedDocumentId: sourceChunk ? sourceChunk.documentId : null,
-      citations: { create: citationsData },
+      // Real bug fix: persist the full results[]-equivalent pool (up to
+      // RESULTS_CAP=10, deduped by document, from the FULL rerankedPool --
+      // the same pool buildResults() below uses for the live response), not
+      // just `reliable` (the TOP_N=3, reliability-filtered subset actually
+      // used for generation above). Generation and citation-persistence are
+      // deliberately decoupled here: what the LLM is allowed to read from is
+      // still narrowly, deterministically filtered (Phase 5 §2's hard
+      // deferral, unchanged); what chat history shows as candidate documents
+      // is the full live results[] set, exactly as QUERY showed it.
+      citations: { create: citationsForResults(rerankedPool) },
     },
   });
 
@@ -535,10 +577,16 @@ export async function askStandards(
  *
  *  This is a REAL, STRUCTURAL APPROXIMATION of the live shape, not a replay
  *  of it -- confirmed directly against the schema before writing this:
- *  - `results[]` here is only what was actually CITED (`TOP_N`=3, or 1 for a
- *    deferral, or 0), never the full RESULTS_CAP=10 deduped-by-document pool
- *    QUERY returns live -- the uncited candidates in that pool are never
- *    persisted anywhere, so they cannot be recovered after the fact.
+ *  - `results[]` here is now the FULL results[] pool (up to RESULTS_CAP=10,
+ *    deduped by document) -- fixed from an earlier, real bug where only the
+ *    actually-cited subset (`TOP_N`=3, or 1 for a deferral, or 0) was
+ *    persisted, so chat history showed up to 3 images for a query that
+ *    originally showed up to 10 live. `askStandards()` now persists every
+ *    `citationsForResults(rerankedPool)` row at answer-creation time, the
+ *    same deduped/capped pool `buildResults()` shapes for the live response
+ *    -- not a smaller, generation-scoped subset. Verified with a real
+ *    before/after this session: a real query returning N images live, then
+ *    `/chat/history` for that same message showing the same N images.
  *  - `score` is never persisted on `StandardChatCitation` (the reranker's
  *    score is purely an in-memory value at query time) -- always `null` here,
  *    not a bug, not omitted by oversight.
@@ -568,7 +616,12 @@ export function reconstructHistoryEntry(
       imagePaths: string[];
     }>;
   }>,
-  familyByDocumentId: Map<string, { documentFamilyId: string | null; familyCode: string | null; edition: string | null }>
+  familyByDocumentId: Map<string, { documentFamilyId: string | null; familyCode: string | null; edition: string | null }>,
+  /** Same treatment as `familyByDocumentId` above, one more batched lookup:
+   *  hyperlinks/pageDescription aren't stored on StandardChatCitation either,
+   *  so the caller passes a single batched query's results across the whole
+   *  history page, keyed by `"${documentId}:${pageNumber}"`. */
+  pageByDocumentIdAndPage: Map<string, { hyperlinks: { uri: string; text: string | null }[] | null; pageDescription: string | null }>
 ): { messageId: string; queryText: string; createdAt: Date; aiSummary: string | null; deferralReason: string | null; results: QueryCandidate[]; queryRewritten: boolean; effectiveQuery: string | null } {
   const answer = answers[0] ?? null;
 
@@ -604,6 +657,7 @@ export function reconstructHistoryEntry(
     const match = cit.imagePaths[0]?.match(/\/image\/([^/]+)\//);
     const documentId = match ? match[1] : "";
     const family = familyByDocumentId.get(documentId);
+    const page = pageByDocumentIdAndPage.get(`${documentId}:${cit.citationPageStart}`);
     return {
       documentId,
       documentName: cit.citationPdfName,
@@ -616,6 +670,8 @@ export function reconstructHistoryEntry(
       imageUrl: cit.imagePaths[0] ?? "",
       score: null, // never persisted -- see docstring
       isPrimarySource: documentId !== "" && documentId === answer?.pinnedDocumentId,
+      hyperlinks: page?.hyperlinks ?? null,
+      pageDescription: page?.pageDescription ?? null,
     };
   });
 

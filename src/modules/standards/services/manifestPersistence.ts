@@ -284,17 +284,23 @@ export async function persistPages(
           // text_content is NOT NULL; a scanned page has no text layer, so its
           // OCR text stands in. Both are kept separately below.
           const textContent = p.proseText || p.ocrText || "";
+          // null (not []) when a page has zero real links -- matches the
+          // schema's own convention, see schema.prisma's comment on this column.
+          const hyperlinksJson = p.hyperlinks.length > 0 ? JSON.stringify(p.hyperlinks) : null;
           const n: number = await tx.$executeRaw`
             INSERT INTO standard_pages (
               id, document_id, page_number, image_path, text_content, ocr_text,
-              extraction_status, visual_only_reason, heading_source, created_at
+              extraction_status, visual_only_reason, heading_source, created_at,
+              hyperlinks, page_description
             ) VALUES (
               gen_random_uuid(), ${documentId}::uuid, ${p.pageNumber},
               ${p.imagePath}, ${textContent}, ${p.ocrText || null},
               ${p.extractionStatus}::"ExtractionStatus",
               ${p.visualOnlyReason}::"VisualOnlyReason",
               ${p.headingSource}::"HeadingSource",
-              NOW()
+              NOW(),
+              ${hyperlinksJson}::jsonb,
+              ${p.pageDescription}
             )
             ON CONFLICT (document_id, page_number) DO UPDATE SET
               image_path         = EXCLUDED.image_path,
@@ -302,7 +308,9 @@ export async function persistPages(
               ocr_text           = EXCLUDED.ocr_text,
               extraction_status  = EXCLUDED.extraction_status,
               visual_only_reason = EXCLUDED.visual_only_reason,
-              heading_source     = EXCLUDED.heading_source
+              heading_source     = EXCLUDED.heading_source,
+              hyperlinks         = EXCLUDED.hyperlinks,
+              page_description   = EXCLUDED.page_description
           `;
           written += Number(n) || 0;
         }

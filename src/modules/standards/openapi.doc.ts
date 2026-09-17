@@ -204,7 +204,7 @@ const standards_doc: ModuleOpenApiDoc = {
         description:
           "Uploads a PDF and enqueues it on `documentIngestionQueue` for the real Phase 2 pipeline (`ingestDocument()`). **Asynchronous**: returns `202` immediately with the new `documentId`; extraction alone measured up to ~68s for a 166-page document and minutes for a 2000+-page one (2325-page AISC manual measured ~19 minutes end-to-end this session) -- no caller should hold a connection open waiting for this. Poll `GET /standards/documents/{id}` until `status===\"PENDING\" && processingStage===null` (or `\"FAILED\"`).\n\n" +
           "**`commit` controls dry-run vs. real ingestion** (`multipart` field, `\"true\"`/`\"false\"`; falsy/omitted = dry-run). A dry-run computes the full extraction/chunking/embedding report (`ingestReport`) but writes nothing to `standard_pages`/`standard_chunks` -- confirmed live this session: a dry-run's final `ingestReport.committed` is `false`, has no `written` key, and the document's own `pagesProcessed`/`totalPages` stay `0`. **Integration hazard, not currently blocked by the API**: `POST .../activate` only checks `status===\"PENDING\"` -- it does NOT check whether the document was ever committed. Activating a dry-run document will flip it to `ACTIVE` with zero real content indexed. Always check `ingestReport.committed === true` (via the STATUS endpoint) before calling activate.\n\n" +
-          "Storage convention (Phase 6): the file is moved to `uploads/standards/<general|fabricator>/[<fabricatorId>/]<documentId>/source.pdf`, one folder per document, filename by documentId not original filename.",
+          "Storage convention (Phase 6): the file is moved to `uploads/standards/<general|fabricator>/[<fabricatorNameSlug>/]<documentId>/source.pdf`, one folder per document, filename by documentId not original filename. For `sourceType=FABRICATOR`, the folder is the fabricator's real name, slugified (lowercased, non-alphanumeric stripped, spaces to hyphens) -- e.g. `Cobb Industrial, Inc.` -> `cobb-industrial-inc` -- not the fabricator's UUID, for human traceability when browsing the disk directly. Was `<fabricatorId>` originally; a bad/nonexistent `fabricatorId` now fails the upload with a real `400` (see below) rather than silently using the id as the folder name.",
         security: [{ bearerAuth: [] }],
         requestBody: {
           required: true,
@@ -264,6 +264,7 @@ const standards_doc: ModuleOpenApiDoc = {
                   badSourceType: { value: { message: "sourceType must be GENERAL or FABRICATOR" } },
                   missingFamily: { summary: "Real capture", value: { message: "documentFamilyId is required" } },
                   missingFabricatorId: { value: { message: "fabricatorId is required for FABRICATOR sourceType" } },
+                  fabricatorNotFound: { summary: "Real capture -- a nonexistent fabricatorId, checked before anything is created (no stray document row, no folder)", value: { message: "fabricatorId 00000000-0000-0000-0000-000000000000 does not match any real fabricator" } },
                   missingFamilyCodeOrEdition: { value: { message: "familyCode and edition are required when providing documentFamilyId" } },
                 },
               },
@@ -349,8 +350,8 @@ const standards_doc: ModuleOpenApiDoc = {
           "The endpoint `POST /standards/documents`'s caller polls. Includes `ingestReport` (absent from the older `.../progress` endpoint above), the full report from the most recent ingestion run, dry-run or committed.\n\n" +
           "**Status values and what a frontend should do at each:**\n" +
           "- `PENDING` + `processingStage=null`, `ingestReport=null`: uploaded, not yet picked up by the worker. Keep polling.\n" +
-          "- `PENDING` + `processingStage` non-null (`EXTRACTING`|`CHUNKING`|`EMBEDDING`|`PERSISTING`): **this is a real, observed transient state, not a bug** -- the worker sets `status` back to `PROCESSING` on pickup, but during the tail end of a run this session observed polls catching `status=PENDING` with `processingStage` not yet cleared to null before the final update commits. Keep polling; do not treat this as \"done.\"\n" +
-          "- `PROCESSING`: actively running. `processingStage` tells you which real pipeline stage (`EXTRACTING`->`CHUNKING`->`EMBEDDING`->`PERSISTING`, the last two only occur when `commit=true`). Keep polling.\n" +
+          "- `PENDING` + `processingStage` non-null (`EXTRACTING`|`CHUNKING`|`EMBEDDING`|`DESCRIBING`|`PERSISTING`): **this is a real, observed transient state, not a bug** -- the worker sets `status` back to `PROCESSING` on pickup, but during the tail end of a run this session observed polls catching `status=PENDING` with `processingStage` not yet cleared to null before the final update commits. Keep polling; do not treat this as \"done.\"\n" +
+          "- `PROCESSING`: actively running. `processingStage` tells you which real pipeline stage (`EXTRACTING`->`CHUNKING`->`EMBEDDING`->`DESCRIBING`->`PERSISTING`; the last three only occur when `commit=true`). `DESCRIBING` (added this pass) generates a 2-3 sentence page description per page, ~1.6s measured average per page -- for a large document this is a real, non-trivial chunk of total ingestion time (e.g. ~60 extra minutes for a 2325-page document), not just a quick pass. Keep polling.\n" +
           "- `PENDING` + `processingStage=null` + `ingestReport` present: **done**, awaiting activation. Check `ingestReport.committed` before offering an \"Activate\" action (see the dry-run hazard noted on the UPLOAD endpoint above).\n" +
           "- `ACTIVE`: live and retrievable via QUERY.\n" +
           "- `SUPERSEDED`: was ACTIVE, replaced by a newer activation in the same scope. Historical only.\n" +
@@ -456,17 +457,31 @@ const standards_doc: ModuleOpenApiDoc = {
     "/standards/documents/{id}/activate": {
       post: {
         tags: ["Standards"],
-        summary: "Activate a document (Phase 6)",
+        summary: "Activate a document (Phase 6, no more auto-supersession)",
         description:
-          "Wraps `activateStandardDocument()`, with a **PENDING-only guard** the underlying service itself does not enforce. Atomically (single Prisma `$transaction`): supersedes every currently-ACTIVE document in the same scope (`sourceType` + `documentFamilyId`, plus `fabricatorId` for FABRICATOR-tier / forced `fabricatorId=null` for GENERAL-tier), then activates this one. `supersededCount` is the real row count from that supersession, not a separately-queried guess -- `0` is a normal, valid result (first activation ever in that scope), not an error.\n\n" +
-          "No request body.",
+          "Wraps `activateStandardDocument()`, with a **PENDING-only guard** the underlying service itself does not enforce.\n\n" +
+          "**Default (no `supersedesDocumentId`): activates, supersedes NOTHING.** Two genuinely different documents in the same `(sourceType, documentFamilyId, fabricatorId)` scope -- different editions of a manual, two distinct fabricator standards -- now coexist as separate ACTIVE documents, always searchable, both cited independently when relevant. This replaced automatic family-based supersession (every prior version of this endpoint auto-superseded any other ACTIVE document sharing that scope) -- confirmed via a corpus audit before removing it that every real supersession to date (16/16) was the same source content re-ingested to fix a bug, never two genuinely different documents, so nothing in the live corpus depended on the old auto-behavior; the audit and the caller-impact analysis are recorded in this session's own report, not repeated here.\n\n" +
+          "**`supersedesDocumentId` (optional, request body):** names one specific prior document to explicitly replace -- the one legitimate reason to supersede: re-ingesting the exact same source content (e.g. this session's own AISC/SJI/ccd/Hilti image-path fixes). Validated, not blindly trusted: the named document must currently be `ACTIVE` (`400` otherwise) and must be in the exact same scope as the document being activated (`400` on a cross-scope attempt) -- refusing rather than silently allowing an accidental cross-family supersession.",
         security: [{ bearerAuth: [] }],
         parameters: [
           { name: "id", in: "path", required: true, schema: { type: "string", format: "uuid" } },
         ],
+        requestBody: {
+          required: false,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  supersedesDocumentId: { type: "string", format: "uuid", description: "Optional. Explicitly names one ACTIVE document, in the same scope as the one being activated, to supersede. Omit to activate without superseding anything." },
+                },
+              },
+            },
+          },
+        },
         responses: {
           "200": {
-            description: "Real capture: first activation of a document in a fresh scope (supersededCount=0). A second real activation of a document in the same scope as an already-ACTIVE one produced supersededCount=1 in this session's AISC re-ingestion.",
+            description: "Real captures below: default (no supersedesDocumentId, two different documents left coexisting ACTIVE in the same family), and explicit supersedesDocumentId (exactly the named document superseded, a third sibling in the same family left untouched).",
             content: {
               "application/json": {
                 schema: {
@@ -474,11 +489,38 @@ const standards_doc: ModuleOpenApiDoc = {
                   properties: {
                     documentId: { type: "string", format: "uuid" },
                     activated: { type: "boolean" },
-                    supersededCount: { type: "integer" },
+                    supersededCount: { type: "integer", description: "0 (default path, or supersedesDocumentId omitted) or 1 (supersedesDocumentId provided and validated) -- never more than 1 now." },
                     status: { type: "string" },
                   },
                 },
-                example: { documentId: "53f2c7a7-1ee1-4f03-8ac8-37c7a885d8cb", activated: true, supersededCount: 0, status: "ACTIVE" },
+                examples: {
+                  noSupersede: {
+                    summary: "Real capture -- no supersedesDocumentId. A second document in the SAME family, activated right after a first -- both ended up ACTIVE simultaneously, confirmed by a direct DB read.",
+                    value: { documentId: "f6d44063-047b-436a-a7c5-8824589baf3d", activated: true, supersededCount: 0, status: "ACTIVE" },
+                  },
+                  explicitSupersede: {
+                    summary: "Real capture -- supersedesDocumentId provided, targeting one specific sibling document in the same family (a different sibling, activated moments earlier, was left untouched -- confirmed by a direct DB read).",
+                    value: { documentId: "47213f34-9db0-4669-8a52-f01e90d3e78c", activated: true, supersededCount: 1, status: "ACTIVE" },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Real captures -- both supersedesDocumentId validation failures.",
+            content: {
+              "application/json": {
+                schema: { type: "object", properties: { message: { type: "string" } } },
+                examples: {
+                  crossScope: {
+                    summary: "Real capture -- supersedesDocumentId pointed at a document in a different family",
+                    value: { message: "supersedesDocumentId ac438ab8-3c4a-45ec-ab74-cbf10580f6d8 is not in the same scope (sourceType/documentFamilyId/fabricatorId) as 87d4bbd1-b743-4ab9-8246-1dcc60e49ef7 -- refusing to supersede across scopes" },
+                  },
+                  notActive: {
+                    summary: "Real capture -- supersedesDocumentId pointed at an already-SUPERSEDED document",
+                    value: { message: "supersedesDocumentId 0b4817db-e93e-4334-9ab8-d2b5fa91070d is not ACTIVE (status: SUPERSEDED) -- nothing to supersede" },
+                  },
+                },
               },
             },
           },
@@ -516,7 +558,9 @@ const standards_doc: ModuleOpenApiDoc = {
           "**Conditional query rewrite (added this pass).** If the ORIGINAL query grades AMBIGUOUS or returns an empty pool, the query rewriter (`queryRewrite.ts`, previously built but not wired in) generates 3 rephrased candidates and retries retrieval+rerank+grading for each, **sequentially, stopping at the first that reaches CONFIDENT** -- not always running all 3. Confirmed via the reranker's own startup log that it is single-request-only, so running candidates concurrently would only queue behind each other at that layer, not actually parallelize; sequential-with-early-stop is strictly faster than always running all 3 in the common case (an early candidate rescues it) and no slower in the worst case (none do), so there was no scenario where running all 3 unconditionally would have been faster. **An already-CONFIDENT original query never triggers rewriting at all** -- no added latency for the common case. If a rewrite reaches CONFIDENT, its result (not the original's) is returned, and the final answer generation step (when applicable) is prompted with the rewritten text, not the original -- confirmed live: a rewrite that fixes retrieval but leaves the LLM generation step reading the original confusing phrasing would defeat the point. If none of the 3 rewrites reach CONFIDENT, the response falls back to the ORIGINAL query's own AMBIGUOUS/empty-pool result unchanged -- never a worse or arbitrary result just because a rewrite ran.\n\n" +
           "`queryRewritten` (boolean) is `true` only when a rewrite actually rescued the result (never true just because rewriting was attempted and failed). `effectiveQuery` (string, nullable) is the exact rewrite text that produced the returned answer, or `null` if no rewrite happened -- a frontend can use it to show \"we searched for: X\".\n\n" +
           "**Latency, real measured data (this pass, live corpus, 9 real calls):** an already-CONFIDENT original query (the common case, rewriting skipped entirely): **~10-24s**, same range as before this change -- no added cost. A query that triggers rewriting and gets rescued: **~35-40s** measured across 3 real rescues (1 rewrite attempt before success: ~35s; 2 attempts before success: ~39-40s) -- confirmed via server-log timestamps that the reranker itself is fast (~2.8s/call, load+infer) and NOT the bottleneck; the added cost is the rewrite-generation LLM call plus each extra retrieval+rerank pass. **The true worst case (all 3 rewrites fail, falls back to the original AMBIGUOUS deferral) was not directly captured live** -- 9 real queries against the live corpus this pass either resolved CONFIDENT immediately or were rescued within 1-2 rewrite attempts, and a 3-failure case could not be forced organically in the time available. Reasoned from real per-stage timings instead of guessed: this case trades one extra retrieval+rerank pass (cheap, ~3-5s, reranker calls confirmed fast) for the final-generation LLM call the rescued cases pay (~5-10s) -- so it's expected to land in roughly the same **~35-40s** range already measured, not meaningfully worse. This sits at the edge of, not dramatically past, typical latency-budget concerns for this kind of endpoint -- show a loading state regardless; the rewrite path in particular should not be treated as fast/interactive.\n\n" +
-          "**Image-URL staleness caveat -- confirmed NOT relevant as of this write-up.** All 4 documents that had this problem earlier in this session (AISC, SJI, ccd, Hilti EA -- pre-dating this session's storage convention, with `image_path` values under a wiped `/tmp` dir) have been re-ingested under the new convention and image-verified (`200`, real PNG) as of this doc. A corpus-wide check just before writing this spec found **zero** other ACTIVE documents with this problem. One unrelated, pre-existing ACTIVE placeholder row (`dummy_fabricator.pdf`, zero pages, `storagePath=\"dummy_path\"`, predates this session) has no image at all, but it structurally cannot appear in `results[]` (it has no indexed chunks to ever be retrieved) -- flagged separately for corpus cleanup, not a QUERY-response hazard.",
+          "**Image-URL staleness caveat -- confirmed NOT relevant as of this write-up.** All 4 documents that had this problem earlier in this session (AISC, SJI, ccd, Hilti EA -- pre-dating this session's storage convention, with `image_path` values under a wiped `/tmp` dir) have been re-ingested under the new convention and image-verified (`200`, real PNG) as of this doc. A corpus-wide check just before writing this spec found **zero** other ACTIVE documents with this problem. One unrelated, pre-existing ACTIVE placeholder row (`dummy_fabricator.pdf`, zero pages, `storagePath=\"dummy_path\"`, predates this session) has no image at all, but it structurally cannot appear in `results[]` (it has no indexed chunks to ever be retrieved) -- flagged separately for corpus cleanup, not a QUERY-response hazard.\n\n" +
+          "**`results[].hyperlinks` (added this pass).** Real external hyperlinks found on that page (`{uri, text}[]`), or `null` if none. Checked directly against 8 real corpus documents before building this: only 1 of 8 had any hyperlinks at all (all external -- manufacturer spec-sheet links, legal-notice boilerplate). No internal same-PDF page-jump handling -- confirmed zero real examples. `text` (anchor text) is itself best-effort and can be `null` even when `uri` is present. **`null` for all 15 documents that predate this feature** (checked, not assumed -- see the `null` fields in the `successfulAnswer`/`rewriteRescued`/`ambiguousDeferralStillPossible` examples below, all real captures against pre-existing documents) -- only documents ingested after this shipped can have real values here.\n\n" +
+          "**`results[].pageDescription` (added this pass).** 2-3 sentence LLM-generated description of that page (Google-image-search-style caption), or `null`. **FUTURE DOCUMENTS ONLY, by design** -- every page of the documents ingested before this feature shipped stays `null` forever, never backfilled. Also `null` for any future page with zero real text/OCR content (generating from nothing produced a confirmed hallucination during design testing, so those are skipped, not guessed). Real measured generation cost: ~1.19s-2.95s per page (~1.6s average), added at ingestion time, not query time -- does not affect QUERY's own latency.",
         security: [{ bearerAuth: [] }],
         parameters: [
           { name: "projectId", in: "path", required: true, schema: { type: "string", format: "uuid" } },
@@ -559,6 +603,19 @@ const standards_doc: ModuleOpenApiDoc = {
                           imageUrl: { type: "string", description: "Relative path -- prefix with the base URL. No auth required to fetch it." },
                           score: { type: "number", description: "Reranker cross-encoder score. Not a 0-1 probability -- can be negative. Only meaningful as a relative ranking within one response, not comparable across queries." },
                           isPrimarySource: { type: "boolean", description: "True for the one candidate `aiSummary` (or the deferral) was actually generated/anchored from." },
+                          hyperlinks: {
+                            type: "array",
+                            nullable: true,
+                            description: "Real external hyperlinks on this page, or null if none. null for every document that predates this feature.",
+                            items: {
+                              type: "object",
+                              properties: {
+                                uri: { type: "string" },
+                                text: { type: "string", nullable: true, description: "Best-effort anchor text -- can be null even when uri is present." },
+                              },
+                            },
+                          },
+                          pageDescription: { type: "string", nullable: true, description: "2-3 sentence generated page description, or null. Future-documents-only by design -- null for every document ingested before this feature shipped." },
                         },
                       },
                     },
@@ -574,10 +631,10 @@ const standards_doc: ModuleOpenApiDoc = {
                       queryRewritten: false,
                       effectiveQuery: null,
                       results: [
-                        { documentId: "1360753c-2396-4a69-b4c7-21fcfd2e2842", documentName: "Expansion_Anchor_(316-327)r021.pdf", documentFamilyId: "HILTI-PTG-2008", familyCode: "HILTI-PTG", edition: "2008", chunkType: "PROSE", pageStart: 5, pageEnd: 5, imageUrl: "/v1/standards/image/1360753c-2396-4a69-b4c7-21fcfd2e2842/5", score: 1.5537109375, isPrimarySource: true },
-                        { documentId: "ac438ab8-3c4a-45ec-ab74-cbf10580f6d8", documentName: "aisc-14th-edition.pdf", documentFamilyId: "AISC-CM-14", familyCode: "AISC", edition: "14", chunkType: "PROSE", pageStart: 2219, pageEnd: 2219, imageUrl: "/v1/standards/image/ac438ab8-3c4a-45ec-ab74-cbf10580f6d8/2219", score: -4.09765625, isPrimarySource: false },
-                        { documentId: "7b3f5e0e-553d-45c8-ac5d-4dfa6e48b437", documentName: "completeconnectiondetails-2.pdf", documentFamilyId: "CANAM-SCD-2017", familyCode: "CANAM-SCD", edition: "2017-08", chunkType: "VISUAL", pageStart: 40, pageEnd: 40, imageUrl: "/v1/standards/image/7b3f5e0e-553d-45c8-ac5d-4dfa6e48b437/40", score: -5.75390625, isPrimarySource: false },
-                        { documentId: "f09a797b-25a6-4065-a29d-9ecc510cfd8e", documentName: "43rd_Edition_Catalog_Final_With_Errata1and2.pdf", documentFamilyId: "SJI-SPEC-43", familyCode: "SJI-SPEC", edition: "43", chunkType: "TABLE", pageStart: 69, pageEnd: 69, imageUrl: "/v1/standards/image/f09a797b-25a6-4065-a29d-9ecc510cfd8e/69", score: -7.125, isPrimarySource: false },
+                        { documentId: "1360753c-2396-4a69-b4c7-21fcfd2e2842", documentName: "Expansion_Anchor_(316-327)r021.pdf", documentFamilyId: "HILTI-PTG-2008", familyCode: "HILTI-PTG", edition: "2008", chunkType: "PROSE", pageStart: 5, pageEnd: 5, imageUrl: "/v1/standards/image/1360753c-2396-4a69-b4c7-21fcfd2e2842/5", score: 1.5537109375, isPrimarySource: true, hyperlinks: null, pageDescription: null },
+                        { documentId: "ac438ab8-3c4a-45ec-ab74-cbf10580f6d8", documentName: "aisc-14th-edition.pdf", documentFamilyId: "AISC-CM-14", familyCode: "AISC", edition: "14", chunkType: "PROSE", pageStart: 2219, pageEnd: 2219, imageUrl: "/v1/standards/image/ac438ab8-3c4a-45ec-ab74-cbf10580f6d8/2219", score: -4.09765625, isPrimarySource: false, hyperlinks: null, pageDescription: null },
+                        { documentId: "7b3f5e0e-553d-45c8-ac5d-4dfa6e48b437", documentName: "completeconnectiondetails-2.pdf", documentFamilyId: "CANAM-SCD-2017", familyCode: "CANAM-SCD", edition: "2017-08", chunkType: "VISUAL", pageStart: 40, pageEnd: 40, imageUrl: "/v1/standards/image/7b3f5e0e-553d-45c8-ac5d-4dfa6e48b437/40", score: -5.75390625, isPrimarySource: false, hyperlinks: null, pageDescription: null },
+                        { documentId: "f09a797b-25a6-4065-a29d-9ecc510cfd8e", documentName: "43rd_Edition_Catalog_Final_With_Errata1and2.pdf", documentFamilyId: "SJI-SPEC-43", familyCode: "SJI-SPEC", edition: "43", chunkType: "TABLE", pageStart: 69, pageEnd: 69, imageUrl: "/v1/standards/image/f09a797b-25a6-4065-a29d-9ecc510cfd8e/69", score: -7.125, isPrimarySource: false, hyperlinks: null, pageDescription: null },
                       ],
                     },
                   },
@@ -590,9 +647,39 @@ const standards_doc: ModuleOpenApiDoc = {
                       queryRewritten: true,
                       effectiveQuery: "According to the structural steel fabrication manual, what is the permitted bolt shear capacity?",
                       results: [
-                        { documentId: "f09a797b-25a6-4065-a29d-9ecc510cfd8e", documentName: "43rd_Edition_Catalog_Final_With_Errata1and2.pdf", documentFamilyId: "SJI-SPEC-43", familyCode: "SJI-SPEC", edition: "43", chunkType: "PROSE", pageStart: 66, pageEnd: 66, imageUrl: "/v1/standards/image/f09a797b-25a6-4065-a29d-9ecc510cfd8e/66", score: -0.8349609375, isPrimarySource: false },
-                        { documentId: "ac438ab8-3c4a-45ec-ab74-cbf10580f6d8", documentName: "aisc-14th-edition.pdf", documentFamilyId: "AISC-CM-14", familyCode: "AISC", edition: "14", chunkType: "PROSE", pageStart: 2117, pageEnd: 2117, imageUrl: "/v1/standards/image/ac438ab8-3c4a-45ec-ab74-cbf10580f6d8/2117", score: -1.015625, isPrimarySource: true },
-                        { documentId: "1360753c-2396-4a69-b4c7-21fcfd2e2842", documentName: "Expansion_Anchor_(316-327)r021.pdf", documentFamilyId: "HILTI-PTG-2008", familyCode: "HILTI-PTG", edition: "2008", chunkType: "TABLE", pageStart: 10, pageEnd: 10, imageUrl: "/v1/standards/image/1360753c-2396-4a69-b4c7-21fcfd2e2842/10", score: -1.4345703125, isPrimarySource: false },
+                        { documentId: "f09a797b-25a6-4065-a29d-9ecc510cfd8e", documentName: "43rd_Edition_Catalog_Final_With_Errata1and2.pdf", documentFamilyId: "SJI-SPEC-43", familyCode: "SJI-SPEC", edition: "43", chunkType: "PROSE", pageStart: 66, pageEnd: 66, imageUrl: "/v1/standards/image/f09a797b-25a6-4065-a29d-9ecc510cfd8e/66", score: -0.8349609375, isPrimarySource: false, hyperlinks: null, pageDescription: null },
+                        { documentId: "ac438ab8-3c4a-45ec-ab74-cbf10580f6d8", documentName: "aisc-14th-edition.pdf", documentFamilyId: "AISC-CM-14", familyCode: "AISC", edition: "14", chunkType: "PROSE", pageStart: 2117, pageEnd: 2117, imageUrl: "/v1/standards/image/ac438ab8-3c4a-45ec-ab74-cbf10580f6d8/2117", score: -1.015625, isPrimarySource: true, hyperlinks: null, pageDescription: null },
+                        { documentId: "1360753c-2396-4a69-b4c7-21fcfd2e2842", documentName: "Expansion_Anchor_(316-327)r021.pdf", documentFamilyId: "HILTI-PTG-2008", familyCode: "HILTI-PTG", edition: "2008", chunkType: "TABLE", pageStart: 10, pageEnd: 10, imageUrl: "/v1/standards/image/1360753c-2396-4a69-b4c7-21fcfd2e2842/10", score: -1.4345703125, isPrimarySource: false, hyperlinks: null, pageDescription: null },
+                      ],
+                    },
+                  },
+                  hyperlinksAndPageDescription: {
+                    summary: "Real capture -- query: \"Weyerhaeuser fire-rated assemblies and sprinkler systems guide TJ-1500 reference\", against a freshly re-ingested TJ-4000.pdf (the one real corpus document confirmed to have hyperlinks). Shows both new fields non-null on the primary source.",
+                    value: {
+                      messageId: "7089f3d1-bfc7-44d5-9d76-90135213bea8",
+                      aiSummary: null,
+                      deferralReason: "The retrieved content does not appear to directly answer this query.",
+                      queryRewritten: false,
+                      effectiveQuery: null,
+                      results: [
+                        {
+                          documentId: "d9621a98-519e-4d95-b251-8659226c2c8c",
+                          documentName: "TJ-4000.pdf",
+                          documentFamilyId: "TJI-SG-4000",
+                          familyCode: "TJI-SG",
+                          edition: "4000",
+                          chunkType: "VISUAL",
+                          pageStart: 3,
+                          pageEnd: 3,
+                          imageUrl: "/v1/standards/image/d9621a98-519e-4d95-b251-8659226c2c8c/3",
+                          score: -0.1636962890625,
+                          isPrimarySource: true,
+                          hyperlinks: [
+                            { uri: "http://www.weyerhaeuser.com/woodproducts/document-library/TJ-1500", text: "Weyerhaeuser Fire-Rated Assemblies and Sprinkler Systems Guide, TJ-1500," },
+                            { uri: "http://www.weyerhaeuser.com/woodproducts", text: "weyerhaeuser.com/woodproducts" },
+                          ],
+                          pageDescription: "This page focuses on fire-safe construction practices, detailing the importance of passive and active fire protection systems, with a specific emphasis on the benefits of automatic fire sprinkler systems and smoke detectors. It includes a section on floor assembly compliance with the 2012 and 2015 International Residential Codes (IRC) for one-hour fire-resistance-rated construction.",
+                        },
                       ],
                     },
                   },
@@ -605,10 +692,10 @@ const standards_doc: ModuleOpenApiDoc = {
                       queryRewritten: false,
                       effectiveQuery: null,
                       results: [
-                        { documentId: "1360753c-2396-4a69-b4c7-21fcfd2e2842", documentName: "Expansion_Anchor_(316-327)r021.pdf", documentFamilyId: "HILTI-PTG-2008", familyCode: "HILTI-PTG", edition: "2008", chunkType: "TABLE", pageStart: 10, pageEnd: 10, imageUrl: "/v1/standards/image/1360753c-2396-4a69-b4c7-21fcfd2e2842/10", score: 1.3466796875, isPrimarySource: true },
-                        { documentId: "ac438ab8-3c4a-45ec-ab74-cbf10580f6d8", documentName: "aisc-14th-edition.pdf", documentFamilyId: "AISC-CM-14", familyCode: "AISC", edition: "14", chunkType: "PROSE", pageStart: 2159, pageEnd: 2159, imageUrl: "/v1/standards/image/ac438ab8-3c4a-45ec-ab74-cbf10580f6d8/2159", score: 0.63330078125, isPrimarySource: false },
-                        { documentId: "f09a797b-25a6-4065-a29d-9ecc510cfd8e", documentName: "43rd_Edition_Catalog_Final_With_Errata1and2.pdf", documentFamilyId: "SJI-SPEC-43", familyCode: "SJI-SPEC", edition: "43", chunkType: "PROSE", pageStart: 66, pageEnd: 66, imageUrl: "/v1/standards/image/f09a797b-25a6-4065-a29d-9ecc510cfd8e/66", score: -0.8310546875, isPrimarySource: false },
-                        { documentId: "7b3f5e0e-553d-45c8-ac5d-4dfa6e48b437", documentName: "completeconnectiondetails-2.pdf", documentFamilyId: "CANAM-SCD-2017", familyCode: "CANAM-SCD", edition: "2017-08", chunkType: "VISUAL", pageStart: 74, pageEnd: 74, imageUrl: "/v1/standards/image/7b3f5e0e-553d-45c8-ac5d-4dfa6e48b437/74", score: -6.375, isPrimarySource: false },
+                        { documentId: "1360753c-2396-4a69-b4c7-21fcfd2e2842", documentName: "Expansion_Anchor_(316-327)r021.pdf", documentFamilyId: "HILTI-PTG-2008", familyCode: "HILTI-PTG", edition: "2008", chunkType: "TABLE", pageStart: 10, pageEnd: 10, imageUrl: "/v1/standards/image/1360753c-2396-4a69-b4c7-21fcfd2e2842/10", score: 1.3466796875, isPrimarySource: true, hyperlinks: null, pageDescription: null },
+                        { documentId: "ac438ab8-3c4a-45ec-ab74-cbf10580f6d8", documentName: "aisc-14th-edition.pdf", documentFamilyId: "AISC-CM-14", familyCode: "AISC", edition: "14", chunkType: "PROSE", pageStart: 2159, pageEnd: 2159, imageUrl: "/v1/standards/image/ac438ab8-3c4a-45ec-ab74-cbf10580f6d8/2159", score: 0.63330078125, isPrimarySource: false, hyperlinks: null, pageDescription: null },
+                        { documentId: "f09a797b-25a6-4065-a29d-9ecc510cfd8e", documentName: "43rd_Edition_Catalog_Final_With_Errata1and2.pdf", documentFamilyId: "SJI-SPEC-43", familyCode: "SJI-SPEC", edition: "43", chunkType: "PROSE", pageStart: 66, pageEnd: 66, imageUrl: "/v1/standards/image/f09a797b-25a6-4065-a29d-9ecc510cfd8e/66", score: -0.8310546875, isPrimarySource: false, hyperlinks: null, pageDescription: null },
+                        { documentId: "7b3f5e0e-553d-45c8-ac5d-4dfa6e48b437", documentName: "completeconnectiondetails-2.pdf", documentFamilyId: "CANAM-SCD-2017", familyCode: "CANAM-SCD", edition: "2017-08", chunkType: "VISUAL", pageStart: 74, pageEnd: 74, imageUrl: "/v1/standards/image/7b3f5e0e-553d-45c8-ac5d-4dfa6e48b437/74", score: -6.375, isPrimarySource: false, hyperlinks: null, pageDescription: null },
                       ],
                     },
                   },
@@ -628,8 +715,11 @@ const standards_doc: ModuleOpenApiDoc = {
     "/projects/{projectId}/standards/chat/history": {
       get: {
         tags: ["Standards"],
-        summary: "Get chat history for a project",
-        description: "Retrieves the standard chat query history and their corresponding answers for a specific project.",
+        summary: "Get chat history for a project (Google-style, same shape as QUERY)",
+        description:
+          "Newest first. Each entry is reconstructed from persisted data to match `POST .../query`'s live response shape exactly (`aiSummary`/`deferralReason`/`results[]`/`queryRewritten`/`effectiveQuery`), not the old per-message/per-answer shape -- `askStandards()` is the sole write path for both endpoints now, so history should look like the thing that created it. See `reconstructHistoryEntry()` in `chatService.ts` for exactly what is and isn't recoverable from persisted data (`results[].score` is always `null` here -- never persisted; `queryRewritten`/`effectiveQuery` are always `false`/`null` -- not persisted either).\n\n" +
+          "**Real bug, fixed this pass:** `results[]` here now shows the SAME set of images the original live QUERY response showed (up to 10, deduped by document) -- previously only the actually-cited subset (3, or 1 for a deferral) was persisted, so a query that showed 10 images live showed only 3 (or fewer) in history. `askStandards()` now persists the full `results[]`-equivalent pool as citations at answer-creation time. Confirmed with a real before/after this session: a live query returning 10 images, then this endpoint for that same message returning the identical 10.\n\n" +
+          "**`results[].hyperlinks`/`results[].pageDescription` (added this pass), reconstructed via the same batched-lookup mechanism as `documentFamilyId`/`familyCode`/`edition`** -- neither is stored on `StandardChatCitation` either, so `getChatHistory()` runs one more batched query (keyed by `documentId`+`pageNumber`) across the whole history page. Confirmed real with a live before/after this session: a query against a freshly re-ingested document (real hyperlinks + a real generated description) showed byte-identical `hyperlinks`/`pageDescription` values here as the original live QUERY response for that same message -- see the `hyperlinksAndPageDescription` example below. `null` for every document that predates these features, same as every other pre-existing document in this response.",
         security: [{ bearerAuth: [] }],
         parameters: [
           {
@@ -641,7 +731,7 @@ const standards_doc: ModuleOpenApiDoc = {
         ],
         responses: {
           "200": {
-            description: "Successfully retrieved history",
+            description: "Real capture (3 entries shown below, not the whole history; a real call returns every message for the project) -- the first entry is the exact before/after test proving the citation-truncation fix: 10 results, matching a live QUERY call to this same message moments earlier. The third entry is the exact before/after test for hyperlinks/pageDescription: real, non-null values matching a live QUERY call to this same message moments earlier.",
             content: {
               "application/json": {
                 schema: {
@@ -649,28 +739,111 @@ const standards_doc: ModuleOpenApiDoc = {
                   items: {
                     type: "object",
                     properties: {
-                      id: { type: "string", format: "uuid" },
-                      projectId: { type: "string", format: "uuid" },
+                      messageId: { type: "string", format: "uuid" },
                       queryText: { type: "string" },
                       createdAt: { type: "string", format: "date-time" },
-                      answers: {
+                      aiSummary: { type: "string", nullable: true },
+                      deferralReason: { type: "string", nullable: true },
+                      queryRewritten: { type: "boolean", description: "Always false here -- not persisted, see description above." },
+                      effectiveQuery: { type: "string", nullable: true, description: "Always null here -- not persisted, see description above." },
+                      results: {
                         type: "array",
+                        description: "Same shape as QUERY's results[], except score is always null (never persisted).",
                         items: {
                           type: "object",
                           properties: {
-                            id: { type: "string", format: "uuid" },
-                            sourceType: { type: "string" },
-                            answerText: { type: "string", nullable: true },
-                            pinnedDocumentId: { type: "string", format: "uuid", nullable: true },
-                            citations: { type: "array", items: { type: "object" } }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
+                            documentId: { type: "string", format: "uuid" },
+                            documentName: { type: "string" },
+                            documentFamilyId: { type: "string", nullable: true },
+                            familyCode: { type: "string", nullable: true },
+                            edition: { type: "string", nullable: true },
+                            chunkType: { type: "string", enum: ["PROSE", "TABLE", "VISUAL"] },
+                            pageStart: { type: "integer" },
+                            pageEnd: { type: "integer" },
+                            imageUrl: { type: "string" },
+                            score: { type: "number", nullable: true, description: "Always null -- never persisted on StandardChatCitation." },
+                            isPrimarySource: { type: "boolean" },
+                            hyperlinks: {
+                              type: "array",
+                              nullable: true,
+                              description: "Real external hyperlinks on this page, reconstructed from standard_pages -- null for every document that predates this feature.",
+                              items: { type: "object", properties: { uri: { type: "string" }, text: { type: "string", nullable: true } } },
+                            },
+                            pageDescription: { type: "string", nullable: true, description: "Reconstructed from standard_pages -- null for every document that predates this feature." },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+                example: [
+                  {
+                    messageId: "b50b3cf4-245c-4c64-bf09-736bb261a8e5",
+                    queryText: "steel joist load table",
+                    createdAt: "2026-09-16T08:06:55.320Z",
+                    aiSummary: "The Load Table provides the TOTAL safe factored uniformly distributed load-carrying capacities, in pounds per linear foot, of LRFD and ASD LH-Series Steel Joists.",
+                    deferralReason: null,
+                    queryRewritten: false,
+                    effectiveQuery: null,
+                    results: [
+                      { documentId: "f09a797b-25a6-4065-a29d-9ecc510cfd8e", documentName: "43rd_Edition_Catalog_Final_With_Errata1and2.pdf", documentFamilyId: "SJI-SPEC-43", familyCode: "SJI-SPEC", edition: "43", chunkType: "PROSE", pageStart: 116, pageEnd: 116, imageUrl: "/v1/standards/image/f09a797b-25a6-4065-a29d-9ecc510cfd8e/116", score: null, isPrimarySource: true, hyperlinks: null, pageDescription: null },
+                      { documentId: "43b824ba-ceca-46d6-ac55-d185f99a6a69", documentName: "NewmillCatalog.pdf", documentFamilyId: "NMBS-JC-2007", familyCode: "NMBS-JC", edition: "2007", chunkType: "PROSE", pageStart: 65, pageEnd: 65, imageUrl: "/v1/standards/image/43b824ba-ceca-46d6-ac55-d185f99a6a69/65", score: null, isPrimarySource: false, hyperlinks: null, pageDescription: null },
+                      { documentId: "08a0558f-d0de-40c4-a019-524b2d34b3eb", documentName: "NASCC2007-SafeHandlePaper_15Jan07.pdf", documentFamilyId: "NASCC-SHP-2007", familyCode: "NASCC-SHP", edition: "2007", chunkType: "PROSE", pageStart: 4, pageEnd: 4, imageUrl: "/v1/standards/image/08a0558f-d0de-40c4-a019-524b2d34b3eb/4", score: null, isPrimarySource: false, hyperlinks: null, pageDescription: null },
+                      { documentId: "96be6053-ce36-413b-b46f-879803a186f7", documentName: "canam-joist-catalog.pdf", documentFamilyId: "CANAM-JC-42", familyCode: "CANAM-JC", edition: "42", chunkType: "TABLE", pageStart: 54, pageEnd: 54, imageUrl: "/v1/standards/image/96be6053-ce36-413b-b46f-879803a186f7/54", score: null, isPrimarySource: false, hyperlinks: null, pageDescription: null },
+                      { documentId: "2090e686-90d2-4da2-b7aa-6db260f5c6b0", documentName: "steeljoists-sec5.pdf", documentFamilyId: "SJI-COSP-2012", familyCode: "SJI-COSP", edition: "2012", chunkType: "PROSE", pageStart: 21, pageEnd: 21, imageUrl: "/v1/standards/image/2090e686-90d2-4da2-b7aa-6db260f5c6b0/21", score: null, isPrimarySource: false, hyperlinks: null, pageDescription: null },
+                      { documentId: "30f68f10-3565-49ce-88f3-0a561f47b0e4", documentName: "steeljoists-sec1.pdf", documentFamilyId: "SJI-DG-2014", familyCode: "SJI-DG", edition: "2014", chunkType: "PROSE", pageStart: 1, pageEnd: 1, imageUrl: "/v1/standards/image/30f68f10-3565-49ce-88f3-0a561f47b0e4/1", score: null, isPrimarySource: false, hyperlinks: null, pageDescription: null },
+                      { documentId: "5e0f1884-1838-4027-892e-7ea1a9f0f38e", documentName: "TJ-4000.pdf", documentFamilyId: "TJI-SG-4000", familyCode: "TJI-SG", edition: "4000", chunkType: "PROSE", pageStart: 13, pageEnd: 13, imageUrl: "/v1/standards/image/5e0f1884-1838-4027-892e-7ea1a9f0f38e/13", score: null, isPrimarySource: false, hyperlinks: null, pageDescription: null },
+                      { documentId: "4892d2fb-44db-40e8-8080-cf22f7a15b97", documentName: "Wood-Beam-Joists-Specs.pdf", documentFamilyId: "WIB-JS-GPI", familyCode: "WIB-JS", edition: "1", chunkType: "TABLE", pageStart: 19, pageEnd: 19, imageUrl: "/v1/standards/image/4892d2fb-44db-40e8-8080-cf22f7a15b97/19", score: null, isPrimarySource: false, hyperlinks: null, pageDescription: null },
+                      { documentId: "ac438ab8-3c4a-45ec-ab74-cbf10580f6d8", documentName: "aisc-14th-edition.pdf", documentFamilyId: "AISC-CM-14", familyCode: "AISC", edition: "14", chunkType: "PROSE", pageStart: 165, pageEnd: 165, imageUrl: "/v1/standards/image/ac438ab8-3c4a-45ec-ab74-cbf10580f6d8/165", score: null, isPrimarySource: false, hyperlinks: null, pageDescription: null },
+                      { documentId: "5e14120e-7676-44d9-beaa-c62a0bc6692b", documentName: "steel joists. - 1926.pdf", documentFamilyId: "SJI-SPT-1926", familyCode: "SJI-SPT", edition: "1926", chunkType: "PROSE", pageStart: 4, pageEnd: 4, imageUrl: "/v1/standards/image/5e14120e-7676-44d9-beaa-c62a0bc6692b/4", score: null, isPrimarySource: false, hyperlinks: null, pageDescription: null },
+                    ],
+                  },
+                  {
+                    messageId: "dadcfd9e-cf77-4c16-970e-d92fc17ee7d5",
+                    queryText: "specification table",
+                    createdAt: "2026-09-15T13:47:30.901Z",
+                    aiSummary: null,
+                    deferralReason: "The retrieved content does not appear to directly answer this query.",
+                    queryRewritten: false,
+                    effectiveQuery: null,
+                    results: [
+                      { documentId: "ac438ab8-3c4a-45ec-ab74-cbf10580f6d8", documentName: "aisc-14th-edition.pdf", documentFamilyId: "AISC-CM-14", familyCode: "AISC", edition: "14", chunkType: "TABLE", pageStart: 191, pageEnd: 191, imageUrl: "/v1/standards/image/ac438ab8-3c4a-45ec-ab74-cbf10580f6d8/191", score: null, isPrimarySource: false, hyperlinks: null, pageDescription: null },
+                      { documentId: "ac438ab8-3c4a-45ec-ab74-cbf10580f6d8", documentName: "aisc-14th-edition.pdf", documentFamilyId: "AISC-CM-14", familyCode: "AISC", edition: "14", chunkType: "TABLE", pageStart: 1766, pageEnd: 1766, imageUrl: "/v1/standards/image/ac438ab8-3c4a-45ec-ab74-cbf10580f6d8/1766", score: null, isPrimarySource: false, hyperlinks: null, pageDescription: null },
+                      { documentId: "ac438ab8-3c4a-45ec-ab74-cbf10580f6d8", documentName: "aisc-14th-edition.pdf", documentFamilyId: "AISC-CM-14", familyCode: "AISC", edition: "14", chunkType: "PROSE", pageStart: 1487, pageEnd: 1487, imageUrl: "/v1/standards/image/ac438ab8-3c4a-45ec-ab74-cbf10580f6d8/1487", score: null, isPrimarySource: false, hyperlinks: null, pageDescription: null },
+                    ],
+                  },
+                  {
+                    messageId: "7089f3d1-bfc7-44d5-9d76-90135213bea8",
+                    queryText: "Weyerhaeuser fire-rated assemblies and sprinkler systems guide TJ-1500 reference",
+                    createdAt: "2026-09-17T09:12:00.000Z",
+                    aiSummary: null,
+                    deferralReason: "The retrieved content does not appear to directly answer this query.",
+                    queryRewritten: false,
+                    effectiveQuery: null,
+                    results: [
+                      {
+                        documentId: "d9621a98-519e-4d95-b251-8659226c2c8c",
+                        documentName: "TJ-4000.pdf",
+                        documentFamilyId: "TJI-SG-4000",
+                        familyCode: "TJI-SG",
+                        edition: "4000",
+                        chunkType: "VISUAL",
+                        pageStart: 3,
+                        pageEnd: 3,
+                        imageUrl: "/v1/standards/image/d9621a98-519e-4d95-b251-8659226c2c8c/3",
+                        score: null,
+                        isPrimarySource: true,
+                        hyperlinks: [
+                          { uri: "http://www.weyerhaeuser.com/woodproducts/document-library/TJ-1500", text: "Weyerhaeuser Fire-Rated Assemblies and Sprinkler Systems Guide, TJ-1500," },
+                          { uri: "http://www.weyerhaeuser.com/woodproducts", text: "weyerhaeuser.com/woodproducts" },
+                        ],
+                        pageDescription: "This page focuses on fire-safe construction practices, detailing the importance of passive and active fire protection systems, with a specific emphasis on the benefits of automatic fire sprinkler systems and smoke detectors. It includes a section on floor assembly compliance with the 2012 and 2015 International Residential Codes (IRC) for one-hour fire-resistance-rated construction.",
+                      },
+                    ],
+                  },
+                ],
+              },
+            },
           },
           "401": {
             description: "Unauthorized - missing or invalid authentication token",

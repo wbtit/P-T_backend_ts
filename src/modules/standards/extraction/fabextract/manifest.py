@@ -72,6 +72,43 @@ _VALIDITY_TO_REASON = {
 }
 
 
+def _extract_hyperlinks(page):
+    """Real external hyperlinks on this page (`{uri, text}`), best-effort
+    anchor text via a bbox crop.
+
+    Feature: preserve hyperlinks from source PDFs, surfaced in citations.
+    Checked directly against 8 real corpus documents before building this:
+    only 1 of 8 had any hyperlinks at all (20, all external `http(s)://`
+    URIs -- manufacturer spec-sheet links and legal-notice boilerplate).
+    Zero internal same-PDF page-jump links found anywhere in that sample, so
+    only the external case is handled here -- `page.hyperlinks` entries
+    without a `uri` (which is how an internal GoTo action would appear)
+    never occurred in the real corpus and are skipped rather than guessed at.
+
+    Anchor text is best-effort, not guaranteed: cropping to the link's own
+    bounding box recovers real text for most links but comes back empty for
+    some (an icon/graphic link with no text glyph under it) or slightly
+    clipped at an edge (pdfplumber bbox tightness) -- confirmed both
+    behaviors on the real corpus. `text` is `None` when nothing could be
+    recovered, never a guess.
+    """
+    links = []
+    for link in page.hyperlinks:
+        uri = link.get("uri")
+        if not uri:
+            continue
+        text = None
+        try:
+            cropped = page.within_bbox((link["x0"], link["top"], link["x1"], link["bottom"]))
+            extracted = cropped.extract_text()
+            if extracted and extracted.strip():
+                text = extracted.strip()
+        except Exception:
+            pass
+        links.append({"uri": uri, "text": text})
+    return links
+
+
 def build_page_manifest(page, page_index, heading=None, min_edge_length=None,
                         ocr_text=None, document_id=None):
     """Assemble one page's manifest.
@@ -106,6 +143,10 @@ def build_page_manifest(page, page_index, heading=None, min_edge_length=None,
         "extractionStatus": VISUAL_ONLY,
         "visualOnlyReason": None,
         "proseReliabilityReason": None,
+        # Independent of table-extraction validity -- a page can have a real
+        # hyperlink regardless of whether its tables are trustworthy, so this
+        # is set unconditionally, not skipped on the early-return below.
+        "hyperlinks": _extract_hyperlinks(page),
     }
 
     if validity["status"] != validity_mod.VALID:

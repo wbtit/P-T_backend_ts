@@ -38,6 +38,15 @@ export interface RetrievedChunk {
   reliabilityReason: string | null;
   score: number;
   branch: "table" | "prose";
+  /** From standard_pages, via a LEFT JOIN on (document_id, page_number =
+   *  page_start) -- same mechanism as familyCode/edition above, one more
+   *  field. `null` for every one of the 16 pre-existing documents (never
+   *  backfilled, by design) and for any page with zero real hyperlinks. */
+  hyperlinks: { uri: string; text: string | null }[] | null;
+  /** Same LEFT JOIN. `null` for the 16 pre-existing documents and for any
+   *  future page with zero real text/OCR content -- both by design, not a
+   *  gap. See StandardPage.pageDescription's schema comment. */
+  pageDescription: string | null;
 }
 
 // Phase 5 §1.3: project-scoping lives in retrievalService.ts's
@@ -160,11 +169,13 @@ export async function tableBranch(
            p.chunk_type AS "chunkType", p.page_start AS "pageStart",
            p.page_end AS "pageEnd", p.text_content AS "textContent",
            p.heading, p.reliability_reason AS "reliabilityReason",
+           sp.hyperlinks, sp.page_description AS "pageDescription",
            r.dense_score AS score
     FROM ranked r
     JOIN standard_chunks p ON p.id = r.parent_id
     JOIN standard_documents d ON d.id = r.document_id
     LEFT JOIN standard_families f ON f.id = d.document_family_id
+    LEFT JOIN standard_pages sp ON sp.document_id = p.document_id AND sp.page_number = p.page_start
     WHERE r.rn <= $4
     ORDER BY r.document_id, r.dense_score DESC
     `,
@@ -250,11 +261,13 @@ export async function proseBranch(
            b.chunk_type AS "chunkType", b.page_start AS "pageStart",
            b.page_end AS "pageEnd", b.text_content AS "textContent", b.heading,
            b.reliability_reason AS "reliabilityReason",
+           sp.hyperlinks, sp.page_description AS "pageDescription",
            b.dense_score AS score
     FROM ranked r
     JOIN base b ON b.id = r.id
     JOIN standard_documents d ON d.id = r.document_id
     LEFT JOIN standard_families f ON f.id = d.document_family_id
+    LEFT JOIN standard_pages sp ON sp.document_id = b.document_id AND sp.page_number = b.page_start
     WHERE r.rn <= $4
     ORDER BY r.document_id, r.rrf_score DESC
     `,

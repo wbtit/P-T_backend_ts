@@ -2794,7 +2794,38 @@ model StandardPage {
   imagePath       String  @map("image_path")
   textContent     String  @map("text_content") @db.Text
   ocrText         String? @map("ocr_text") @db.Text
-  visionExtracted Boolean @default(false) @map("vision_extracted")
+
+  // Feature: preserve hyperlinks from source PDFs, surfaced in citations.
+  // JSON array, not a separate table -- page-scoped, low cardinality
+  // (checked directly: only 1 of 8 real sampled documents had any hyperlinks
+  // at all, 20 total, all external), nothing else needs to reference a
+  // hyperlink as its own entity. `null` when a page has zero real links (the
+  // common case); a non-empty `{uri, text}[]` array when real ones exist.
+  // `text` (anchor text, best-effort via a bbox crop) can itself be null.
+  // No internal same-PDF page-jump handling -- confirmed zero real examples
+  // in the sampled corpus before deciding not to build it.
+  hyperlinks Json? @map("hyperlinks")
+
+  // Feature: 2-3 sentence page description (Google-image-search style),
+  // generated at ingestion (qwen2.5, one LLM call per page, ~1.6s measured
+  // average), shown per citation. FUTURE DOCUMENTS ONLY, by design -- all
+  // pages of the 16 documents ingested before this feature stay `null`
+  // forever, never backfilled. Also `null` for any future page with zero
+  // real text/OCR content (measured: ~14% of VISUAL_ONLY pages) -- generating
+  // a description from nothing produced a confirmed, real hallucination
+  // during design testing, so those are skipped rather than guessed at, same
+  // standing policy as `isUnreliable()` elsewhere in this project.
+  pageDescription String? @map("page_description") @db.Text
+
+  // visionExtracted (`vision_extracted`) removed here -- confirmed via a
+  // full-codebase audit (schema + every API/controller file + the Python
+  // extraction module + .env) that it was never read or written anywhere:
+  // real multimodal residue, not a field any live code path depended on.
+  // This project's real pipeline is text/table extraction only (OCR is a
+  // deterministic technique, not a multimodal model); no vision-language
+  // model is called anywhere in it. Draft DROP COLUMN in
+  // prisma/phase2_draft/007_remove_vision_extracted_column.sql -- not
+  // applied here, waiting on Gowtham's `db push` per the established process.
 
   // Exists live (boolean NOT NULL) but was missing from this file; recorded
   // here so `db push` cannot drop it. Legacy heuristic flag from the current
