@@ -1,6 +1,6 @@
 import { Queue, Worker, QueueEvents } from "bullmq";
 import Redis from "ioredis";
-import { RetrievedChunk } from "../services/retrievalService";
+import { RetrievedChunk } from "../services/retrievalTwoBranch";
 
 const redisOptions = {
   host: process.env.REDIS_HOST || "localhost",

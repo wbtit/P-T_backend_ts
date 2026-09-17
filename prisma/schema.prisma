@@ -926,7 +926,6 @@ model Project {
   coordinationDrawings    CoordinationDrawing[]
   standardDocuments       StandardDocument[]
   standardChatMessages    StandardChatMessage[]
-  standardPreferences     ProjectStandardPreference[]
 
   @@index([name])
   @@index([fabricatorID])
@@ -2507,6 +2506,19 @@ enum BfaStatus {
   complete
 }
 
+// PROJECT retired -- Phase 5, confirmed with the client: PROJECT-tier scoping
+// is old 3-tier architecture, no longer written by any code (last writer,
+// the tier-preference controller endpoints, removed in the same change).
+// Same precedent as NO_CONFIDENT_REGION above: kept live in the enum rather
+// than dropped, decided after finding 366 real `standard_chat_answers` rows
+// still carry it (all boilerplate "not covered" stubs, zero real content, but
+// real history nonetheless) -- Postgres cannot drop an enum value without
+// recreating the type and remapping every row using it, and relabeling or
+// deleting real historical rows to buy a marginally tidier enum was judged a
+// worse trade than the one already made for NO_CONFIDENT_REGION. See
+// prisma/phase2_draft/005_phase5_remove_project_tier.sql for the draft DDL --
+// only the ProjectStandardPreference table is actually dropped; this enum
+// value is not.
 enum StandardSourceType {
   GENERAL
   FABRICATOR
@@ -2515,40 +2527,103 @@ enum StandardSourceType {
 
 enum StandardChunkType {
   PROSE
+  TABLE
   VISUAL
+}
+
+enum ExtractionStatus {
+  EXTRACTED
+  VISUAL_ONLY
+}
+
+enum VisualOnlyReason {
+  EMPTY
+  UNMAPPED_GLYPH
+  DUPLICATE_TEXT
+  SCANNED
+  REJECTED_REGION
+
+  // Retired by Phase 2 amendment 9 (see specs/): conflated "no table on this
+  // page" with "a table we could not read" -- only the second is
+  // visual-only. New code never writes this value. Kept in the enum only
+  // because Postgres cannot drop an enum value without recreating the type,
+  // and 7 EA rows and any un-reingested legacy rows still carry it. Drop it
+  // in a later cleanup once nothing references it live.
+  NO_CONFIDENT_REGION
+
+  // Added by Phase 2 amendment 10 (PROPOSED, see specs/ -- draft only, not
+  // yet applied to the database). Both are page-level verdicts detected at
+  // finer-than-page granularity -- same "unit is the page" decision as every
+  // existing reason, evidence measured finer-grained, not a new unit. Given
+  // distinct codes rather than folded into REJECTED_REGION/UNMAPPED_GLYPH,
+  // per the same precedent that retired NO_CONFIDENT_REGION for conflating
+  // causes that need to stay distinguishable downstream.
+  //
+  // TABLE_LOCAL_CORRUPTION is live: fabextract.tables writes it today.
+  // INTERLEAVED_TEXT is NOT YET REACHABLE -- fabextract.validity computes the
+  // signal but does not gate page status with it yet (false-positives on real
+  // table content; needs §2-region-exclusion, which conflicts with §1's
+  // "runs before §2 exists" ordering -- an open design question). Kept in
+  // this same migration as forward-compatible scaffolding so wiring it in
+  // later needs no second enum migration.
+  TABLE_LOCAL_CORRUPTION
+  INTERLEAVED_TEXT
+}
+
+// Added by Phase 2 amendment 11 (PROPOSED, see specs/ -- draft only, not yet
+// applied to the database). Deliberately NOT a VisualOnlyReason: that enum
+// records page-level verdicts; this one records chunk-level trustworthiness,
+// independent of which retrieval branch (table vs. prose) surfaces the
+// chunk -- see StandardChunk.reliabilityReason below and Amendment 11 in the
+// spec for why chunk granularity was chosen over reusing extractionStatus.
+enum ChunkReliabilityReason {
+  // A page had >=1 confirmed table region AND interleaved-text lines, but
+  // every flagged line's bbox had zero 2D overlap with every table's bbox.
+  // The table stays EXTRACTED; the page's PROSE chunk (only) carries this.
+  INTERLEAVED_TEXT
+}
+
+// NULL_SOURCE is an explicit member, not SQL NULL: it records that detection
+// ran and produced no trusted heading, as distinct from "not yet computed".
+enum HeadingSource {
+  OUTLINE
+  REGEX
+  NULL_SOURCE
 }
 
 enum StandardDocumentStatus {
   PENDING
+  // Phase 6: the document row exists and a background ingestion job is
+  // actively running against it right now (see documentIngestion.ts).
+  // Distinct from PENDING, which now covers both "queued, not yet picked up"
+  // and "a run finished, awaiting ACTIVATE" -- processingStage + pagesProcessed/
+  // totalPages distinguish those two within PENDING; PROCESSING is only the
+  // in-between state a poller needs to show a real "running" indicator for.
+  PROCESSING
   ACTIVE
   SUPERSEDED
   FAILED
 }
 
 model StandardFamily {
-  id          String   @id // e.g., "AISC-CM-14", "GSMS"
-  familyCode  String   @map("family_code")
-  edition     String
-  isDefault   Boolean  @default(false) @map("is_default")
+  id         String  @id // e.g., "AISC-CM-14", "GSMS"
+  familyCode String  @map("family_code")
+  edition    String
+  isDefault  Boolean @default(false) @map("is_default")
 
-  preferences ProjectStandardPreference[]
-  documents   StandardDocument[]
+  documents StandardDocument[]
 
   @@map("standard_families")
 }
 
-model ProjectStandardPreference {
-  id               String             @id @default(uuid()) @db.Uuid
-  projectId        String             @map("project_id") @db.Uuid
-  standardFamilyId String             @map("standard_family_id")
-  sourceType       StandardSourceType @default(GENERAL) @map("source_type")
-
-  project        Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  standardFamily StandardFamily @relation(fields: [standardFamilyId], references: [id], onDelete: Cascade)
-
-  @@unique([projectId, standardFamilyId, sourceType])
-  @@map("project_standard_preferences")
-}
+// ProjectStandardPreference (model + table `project_standard_preferences`)
+// removed -- Phase 5, confirmed with the client: PROJECT-tier scoping and
+// per-project GENERAL curation were both old 3-tier architecture, retired by
+// the same client pivot that removed tier selection from the user. GENERAL is
+// now unconditional/org-wide (retrievalService.ts's resolveProjectDocumentIds);
+// FABRICATOR is auto-derived from Project.fabricatorID. No table replaces this
+// one -- there is nothing left for a project to curate. See prisma/phase2_draft
+// for the draft DROP TABLE.
 
 model StandardDocument {
   id               String                 @id @default(uuid()) @db.Uuid
@@ -2558,7 +2633,11 @@ model StandardDocument {
   pdfName          String                 @map("pdf_name")
   storagePath      String                 @map("storage_path")
   status           StandardDocumentStatus @default(PENDING)
-  processingStage  String?                @map("processing_stage") // EXTRACTING, CLASSIFYING, CHUNKING
+  // Phase 6: real stage names for the actual Phase 2 pipeline (ingestDocument()),
+  // not the legacy pipeline's EXTRACTING/CLASSIFYING/CHUNKING -- set by
+  // documentIngestion.ts's onProgress callback: EXTRACTING -> CHUNKING ->
+  // EMBEDDING (commit only) -> PERSISTING (commit only) -> null on completion.
+  processingStage  String?                @map("processing_stage")
   pagesProcessed   Int                    @default(0) @map("pages_processed")
   totalPages       Int                    @default(0) @map("total_pages")
   failureReason    String?                @map("failure_reason")
@@ -2566,13 +2645,28 @@ model StandardDocument {
   excludedPages    Int[]                  @default([]) @map("excluded_pages")
   uploadedAt       DateTime               @default(now()) @map("uploaded_at")
 
+  // Phase 6: the IngestReport ingestDocument() returns (pages, chunks, byType,
+  // parents/children, embedded/notEmbedded, truncationRisk, and -- once
+  // committed -- written counts). The async UPLOAD endpoint returns
+  // immediately, before this exists; a poller reads it from here once
+  // processingStage clears. Nullable, no default: absent until a run
+  // completes, whether that run was a dry-run or a commit.
+  ingestReport Json? @map("ingest_report")
+
+  // Phase 2: per-document heading provenance. All nullable -- documents
+  // ingested before the new pipeline have no measurement.
+  noHeadingsDetected   Boolean? @map("no_headings_detected")
+  headingCoverageRatio Float?   @map("heading_coverage_ratio")
+  outlineCoverageRatio Float?   @map("outline_coverage_ratio")
+  outlineFillEnabled   Boolean? @map("outline_fill_enabled")
+
   // Relations
-  project       Project?             @relation(fields: [projectId], references: [id], onDelete: Restrict)
-  fabricator    Fabricator?          @relation(fields: [fabricatorId], references: [id], onDelete: Restrict)
+  project        Project?             @relation(fields: [projectId], references: [id], onDelete: Restrict)
+  fabricator     Fabricator?          @relation(fields: [fabricatorId], references: [id], onDelete: Restrict)
   documentFamily StandardFamily?      @relation(fields: [documentFamilyId], references: [id], onDelete: Restrict)
-  chunks        StandardChunk[]
-  pinnedAnswers StandardChatAnswer[]
-  StandardPage  StandardPage[]
+  chunks         StandardChunk[]
+  pinnedAnswers  StandardChatAnswer[]
+  StandardPage   StandardPage[]
 
   @@map("standard_documents")
 }
@@ -2591,6 +2685,32 @@ model StandardChunk {
   fabricatorId String?            @map("fabricator_id") @db.Uuid
   heading      String?            @map("heading")
 
+  // Exists live but was missing from this file; recorded here so `db push`
+  // cannot drop it. Legacy page-level parent link (FK -> standard_pages).
+  // Currently 0 rows. NOT reused for table parent/child -- see phase2_draft.
+  parentPageId String? @map("parent_page_id") @db.Uuid
+
+  // Phase 2. All nullable, NO default: a default would backfill existing rows
+  // and destroy the null-vs-set boundary that identifies legacy rows.
+  documentFamilyId String? @map("document_family_id")
+  edition          String? @map("edition")
+
+  // Table parent/child. A parent is one whole table (citation identity, full
+  // serialized grid). Children are header row + ~10 data rows, embedded
+  // separately and max-pooled to the parent at query time.
+  parentChunkId String? @map("parent_chunk_id") @db.Uuid
+  rowGroupIndex Int?    @map("row_group_index")
+
+  parentChunk StandardChunk?  @relation("ChunkRowGroups", fields: [parentChunkId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  rowGroups   StandardChunk[] @relation("ChunkRowGroups")
+
+  // Phase 2 amendment 11 (PROPOSED, draft only). Nullable, no default: a
+  // default would backfill every existing row and destroy the null-vs-set
+  // boundary that identifies which chunks actually hit the Amendment 11
+  // exception. Set only on a PROSE chunk; every TABLE parent/child and every
+  // VISUAL chunk is NULL by construction (manifestChunking.ts).
+  reliabilityReason ChunkReliabilityReason? @map("reliability_reason")
+
   // Storing a 768-dimensional vector for Ollama nomic-embed-text embeddings.
   embedding Unsupported("vector(768)")?
 
@@ -2599,6 +2719,14 @@ model StandardChunk {
   // Relations
   document StandardDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
 
+  // Retrieval fetches a parent's children by parent id, in row-group order.
+  @@index([parentChunkId, rowGroupIndex])
+  // Modality-separated retrieval: table branch vs prose branch, per document.
+  @@index([documentId, chunkType])
+  // Duplicate children become impossible rather than dependent on the
+  // idempotency strategy. Parents all carry (NULL, NULL) and Postgres treats
+  // NULLs as distinct in a unique index, so parents never collide.
+  @@unique([parentChunkId, rowGroupIndex])
   @@map("standard_chunks")
 }
 
@@ -2629,6 +2757,11 @@ model StandardChatAnswer {
   imagePaths        String[]           @map("image_paths") // Array of string paths
   pinnedDocumentId  String?            @map("pinned_document_id") @db.Uuid
 
+  // Exist live but were missing from this file; recorded here so `db push`
+  // cannot drop them. Both are on the Phase 0 "keep" list.
+  generationStatus        String? @map("generation_status")
+  generationFailureReason String? @map("generation_failure_reason")
+
   citations StandardChatCitation[]
 
   // Relations
@@ -2656,14 +2789,59 @@ model StandardChatCitation {
 }
 
 model StandardPage {
-  id          String   @id @default(uuid()) @db.Uuid
-  documentId  String   @map("document_id") @db.Uuid
-  pageNumber  Int      @map("page_number")
-  imagePath   String   @map("image_path")
-  textContent String   @map("text_content") @db.Text
-  ocrText     String?  @map("ocr_text") @db.Text
-  visionExtracted Boolean @default(false) @map("vision_extracted")
-  createdAt   DateTime @default(now()) @map("created_at")
+  id              String  @id @default(uuid()) @db.Uuid
+  documentId      String  @map("document_id") @db.Uuid
+  pageNumber      Int     @map("page_number")
+  imagePath       String  @map("image_path")
+  textContent     String  @map("text_content") @db.Text
+  ocrText         String? @map("ocr_text") @db.Text
+
+  // Feature: preserve hyperlinks from source PDFs, surfaced in citations.
+  // JSON array, not a separate table -- page-scoped, low cardinality
+  // (checked directly: only 1 of 8 real sampled documents had any hyperlinks
+  // at all, 20 total, all external), nothing else needs to reference a
+  // hyperlink as its own entity. `null` when a page has zero real links (the
+  // common case); a non-empty `{uri, text}[]` array when real ones exist.
+  // `text` (anchor text, best-effort via a bbox crop) can itself be null.
+  // No internal same-PDF page-jump handling -- confirmed zero real examples
+  // in the sampled corpus before deciding not to build it.
+  hyperlinks Json? @map("hyperlinks")
+
+  // Feature: 2-3 sentence page description (Google-image-search style),
+  // generated at ingestion (qwen2.5, one LLM call per page, ~1.6s measured
+  // average), shown per citation. FUTURE DOCUMENTS ONLY, by design -- all
+  // pages of the 16 documents ingested before this feature stay `null`
+  // forever, never backfilled. Also `null` for any future page with zero
+  // real text/OCR content (measured: ~14% of VISUAL_ONLY pages) -- generating
+  // a description from nothing produced a confirmed, real hallucination
+  // during design testing, so those are skipped rather than guessed at, same
+  // standing policy as `isUnreliable()` elsewhere in this project.
+  pageDescription String? @map("page_description") @db.Text
+
+  // visionExtracted (`vision_extracted`) removed here -- confirmed via a
+  // full-codebase audit (schema + every API/controller file + the Python
+  // extraction module + .env) that it was never read or written anywhere:
+  // real multimodal residue, not a field any live code path depended on.
+  // This project's real pipeline is text/table extraction only (OCR is a
+  // deterministic technique, not a multimodal model); no vision-language
+  // model is called anywhere in it. Draft DROP COLUMN in
+  // prisma/phase2_draft/007_remove_vision_extracted_column.sql -- not
+  // applied here, waiting on Gowtham's `db push` per the established process.
+
+  // Exists live (boolean NOT NULL) but was missing from this file; recorded
+  // here so `db push` cannot drop it. Legacy heuristic flag from the current
+  // system -- new code must NOT read or write it. Extraction confidence is now
+  // structural: extractionStatus + visualOnlyReason is the real signal.
+  highConfidenceExtraction Boolean @default(false) @map("high_confidence_extraction")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Phase 2: structural extraction outcome. Set from spec §1-2 results, never
+  // by heuristic. extractionStatus + visualOnlyReason together are THE
+  // confidence signal; highConfidenceExtraction above is legacy and frozen.
+  extractionStatus ExtractionStatus? @map("extraction_status")
+  visualOnlyReason VisualOnlyReason? @map("visual_only_reason")
+  headingSource    HeadingSource?    @map("heading_source")
 
   classification StandardChunkType? @map("classification")
 
