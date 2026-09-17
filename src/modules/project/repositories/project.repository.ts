@@ -1058,6 +1058,34 @@ async getAllDocuments(id:string, role?: UserRole){
                 files: true,
               },
             },
+            bfa: {
+              select: {
+                id: true,
+                serialNo: true,
+                subject: true,
+                description: true,
+                status: true,
+                createdAt: true,
+                currentVersion: {
+                  select: {
+                    id: true,
+                    versionNumber: true,
+                    description: true,
+                    createdAt: true,
+                    file: true,
+                  },
+                },
+                versions: {
+                  select: {
+                    id: true,
+                    versionNumber: true,
+                    description: true,
+                    createdAt: true,
+                    file: true,
+                  },
+                },
+              },
+            },
           },
         },
         changeOrders: {
@@ -1199,6 +1227,28 @@ async getAllDocuments(id:string, role?: UserRole){
           createdAt: response.createdAt,
           files: normalizeFiles(response.files),
         })),
+        bfa: submittal.bfa ? {
+          id: submittal.bfa.id,
+          serialNo: submittal.bfa.serialNo,
+          subject: submittal.bfa.subject,
+          description: submittal.bfa.description,
+          status: submittal.bfa.status,
+          createdAt: submittal.bfa.createdAt,
+          currentVersion: submittal.bfa.currentVersion ? {
+            id: submittal.bfa.currentVersion.id,
+            versionNumber: submittal.bfa.currentVersion.versionNumber,
+            description: submittal.bfa.currentVersion.description,
+            createdAt: submittal.bfa.currentVersion.createdAt,
+            files: normalizeFiles(submittal.bfa.currentVersion.file),
+          } : null,
+          versions: submittal.bfa.versions.map((version) => ({
+            id: version.id,
+            versionNumber: version.versionNumber,
+            description: version.description,
+            createdAt: version.createdAt,
+            files: normalizeFiles(version.file),
+          })),
+        } : null,
       })),
       changeOrders: project.changeOrders.map((changeOrder) => ({
         id: changeOrder.id,

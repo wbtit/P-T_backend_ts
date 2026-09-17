@@ -1,4 +1,4 @@
-import { Response, NextFunction } from "express";
+import { Response } from "express";
 import { AuthenticateRequest } from "./authMiddleware";
 
 /**
@@ -26,6 +26,8 @@ const AUTHORITATIVE_ROLES = [
   "CONNECTION_DESIGNER_ADMIN",
   "CONNECTION_DESIGNER_ENGINEER",
   "ESTIMATION_HEAD",
+  "CLIENT_ADMIN",
+  "CLIENT",
 ];
 
 const ALLOWED_DESIGNATIONS = ["modeler", "checker"];
