@@ -75,7 +75,7 @@ export class TaskController {
     }
     const { role } = req.user;
     let results;
-    if(role === 'ADMIN'|| role === 'OPERATION_EXECUTIVE'|| role === 'HUMAN_RESOURCE' || role === 'DEPUTY_MANAGER' || role === 'PROJECT_MANAGER_OFFICER'){
+    if(role === 'ADMIN'|| role === 'OPERATION_EXECUTIVE'|| role === 'OPERATION_EXECUTIVE_TRAINEE' || role === 'HUMAN_RESOURCE' || role === 'DEPUTY_MANAGER' || role === 'PROJECT_MANAGER_OFFICER'){
         results=await taskService.getAllTasks();
     }else if (role === 'DEPT_MANAGER'){
         results= await taskService.getTasksForDepartmentManager(req.user.id);
