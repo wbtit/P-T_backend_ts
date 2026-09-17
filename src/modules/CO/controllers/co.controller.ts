@@ -264,6 +264,13 @@ async handlePendingCOsForClient(req: AuthenticateRequest, res: Response) {
           const uniqueCoEmails = Array.from(new Set(coEmails));
           const coSubject = `Change Order ${updatedCo.changeOrderNumber || ""} - ${stripHtml(updatedCo.remarks) || ""}`.trim();
           const fabricatorName = (await getFabricatorNameForUser(updaterId, req.user?.role)) || undefined;
+          
+          const approver = await prisma.user.findUnique({
+            where: { id: updaterId },
+            select: { firstName: true, lastName: true, username: true, email: true }
+          });
+          if (approver) coAny.approvedBy = approver;
+
           const coHtml = coHtmlContent(coAny, fabricatorName);
 
           const internalRoles: UserRole[] = ["ADMIN", "DEPUTY_MANAGER", "OPERATION_EXECUTIVE", "OPERATION_EXECUTIVE_TRAINEE", "PROJECT_MANAGER_OFFICER"];
@@ -397,6 +404,17 @@ async handlePendingCOsForClient(req: AuthenticateRequest, res: Response) {
       });
       if (!project) {
         throw new AppError("Access denied: You are not assigned to this project", 403);
+      }
+    }
+
+    if (req.user?.role === "OPERATION_EXECUTIVE_TRAINEE") {
+      if (co.currentVersion) {
+        delete (co.currentVersion as any).changeOrderTables;
+      }
+      if (co.versions && Array.isArray(co.versions)) {
+        co.versions.forEach(v => {
+          delete (v as any).changeOrderTables;
+        });
       }
     }
 

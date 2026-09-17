@@ -276,7 +276,7 @@ export class RFIController {
               multipleRecipients: true,
               project: true,
               sender: { select: { firstName: true, middleName: true, lastName: true, username: true, email: true, id: true } },
-              approvedBy: { select: { firstName: true, lastName: true, username: true } }
+              approvedBy: { select: { firstName: true, lastName: true, username: true, email: true } }
             }
           });
           const recipientEmails = [

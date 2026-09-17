@@ -83,7 +83,7 @@ export const coHtmlContent = (co: any, fabricatorName?: string) => {
 
                 <tr>
                   <td width="140" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #888888; font-weight: bold; font-size: 14px;">Sender</td>
-                  <td valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333;">${[co.senders?.firstName, co.senders?.lastName].filter(Boolean).join(" ") || co.senders?.username || "N/A"}</td>
+                  <td valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #333333;">${(co.approvedBy || co.senders) ? `${[co.approvedBy?.firstName || co.senders?.firstName, co.approvedBy?.lastName || co.senders?.lastName].filter(Boolean).join(" ") || co.approvedBy?.username || co.senders?.username || "N/A"} ${(co.approvedBy?.email || co.senders?.email) ? `(${co.approvedBy?.email || co.senders?.email})` : ""}` : "N/A"}</td>
                 </tr>
                 <tr>
                   <td width="140" valign="top" style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #888888; font-weight: bold; font-size: 14px;">Sent On</td>
