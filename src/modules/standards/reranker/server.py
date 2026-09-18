@@ -42,8 +42,11 @@ def _load_model():
     import torch
     from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    dtype = torch.float16 if torch.cuda.is_available() else torch.float32
+
     tok = AutoTokenizer.from_pretrained(MODEL_NAME)
-    model = AutoModelForSequenceClassification.from_pretrained(MODEL_NAME, dtype=torch.float16).cuda()
+    model = AutoModelForSequenceClassification.from_pretrained(MODEL_NAME, torch_dtype=dtype).to(device)
     model.eval()
     return tok, model
 
@@ -65,18 +68,20 @@ def _release(model, tok):
     del model
     del tok
     gc.collect()
-    torch.cuda.empty_cache()
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
 
 
 def _score(tok, model, query, candidates):
     import torch
 
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     pairs = [[query, c["text"][:2000]] for c in candidates]  # char cap; tokenizer truncates to MAX_LEN anyway
     scores = []
     with torch.no_grad():
         for i in range(0, len(pairs), BATCH):
             batch = pairs[i:i + BATCH]
-            inputs = tok(batch, padding=True, truncation=True, max_length=MAX_LEN, return_tensors="pt").to("cuda")
+            inputs = tok(batch, padding=True, truncation=True, max_length=MAX_LEN, return_tensors="pt").to(device)
             logits = model(**inputs).logits.view(-1).float().cpu().tolist()
             scores.extend(logits)
     return scores

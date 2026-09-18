@@ -440,7 +440,7 @@ async expandProjectWbs(
       //acts as point of contact
       projects = await projectRepository.getProjectsForClient(user.id, skip, take, filters);
      }
-     if(user.role==="STAFF"){
+     if(user.role==="STAFF"|| user.role==="ESTIMATOR"){
       //only his assigned projects
       projects = await projectRepository.getForStaff(user.id, skip, take, filters);
      }
