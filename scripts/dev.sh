@@ -27,6 +27,13 @@
 # always actually finishes, even if it races a respawn.
 set -uo pipefail
 
+# Load environment variables from .env if present (so system-specific paths like RERANKER_PYTHON can be defined locally)
+if [ -f .env ]; then
+  set -a
+  source .env
+  set +a
+fi
+
 RERANKER_PYTHON="${RERANKER_PYTHON:-.venv/bin/python3}"
 RERANKER_SCRIPT="src/modules/standards/reranker/server.py"
 RERANKER_PORT="${RERANKER_PORT:-8008}"
