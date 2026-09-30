@@ -109,6 +109,7 @@ export class CoResponseService {
   }
 
   async findByCoId(coId: string) {
-    return await coResponseRepo.findbyId(coId);
+    const responses = await coResponseRepo.findByCoId(coId);
+    return responses;
   }
 }

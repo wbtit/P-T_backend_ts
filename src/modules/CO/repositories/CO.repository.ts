@@ -477,7 +477,13 @@ async findPendingCOsForDepartmentManager(managerId: string) {
 async findPendingCOsForProjectManager(managerId: string) {
     return await prisma.changeOrder.findMany({
         where: {
-            Project: { managerID: managerId },
+            Project: {
+                isDeleted: false,
+                OR: [
+                    { managerID: managerId },
+                    { assists: { some: { userId: managerId, isActive: true } } },
+                ],
+            },
             NOT: {
                 coResponses: {
                     some: {
@@ -501,7 +507,13 @@ async findPendingCOsForProjectManager(managerId: string) {
 async findNewCOsForProjectManager(managerId: string) {
     return await prisma.changeOrder.findMany({
         where: {
-            Project: { managerID: managerId },
+            Project: {
+                isDeleted: false,
+                OR: [
+                    { managerID: managerId },
+                    { assists: { some: { userId: managerId, isActive: true } } },
+                ],
+            },
             coResponses: { none: {} },
         },
         include: {

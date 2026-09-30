@@ -332,7 +332,13 @@ async getPendingSubmittalsForProjectManager(managerId: string, role?: UserRole) 
         some: { wbtStatus: "RECEIVED" },
       },
       ...getRfiSubmittalVisibilityFilter(role),
-      project: { managerID: managerId },
+      project: {
+        isDeleted: false,
+        OR: [
+          { managerID: managerId },
+          { assists: { some: { userId: managerId, isActive: true } } },
+        ],
+      },
     },
     include:{
       mileStoneBelongsTo: true,

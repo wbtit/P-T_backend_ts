@@ -209,9 +209,24 @@ export class TaskRepository {
         }
         const tasks = await prisma.task.findMany({
             where: {
-                department:{
-                    id:department.id
-                }
+                OR: [
+                    {
+                        department: {
+                            id: department.id
+                        }
+                    },
+                    {
+                        project: {
+                            isDeleted: false,
+                            assists: {
+                                some: {
+                                    userId: departmentManagerId,
+                                    isActive: true
+                                }
+                            }
+                        }
+                    }
+                ]
             },
             include: {
                 mileStone: { select: { subject: true } },
@@ -232,7 +247,11 @@ export class TaskRepository {
         const tasks = await prisma.task.findMany({
             where: {
                 project: {
-                    managerID: projectManagerId
+                    isDeleted: false,
+                    OR: [
+                        { managerID: projectManagerId },
+                        { assists: { some: { userId: projectManagerId, isActive: true } } }
+                    ]
                 }
             },
            include: {
@@ -258,7 +277,22 @@ export class TaskRepository {
 
     async getAlltasksByUserId(user_id: string) {
         const tasks = await prisma.task.findMany({
-            where: { user_id },
+            where: {
+                OR: [
+                    { user_id },
+                    {
+                        project: {
+                            isDeleted: false,
+                            assists: {
+                                some: {
+                                    userId: user_id,
+                                    isActive: true
+                                }
+                            }
+                        }
+                    }
+                ]
+            },
             include: {
                 mileStone: { select: { subject: true } },
                 taskcomment:{
@@ -408,7 +442,22 @@ export class TaskRepository {
 
     async findAllByUserId(user_id: string) {
         const tasks = await prisma.task.findMany({
-            where: { user_id },
+            where: {
+                OR: [
+                    { user_id },
+                    {
+                        project: {
+                            isDeleted: false,
+                            assists: {
+                                some: {
+                                    userId: user_id,
+                                    isActive: true
+                                }
+                            }
+                        }
+                    }
+                ]
+            },
             include: {
                 mileStone: { select: { subject: true } },
                 project:{

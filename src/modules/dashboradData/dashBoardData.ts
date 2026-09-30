@@ -29,8 +29,20 @@ export const DashBoradData = async (
 
     if (!FULL_ACCESS_ROLES.has(role)) {
       const roleFilters: Record<string, Record<string, any>> = {
-        PROJECT_MANAGER: { managerID: userId },
-        TEAM_LEAD: { managerID: userId },
+        PROJECT_MANAGER: {
+          isDeleted: false,
+          OR: [
+            { managerID: userId },
+            { assists: { some: { userId, isActive: true } } },
+          ],
+        },
+        TEAM_LEAD: {
+          isDeleted: false,
+          OR: [
+            { managerID: userId },
+            { assists: { some: { userId, isActive: true } } },
+          ],
+        },
         DEPT_MANAGER: { deptManagerID: userId },
         SALES_MANAGER: {
           rfq: {

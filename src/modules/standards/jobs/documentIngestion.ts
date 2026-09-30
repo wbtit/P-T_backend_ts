@@ -29,13 +29,35 @@ import { ingestDocument } from "./manifestIngestion";
 
 const redisUrl = process.env.REDIS_URL || "redis://127.0.0.1:6379";
 
-export const documentIngestionQueueConnection = new IORedis(redisUrl, {
-  maxRetriesPerRequest: null,
-});
+export let documentIngestionQueueConnection: IORedis | null = null;
+let documentIngestionQueueInstance: Queue | null = null;
 
-export const documentIngestionQueue = new Queue("document-ingestion", {
-  connection: documentIngestionQueueConnection,
-  defaultJobOptions: { attempts: 1 },
+export function getDocumentIngestionQueueConnection(): IORedis {
+  if (!documentIngestionQueueConnection) {
+    documentIngestionQueueConnection = new IORedis(redisUrl, {
+      maxRetriesPerRequest: null,
+    });
+  }
+  return documentIngestionQueueConnection;
+}
+
+export function getDocumentIngestionQueue(): Queue {
+  if (!documentIngestionQueueInstance) {
+    registerShutdownHandler();
+    documentIngestionQueueInstance = new Queue("document-ingestion", {
+      connection: getDocumentIngestionQueueConnection(),
+      defaultJobOptions: { attempts: 1 },
+    });
+  }
+  return documentIngestionQueueInstance;
+}
+
+export const documentIngestionQueue = new Proxy({} as Queue, {
+  get(_target, prop) {
+    const q = getDocumentIngestionQueue();
+    const val = (q as any)[prop];
+    return typeof val === "function" ? val.bind(q) : val;
+  },
 });
 
 export interface DocumentIngestionJobPayload {
@@ -53,8 +75,17 @@ export interface DocumentIngestionJobPayload {
 export let documentIngestionWorker: Worker<DocumentIngestionJobPayload> | null = null;
 export let documentIngestionWorkerConnection: IORedis | null = null;
 
+let shutdownHandlerRegistered = false;
+function registerShutdownHandler() {
+  if (shutdownHandlerRegistered) return;
+  shutdownHandlerRegistered = true;
+  process.on("SIGTERM", gracefulShutdown);
+  process.on("SIGINT", gracefulShutdown);
+}
+
 export function startDocumentIngestionWorker() {
   if (documentIngestionWorker) return;
+  registerShutdownHandler();
 
   documentIngestionWorkerConnection = new IORedis(redisUrl, {
     maxRetriesPerRequest: null,
@@ -124,9 +155,6 @@ const gracefulShutdown = async () => {
   console.log("[DocumentIngestion] shutting down worker and queue...");
   if (documentIngestionWorker) await documentIngestionWorker.close();
   if (documentIngestionWorkerConnection) documentIngestionWorkerConnection.disconnect();
-  await documentIngestionQueue.close();
-  documentIngestionQueueConnection.disconnect();
+  if (documentIngestionQueueInstance) await documentIngestionQueueInstance.close();
+  if (documentIngestionQueueConnection) documentIngestionQueueConnection.disconnect();
 };
-
-process.on("SIGTERM", gracefulShutdown);
-process.on("SIGINT", gracefulShutdown);

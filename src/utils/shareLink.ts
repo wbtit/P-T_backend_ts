@@ -45,8 +45,13 @@ const MODEL_MAP: Record<string, string> = {
   projectprogressreport: "projectProgressReport",
   projectprogressreportresponse: "projectProgressReportResponse",
   coordinationDrawingResponse: "coordinationDrawingResponse",
+  coordinationDrawingResponses: "coordinationDrawingResponse",
+  coordinationDrawing: "coordinationDrawing",
+  coordinationDrawings: "coordinationDrawing",
   coordinationdrawing: "coordinationDrawing",
+  coordinationdrawings: "coordinationDrawing",
   coordinationdrawingresponse: "coordinationDrawingResponse",
+  coordinationdrawingresponses: "coordinationDrawingResponse",
   bfa: "bFA",
   bfaVersion: "bfaVersion",
 };

@@ -62,7 +62,7 @@ export class ProjectController {
         (async () => {
           try {
             const rolesToNotify = project.isAwarded === false 
-              ? PROJECT_CREATED_ROLES.filter(r => !r.startsWith('CLIENT') && !r.startsWith('VENDOR')) 
+              ? PROJECT_CREATED_ROLES.filter(r => !r.startsWith('CLIENT') && !r.startsWith('VENDOR') && !r.startsWith('CONNECTION_DESIGNER')) 
               : PROJECT_CREATED_ROLES;
               
             await notifyProjectStakeholdersByRole(project.id, rolesToNotify, (role) =>
@@ -263,7 +263,7 @@ export class ProjectController {
         // Background non-blocking tasks to notify client/vendor stakeholders
         (async () => {
           try {
-            const clientVendorRoles = PROJECT_CREATED_ROLES.filter(r => r.startsWith('CLIENT') || r.startsWith('VENDOR'));
+            const clientVendorRoles = PROJECT_CREATED_ROLES.filter(r => r.startsWith('CLIENT') || r.startsWith('VENDOR') || r.startsWith('CONNECTION_DESIGNER'));
             await notifyProjectStakeholdersByRole(project.id, clientVendorRoles, (role) =>
               buildRoleScopedNotification(role, {
                 type: "PROJECT_CREATED",

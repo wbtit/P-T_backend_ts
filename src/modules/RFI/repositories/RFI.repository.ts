@@ -459,7 +459,13 @@ export class RFIRepository{
     async findPendingRFIsForProjectManager(managerId: string, role?: UserRole) {
       return await prisma.rFI.findMany({
         where: {
-          project: { managerID: managerId },
+          project: {
+            isDeleted: false,
+            OR: [
+              { managerID: managerId },
+              { assists: { some: { userId: managerId, isActive: true } } },
+            ],
+          },
           ...getRfiSubmittalVisibilityFilter(role),
           OR: [
             {
@@ -489,7 +495,13 @@ export class RFIRepository{
     async findNewRFIsForProjectManager(managerId: string, role?: UserRole) {
       return await prisma.rFI.findMany({
         where: {
-          project: { managerID: managerId },
+          project: {
+            isDeleted: false,
+            OR: [
+              { managerID: managerId },
+              { assists: { some: { userId: managerId, isActive: true } } },
+            ],
+          },
           rfiresponse: { none: {} },
           ...getRfiSubmittalVisibilityFilter(role),
         },

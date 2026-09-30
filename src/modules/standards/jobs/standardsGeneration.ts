@@ -8,12 +8,59 @@ const redisOptions = {
   maxRetriesPerRequest: null,
 };
 
-export const generationQueueConnection = new Redis(redisOptions);
-export const generationWorkerConnection = new Redis(redisOptions);
-export const generationEventsConnection = new Redis(redisOptions);
+export let generationQueueConnection: Redis | null = null;
+export let generationWorkerConnection: Redis | null = null;
+export let generationEventsConnection: Redis | null = null;
+let standardsGenerationQueueInstance: Queue | null = null;
+let standardsGenerationEventsInstance: QueueEvents | null = null;
 
-export const standardsGenerationQueue = new Queue("standards-generation", { connection: generationQueueConnection });
-export const standardsGenerationEvents = new QueueEvents("standards-generation", { connection: generationEventsConnection });
+export function getGenerationQueueConnection(): Redis {
+  if (!generationQueueConnection) {
+    generationQueueConnection = new Redis(redisOptions);
+  }
+  return generationQueueConnection;
+}
+
+export function getGenerationEventsConnection(): Redis {
+  if (!generationEventsConnection) {
+    generationEventsConnection = new Redis(redisOptions);
+  }
+  return generationEventsConnection;
+}
+
+export function getStandardsGenerationQueue(): Queue {
+  if (!standardsGenerationQueueInstance) {
+    standardsGenerationQueueInstance = new Queue("standards-generation", {
+      connection: getGenerationQueueConnection(),
+    });
+  }
+  return standardsGenerationQueueInstance;
+}
+
+export function getStandardsGenerationEvents(): QueueEvents {
+  if (!standardsGenerationEventsInstance) {
+    standardsGenerationEventsInstance = new QueueEvents("standards-generation", {
+      connection: getGenerationEventsConnection(),
+    });
+  }
+  return standardsGenerationEventsInstance;
+}
+
+export const standardsGenerationQueue = new Proxy({} as Queue, {
+  get(_target, prop) {
+    const q = getStandardsGenerationQueue();
+    const val = (q as any)[prop];
+    return typeof val === "function" ? val.bind(q) : val;
+  },
+});
+
+export const standardsGenerationEvents = new Proxy({} as QueueEvents, {
+  get(_target, prop) {
+    const qe = getStandardsGenerationEvents();
+    const val = (qe as any)[prop];
+    return typeof val === "function" ? val.bind(qe) : val;
+  },
+});
 
 export let standardsGenerationWorker: Worker | null = null;
 
@@ -21,6 +68,10 @@ const ollamaUrl = process.env.OLLAMA_URL || "http://127.0.0.1:11434";
 
 export function startStandardsGenerationWorker() {
   if (standardsGenerationWorker) return;
+
+  if (!generationWorkerConnection) {
+    generationWorkerConnection = new Redis(redisOptions);
+  }
 
   standardsGenerationWorker = new Worker("standards-generation", async (job) => {
     const { query, chunks } = job.data as { query: string; chunks: RetrievedChunk[] };

@@ -2,6 +2,7 @@ import { AuthenticateRequest } from "../../../middleware/authMiddleware";
 import { Request, Response } from "express";
 import { TaskService } from "../services";
 import { AppError } from "../../../config/utils/AppError";
+import prisma from "../../../config/database/client";
 
 const taskService = new TaskService();
 
@@ -79,15 +80,22 @@ export class TaskController {
         results=await taskService.getAllTasks();
     }else if (role === 'DEPT_MANAGER'){
         results= await taskService.getTasksForDepartmentManager(req.user.id);
-    }else if (role === 'PROJECT_MANAGER'){
+    }else if (role === 'PROJECT_MANAGER' || role === 'TEAM_LEAD'){
         results = await taskService.getTasksByProjectManagerId(req.user.id);
     }else if(role === 'STAFF'){
         results = await taskService.getTaskByUserId(req.user.id);
     }else{
-        return res.status(403).json({
-            status: 'fail',
-            message: 'Access denied',
+        const hasAssistRole = await prisma.projectAssist.findFirst({
+            where: { userId: req.user.id, isActive: true }
         });
+        if (hasAssistRole) {
+            results = await taskService.getTasksByProjectManagerId(req.user.id);
+        } else {
+            return res.status(403).json({
+                status: 'fail',
+                message: 'Access denied',
+            });
+        }
     }
         res.status(200).json({
             status: 'success',

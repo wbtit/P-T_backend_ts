@@ -74,15 +74,49 @@ cleanup() {
 }
 trap cleanup INT TERM
 
-echo "${MAGENTA}[dev]${RESET} starting reranker: ${RERANKER_PYTHON} -u ${RERANKER_SCRIPT} --port ${RERANKER_PORT}"
-setsid "$RERANKER_PYTHON" -u "$RERANKER_SCRIPT" --port "$RERANKER_PORT" \
-  > >(sed -u "s/^/${MAGENTA}[reranker]${RESET} /") 2>&1 &
-RERANKER_PID=$!
+RESOLVED_RERANKER_PYTHON=""
+if [ -n "${RERANKER_PYTHON:-}" ]; then
+  if [ -x "$RERANKER_PYTHON" ]; then
+    RESOLVED_RERANKER_PYTHON="$RERANKER_PYTHON"
+  elif command -v "$RERANKER_PYTHON" >/dev/null 2>&1; then
+    RESOLVED_RERANKER_PYTHON="$(command -v "$RERANKER_PYTHON")"
+  fi
+fi
+
+if [ -n "$RESOLVED_RERANKER_PYTHON" ]; then
+  echo "${MAGENTA}[dev]${RESET} starting reranker: ${RESOLVED_RERANKER_PYTHON} -u ${RERANKER_SCRIPT} --port ${RERANKER_PORT}"
+  setsid "$RESOLVED_RERANKER_PYTHON" -u "$RERANKER_SCRIPT" --port "$RERANKER_PORT" \
+    > >(sed -u "s/^/${MAGENTA}[reranker]${RESET} /") 2>&1 &
+  RERANKER_PID=$!
+else
+  echo "${MAGENTA}[dev]${RESET} reranker interpreter not found at '${RERANKER_PYTHON}' (only needed for standards queries; set RERANKER_PYTHON in .env to enable). Skipping reranker."
+  RERANKER_PID=""
+fi
+
+DEV_PORT="${PORT:-5156}"
+STALE_PIDS=$(lsof -ti :"$DEV_PORT" 2>/dev/null || true)
+if [ -n "$STALE_PIDS" ]; then
+  for pid in $STALE_PIDS; do
+    cmd=$(ps -p "$pid" -o cmd= 2>/dev/null || true)
+    if [[ "$cmd" == *"ts-node-dev"* || "$cmd" == *"src/server.ts"* ]]; then
+      echo "${CYAN}[dev]${RESET} Freeing port $DEV_PORT from stale dev process (PID $pid)..."
+      kill -9 "$pid" 2>/dev/null || true
+    else
+      echo "${CYAN}[dev]${RESET} Error: Port $DEV_PORT is in use by non-dev process: $cmd"
+      exit 1
+    fi
+  done
+  sleep 0.5
+fi
 
 echo "${CYAN}[dev]${RESET} starting server: npx ts-node-dev --respawn src/server.ts"
 setsid npx ts-node-dev --respawn src/server.ts \
   > >(sed -u "s/^/${CYAN}[server]${RESET} /") 2>&1 &
 SERVER_PID=$!
 
-wait -n "$RERANKER_PID" "$SERVER_PID"
+if [ -n "$RERANKER_PID" ]; then
+  wait -n "$RERANKER_PID" "$SERVER_PID"
+else
+  wait "$SERVER_PID"
+fi
 cleanup

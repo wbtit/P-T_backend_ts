@@ -14,6 +14,8 @@ const EXTERNAL_ROLES = new Set<UserRole>([
   UserRole.CLIENT_GENERAL_CONSTRUCTOR,
   UserRole.VENDOR,
   UserRole.VENDOR_ADMIN,
+  UserRole.CONNECTION_DESIGNER_ENGINEER,
+  UserRole.CONNECTION_DESIGNER_ADMIN,
 ])
 
 export function getUploaderCategory(role: UserRole): "external" | "internal" {

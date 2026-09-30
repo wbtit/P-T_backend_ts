@@ -319,8 +319,11 @@ export class MileStoneRepository{
     return await prisma.mileStone.findMany({
         where:{
             project:{
-                managerID:managerId,
                 isDeleted: false,
+                OR: [
+                    { managerID: managerId },
+                    { assists: { some: { userId: managerId, isActive: true } } }
+                ],
             },
             mileStoneSubmittals:{none:{}},
             legacySubmittals:{none:{}},

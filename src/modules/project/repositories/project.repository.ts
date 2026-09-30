@@ -274,6 +274,20 @@ import { generateProjectSerial } from "../../../utils/serial.util";
                       multipleRecipients:{select:{id:true,firstName:true,lastName:true,email:true}},
                       sender:{select:{firstName:true,middleName:true,lastName:true,id:true}}}},
         designDrawings:{include:{user:{select:{firstName:true,middleName:true,lastName:true,id:true}}}},
+        coordinationDrawings:{
+          where: { isDeleted: false },
+          include: {
+            createdBy: {
+              select: {
+                id: true,
+                firstName: true,
+                middleName: true,
+                lastName: true,
+                username: true,
+              },
+            },
+          },
+        },
         mileStones:true,
         stageHistory:true,
         fabricator:{select:{
@@ -514,7 +528,21 @@ import { generateProjectSerial } from "../../../utils/serial.util";
                 department:{select:{
                   name:true,
                   id:true
-                }}
+                }},
+                assists:{
+                  where: { isActive: true },
+                  include:{
+                    user:{
+                      select:{
+                        id:true,
+                        firstName:true,
+                        middleName:true,
+                        lastName:true,
+                        email:true
+                      }
+                    }
+                  }
+                }
                },
                    skip: skip,
                    take: take
@@ -935,7 +963,21 @@ async getForStaff(staffId: string, skip?: number, take?: number, filters?: Proje
             department:{select:{
               name:true,
               id:true
-            }}
+            }},
+            assists:{
+              where: { isActive: true },
+              include:{
+                user:{
+                  select:{
+                    id:true,
+                    firstName:true,
+                    middleName:true,
+                    lastName:true,
+                    email:true
+                  }
+                }
+              }
+            }
            },
           skip: skip,
           take: take
@@ -986,6 +1028,8 @@ async getAllDocuments(id:string, role?: UserRole){
             createdAt: true,
             files: true,
             responses: {
+              where: { isDeleted: false },
+              orderBy: { createdAt: "desc" },
               select: {
                 id: true,
                 description: true,
@@ -1007,6 +1051,7 @@ async getAllDocuments(id:string, role?: UserRole){
             status: true,
             files: true,
             rfiresponse: {
+              orderBy: { createdAt: "desc" },
               select: {
                 id: true,
                 reason: true,
@@ -1038,15 +1083,18 @@ async getAllDocuments(id:string, role?: UserRole){
               },
             },
             versions: {
+              orderBy: { versionNumber: "desc" },
               select: {
                 id: true,
                 versionNumber: true,
                 description: true,
                 createdAt: true,
                 files: true,
+                isActive: true,
               },
             },
             submittalsResponse: {
+              orderBy: { createdAt: "desc" },
               select: {
                 id: true,
                 submittalVersionId: true,
@@ -1076,6 +1124,8 @@ async getAllDocuments(id:string, role?: UserRole){
                   },
                 },
                 versions: {
+                  orderBy: { versionNumber: "desc" },
+                  take: 1,
                   select: {
                     id: true,
                     versionNumber: true,
@@ -1098,13 +1148,38 @@ async getAllDocuments(id:string, role?: UserRole){
             stage: true,
             status: true,
             files: true,
+            currentVersionId: true,
+            currentVersion: {
+              select: {
+                id: true,
+                versionNumber: true,
+                description: true,
+                remarks: true,
+                createdAt: true,
+                files: true,
+              },
+            },
+            versions: {
+              orderBy: { versionNumber: "desc" },
+              select: {
+                id: true,
+                versionNumber: true,
+                description: true,
+                remarks: true,
+                createdAt: true,
+                files: true,
+                isActive: true,
+              },
+            },
             coResponses: {
+              orderBy: { createdAt: "desc" },
               select: {
                 id: true,
                 Status: true,
                 description: true,
                 createdAt: true,
                 files: true,
+                changeOrderVersionId: true,
               },
             },
           },
@@ -1140,6 +1215,101 @@ async getAllDocuments(id:string, role?: UserRole){
             files: true,
           },
         },
+        coordinationDrawings: {
+          where: { isDeleted: false },
+          select: {
+            id: true,
+            title: true,
+            message: true,
+            stage: true,
+            createdAt: true,
+            updatedAt: true,
+            files: true,
+            createdBy: {
+              select: {
+                id: true,
+                username: true,
+                firstName: true,
+                lastName: true,
+                email: true,
+                role: true,
+              },
+            },
+            responses: {
+              where: { isDeleted: false },
+              select: {
+                id: true,
+                description: true,
+                status: true,
+                wbtStatus: true,
+                createdAt: true,
+                files: true,
+                user: {
+                  select: {
+                    id: true,
+                    username: true,
+                    firstName: true,
+                    lastName: true,
+                    email: true,
+                    role: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        mileStones: {
+          select: {
+            id: true,
+            serialNo: true,
+            subject: true,
+            stage: true,
+            status: true,
+            currentVersionId: true,
+            currentVersion: {
+              select: {
+                id: true,
+                versionNumber: true,
+                subject: true,
+                stage: true,
+                status: true,
+                createdAt: true,
+                responses: {
+                  orderBy: { createdAt: "desc" },
+                  select: {
+                    id: true,
+                    description: true,
+                    status: true,
+                    createdAt: true,
+                    files: true,
+                  },
+                },
+              },
+            },
+            versions: {
+              orderBy: { versionNumber: "desc" },
+              select: {
+                id: true,
+                versionNumber: true,
+                subject: true,
+                stage: true,
+                status: true,
+                createdAt: true,
+                isActive: true,
+                responses: {
+                  orderBy: { createdAt: "desc" },
+                  select: {
+                    id: true,
+                    description: true,
+                    status: true,
+                    createdAt: true,
+                    files: true,
+                  },
+                },
+              },
+            },
+          },
+        },
       },
     });
 
@@ -1167,106 +1337,161 @@ async getAllDocuments(id:string, role?: UserRole){
             wbtStatus: project.rfq.wbtStatus,
             createdAt: project.rfq.createdAt,
             files: normalizeFiles(project.rfq.files),
-            responses: project.rfq.responses.map((response) => ({
-              id: response.id,
-              description: response.description,
-              status: response.status,
-              wbtStatus: response.wbtStatus,
-              createdAt: response.createdAt,
-              files: normalizeFiles(response.files),
-            })),
+            responses: (project.rfq.responses && project.rfq.responses.length > 0)
+              ? [
+                  {
+                    id: project.rfq.responses[0].id,
+                    description: project.rfq.responses[0].description,
+                    status: project.rfq.responses[0].status,
+                    wbtStatus: project.rfq.responses[0].wbtStatus,
+                    createdAt: project.rfq.responses[0].createdAt,
+                    files: normalizeFiles(project.rfq.responses[0].files),
+                  }
+                ]
+              : [],
           },
         ]
         : [],
-      rfi: project.rfi.map((rfi) => ({
-        id: rfi.id,
-        subject: rfi.subject,
-        description: rfi.description,
-        date: rfi.date,
-        status: rfi.status,
-        files: normalizeFiles(rfi.files),
-        responses: rfi.rfiresponse.map((response) => ({
-          id: response.id,
-          reason: response.reason,
-          createdAt: response.createdAt,
-          responseState: response.responseState,
-          wbtStatus: response.wbtStatus,
-          files: normalizeFiles(response.files),
-        })),
-      })),
-      submittals: project.submittals.map((submittal) => ({
-        id: submittal.id,
-        subject: submittal.subject,
-        date: submittal.date,
-        stage: submittal.stage,
-        status: submittal.status,
-        currentVersionId: submittal.currentVersionId,
-        currentVersion: submittal.currentVersion
+      rfi: project.rfi.map((rfi) => {
+        const latestResponse = rfi.rfiresponse && rfi.rfiresponse.length > 0
+          ? rfi.rfiresponse[0]
+          : null;
+        return {
+          id: rfi.id,
+          subject: rfi.subject,
+          description: rfi.description,
+          date: rfi.date,
+          status: rfi.status,
+          files: normalizeFiles(rfi.files),
+          responses: latestResponse
+            ? [
+                {
+                  id: latestResponse.id,
+                  reason: latestResponse.reason,
+                  createdAt: latestResponse.createdAt,
+                  responseState: latestResponse.responseState,
+                  wbtStatus: latestResponse.wbtStatus,
+                  files: normalizeFiles(latestResponse.files),
+                }
+              ]
+            : [],
+        };
+      }),
+      submittals: project.submittals.map((submittal) => {
+        const latestVersion = submittal.currentVersion
+          || submittal.versions?.find((v) => v.isActive)
+          || submittal.versions?.[0]
+          || null;
+
+        const latestVersionObj = latestVersion
           ? {
-              id: submittal.currentVersion.id,
-              versionNumber: submittal.currentVersion.versionNumber,
-              description: submittal.currentVersion.description,
-              createdAt: submittal.currentVersion.createdAt,
-              files: normalizeFiles(submittal.currentVersion.files),
+              id: latestVersion.id,
+              versionNumber: latestVersion.versionNumber,
+              description: latestVersion.description,
+              createdAt: latestVersion.createdAt,
+              files: normalizeFiles(latestVersion.files),
             }
-          : null,
-        versions: submittal.versions.map((version) => ({
-          id: version.id,
-          versionNumber: version.versionNumber,
-          description: version.description,
-          createdAt: version.createdAt,
-          files: normalizeFiles(version.files),
-        })),
-        responses: submittal.submittalsResponse.map((response) => ({
-          id: response.id,
-          submittalVersionId: response.submittalVersionId,
-          description: response.description,
-          reason: response.reason,
-          status: response.status,
-          wbtStatus: response.wbtStatus,
-          createdAt: response.createdAt,
-          files: normalizeFiles(response.files),
-        })),
-        bfa: submittal.bfa ? {
-          id: submittal.bfa.id,
-          serialNo: submittal.bfa.serialNo,
-          subject: submittal.bfa.subject,
-          description: submittal.bfa.description,
-          status: submittal.bfa.status,
-          createdAt: submittal.bfa.createdAt,
-          currentVersion: submittal.bfa.currentVersion ? {
-            id: submittal.bfa.currentVersion.id,
-            versionNumber: submittal.bfa.currentVersion.versionNumber,
-            description: submittal.bfa.currentVersion.description,
-            createdAt: submittal.bfa.currentVersion.createdAt,
-            files: normalizeFiles(submittal.bfa.currentVersion.file),
-          } : null,
-          versions: submittal.bfa.versions.map((version) => ({
-            id: version.id,
-            versionNumber: version.versionNumber,
-            description: version.description,
-            createdAt: version.createdAt,
-            files: normalizeFiles(version.file),
+          : null;
+
+        const versionResponses = latestVersion
+          ? submittal.submittalsResponse.filter((r) => r.submittalVersionId === latestVersion.id)
+          : submittal.submittalsResponse;
+
+        const latestBfaVersion = submittal.bfa?.currentVersion || submittal.bfa?.versions?.[0] || null;
+        const bfaData = submittal.bfa
+          ? {
+              id: submittal.bfa.id,
+              serialNo: submittal.bfa.serialNo,
+              subject: submittal.bfa.subject,
+              description: submittal.bfa.description,
+              status: submittal.bfa.status,
+              createdAt: submittal.bfa.createdAt,
+              currentVersion: latestBfaVersion ? {
+                id: latestBfaVersion.id,
+                versionNumber: latestBfaVersion.versionNumber,
+                description: latestBfaVersion.description,
+                createdAt: latestBfaVersion.createdAt,
+                files: normalizeFiles(latestBfaVersion.file),
+              } : null,
+              versions: latestBfaVersion ? [{
+                id: latestBfaVersion.id,
+                versionNumber: latestBfaVersion.versionNumber,
+                description: latestBfaVersion.description,
+                createdAt: latestBfaVersion.createdAt,
+                files: normalizeFiles(latestBfaVersion.file),
+              }] : [],
+            }
+          : null;
+
+        return {
+          id: submittal.id,
+          subject: submittal.subject,
+          date: submittal.date,
+          stage: submittal.stage,
+          status: submittal.status,
+          currentVersionId: submittal.currentVersionId,
+          files: latestVersionObj ? latestVersionObj.files : [],
+          currentVersion: latestVersionObj,
+          versions: latestVersionObj ? [latestVersionObj] : [],
+          responses: versionResponses.map((response) => ({
+            id: response.id,
+            submittalVersionId: response.submittalVersionId,
+            description: response.description,
+            reason: response.reason,
+            status: response.status,
+            wbtStatus: response.wbtStatus,
+            createdAt: response.createdAt,
+            files: normalizeFiles(response.files),
           })),
-        } : null,
-      })),
-      changeOrders: project.changeOrders.map((changeOrder) => ({
-        id: changeOrder.id,
-        changeOrderNumber: changeOrder.changeOrderNumber,
-        description: changeOrder.description,
-        remarks: changeOrder.remarks,
-        sentOn: changeOrder.sentOn,
-        stage: changeOrder.stage,
-        status: changeOrder.status,
-        files: normalizeFiles(changeOrder.files),
-        responses: changeOrder.coResponses.map((response) => ({
-          id: response.id,
-          status: response.Status,
-          description: response.description,
-          createdAt: response.createdAt,
-          files: normalizeFiles(response.files),
-        })),
-      })),
+          bfa: bfaData,
+        };
+      }),
+      changeOrders: project.changeOrders.map((changeOrder) => {
+        const latestVersion = changeOrder.currentVersion
+          || changeOrder.versions?.find((v) => v.isActive)
+          || changeOrder.versions?.[0]
+          || null;
+
+        const latestFiles = latestVersion
+          ? normalizeFiles(latestVersion.files)
+          : normalizeFiles(changeOrder.files);
+
+        const latestVersionObj = latestVersion
+          ? {
+              id: latestVersion.id,
+              versionNumber: latestVersion.versionNumber,
+              description: latestVersion.description,
+              remarks: latestVersion.remarks,
+              createdAt: latestVersion.createdAt,
+              files: normalizeFiles(latestVersion.files),
+            }
+          : null;
+
+        const versionResponses = latestVersion
+          ? changeOrder.coResponses.filter((r) => r.changeOrderVersionId === latestVersion.id)
+          : changeOrder.coResponses;
+
+        return {
+          id: changeOrder.id,
+          changeOrderNumber: changeOrder.changeOrderNumber,
+          description: changeOrder.description,
+          remarks: changeOrder.remarks,
+          sentOn: changeOrder.sentOn,
+          stage: changeOrder.stage,
+          status: changeOrder.status,
+          files: latestFiles,
+          currentVersionId: changeOrder.currentVersionId,
+          currentVersion: latestVersionObj,
+          versions: latestVersionObj ? [latestVersionObj] : [],
+          responses: versionResponses.map((response) => ({
+            id: response.id,
+            status: response.Status,
+            description: response.description,
+            createdAt: response.createdAt,
+            files: normalizeFiles(response.files),
+          })),
+        };
+      }),
       designDrawings: project.designDrawings.map((designDrawing) => ({
         id: designDrawing.id,
         stage: designDrawing.stage,
@@ -1292,6 +1517,63 @@ async getAllDocuments(id:string, role?: UserRole){
         updatedAt: note.updatedAt,
         files: normalizeFiles(note.files),
       })),
+      coordinationDrawings: (project.coordinationDrawings || []).map((drawing) => ({
+        id: drawing.id,
+        title: drawing.title,
+        message: drawing.message,
+        stage: drawing.stage,
+        createdAt: drawing.createdAt,
+        updatedAt: drawing.updatedAt,
+        files: normalizeFiles(drawing.files),
+        createdBy: drawing.createdBy,
+        responses: (drawing.responses || []).map((response) => ({
+          id: response.id,
+          description: response.description,
+          status: response.status,
+          wbtStatus: response.wbtStatus,
+          createdAt: response.createdAt,
+          files: normalizeFiles(response.files),
+          user: response.user,
+        })),
+      })),
+      mileStones: (project.mileStones || []).map((milestone) => {
+        const latestVersion = milestone.currentVersion
+          || milestone.versions?.find((v) => v.isActive)
+          || milestone.versions?.[0]
+          || null;
+
+        const latestResponses = latestVersion?.responses || [];
+        const latestFiles = latestResponses.flatMap((resp) => normalizeFiles(resp.files));
+
+        const latestVersionObj = latestVersion ? {
+          id: latestVersion.id,
+          versionNumber: latestVersion.versionNumber,
+          subject: latestVersion.subject,
+          stage: latestVersion.stage,
+          status: latestVersion.status,
+          createdAt: latestVersion.createdAt,
+          files: latestFiles,
+        } : null;
+
+        return {
+          id: milestone.id,
+          serialNo: milestone.serialNo,
+          subject: milestone.subject,
+          stage: milestone.stage,
+          status: milestone.status,
+          currentVersionId: milestone.currentVersionId,
+          files: latestFiles,
+          currentVersion: latestVersionObj,
+          versions: latestVersionObj ? [latestVersionObj] : [],
+          responses: latestResponses.map((response) => ({
+            id: response.id,
+            description: response.description,
+            status: response.status,
+            createdAt: response.createdAt,
+            files: normalizeFiles(response.files),
+          })),
+        };
+      }),
     };
   }
 

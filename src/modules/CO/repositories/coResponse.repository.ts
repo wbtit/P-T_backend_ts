@@ -47,9 +47,51 @@ async getResponseById(id: string) {
     })
 }
 async findbyId(id:string){
-  return await prisma.cOResponse.findUnique({
+  
+  const response = await prisma.cOResponse.findUnique({
     where:{id:id}
-  })            
+  });
+  
+  return response;
+}
+async findByCoId(coId: string) {
+  
+  const responses = await prisma.cOResponse.findMany({
+    where: {
+      OR: [
+        { CoId: coId },
+        { changeOrderVersion: { changeOrderId: coId } },
+      ],
+    },
+    include: {
+      user: {
+        select: {
+          id: true,
+          firstName: true,
+          middleName: true,
+          lastName: true,
+          email: true,
+        },
+      },
+      childResponses: {
+        include: {
+          user: {
+            select: {
+              id: true,
+              firstName: true,
+              middleName: true,
+              lastName: true,
+              email: true,
+            },
+          },
+        },
+        orderBy: { createdAt: "asc" },
+      },
+    },
+    orderBy: { createdAt: "asc" },
+  });
+  
+  return responses;
 }
 async getAll(){
   return await prisma.cOResponse.findMany()

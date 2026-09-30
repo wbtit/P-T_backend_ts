@@ -26,7 +26,13 @@ export const unapprovedListsHandler = async (
 
     if (!FULL_ACCESS_ROLES.has(role)) {
       if (role === "PROJECT_MANAGER" || role === "TEAM_LEAD") {
-        projectFilter = { managerID: userId };
+        projectFilter = {
+          isDeleted: false,
+          OR: [
+            { managerID: userId },
+            { assists: { some: { userId, isActive: true } } },
+          ],
+        };
       } else if (role === "DEPT_MANAGER") {
         // Need to find the department for this user to get departmentID
         const dept = await prisma.department.findFirst({

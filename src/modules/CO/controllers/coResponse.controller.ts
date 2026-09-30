@@ -246,14 +246,18 @@ export class CoResponseController {
     const authReq = req as AuthenticateRequest;
     const { coId } = req.params;
 
+    
+
     if (authReq.user?.role === "CLIENT" || authReq.user?.role === "CLIENT_ADMIN") {
       const co = await prisma.changeOrder.findUnique({ where: { id: coId } });
+      
       if (!co || co.isAproovedByAdmin !== true) {
         throw new AppError("You do not have permission to view responses for this change order until it is approved", 403);
       }
     }
 
     const responses = await coResponseService.findByCoId(coId);
+    
 
     res.status(200).json({
       status: "success",

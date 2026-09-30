@@ -34,6 +34,7 @@ import vendors_doc from "../modules/vendors/openapi.doc";
 import workingHours_doc from "../modules/workingHours/openapi.doc";
 import training_doc from "../modules/training/openapi.doc";
 import standards_doc from "../modules/standards/openapi.doc";
+import { RAG_ENABLED } from "../config/features";
 
 const moduleDocs: ModuleOpenApiDoc[] = [
   chatSystem_doc,
@@ -70,7 +71,7 @@ const moduleDocs: ModuleOpenApiDoc[] = [
   vendors_doc,
   workingHours_doc,
   training_doc,
-  standards_doc,
+  ...(RAG_ENABLED ? [standards_doc] : []),
 ];
 
 const mergePaths = (docs: ModuleOpenApiDoc[]) => {

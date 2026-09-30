@@ -132,8 +132,13 @@ export class RFIController {
         const internalEmails = Array.from(new Set(internalUsers.map(u => u.email).filter(Boolean))) as string[];
 
         const targetEmails = isAproovedByAdmin
-          ? Array.from(new Set([...uniqueEmails, ...internalEmails]))
+          ? uniqueEmails
           : internalEmails;
+
+        const baseCcEmails = await getCCEmails(newrfi.project_id);
+        const ccEmails = isAproovedByAdmin
+          ? Array.from(new Set([...baseCcEmails, ...internalEmails]))
+          : baseCcEmails;
 
         if (targetEmails.length > 0) {
           const projectInfo = await prisma.project.findUnique({
@@ -143,7 +148,6 @@ export class RFIController {
           
           if (projectInfo?.isAwarded !== false) {
             const fabricatorName = (await getFabricatorNameForUser(creatorId, actorRole)) || undefined;
-            const ccEmails = await getCCEmails(newrfi.project_id);
             await sendEmail({
               html: rfihtmlContent(newrfi, fabricatorName),
               to: targetEmails.join(","),

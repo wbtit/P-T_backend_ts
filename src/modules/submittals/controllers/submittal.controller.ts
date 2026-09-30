@@ -152,12 +152,16 @@ export class SubmittalController {
         const internalEmails = Array.from(new Set(internalUsers.map(u => u.email).filter(Boolean))) as string[];
 
         const targetEmails = isAproovedByAdmin
-          ? Array.from(new Set([...uniqueSubmittalEmails, ...internalEmails]))
+          ? uniqueSubmittalEmails
           : internalEmails;
+
+        const baseCcEmails = await getCCEmails(submittal.project_id);
+        const ccEmails = isAproovedByAdmin
+          ? Array.from(new Set([...baseCcEmails, ...internalEmails]))
+          : baseCcEmails;
 
         if (targetEmails.length > 0) {
           const fabricatorName = (await getFabricatorNameForUser(userId, role)) || undefined;
-          const ccEmails = await getCCEmails(submittal.project_id);
           await sendEmail({
             to: targetEmails.join(","),
             cc: ccEmails,

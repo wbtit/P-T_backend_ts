@@ -29,7 +29,11 @@ export const projectManagerDashBoard = async (
         const now = new Date();
 
         const managerFilter = {
-          managerID: userId,
+          isDeleted: false,
+          OR: [
+            { managerID: userId },
+            { assists: { some: { userId, isActive: true } } },
+          ],
         };
 
         const [
@@ -150,7 +154,7 @@ export const projectManagerDashBoard = async (
           }),
           prisma.rFI.count({
             where: {
-              project: { managerID: userId, status: { in: ["ACTIVE", "ONHOLD"] } },
+              project: { ...managerFilter, status: { in: ["ACTIVE", "ONHOLD"] } },
               OR: [
                 {
                   rfiresponse: { none: {} },
@@ -171,14 +175,14 @@ export const projectManagerDashBoard = async (
           }),
           prisma.changeOrder.count({
             where: {
-              Project: { managerID: userId, status: { in: ["ACTIVE", "ONHOLD"] } },
+              Project: { ...managerFilter, status: { in: ["ACTIVE", "ONHOLD"] } },
               coResponses: { none: {} },
               isAproovedByAdmin: true,
             },
           }),
           prisma.rFQ.count({
             where: {
-              project: { managerID: userId, status: { in: ["ACTIVE", "ONHOLD"] } },
+              project: { ...managerFilter, status: { in: ["ACTIVE", "ONHOLD"] } },
               responses: {
                 some: {
                   childResponses: { none: {} },
@@ -189,7 +193,7 @@ export const projectManagerDashBoard = async (
           }),
           prisma.submittals.count({
             where: {
-              project: { managerID: userId, status: { in: ["ACTIVE", "ONHOLD"] } },
+              project: { ...managerFilter, status: { in: ["ACTIVE", "ONHOLD"] } },
               bfaStatus: false,
               stage: { not: "IFC" },
               currentVersionId: { not: null },

@@ -35,17 +35,24 @@ console.error = (...args: unknown[]) => {
 };
 
 import "./corn-jobs/safeCorn"
-import { startStandardsGenerationWorker } from "./modules/standards/jobs/standardsGeneration";
-import { startDocumentIngestionWorker } from "./modules/standards/jobs/documentIngestion";
+import { RAG_ENABLED } from "./config/features";
 
-// Phase 6: the legacy standardsIngestion/pageClassification/chunking worker
-// chain (fed only by the old POST /standards/upload route) was removed along
-// with that route -- confirmed nothing else enqueued to any of those three
-// queues before deleting. standardsGenerationWorker is unrelated dead code
-// (nothing enqueues to it either) but out of scope for this pass -- flagged,
-// not removed.
-startStandardsGenerationWorker();
-startDocumentIngestionWorker();
+if (RAG_ENABLED) {
+  Promise.all([
+    import("./modules/standards/jobs/standardsGeneration"),
+    import("./modules/standards/jobs/documentIngestion"),
+  ])
+    .then(([{ startStandardsGenerationWorker }, { startDocumentIngestionWorker }]) => {
+      startStandardsGenerationWorker();
+      startDocumentIngestionWorker();
+      console.log("[RAG] Background workers started.");
+    })
+    .catch((err) => {
+      console.error("[RAG] Failed to start workers:", err);
+    });
+} else {
+  console.log("[RAG] disabled");
+}
 
 import cors from 'cors'
 import {
@@ -168,6 +175,12 @@ import { setupGracefulShutdown } from "./utils/gracefulShutdown";
  const PORT=parseInt(process.env.PORT || '3000', 10)
  const serverInstance = server.listen(PORT,()=>{
     console.log(`server running http://localhost:${PORT}`)
+
+    setInterval(() => {
+      const m = process.memoryUsage();
+      const mb = (n: number) => Math.round(n / 1024 / 1024);
+      console.log(`[MEM] pid=${process.pid} rss=${mb(m.rss)}MB heapUsed=${mb(m.heapUsed)}MB heapTotal=${mb(m.heapTotal)}MB external=${mb(m.external)}MB arrayBuffers=${mb(m.arrayBuffers)}MB`);
+    }, 30000).unref();
  })
 
  setupGracefulShutdown(serverInstance);

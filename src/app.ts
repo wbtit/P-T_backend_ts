@@ -38,14 +38,39 @@ import { default as ProjectProgressReportRoutes } from "./modules/projectProgres
 import { default as InvoiceWireTransferRoutes } from "./modules/invoiceWireTransfers/routes";
 import { default as CoordinationDrawingRoutes } from "./modules/coordinationDrawing/routes";
 import { trainingRoutes } from "./modules/training";
-import { standardsRoutes, projectStandardsRoutes } from "./modules/standards/routes";
+import { RAG_ENABLED } from "./config/features";
 
 const routes = express.Router();
 
 
 routes.use("/auth", AuthRoutes);
-routes.use("/standards", standardsRoutes);
-routes.use("/projects/:projectId/standards", projectStandardsRoutes);
+
+const standardsRouter = express.Router();
+const projectStandardsRouter = express.Router({ mergeParams: true });
+
+routes.use("/standards", standardsRouter);
+routes.use("/projects/:projectId/standards", projectStandardsRouter);
+
+if (RAG_ENABLED) {
+  import("./modules/standards/routes")
+    .then(({ standardsRoutes, projectStandardsRoutes }) => {
+      standardsRouter.use(standardsRoutes);
+      projectStandardsRouter.use(projectStandardsRoutes);
+    })
+    .catch((err) => {
+      console.error("[RAG] Failed to load standards routes:", err);
+    });
+} else {
+  const disabledHandler = (_req: express.Request, res: express.Response) => {
+    res.status(503).json({
+      success: false,
+      message: "Standards module is not enabled on this server.",
+    });
+  };
+  standardsRouter.use(disabledHandler);
+  projectStandardsRouter.use(disabledHandler);
+}
+
 routes.use("/user", userRouter);
 routes.use("/task", whRoutes);
 routes.use("/employee",EmployeeRoutes)

@@ -194,6 +194,7 @@ venv/
 # Everything else under here is regenerable extraction/render output.
 benchmark-source/
 specs/
+public/
 
 # Phase 2 migration draft: review artifacts, not app code. schema.prisma is the
 # thing that gets applied; these document why.
