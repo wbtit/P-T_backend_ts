@@ -7,3 +7,4 @@ export * from "./wpr.pdf";
 export * from "./wpr.service";
 export * from "./wpr.controller";
 export { default as WprRoutes } from "./wpr.routes";
+export { default as wprOpenApiDoc } from "./openapi.doc";
