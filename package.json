@@ -10,9 +10,11 @@
     "dev": "bash scripts/dev.sh",
     "run": "ts-node src/server.ts",
     "test": "jest",
-    "build": "rm -rf build && tsc",
+    "build": "rm -rf build && tsc && mkdir -p build/assets && cp -r src/assets/. build/assets/",
     "serve": "node build/server.js",
-    "metrics:percentiles": "ts-node src/scripts/metricsPercentiles.ts"
+    "metrics:percentiles": "ts-node src/scripts/metricsPercentiles.ts",
+    "wpr:dump": "ts-node src/scripts/wprDump.ts",
+    "wpr:run": "ts-node src/scripts/wprRun.ts"
   },
   "repository": {
     "type": "git",
@@ -50,6 +52,9 @@
     "helmet": "^8.1.0",
     "ioredis": "^5.8.1",
     "jsonwebtoken": "^9.0.2",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.8",
+    "luxon": "^3.7.2",
     "mime": "^4.0.7",
     "multer": "^2.0.2",
     "node-cron": "^4.2.1",
@@ -78,6 +83,7 @@
     "@types/helmet": "^0.0.48",
     "@types/jest": "^30.0.0",
     "@types/jsonwebtoken": "^9.0.10",
+    "@types/luxon": "^3.7.6",
     "@types/mime": "^3.0.4",
     "@types/multer": "^2.1.0",
     "@types/node": "^24.7.2",

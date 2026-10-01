@@ -3,11 +3,20 @@ import { Client } from "@microsoft/microsoft-graph-client";
 import { TokenCredentialAuthenticationProvider } from "@microsoft/microsoft-graph-client/authProviders/azureTokenCredentials";
 
 
+export type MailAttachment = {
+  name: string;
+  contentType: string;
+  /** Base64-encoded file content. Graph's inline sendMail attachments cap out around ~3MB total per message. */
+  contentBytes: string;
+};
+
 export type MailOptions = {
   to: string | string[];
   subject: string;
   html: string;
   cc?: string | string[];
+  /** Optional — existing callers that omit this are unaffected. */
+  attachments?: MailAttachment[];
 };
 
 class MailService {
@@ -57,6 +66,15 @@ class MailService {
 
       if (ccRecipients.length > 0) {
         message.ccRecipients = ccRecipients;
+      }
+
+      if (options.attachments && options.attachments.length > 0) {
+        message.attachments = options.attachments.map((att) => ({
+          "@odata.type": "#microsoft.graph.fileAttachment",
+          name: att.name,
+          contentType: att.contentType,
+          contentBytes: att.contentBytes,
+        }));
       }
 
       const sendMailPayload = {

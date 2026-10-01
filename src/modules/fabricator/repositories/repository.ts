@@ -150,6 +150,9 @@ export class FabricatorRepository {
         accountId: data.accountId ?? null,
         currencyType: data.currencyType,
         fabStage: data.fabStage,
+        // undefined => untouched (field absent from this update's body);
+        // null => explicitly cleared (automatic WPR delivery turned off).
+        wprDay: data.wprDay,
         pointOfContact: data.pointOfContact?.length
           ? { connect: data.pointOfContact.map((id) => ({ id })) }
           : undefined,

@@ -1,4 +1,4 @@
-import { mailService } from "../mail/MailService";
+import { mailService, MailAttachment } from "../mail/MailService";
 import prisma from "../../config/database/client";
 import { UserRole } from "@prisma/client";
 
@@ -8,6 +8,14 @@ type SendEmailInput = {
   subject: string;        // subject line of the email
   text?: string;          // optional plain text version
   html?: string;          // optional HTML version
+  attachments?: MailAttachment[]; // optional — existing callers unaffected
+  /**
+   * Bypasses the NODE_ENV!=='production' no-op guard below. Not for general
+   * use — this exists solely so the WPR job's INTERNAL test mode (fixed,
+   * operator-configured WPR_TEST_RECIPIENTS, never a real client) can be
+   * exercised from a dev machine. No other caller should set this.
+   */
+  allowNonProduction?: boolean;
 };
 
 const normalizeEmail = (email: string) => email.trim().toLowerCase();
@@ -141,8 +149,8 @@ export const stripHtml = (html: string): string => {
     .trim();
 };
 
-const sendEmail = async ({ to, cc, subject, text, html }: SendEmailInput) => {
-  if (process.env.NODE_ENV !== 'production') {
+const sendEmail = async ({ to, cc, subject, text, html, attachments, allowNonProduction }: SendEmailInput) => {
+  if (process.env.NODE_ENV !== 'production' && !allowNonProduction) {
     console.log('Email sending disabled in development environment');
     return { messageId: 'development-mode' };
   }
@@ -160,6 +168,7 @@ const sendEmail = async ({ to, cc, subject, text, html }: SendEmailInput) => {
       cc: sanitizedRecipients.cc.length ? sanitizedRecipients.cc : undefined,
       subject: stripHtml(subject),
       html: html || text || "",
+      attachments,
     });
     return { messageId: "graph-api-sent" };
   } catch (error) {

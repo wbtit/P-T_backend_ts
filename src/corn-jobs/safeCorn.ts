@@ -11,18 +11,19 @@ import { sendFollowUpReminders } from "./sendFollowUpReminders";
 import { runPMOComplition } from "./pmoComplition";
 import { processCDFileRetention } from "./cdFileRetention";
 import { checkTrainingRequestSLA } from "./checkTrainingRequestSLA";
+import { runWprWeekly } from "./wprWeekly";
 import redlock from "../config/redlock";
 import { Lock } from "redlock";
 
 import logger from "../utils/logger";
 
 // ───────────────────────────────
-// Redis Distributed Lock Helpers 
+// Redis Distributed Lock Helpers
 // ───────────────────────────────
-export async function acquireLock(lockKey: string | number): Promise<Lock | null> {
+export async function acquireLock(lockKey: string | number, ttlMs: number = 30000): Promise<Lock | null> {
 
   try {
-    return await redlock.acquire([`lock:cron:${lockKey}`], 30000);
+    return await redlock.acquire([`lock:cron:${lockKey}`], ttlMs);
   } catch (err) {
     // Redlock throws an error if the lock cannot be acquired
     return null;
@@ -341,6 +342,38 @@ async function safeCDFileRetention() {
   }
 }
 
+// WPR/WBR weekly delivery
+async function safeWprWeekly() {
+  const jobName = "wprWeekly";
+  const lockKey = 111222012; // unique key
+  const lock = await acquireLock(lockKey, 10 * 60 * 1000); // 10 minutes — a full run processes projects one at a time
+  if (!lock) {
+    logger.warn(`🚫 ${jobName}: Another instance running. Skipping.`);
+    return;
+  }
+
+  const start = Date.now();
+  const log = await prisma.cronLog.create({ data: { jobName } });
+
+  try {
+    logger.info(`${jobName}: Started at ${new Date().toISOString()}`);
+    await runWprWeekly();
+    await prisma.cronLog.update({
+      where: { id: log.id },
+      data: { completedAt: new Date(), status: "SUCCESS", durationMs: Date.now() - start },
+    });
+    logger.info(` ${jobName}: Completed successfully.`);
+  } catch (err: any) {
+    logger.error({ err }, `${jobName}: Failed`);
+    await prisma.cronLog.update({
+      where: { id: log.id },
+      data: { completedAt: new Date(), status: "FAILED", errorMessage: err.message, durationMs: Date.now() - start },
+    });
+  } finally {
+    await releaseLock(lock);
+  }
+}
+
 // ───────────────────────────────
 // CRON SCHEDULER (Every minute)
 // ───────────────────────────────
@@ -418,6 +451,17 @@ if (process.env.ENABLE_CRON === "true") {
     () => void checkTrainingRequestSLA(),
     { timezone: "Asia/Kolkata" }
   );
+
+// WPR/WBR weekly delivery — opt-in on top of ENABLE_CRON, since deploying
+// this code must never start emailing clients by itself.
+  if (process.env.WPR_SCHEDULER_ENABLED === "true") {
+    nodeCron.schedule(
+      "0 8,11 * * *", // 08:00 primary run, 11:00 idempotent catch-up (see claimDelivery)
+      () => void safeWprWeekly(),
+      { timezone: process.env.WPR_TIMEZONE || "Asia/Kolkata" }
+    );
+    logger.info(" WPR weekly scheduler enabled (WPR_SCHEDULER_ENABLED=true).");
+  }
 
   logger.info(" Scheduler started for reminders with Redis lock protection.");
 

@@ -18,6 +18,14 @@ const zStringArrayFromForm = z.preprocess((val) => {
     return val;
 }, z.array(z.string()));
 
+// wprDay arrives from multipart/form-data as a string (or is absent). "" and
+// the literal string "null" both mean "clear it" -> null. Any other value is
+// coerced to an int and constrained to the 1..7 ISO-weekday range.
+const zWprDay = z.preprocess(
+    (v) => (v === "" || v === undefined || v === "null" ? (v === undefined ? undefined : null) : v),
+    z.coerce.number().int().min(1).max(7).nullable()
+).optional();
+
 export const CreateFabricatorSchema=z.object({
     fabName:z.string().min(1,{message:"Fabricator name is required"}),
     website:z.string({message:"Invalid website URL"}).optional(),
@@ -32,6 +40,9 @@ export const CreateFabricatorSchema=z.object({
     fabStage:z.enum(FabricatirStage),
     pointOfContact: zStringArrayFromForm.optional(),
     wbtFabricatorPointOfContact: zStringArrayFromForm.optional(),
+    // WPR/WBR: ISO weekday (1=Monday..7=Sunday) this fabricator's report is
+    // auto-generated on; null/omitted = automatic delivery stays off.
+    wprDay: zWprDay,
     files: z.preprocess((val) => {
         if (typeof val === "string") {
             try {

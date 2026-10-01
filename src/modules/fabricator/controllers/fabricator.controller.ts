@@ -18,11 +18,28 @@ export class FabricatorController {
     "DEPUTY_MANAGER",
     "PROJECT_MANAGER_OFFICER"
   ];
+  // WPR/WBR: only these roles may set or change a fabricator's automatic
+  // report day. Anyone else in `allowedRoles` (routes.ts) can still create
+  // or update a fabricator — this field alone gets stripped for them below.
+  private readonly wprDaySetterRoles: string[] = [
+    "ADMIN",
+    "OPERATION_EXECUTIVE",
+    "DEPUTY_MANAGER",
+    "PROJECT_MANAGER_OFFICER",
+  ];
+
+  private stripWprDayIfUnauthorized(body: Record<string, any>, role: string | undefined) {
+    if ("wprDay" in body && !this.wprDaySetterRoles.includes(role || "")) {
+      delete body.wprDay;
+    }
+  }
 
   async handleCreateFabricator(req: AuthenticateRequest, res: Response) {
     const { body } = req;
     const userId = req.user?.id;
     if (!userId) throw new AppError("createdById is required", 400);
+
+    this.stripWprDayIfUnauthorized(body, req.user?.role);
 
     const uploadedFiles = mapUploadedFiles(
       (req.files as Express.Multer.File[]) || [],
@@ -146,6 +163,8 @@ export class FabricatorController {
     const { body } = req;
     const userId = req.user?.id;
     if (!userId) throw new AppError("createdById is required", 400);
+
+    this.stripWprDayIfUnauthorized(body, req.user?.role);
 
     const uploadedFiles = mapUploadedFiles(
       (req.files as Express.Multer.File[]) || [],

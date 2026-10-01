@@ -38,6 +38,7 @@ import { default as ProjectProgressReportRoutes } from "./modules/projectProgres
 import { default as InvoiceWireTransferRoutes } from "./modules/invoiceWireTransfers/routes";
 import { default as CoordinationDrawingRoutes } from "./modules/coordinationDrawing/routes";
 import { trainingRoutes } from "./modules/training";
+import { WprRoutes } from "./modules/wpr";
 import { RAG_ENABLED } from "./config/features";
 
 const routes = express.Router();
@@ -109,5 +110,6 @@ routes.use("/projectProgressReport", ProjectProgressReportRoutes);
 routes.use("/invoiceWireTransfer", InvoiceWireTransferRoutes);
 routes.use("/coordinationDrawing", CoordinationDrawingRoutes);
 routes.use("/training", trainingRoutes);
+routes.use("/wpr", WprRoutes);
 
 export default routes

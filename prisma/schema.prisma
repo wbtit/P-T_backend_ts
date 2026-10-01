@@ -517,7 +517,12 @@ model Fabricator {
   accountId          String?         @db.Uuid
   fabStage           FabricatirStage @default(RFQ)
 
-  // Relations      
+  // WPR/WBR scheduling — the ISO weekday (1=Monday..7=Sunday) this
+  // fabricator's Weekly Progress Report is automatically generated and
+  // emailed on. null = automatic WPR delivery is off for this fabricator.
+  wprDay             Int?            @map("wpr_day")
+
+  // Relations
   branches                    Branch[]              @relation("FabricatorBranches")
   createdBy                   User                  @relation("FabricatorCreatedBy", fields: [createdById], references: [id])
   project                     Project[]             @relation("projectFabricator")
@@ -532,9 +537,11 @@ model Fabricator {
   rfq                         RFQ[]                 @relation("fabricatorRFQ")
   communications              ClientCommunication[]
   standardDocuments           StandardDocument[]
+  wprDeliveries               WprDelivery[]         @relation("WprDeliveryFabricator")
 
   @@index([createdById])
   @@index([fabName])
+  @@index([wprDay])
   @@map("fabricators")
 }
 
@@ -926,6 +933,7 @@ model Project {
   coordinationDrawings    CoordinationDrawing[]
   standardDocuments       StandardDocument[]
   standardChatMessages    StandardChatMessage[]
+  wprDeliveries           WprDelivery[]             @relation("WprDeliveryProject")
 
   @@index([name])
   @@index([fabricatorID])
@@ -2357,6 +2365,48 @@ model CoordinationDrawingResponse {
   @@index([userId])
   @@index([parentResponseId])
   @@map("coordination_drawing_responses")
+}
+
+// ===========================================================
+// WPR (Weekly Progress Report / "WBR") — Phase 2: scheduled automatic
+// delivery. Phase 1's report generation itself needs no schema; this is
+// only the per-fabricator delivery day and the delivery audit trail.
+// ===========================================================
+
+enum WprDeliveryMode {
+  DRY_RUN
+  INTERNAL
+  LIVE
+}
+
+enum WprDeliveryStatus {
+  PENDING
+  SENT
+  FAILED
+  SKIPPED
+}
+
+model WprDelivery {
+  id           String            @id @default(uuid()) @db.Uuid
+  projectId    String            @db.Uuid
+  fabricatorId String            @db.Uuid
+  weekEnding   DateTime          @db.Date // the Sunday, in WPR_TIMEZONE
+  mode         WprDeliveryMode
+  status       WprDeliveryStatus
+  recipients   Json? // { to: [...], cc: [...] } actually used for this delivery
+  filePath     String? // saved PDF path
+  attempts     Int               @default(0)
+  error        String?
+  createdAt    DateTime          @default(now())
+  sentAt       DateTime?
+
+  project    Project    @relation("WprDeliveryProject", fields: [projectId], references: [id], onDelete: Restrict)
+  fabricator Fabricator @relation("WprDeliveryFabricator", fields: [fabricatorId], references: [id], onDelete: Restrict)
+
+  @@unique([projectId, weekEnding, mode])
+  @@index([fabricatorId, weekEnding])
+  @@index([status])
+  @@map("wpr_delivery")
 }
 
 model UserTrustedIp {
