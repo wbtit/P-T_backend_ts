@@ -51,7 +51,16 @@ const validate = (schemas: SchemaConfig) =>
           });
           throw new AppError(parsed.error.message, 400);
         }
-        req.query = parsed.data as any;
+        // Express 5 defines req.query as a getter-only accessor (no setter) —
+        // a plain `req.query = ...` throws "Cannot set property query of
+        // #<IncomingMessage> which has only a getter". Shadow it with an own,
+        // writable property instead of assigning through the inherited getter.
+        Object.defineProperty(req, "query", {
+          value: parsed.data,
+          writable: true,
+          enumerable: true,
+          configurable: true,
+        });
       }
 
       next();
