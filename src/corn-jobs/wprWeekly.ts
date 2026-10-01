@@ -3,6 +3,7 @@ import prisma from "../config/database/client";
 import logger from "../utils/logger";
 import { sendEmail } from "../services/mailServices/mailconfig";
 import { MailAttachment } from "../services/mail/MailService";
+import { buildWprEmailHtml } from "../services/mailServices/mailtemplates/wprMailTemplate";
 import { getReportPdf } from "../modules/wpr/wpr.service";
 import { WprRequestUser } from "../modules/wpr/wpr.repository";
 import { resolveWprRecipients, ResolvedWprRecipients } from "../modules/wpr/wpr.recipients";
@@ -91,36 +92,16 @@ async function claimDelivery(
 // Email
 // ---------------------------------------------------------------------------
 
-function buildEmailHtml(projectName: string, weekEndingDisplay: string, testMode: boolean, wouldGoTo?: ResolvedWprRecipients): string {
-  const testNotice = testMode
-    ? `<p style="color:#8a6118;font-weight:600;">TEST SEND — this did not go to real recipients. In production this would have gone to:<br>
-         To: ${wouldGoTo?.to.join(", ") || "(none)"}<br>
-         CC: ${wouldGoTo?.cc.join(", ") || "(none)"}</p>`
-    : "";
-  return `
-    <div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#1c2321;">
-      ${testNotice}
-      <p>Hello,</p>
-      <p>Please find attached the Weekly Progress Report for <b>${escapeHtml(projectName)}</b>, week ending <b>${weekEndingDisplay}</b>.</p>
-      <p>This is an automated delivery. Please contact your project manager with any questions.</p>
-      <p>— Whiteboard Technologies</p>
-    </div>
-  `;
-}
-
-function escapeHtml(s: string): string {
-  return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] as string));
-}
-
 async function dispatchEmail(params: {
   mode: WprJobMode;
   projectName: string;
+  fabricatorName: string;
   weekEnding: Date;
   recipients: ResolvedWprRecipients;
   buffer: Buffer;
   filename: string;
 }): Promise<void> {
-  const { mode, projectName, weekEnding, recipients, buffer, filename } = params;
+  const { mode, projectName, fabricatorName, weekEnding, recipients, buffer, filename } = params;
   const weekEndingDisplay = formatSlashDate(weekEnding, WPR_TIMEZONE);
   const subject = `Weekly Progress Report - ${projectName} - Week ending ${weekEndingDisplay}`;
 
@@ -156,7 +137,15 @@ async function dispatchEmail(params: {
     await sendEmail({
       to: testRecipients,
       subject: `[TEST] ${subject}`,
-      html: buildEmailHtml(projectName, weekEndingDisplay, true, recipients),
+      // testBanner is ONLY ever constructed here, in the INTERNAL branch — LIVE
+      // below never builds one, so the banner cannot leak into a real send.
+      html: buildWprEmailHtml({
+        projectName,
+        weekEnding: weekEndingDisplay,
+        fabricatorName,
+        filename,
+        testBanner: { to: recipients.to, cc: recipients.cc },
+      }),
       attachments: [attachment],
       allowNonProduction: true, // WPR-only bypass — see mailconfig.ts's SendEmailInput doc comment
     });
@@ -168,7 +157,7 @@ async function dispatchEmail(params: {
     to: recipients.to,
     cc: recipients.cc.length ? recipients.cc : undefined,
     subject,
-    html: buildEmailHtml(projectName, weekEndingDisplay, false),
+    html: buildWprEmailHtml({ projectName, weekEnding: weekEndingDisplay, fabricatorName, filename }),
     attachments: [attachment],
   });
 }
@@ -210,7 +199,7 @@ async function processProject(
       data: { recipients: recipients as unknown as Prisma.InputJsonValue },
     });
 
-    await dispatchEmail({ mode, projectName: project.name, weekEnding, recipients, buffer, filename });
+    await dispatchEmail({ mode, projectName: project.name, fabricatorName: fabricator.fabName, weekEnding, recipients, buffer, filename });
 
     await prisma.wprDelivery.update({ where: { id: deliveryId }, data: { status: "SENT", sentAt: new Date() } });
     return "sent";

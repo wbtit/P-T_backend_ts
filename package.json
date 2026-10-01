@@ -14,7 +14,8 @@
     "serve": "node build/server.js",
     "metrics:percentiles": "ts-node src/scripts/metricsPercentiles.ts",
     "wpr:dump": "ts-node src/scripts/wprDump.ts",
-    "wpr:run": "ts-node src/scripts/wprRun.ts"
+    "wpr:run": "ts-node src/scripts/wprRun.ts",
+    "wpr:preview-mail": "ts-node src/scripts/wprPreviewMail.ts"
   },
   "repository": {
     "type": "git",
